@@ -6,12 +6,14 @@ package issue
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/services/activitypub"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
@@ -56,6 +58,19 @@ func CreateIssueComment(ctx context.Context, doer *user_model.User, repo *repo_m
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if strings.Contains(repo.OwnerName, "@") {
+		// Federated comment
+		note, err := activitypub.Note(ctx, comment)
+		if err != nil {
+			return nil, err
+		}
+		create := activitypub.Create(doer, note, repo.GetIRI())
+		err = activitypub.Send(ctx, doer, create)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	mentions, err := issues_model.FindAndUpdateIssueMentions(ctx, issue, doer, comment.Content)

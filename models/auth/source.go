@@ -24,14 +24,15 @@ type Type int
 
 // Note: new type must append to the end of list to maintain compatibility.
 const (
-	NoType Type = iota
-	Plain       // 1
-	LDAP        // 2
-	SMTP        // 3
-	PAM         // 4
-	DLDAP       // 5
-	OAuth2      // 6
-	SSPI        // 7
+	NoType    Type = iota
+	Plain          // 1
+	LDAP           // 2
+	SMTP           // 3
+	PAM            // 4
+	DLDAP          // 5
+	OAuth2         // 6
+	SSPI           // 7
+	Federated      // 8
 )
 
 // This should be in the above list of types but is separated to avoid conflicts with Gitea changes
@@ -184,8 +185,14 @@ func (source *Source) IsSSPI() bool {
 	return source.Type == SSPI
 }
 
+// IsF3 returns true of this source is of the F3 type.
 func (source *Source) IsF3() bool {
 	return source.Type == F3
+}
+
+// IsFederated returns true of this source is of the Federated type.
+func (source *Source) IsFederated() bool {
+	return source.Type == Federated
 }
 
 // HasTLS returns true of this source supports TLS.

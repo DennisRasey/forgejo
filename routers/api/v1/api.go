@@ -851,6 +851,7 @@ func Routes() *web.Route {
 		}
 
 		if setting.Federation.Enabled {
+			m.Get("/authorize_interaction", activitypub.AuthorizeInteraction)
 			m.Get("/nodeinfo", misc.NodeInfo)
 			m.Group("/activitypub", func() {
 				// deprecated, remove in 1.20, use /user-id/{user-id} instead
@@ -861,7 +862,19 @@ func Routes() *web.Route {
 				m.Group("/user-id/{user-id}", func() {
 					m.Get("", activitypub.Person)
 					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.PersonInbox)
+					m.Get("/outbox", activitypub.PersonOutbox)
+					m.Get("/following", activitypub.PersonFollowing)
+					m.Get("/followers", activitypub.PersonFollowers)
+					m.Get("/liked", activitypub.PersonLiked)
 				}, context_service.UserIDAssignmentAPI())
+				m.Group("/repo-id/{repo-id}", func() {
+					m.Get("", activitypub.Repo)
+					m.Post("/inbox", activitypub.ReqHTTPSignature(), activitypub.RepoInbox)
+					m.Get("/outbox", activitypub.RepoOutbox)
+					m.Get("/followers", activitypub.RepoFollowers)
+				}, repoAssignment())
+				m.Get("/ticket/{id}", repoAssignment(), activitypub.Ticket)
+				m.Get("/note/{noteid}", repoAssignment(), activitypub.Note)
 			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryActivityPub))
 		}
 

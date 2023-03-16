@@ -13,9 +13,9 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers"
+	"code.gitea.io/gitea/services/activitypub"
 
 	ap "github.com/go-ap/activitypub"
 	"github.com/stretchr/testify/assert"
@@ -43,10 +43,10 @@ func TestActivityPubPerson(t *testing.T) {
 
 		assert.Equal(t, ap.PersonType, person.Type)
 		assert.Equal(t, username, person.PreferredUsername.String())
-		keyID := person.GetID().String()
+		keyID := person.GetLink().String()
 		assert.Regexp(t, fmt.Sprintf("activitypub/user-id/%v$", userID), keyID)
-		assert.Regexp(t, fmt.Sprintf("activitypub/user-id/%v/outbox$", userID), person.Outbox.GetID().String())
-		assert.Regexp(t, fmt.Sprintf("activitypub/user-id/%v/inbox$", userID), person.Inbox.GetID().String())
+		assert.Regexp(t, fmt.Sprintf("activitypub/user-id/%v/outbox$", userID), person.Outbox.GetLink().String())
+		assert.Regexp(t, fmt.Sprintf("activitypub/user-id/%v/inbox$", userID), person.Inbox.GetLink().String())
 
 		pubKey := person.PublicKey
 		assert.NotNil(t, pubKey)

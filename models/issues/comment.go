@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"code.gitea.io/gitea/models/db"
@@ -22,6 +23,7 @@ import (
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/references"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/translation"
@@ -1317,4 +1319,20 @@ func InsertIssueComments(ctx context.Context, comments []*Comment) error {
 		}
 	}
 	return committer.Commit()
+}
+
+// GetIRI gets the IRI of the comment as a string
+func (c *Comment) GetIRI(ctx context.Context) string {
+	err := c.LoadIssue(ctx)
+	if err != nil {
+		return ""
+	}
+	err = c.Issue.LoadRepo(ctx)
+	if err != nil {
+		return ""
+	}
+	if strings.Contains(c.Issue.Repo.OwnerName, "@") {
+		return c.OldTitle
+	}
+	return setting.AppURL + "api/v1/activitypub/note/" + c.Issue.Repo.OwnerName + "/" + c.Issue.Repo.Name + "/" + strconv.FormatInt(c.ID, 10)
 }

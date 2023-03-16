@@ -98,6 +98,15 @@ func (u *User) AvatarLink(ctx context.Context) string {
 	return link
 }
 
+// AvatarFullLinkWithSize returns the full avatar link with size and http host
+func (u *User) AvatarFullLinkWithSize(ctx context.Context, size int) string {
+	link := u.AvatarLinkWithSize(ctx, size)
+	if !strings.HasPrefix(link, "//") && !strings.Contains(link, "://") {
+		return setting.AppURL + strings.TrimPrefix(link, setting.AppSubURL+"/")
+	}
+	return link
+}
+
 // IsUploadAvatarChanged returns true if the current user's avatar would be changed with the provided data
 func (u *User) IsUploadAvatarChanged(data []byte) bool {
 	if !u.UseCustomAvatar || len(u.Avatar) == 0 {

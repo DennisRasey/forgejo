@@ -1,4 +1,4 @@
-// Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package activitypub
@@ -7,28 +7,26 @@ import (
 	"crypto"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
 
-	"code.gitea.io/gitea/modules/activitypub"
 	gitea_context "code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/httplib"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/services/activitypub"
 
 	ap "github.com/go-ap/activitypub"
 	"github.com/go-fed/httpsig"
 )
 
-func getPublicKeyFromResponse(b []byte, keyID *url.URL) (p crypto.PublicKey, err error) {
-	person := ap.PersonNew(ap.IRI(keyID.String()))
+func getPublicKeyFromResponse(b []byte, keyID string) (p crypto.PublicKey, err error) {
+	person := ap.PersonNew(ap.IRI(keyID))
 	err = person.UnmarshalJSON(b)
 	if err != nil {
 		return nil, fmt.Errorf("ActivityStreams type cannot be converted to one known to have publicKey property: %w", err)
 	}
 	pubKey := person.PublicKey
-	if pubKey.ID.String() != keyID.String() {
+	if pubKey.ID.String() != keyID {
 		return nil, fmt.Errorf("cannot find publicKey with id: %s in %s", keyID, string(b))
 	}
 	pubKeyPem := pubKey.PublicKeyPem
@@ -40,21 +38,12 @@ func getPublicKeyFromResponse(b []byte, keyID *url.URL) (p crypto.PublicKey, err
 	return p, err
 }
 
-func fetch(iri *url.URL) (b []byte, err error) {
-	req := httplib.NewRequest(iri.String(), http.MethodGet)
-	req.Header("Accept", activitypub.ActivityStreamsContentType)
-	req.Header("User-Agent", "Gitea/"+setting.AppVer)
-	resp, err := req.Response()
+func getKeyID(r *http.Request) (httpsig.Verifier, string, error) {
+	v, err := httpsig.NewVerifier(r)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("url IRI fetch [%s] failed with status (%d): %s", iri, resp.StatusCode, resp.Status)
-	}
-	b, err = io.ReadAll(io.LimitReader(resp.Body, setting.Federation.MaxSize))
-	return b, err
+	return v, v.KeyId(), nil
 }
 
 func verifyHTTPSignatures(ctx *gitea_context.APIContext) (authenticated bool, err error) {
@@ -66,22 +55,29 @@ func verifyHTTPSignatures(ctx *gitea_context.APIContext) (authenticated bool, er
 		return false, err
 	}
 	ID := v.KeyId()
-	idIRI, err := url.Parse(ID)
-	if err != nil {
-		return false, err
-	}
 	// 2. Fetch the public key of the other actor
-	b, err := fetch(idIRI)
+	b, err := activitypub.Fetch(ID)
 	if err != nil {
 		return false, err
 	}
-	pubKey, err := getPublicKeyFromResponse(b, idIRI)
+	pubKey, err := getPublicKeyFromResponse(b, ID)
 	if err != nil {
 		return false, err
 	}
 	// 3. Verify the other actor's key
 	algo := httpsig.Algorithm(setting.Federation.Algorithms[0])
 	authenticated = v.Verify(pubKey, algo) == nil
+	if !authenticated {
+		return
+	}
+	// 4. Create a federated user for the actor
+	var person ap.Person
+	err = person.UnmarshalJSON(b)
+	if err != nil {
+		return
+	}
+
+	err = createPerson(ctx, &person)
 	return authenticated, err
 }
 
@@ -94,4 +90,30 @@ func ReqHTTPSignature() func(ctx *gitea_context.APIContext) {
 			ctx.Error(http.StatusForbidden, "reqSignature", "request signature verification failed")
 		}
 	}
+}
+
+// Check if the keyID matches the activity to prevent impersonation
+func checkActivityAndKeyID(activity ap.Activity, keyID string) error {
+	if activity.Actor != nil && keyID != activity.Actor.GetLink().String()+"#main-key" {
+		return errors.New("actor does not match HTTP signature keyID")
+	}
+	if activity.AttributedTo != nil && keyID != activity.AttributedTo.GetLink().String()+"#main-key" {
+		return errors.New("attributedTo does not match HTTP signature keyID")
+	}
+	if activity.Object == nil {
+		return errors.New("activity does not contain object")
+	}
+	if activity.Type == ap.UndoType {
+		return ap.OnActivity(activity.Object, func(a *ap.Activity) error {
+			if a.Actor != nil && keyID != a.Actor.GetLink().String()+"#main-key" {
+				// TODO: This doesn't necessarily mean impersonation since the object might be created by someone else
+				return errors.New("actor does not match HTTP signature keyID")
+			}
+			if a.AttributedTo != nil && keyID != a.AttributedTo.GetLink().String()+"#main-key" {
+				return errors.New("attributedTo does not match HTTP signature keyID")
+			}
+			return nil
+		})
+	}
+	return nil
 }

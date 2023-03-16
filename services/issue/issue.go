@@ -6,6 +6,7 @@ package issue
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	activities_model "code.gitea.io/gitea/models/activities"
@@ -19,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/services/activitypub"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
@@ -26,6 +28,23 @@ import (
 func NewIssue(ctx context.Context, repo *repo_model.Repository, issue *issues_model.Issue, labelIDs []int64, uuids []string, assigneeIDs []int64) error {
 	if err := issues_model.NewIssue(ctx, repo, issue, labelIDs, uuids); err != nil {
 		return err
+	}
+
+	if strings.Contains(repo.OwnerName, "@") {
+		// Federated issue
+		ticket, err := activitypub.Ticket(db.DefaultContext, issue)
+		if err != nil {
+			return err
+		}
+		err = issue.LoadPoster(db.DefaultContext)
+		if err != nil {
+			return err
+		}
+		create := activitypub.Create(issue.Poster, ticket, repo.GetIRI())
+		err = activitypub.Send(ctx, issue.Poster, create)
+		if err != nil {
+			return err
+		}
 	}
 
 	for _, assigneeID := range assigneeIDs {

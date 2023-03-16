@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	project_model "code.gitea.io/gitea/models/project"
@@ -922,4 +924,15 @@ func insertIssue(ctx context.Context, issue *Issue) error {
 	}
 
 	return nil
+}
+
+func (issue *Issue) GetIRI(ctx context.Context) string {
+	err := issue.LoadRepo(ctx)
+	if err != nil {
+		log.Error(fmt.Sprintf("loadRepo: %v", err))
+	}
+	if strings.Contains(issue.Repo.OwnerName, "@") {
+		return issue.OriginalAuthor
+	}
+	return setting.AppURL + "api/v1/activitypub/ticket/" + issue.Repo.OwnerName + "/" + issue.Repo.Name + "/" + strconv.FormatInt(issue.Index, 10)
 }

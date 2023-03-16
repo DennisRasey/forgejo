@@ -5,6 +5,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"net"
@@ -791,6 +792,28 @@ func GetRepositoryByID(ctx context.Context, id int64) (*Repository, error) {
 	return repo, nil
 }
 
+// GetRepositoryByIRI returns the repository by given IRI if exists.
+func GetRepositoryByIRI(ctx context.Context, iri string) (*Repository, error) {
+	iriSplit := strings.Split(iri, "/")
+	if len(iriSplit) < 5 {
+		return nil, errors.New("not a Repository actor IRI")
+	}
+	if iriSplit[2] == setting.Domain {
+		// Local repository
+		return GetRepositoryByOwnerAndName(ctx, iriSplit[len(iriSplit)-2], iriSplit[len(iriSplit)-1])
+	}
+	repo := &Repository{
+		OriginalURL: iri,
+	}
+	has, err := db.GetEngine(ctx).Get(repo)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, ErrRepoNotExist{0, 0, "", ""}
+	}
+	return repo, err
+}
+
 // GetRepositoriesMapByIDs returns the repositories by given id slice.
 func GetRepositoriesMapByIDs(ctx context.Context, ids []int64) (map[int64]*Repository, error) {
 	repos := make(map[int64]*Repository, len(ids))
@@ -904,4 +927,12 @@ func UpdateRepositoryOwnerName(ctx context.Context, oldUserName, newUserName str
 		return fmt.Errorf("change repo owner name: %w", err)
 	}
 	return nil
+}
+
+// GetIRI gets the repository's IRI as a string
+func (repo *Repository) GetIRI() string {
+	if strings.Contains(repo.OwnerName, "@") {
+		return repo.OriginalURL
+	}
+	return setting.AppURL + "api/v1/activitypub/repo/" + repo.OwnerName + "/" + repo.Name
 }

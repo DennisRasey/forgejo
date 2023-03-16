@@ -23,10 +23,231 @@
   },
   "basePath": "{{AppSubUrl | JSEscape | Safe}}/api/v1",
   "paths": {
+    "/activitypub/note/{username}/{reponame}/{noteid}": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the Note object for a comment to an issue or PR",
+        "operationId": "activitypubNote",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "ID number of the comment",
+            "name": "noteid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          },
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
+    "/activitypub/repo/{username}/{reponame}": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the repository",
+        "operationId": "activitypubRepo",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repository",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          }
+        }
+      }
+    },
+    "/activitypub/repo/{username}/{reponame}/followers": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the followers collection",
+        "operationId": "activitypubRepoFollowers",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repository",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          }
+        }
+      }
+    },
+    "/activitypub/repo/{username}/{reponame}/inbox": {
+      "post": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Send to the inbox",
+        "operationId": "activitypubRepoInbox",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repository",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/responses/empty"
+          }
+        }
+      }
+    },
+    "/activitypub/repo/{username}/{reponame}/outbox": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the outbox",
+        "operationId": "activitypubRepoOutbox",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repository",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "501": {
+            "$ref": "#/responses/empty"
+          }
+        }
+      }
+    },
+    "/activitypub/ticket/{username}/{reponame}/{id}": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the Ticket object for an issue or PR",
+        "operationId": "forgefedTicket",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "reponame",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "ID number of the issue or PR",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
     "/activitypub/user-id/{user-id}": {
       "get": {
         "produces": [
-          "application/json"
+          "application/activity+json"
         ],
         "tags": [
           "activitypub"
@@ -52,7 +273,7 @@
     "/activitypub/user-id/{user-id}/inbox": {
       "post": {
         "produces": [
-          "application/json"
+          "application/activity+json"
         ],
         "tags": [
           "activitypub"
@@ -69,7 +290,85 @@
           }
         ],
         "responses": {
-          "204": {
+          "202": {
+            "$ref": "#/responses/empty"
+          }
+        }
+      }
+    },
+    "/activitypub/user/{username}/followers": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the Liked Collection",
+        "operationId": "activitypubPersonLiked",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          }
+        }
+      }
+    },
+    "/activitypub/user/{username}/following": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the Following Collection",
+        "operationId": "activitypubPersonFollowing",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          }
+        }
+      }
+    },
+    "/activitypub/user/{username}/outbox": {
+      "get": {
+        "produces": [
+          "application/activity+json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the Outbox OrderedCollection",
+        "operationId": "activitypubPersonOutbox",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "username of the user",
+            "name": "username",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "501": {
             "$ref": "#/responses/empty"
           }
         }
