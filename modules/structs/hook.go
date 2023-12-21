@@ -402,6 +402,16 @@ func (p *PullRequestPayload) JSONPayload() ([]byte, error) {
 	return json.MarshalIndent(p, "", "  ")
 }
 
+type HookScheduleAction string
+
+const (
+	HookScheduleCreated HookScheduleAction = "created"
+)
+
+type SchedulePayload struct {
+	Action HookScheduleAction `json:"action"`
+}
+
 // ReviewPayload FIXME
 type ReviewPayload struct {
 	Type    string `json:"type"`

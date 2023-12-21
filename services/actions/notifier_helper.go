@@ -423,7 +423,11 @@ func handleSchedules(
 		return nil
 	}
 
-	p, err := json.Marshal(input.Payload)
+	payload := &api.SchedulePayload{
+		Action: api.HookScheduleCreated,
+	}
+
+	p, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
