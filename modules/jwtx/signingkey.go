@@ -381,7 +381,7 @@ func createAsymmetricKey(keyPath, algorithm string) error {
 	return pem.Encode(f, privateKeyPEM)
 }
 
-func loadAsymmetricKey(keyPath string) (any, error) {
+func loadPrivateKey(keyPath string) (any, error) {
 	bytes, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
@@ -410,7 +410,7 @@ func loadOrCreateAsymmetricKey(keyPath, algorithm string) (any, error) {
 			return nil, fmt.Errorf("Error generating private key %s: %v", keyPath, err)
 		}
 	}
-	return loadAsymmetricKey(keyPath)
+	return loadPrivateKey(keyPath)
 }
 
 // InitSigningKey creates a signing key from SigningKeyCfg
