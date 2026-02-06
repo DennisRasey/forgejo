@@ -77,6 +77,7 @@ func TestLoadOrCreateAsymmetricKey(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, key)
 		assert.Nil(t, cfg)
+		assert.NotEmpty(t, key.ID())
 
 		testSignVerify(t, key, key)
 	}
