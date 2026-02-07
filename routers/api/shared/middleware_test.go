@@ -51,6 +51,26 @@ func TestReducer(t *testing.T) {
 		IsSpecificAccess bool
 	}
 
+	// mock oauth.Init() without the ctx
+	var signingKey jwtx.SigningKey
+	var verifier *jwtx.Verifier
+	{
+		secret := make([]byte, 32)
+		signingCfg := jwtx.SigningKeyCfg{
+			Algorithm:   "HS256",
+			SecretBytes: &secret,
+		}
+		keyCfg := jwtx.KeyCfg{
+			Signing: &signingCfg,
+		}
+		keyCfgP := &keyCfg
+		var err error
+		signingKey, verifier, err = jwtx.Init(&keyCfgP)
+		require.NoError(t, err)
+	}
+	defer test.MockVariableValue(&oauth2.DefaultSigningKey, signingKey)()
+	defer test.MockVariableValue(&oauth2.DefaultVerifier, verifier)()
+
 	r.Get("/api/test", func(ctx *context.APIContext) {
 		retval := ReducerInfo{
 			IsSigned: ctx.IsSigned,
@@ -182,10 +202,6 @@ func TestReducer(t *testing.T) {
 	})
 
 	t.Run("OAuth", func(t *testing.T) {
-		signingKey, err := jwtx.CreateSigningKey("HS256", make([]byte, 32))
-		require.NoError(t, err)
-		defer test.MockVariableValue(&oauth2.DefaultSigningKey, signingKey)()
-
 		t.Run("unrestricted grant", func(t *testing.T) {
 			grant := &auth_model.OAuth2Grant{
 				UserID:        2,

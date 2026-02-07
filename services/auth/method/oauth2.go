@@ -80,9 +80,10 @@ func (o *OAuth2) Verify(req *http.Request, w http.ResponseWriter, _ auth.Session
 	}
 	_, authToken := maybeAuthToken.Get()
 
-	token, err := oauth2.ParseToken(authToken, oauth2.DefaultSigningKey)
+	var token oauth2.Token
+	_, err := oauth2.DefaultVerifier.ParseWithClaims(authToken, &token)
 	if err != nil {
-		log.Trace("oauth2.ParseToken: %v", err)
+		log.Trace("oauth2.DefaultVerifier.ParseWithClaims: %v", err)
 		return &auth.AuthenticationAttemptedIncorrectCredential{Error: err}
 	}
 
