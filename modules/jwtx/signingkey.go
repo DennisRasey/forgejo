@@ -609,3 +609,33 @@ func ParseJWKToPublicKey(jwk map[string]any) (any, error) {
 		return nil, fmt.Errorf("unsupported key type in JWK: %s", kty)
 	}
 }
+
+// Init Signing Key and Verifier
+func InitWithParser(keyCfgP **KeyCfg, parser *jwt.Parser) (SigningKey, *Verifier, error) {
+	keyCfg := *keyCfgP
+	*keyCfgP = nil
+
+	signingKey, err := InitSigningKey(&keyCfg.Signing)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// we always add the signing key to the verifier (we accept tokens which
+	// we issue). No idea if there could be future cases where we do not
+	// want this, but for now antything else would be very un-POLA
+	verifier := NewVerifierWithParser(parser)
+	err = verifier.AddKey(signingKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = verifier.AddVerificationKeyCfg(&keyCfg.Verification)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return signingKey, verifier, nil
+}
+
+func Init(keyCfgP **KeyCfg) (SigningKey, *Verifier, error) {
+	return InitWithParser(keyCfgP, jwt.NewParser())
+}
