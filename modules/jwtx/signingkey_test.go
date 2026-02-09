@@ -13,12 +13,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"forgejo.org/modules/generate"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func testSignVerify(t *testing.T, signKey, verifyKey SigningKey) {
+func testSignVerify(t *testing.T, signKey SigningKey, verifyKey VerificationKey) {
 	t.Helper()
 	// test sign and verify
 	claimsIn := jwt.RegisteredClaims{
@@ -34,9 +36,15 @@ func testSignVerify(t *testing.T, signKey, verifyKey SigningKey) {
 		assert.NotNil(t, valToken.Method)
 		assert.Equal(t, signKey.SigningMethod().Alg(), valToken.Method.Alg())
 		assert.Equal(t, verifyKey.SigningMethod().Alg(), valToken.Method.Alg())
+
+		// asymmetric keys generate JWT with a kid, symmetric not
 		kid, ok := valToken.Header["kid"]
-		assert.True(t, ok)
-		assert.NotNil(t, kid)
+		if signKey.IsSymmetric() {
+			assert.False(t, ok)
+		} else {
+			assert.True(t, ok)
+			assert.NotNil(t, kid)
+		}
 
 		return verifyKey.VerifyKey(), nil
 	})
@@ -68,18 +76,53 @@ func TestLoadOrCreateAsymmetricKey(t *testing.T) {
 	useKey := func(t *testing.T, keyPath, algorithm string) {
 		t.Helper()
 		// duplicates loadKey() to some extent, but uses SigningKey
-		cfg := &SigningKeyCfg{
+		assert.NotEmpty(t, keyPath)
+		scfg := &SigningKeyCfg{
 			Algorithm:      algorithm,
 			PrivateKeyPath: &keyPath,
 		}
 
-		key, err := InitSigningKey(&cfg)
+		// load the signing key via the settings interface
+		key, err := InitSigningKey(&scfg)
 		require.NoError(t, err)
 		assert.NotNil(t, key)
-		assert.Nil(t, cfg)
+		assert.Nil(t, scfg)
 		assert.NotEmpty(t, key.ID())
+		assert.Nil(t, scfg)
 
 		testSignVerify(t, key, key)
+
+		// load the signing key file as a verification key
+		assert.NotEmpty(t, keyPath)
+		vcfg := &VerificationKeyCfg{
+			Algorithm:     algorithm,
+			PublicKeyPath: &keyPath,
+		}
+
+		// load the verification key via the settings interface
+		vkey, err := InitVerificationKey(&vcfg)
+		require.NoError(t, err)
+		assert.NotNil(t, key)
+		assert.Equal(t, key.ID(), vkey.ID())
+		assert.Nil(t, scfg)
+
+		testSignVerify(t, key, vkey)
+
+		// save the public key, then load it and test
+		pKeyPath := keyPath + ".pub"
+		err = savePublicKey(pKeyPath, key)
+		require.NoError(t, err)
+		vcfg = &VerificationKeyCfg{
+			Algorithm:     algorithm,
+			PublicKeyPath: &pKeyPath,
+		}
+		vkey, err = InitVerificationKey(&vcfg)
+		require.NoError(t, err)
+		assert.NotNil(t, vkey)
+		assert.Equal(t, key.ID(), vkey.ID())
+		assert.Nil(t, vcfg)
+
+		testSignVerify(t, key, vkey)
 	}
 	t.Run("RSA-2048", func(t *testing.T) {
 		keyPath := filepath.Join(t.TempDir(), "jwt-rsa-2048.priv")
@@ -184,4 +227,40 @@ func TestCannotCreatePrivateKey(t *testing.T) {
 	_, err := InitAsymmetricSigningKey("/dev/directory-does-not-exist-and-you-should-not-have-permission-to-create/privatekey.pem", "RS256")
 	require.Error(t, err)
 	require.ErrorContains(t, err, "Error generating private key")
+}
+
+// test symmetic algorithms used via the SigningKey and VerificationKey
+// interfaces
+func TestSymmetricKey(t *testing.T) {
+	algorithms := []string{"HS256", "HS384", "HS512"}
+	for _, algorithm := range algorithms {
+		t.Run(algorithm, func(t *testing.T) {
+			secret, _ := generate.NewJwtSecret()
+			assert.NotEmpty(t, secret)
+
+			// init the signing key via the settings interface
+			scfg := &SigningKeyCfg{
+				Algorithm:   algorithm,
+				SecretBytes: &secret,
+			}
+			skey, err := InitSigningKey(&scfg)
+			require.NoError(t, err)
+			assert.NotNil(t, skey)
+			assert.Nil(t, scfg)
+
+			testSignVerify(t, skey, skey)
+
+			// init the same key as a VerificationKey
+			vcfg := &VerificationKeyCfg{
+				Algorithm:   algorithm,
+				SecretBytes: &secret,
+			}
+			vkey, err := InitVerificationKey(&vcfg)
+			require.NoError(t, err)
+			assert.NotNil(t, vkey)
+			assert.Nil(t, vcfg)
+
+			testSignVerify(t, skey, vkey)
+		})
+	}
 }

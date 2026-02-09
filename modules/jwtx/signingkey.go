@@ -35,8 +35,8 @@ type SigningKeyCfg struct {
 }
 
 type KeyCfg struct {
-	Signing *SigningKeyCfg
-	// more later
+	Signing      *SigningKeyCfg
+	Verification []*VerificationKeyCfg
 }
 
 // ErrInvalidAlgorithmType represents an invalid algorithm error.
@@ -428,6 +428,35 @@ func loadOrCreateAsymmetricKey(keyPath, algorithm string) (any, error) {
 		}
 	}
 	return loadPrivateKey(keyPath)
+}
+
+// save the public key for a private key
+func savePublicKey(keyPath string, signingKey SigningKey) error {
+	if signingKey.IsSymmetric() {
+		return fmt.Errorf("Saving symmatric key deliberately not supported (path: \"%s\")", keyPath)
+	}
+	bytes, err := x509.MarshalPKIXPublicKey(signingKey.VerifyKey())
+	if err != nil {
+		return err
+	}
+
+	publicKeyPEM := &pem.Block{Type: "PUBLIC KEY", Bytes: bytes}
+
+	if err := os.MkdirAll(filepath.Dir(keyPath), os.ModePerm); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err = f.Close(); err != nil {
+			log.Error("Close: %v", err)
+		}
+	}()
+
+	return pem.Encode(f, publicKeyPEM)
 }
 
 // InitSigningKey creates a signing key from SigningKeyCfg
