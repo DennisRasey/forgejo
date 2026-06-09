@@ -148,6 +148,11 @@ func TestInitRepositoryWithNoTemplates(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if !IsValidObjectFormat(tt.objectFormatName) {
+				t.Skip("not supported")
+				return
+			}
+
 			repoPath := t.TempDir()
 
 			err := InitRepository(t.Context(), repoPath, tt.bare, tt.objectFormatName)
