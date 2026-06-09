@@ -192,7 +192,7 @@ func TestReducer(t *testing.T) {
 				ApplicationID: 100, // fake, but required here for unique constraint
 				Scope:         "write:repository",
 			}
-			_, err = db.GetEngine(t.Context()).Insert(grant)
+			_, err := db.GetEngine(t.Context()).Insert(grant)
 			require.NoError(t, err)
 
 			token := oauth2.Token{
@@ -230,7 +230,7 @@ func TestReducer(t *testing.T) {
 				ApplicationID: 101, // fake, but required here for unique constraint
 				Scope:         "write:repository public-only",
 			}
-			_, err = db.GetEngine(t.Context()).Insert(grant)
+			_, err := db.GetEngine(t.Context()).Insert(grant)
 			require.NoError(t, err)
 
 			token := oauth2.Token{
