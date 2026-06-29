@@ -458,6 +458,14 @@ func mustEnableAttachments() func(ctx *context.APIContext) {
 	return checkPermission(apiv1_permissions.MustEnableAttachments)
 }
 
+func checkForkDestination() func(*context.APIContext) {
+	apiv1_permissions_testhelpers.RecordSignature(apiv1_permissions.CheckForkDestination)
+	return func(ctx *context.APIContext) {
+		form := web.GetForm(ctx).(*api.CreateForkOption)
+		apiv1_permissions.CheckForkDestination(ctx, form.Organization)
+	}
+}
+
 // bind binding an obj to a func(ctx *context.APIContext)
 func bind[T any](_ T) any {
 	return func(ctx *context.APIContext) {
@@ -852,7 +860,7 @@ func Routes() *web.Route {
 				m.Get("/archive/*", reqRepoReader(unit.TypeCode), repo.GetArchive)
 				if !setting.Repository.DisableForks {
 					m.Combo("/forks").Get(repo.ListForks).
-						Post(reqToken(), reqRepoReader(unit.TypeCode), bind(api.CreateForkOption{}), repo.CreateFork)
+						Post(reqToken(), reqRepoReader(unit.TypeCode), bind(api.CreateForkOption{}), checkForkDestination(), repo.CreateFork)
 				}
 				m.Group("/branches", func() {
 					m.Get("", repo.ListBranches)
