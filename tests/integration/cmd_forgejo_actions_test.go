@@ -191,12 +191,16 @@ func TestActions_CmdForgejo_Actions(t *testing.T) {
 						action, err := actions_model.GetRunnerByUUID(t.Context(), uuid)
 						require.NoError(t, err)
 
-						user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: action.OwnerID})
-						assert.Equal(t, ownerName, user.Name, action.OwnerID)
-
 						if found {
+							assert.Zero(t, action.OwnerID)
+
 							repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: action.RepoID})
 							assert.Equal(t, repoName, repo.Name, action.RepoID)
+						} else {
+							assert.Zero(t, action.RepoID)
+
+							user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: action.OwnerID})
+							assert.Equal(t, ownerName, user.Name, action.OwnerID)
 						}
 						if testCase.name != "" {
 							assert.Equal(t, testCase.name, action.Name)

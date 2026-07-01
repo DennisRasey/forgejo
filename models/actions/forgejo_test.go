@@ -129,7 +129,7 @@ func TestActions_RegisterRunner_UpdateWithLabels(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: recordID})
 
-	newOwnerID := int64(1)
+	newOwnerID := int64(0)
 	newRepoID := int64(1)
 	newName := "rennur"
 	newVersion := "v4.5.6"
@@ -164,7 +164,7 @@ func TestActions_RegisterRunner_UpdateWithoutLabels(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	before := unittest.AssertExistsAndLoadBean(t, &ActionRunner{ID: recordID})
 
-	newOwnerID := int64(1)
+	newOwnerID := int64(0)
 	newRepoID := int64(1)
 	newName := "rennur"
 	newVersion := "v4.5.6"

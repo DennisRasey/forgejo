@@ -12,6 +12,7 @@ import (
 	"forgejo.org/models/db"
 	"forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
+	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
@@ -478,4 +479,60 @@ func TestRunner_FindRunnerOptionsToConds(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUpdateRunner(t *testing.T) {
+	t.Run("ownership is not altered", func(t *testing.T) {
+		require.NoError(t, unittest.PrepareTestDatabase())
+
+		runnerUUID := "86b2f19a-3fbb-410b-ace6-2a2ace078a28"
+
+		require.NoError(t, CreateRunner(t.Context(), &ActionRunner{UUID: runnerUUID, Name: "old name"}))
+
+		runner := unittest.AssertExistsAndLoadBean(t, &ActionRunner{UUID: runnerUUID})
+
+		assert.Zero(t, runner.OwnerID)
+		assert.Zero(t, runner.RepoID)
+		assert.Equal(t, "old name", runner.Name)
+
+		runner.Name = "new name"
+
+		require.NoError(t, UpdateRunner(t.Context(), runner))
+
+		runner = unittest.AssertExistsAndLoadBean(t, &ActionRunner{UUID: runnerUUID})
+
+		assert.Zero(t, runner.OwnerID)
+		assert.Zero(t, runner.RepoID)
+		assert.Equal(t, "new name", runner.Name)
+	})
+
+	t.Run("OwnerID and RepoID cannot be set simultaneously", func(t *testing.T) {
+		require.NoError(t, unittest.PrepareTestDatabase())
+
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		repo62 := unittest.AssertExistsAndLoadBean(t, &repo.Repository{ID: 62, OwnerID: user2.ID})
+		runnerUUID := "86b2f19a-3fbb-410b-ace6-2a2ace078a28"
+
+		require.NoError(t, CreateRunner(t.Context(), &ActionRunner{UUID: runnerUUID, OwnerID: user2.ID, Name: "old name"}))
+
+		runner := unittest.AssertExistsAndLoadBean(t, &ActionRunner{UUID: runnerUUID})
+
+		assert.Equal(t, user2.ID, runner.OwnerID)
+		assert.Zero(t, runner.RepoID)
+		assert.Equal(t, "old name", runner.Name)
+
+		// Attempt to violate scoping rules by simultaneously setting OwnerID and RepoID.
+		runner.RepoID = repo62.ID
+		runner.Name = "new name"
+
+		err := UpdateRunner(t.Context(), runner)
+		require.ErrorContains(t, err, "OwnerID (2) and RepoID (62) of runner")
+
+		// Verify that runner has not been changed.
+		runner = unittest.AssertExistsAndLoadBean(t, &ActionRunner{UUID: runnerUUID})
+
+		assert.Equal(t, user2.ID, runner.OwnerID)
+		assert.Zero(t, runner.RepoID)
+		assert.Equal(t, "old name", runner.Name)
+	})
 }
