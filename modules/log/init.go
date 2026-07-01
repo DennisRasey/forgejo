@@ -5,6 +5,7 @@ package log
 
 import (
 	"context"
+	"os/exec"
 	"runtime"
 	"strings"
 
@@ -32,6 +33,12 @@ func init() {
 		} else {
 			Log(skip+1, TRACE, "Done %s: %s", NewColoredValue(pid, FgHiYellow), NewColoredValue(description, Reset))
 		}
+	}
+	process.NotifyTerminateGraceExhausted = func(cmd *exec.Cmd) {
+		Error(
+			"Subprocess pid=%d (%s) failed to terminate from SIGTERM after grace period %s, and was sent SIGKILL. The subprocess termination may leave incomplete state on the server, such as lock files. `[server].SUBPROCESS_TERMINATE_GRACE` can be changed to give subprocesses more time to cleanly exit.",
+			cmd.Process.Pid, cmd.String(), process.TerminateGraceTimeout.String(),
+		)
 	}
 }
 

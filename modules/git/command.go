@@ -334,7 +334,7 @@ func (c *Command) Run(opts *RunOpts) error {
 		cmd.Env = opts.Env
 	}
 
-	process.SetSysProcAttribute(cmd)
+	process.SetupCancellableCommand(cmd)
 	cmd.Env = append(cmd.Env, CommonGitCmdEnvs()...)
 	cmd.Dir = opts.Dir
 	cmd.Stdout = opts.Stdout
