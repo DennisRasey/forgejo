@@ -329,7 +329,7 @@ func runServ(ctx context.Context, c *cli.Command) error {
 		gitcmd = exec.CommandContext(ctx, gitBinVerb, repoPath)
 	}
 
-	process.SetSysProcAttribute(gitcmd)
+	process.SetupCancellableCommand(gitcmd)
 	gitcmd.Dir = setting.RepoRootPath
 	gitcmd.Stdout = os.Stdout
 	gitcmd.Stdin = os.Stdin
