@@ -26,18 +26,17 @@ func (pm *Manager) ExecDir(ctx context.Context, timeout time.Duration, dir, desc
 	return pm.ExecDirEnv(ctx, timeout, dir, desc, nil, cmdName, args...)
 }
 
-// ExecDirEnv runs a command in given path and environment variables, and waits for its completion
-// up to the given timeout (or DefaultTimeout if -1 is given).
-// Returns its complete stdout and stderr
-// outputs and an error, if any (including timeout)
+// ExecDirEnv runs a command in given path and environment variables, and waits for its completion up to the given
+// timeout (or 60s if -1 is given). Returns its complete stdout and stderr outputs and an error, if any (including
+// timeout)
 func (pm *Manager) ExecDirEnv(ctx context.Context, timeout time.Duration, dir, desc string, env []string, cmdName string, args ...string) (string, string, error) {
 	return pm.ExecDirEnvStdIn(ctx, timeout, dir, desc, env, nil, cmdName, args...)
 }
 
-// ExecDirEnvStdIn runs a command in given path and environment variables with provided stdIN, and waits for its completion
-// up to the given timeout (or DefaultTimeout if timeout <= 0 is given).
-// Returns its complete stdout and stderr
-// outputs and an error, if any (including timeout)
+// ExecDirEnvStdIn runs a command in given path and environment variables with provided stdIN, and waits for its
+// completion up to the given timeout (or 60s if timeout <= 0 is given).  If the process times out, will send SIGTERM
+// and wait 5s before the process is SIGKILL'd.  Returns its complete stdout and stderr outputs and an error, if any
+// (including timeout)
 func (pm *Manager) ExecDirEnvStdIn(ctx context.Context, timeout time.Duration, dir, desc string, env []string, stdIn io.Reader, cmdName string, args ...string) (string, string, error) {
 	if timeout <= 0 {
 		timeout = 60 * time.Second
@@ -57,7 +56,7 @@ func (pm *Manager) ExecDirEnvStdIn(ctx context.Context, timeout time.Duration, d
 	if stdIn != nil {
 		cmd.Stdin = stdIn
 	}
-	SetSysProcAttribute(cmd)
+	SetupCancellableCommand(cmd)
 
 	if err := cmd.Start(); err != nil {
 		return "", "", err

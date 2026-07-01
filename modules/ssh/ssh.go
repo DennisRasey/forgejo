@@ -106,7 +106,7 @@ func sessionHandler(session ssh.Session) {
 	}
 	defer stdin.Close()
 
-	process.SetSysProcAttribute(cmd)
+	process.SetupCancellableCommand(cmd)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2)

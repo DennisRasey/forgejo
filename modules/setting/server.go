@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/process"
 	"forgejo.org/modules/util"
 
 	"github.com/caddyserver/certmagic"
@@ -321,4 +322,6 @@ func loadServerFrom(rootCfg ConfigProvider) {
 	default:
 		LandingPageURL = LandingPage(landingPage)
 	}
+
+	process.TerminateGraceTimeout = sec.Key("SUBPROCESS_TERMINATE_GRACE").MustDuration(time.Duration(5) * time.Second)
 }
