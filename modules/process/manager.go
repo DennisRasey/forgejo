@@ -6,6 +6,7 @@ package process
 
 import (
 	"context"
+	"os/exec"
 	"runtime/pprof"
 	"runtime/trace"
 	"strconv"
@@ -48,6 +49,15 @@ type FinishedFunc = context.CancelFunc
 var (
 	traceDisabled atomic.Int64
 	TraceCallback = defaultTraceCallback // this global can be overridden by particular logging packages - thus avoiding import cycles
+
+	// A command run through [SetupCancellableCommand] will be sent SIGKILL after this grace period if the processes do
+	// not terminate after SIGTERM is sent to them.
+	TerminateGraceTimeout = 5 * time.Second
+
+	// This closure is invoked in the event that SIGKILL is sent after a grace period has expired.  Intended for logging
+	// the situation, which cannot be performed inside the process module as it would cause a cyclical dependency on
+	// Forgejo's log module.
+	NotifyTerminateGraceExhausted func(cmd *exec.Cmd)
 )
 
 // defaultTraceCallback is a no-op. Without a proper TraceCallback (provided by the logger system), this "Trace" level messages shouldn't be outputted.
