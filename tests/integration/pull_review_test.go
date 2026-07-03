@@ -576,6 +576,38 @@ func TestPullReview_OldLatestCommitId(t *testing.T) {
 	assert.NotEqual(t, headCommitSHA, review.CommitID)
 }
 
+// TestPullReviewReplyToCommentWithoutPatch checks that replying to a code comment that has no stored
+// patch (e.g. migrated from GitHub against a commit later force-pushed away) does not 500 when the
+// diff hunk cannot be regenerated; the reply is stored without diff context instead.
+func TestPullReviewReplyToCommentWithoutPatch(t *testing.T) {
+	defer unittest.OverrideFixtures("tests/integration/fixtures/TestPullReviewReplyToCommentWithoutPatch")()
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+
+	review := unittest.AssertExistsAndLoadBean(t, &issues_model.Review{ID: 1100})
+
+	// Warm up the session, then reply with an empty latest_commit_id: this mirrors the timeline
+	// reply form, which submits no commit id, so the diff hunk cannot be regenerated.
+	session.MakeRequest(t, NewRequest(t, "GET", "/user2/repo1/pulls/2/files/reviews/new_comment"), http.StatusOK)
+
+	const content = "reply to a comment migrated without a patch"
+	req := NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
+		"origin":           "timeline",
+		"latest_commit_id": "",
+		"content":          content,
+		"side":             "proposed",
+		"line":             "4",
+		"path":             "README.md",
+		"reply":            strconv.FormatInt(review.ID, 10),
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+
+	reply := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{Content: content, IssueID: 2})
+	assert.Equal(t, review.ID, reply.ReviewID)
+	assert.Empty(t, reply.Patch)
+}
+
 func TestPullReviewInArchivedRepo(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, giteaURL *url.URL) {
 		session := loginUser(t, "user2")
