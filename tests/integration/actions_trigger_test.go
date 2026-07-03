@@ -1416,3 +1416,79 @@ jobs:
 		}
 	})
 }
+
+func TestActionWorkflowTitle(t *testing.T) {
+	runName := "awesome title"
+	workflow := fmt.Sprintf(`
+run-name: "%s"
+on:
+  push:
+  schedule:
+    - cron: "* * * * *"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps: []
+`, runName)
+
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		for _, tc := range []struct {
+			name string
+			fn   func(t testing.TB, owner *user_model.User, repo *repo_model.Repository) *actions_model.ActionRun
+		}{
+			{
+				name: "push",
+				fn: func(t testing.TB, owner *user_model.User, repo *repo_model.Repository) *actions_model.ActionRun {
+					return unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{
+						RepoID: repo.ID,
+						Event:  webhook_module.HookEventPush,
+					})
+				},
+			},
+			{
+				name: "schedule",
+				fn: func(t testing.TB, _ *user_model.User, repo *repo_model.Repository) *actions_model.ActionRun {
+					schedules, err := db.Find[actions_model.ActionSchedule](t.Context(), actions_model.FindScheduleOptions{RepoID: repo.ID})
+					require.NoError(t, err)
+
+					require.NoError(t, actions_service.CreateScheduleTask(t.Context(), schedules[0]))
+
+					return unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{
+						RepoID:     repo.ID,
+						ScheduleID: schedules[0].ID,
+					})
+				},
+			},
+
+			{
+				name: "workflow_dispatch",
+				fn: func(t testing.TB, owner *user_model.User, repo *repo_model.Repository) *actions_model.ActionRun {
+					gitRepo, err := gitrepo.OpenRepository(t.Context(), repo)
+					require.NoError(t, err)
+					defer gitRepo.Close()
+
+					workflow, err := actions_service.GetWorkflowFromCommit(gitRepo, repo.DefaultBranch, "workflow.yml")
+					require.NoError(t, err)
+
+					run, _, err := workflow.Dispatch(t.Context(), nil, repo, owner)
+					require.NoError(t, err)
+
+					return run
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+				repo := forgery.CreateRepository(t, owner, &forgery.CreateRepositoryOptions{
+					Files: forgery.MapFS{
+						".forgejo/workflows/workflow.yml": forgery.MapFile(workflow),
+					},
+				})
+
+				assert.Equal(t, runName, tc.fn(t, owner, repo).Title)
+			})
+		}
+	})
+}

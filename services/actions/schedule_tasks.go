@@ -189,6 +189,10 @@ func CreateScheduleTask(ctx context.Context, cron *actions_model.ActionSchedule)
 		return err
 	}
 
+	if err := ConfigureActionRunTitle(workflows, run); err != nil {
+		return err
+	}
+
 	// Insert the action run and its associated jobs into the database
 	if err := InsertRun(ctx, run, workflows); err != nil {
 		return err

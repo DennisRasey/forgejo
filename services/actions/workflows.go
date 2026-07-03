@@ -197,6 +197,10 @@ func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGette
 		return nil, nil, err
 	}
 
+	if err := ConfigureActionRunTitle(jobs, run); err != nil {
+		return nil, nil, err
+	}
+
 	if err := InsertRun(ctx, run, jobs); err != nil {
 		return run, jobNames, err
 	}
@@ -238,6 +242,23 @@ func GetWorkflowFromCommit(gitRepo *git.Repository, ref, workflowID string) (*Wo
 		Commit:            commit,
 		GitEntry:          workflowEntry,
 	}, nil
+}
+
+// Sets Title of a workflow run to the value of the workflow's `run-name` field, if present.
+// Keeps the existing default title when run-name is absent or when run-name evaluates to "".
+func ConfigureActionRunTitle(workflows []*jobparser.SingleWorkflow, run *actions_model.ActionRun) error {
+	if len(workflows) == 0 {
+		return nil
+	}
+	// run-name is workflow-level, so each job's SingleWorkflow has the same run-name.
+	runName, err := workflows[0].EvaluateRunName()
+	if err != nil {
+		return fmt.Errorf("unable to evaluate workflow `run-name`: %w", err)
+	}
+	if runName != "" {
+		run.Title = runName
+	}
+	return nil
 }
 
 // Sets the ConcurrencyGroup & ConcurrencyType on the provided ActionRun based upon the Workflow's `concurrency` data,

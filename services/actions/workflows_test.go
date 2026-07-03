@@ -9,12 +9,65 @@ import (
 
 	actions_model "forgejo.org/models/actions"
 	"forgejo.org/models/repo"
+	"forgejo.org/models/user"
 	"forgejo.org/modules/webhook"
 
+	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
 	act_model "code.forgejo.org/forgejo/runner/v12/act/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestConfigureActionRunTitle(t *testing.T) {
+	const defaultTitle = "default title"
+	for _, tc := range []struct {
+		name          string
+		workflow      string
+		expectedTitle string
+	}{
+		{
+			name: "no run-name keeps default title",
+			workflow: `
+on: push
+jobs:
+  job:
+    runs-on: ubuntu
+    steps: []
+`,
+			expectedTitle: defaultTitle,
+		},
+		{
+			name: "run-name is used",
+			workflow: `
+run-name: "good title"
+on: push
+jobs:
+  job:
+    runs-on: ubuntu
+    steps: []
+`,
+			expectedTitle: "good title",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			run := &actions_model.ActionRun{
+				Title:        defaultTitle,
+				Ref:          "refs/head/main",
+				WorkflowID:   "testing.yml",
+				Event:        webhook.HookEventPush,
+				TriggerEvent: string(webhook.HookEventPush),
+				TriggerUser:  &user.User{Name: "someone"},
+				Repo:         &repo.Repository{},
+			}
+			workflows, err := jobparser.Parse([]byte(tc.workflow), false)
+			require.NoError(t, err)
+
+			require.NoError(t, ConfigureActionRunTitle(workflows, run))
+
+			assert.Equal(t, tc.expectedTitle, run.Title)
+		})
+	}
+}
 
 func TestConfigureActionRunConcurrency(t *testing.T) {
 	for _, tc := range []struct {

@@ -437,6 +437,12 @@ func handleWorkflows(
 			}
 		}
 
+		if errorCode == 0 {
+			if err := ConfigureActionRunTitle(jobs, run); err != nil {
+				log.Error("ConfigureActionRunTitle: %v", err)
+			}
+		}
+
 		if run.ConcurrencyType == actions_model.CancelInProgress {
 			if err := CancelPreviousWithConcurrencyGroup(
 				ctx,
