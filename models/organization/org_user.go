@@ -123,13 +123,13 @@ func IsAnEligibleTeamMemberByID(ctx context.Context, uid int64) (bool, error) {
 
 func loadOrganizationOwners(ctx context.Context, users user_model.UserList, orgID int64) (map[int64]*TeamUser, error) {
 	if len(users) == 0 {
-		return nil, nil
+		return make(map[int64]*TeamUser), nil
 	}
 	ownerTeam, err := GetOwnerTeam(ctx, orgID)
 	if err != nil {
 		if IsErrTeamNotExist(err) {
 			log.Error("Organization does not have owner team: %d", orgID)
-			return nil, nil
+			return make(map[int64]*TeamUser), nil
 		}
 		return nil, err
 	}
