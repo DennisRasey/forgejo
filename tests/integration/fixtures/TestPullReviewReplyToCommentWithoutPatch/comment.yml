@@ -1,0 +1,13 @@
+-
+  id: 1100
+  type: 21 # code comment
+  poster_id: 2
+  issue_id: 2
+  content: "Migrated comment without a stored patch"
+  review_id: 1100
+  line: 4
+  tree_path: "README.md"
+  commit_sha: "1234567890abcdef1234567890abcdef12345678" # anchored to a now-missing commit
+  created_unix: 1720000000
+  invalidated: false
+  content_version: 1

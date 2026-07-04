@@ -353,8 +353,10 @@ func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, 
 		contextLines := setting.UI.CodeCommentLines + int(extraLinesCount)
 		patch, err = git.CutDiffAroundLine(reader, displayLine, line < 0, contextLines)
 		if err != nil {
-			log.Error("Error whilst generating patch: %v", err)
-			return nil, err
+			// The anchored commit may be gone (e.g. force-push before a migration), so the hunk
+			// can't be produced. Store the comment without context, like the importer.
+			log.Warn("CreateCodeComment: storing comment without diff context: %v", err)
+			patch = ""
 		}
 	}
 	return issues_model.CreateComment(ctx, &issues_model.CreateCommentOptions{
