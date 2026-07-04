@@ -41,7 +41,7 @@ func Middlewares() (stack []any) {
 		apiAuthentication(buildAuthGroup()),
 		apiAuthorization(),
 		verifyAuthWithOptions(&common.VerifyOptions{
-			SignInRequired: setting.Service.RequireSignInView,
+			SignInRequired: func() bool { return setting.Service.RequireSignInView },
 		}),
 	)
 }
@@ -159,7 +159,7 @@ func verifyAuthWithOptions(options *common.VerifyOptions) func(ctx *context.APIC
 			return
 		}
 
-		if options.SignInRequired {
+		if options.SignInRequired != nil && options.SignInRequired() {
 			if !ctx.IsSigned() {
 				// Restrict API calls with error message.
 				ctx.JSON(http.StatusForbidden, map[string]string{
