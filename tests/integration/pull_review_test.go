@@ -1806,6 +1806,53 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 			assert.False(t, comment.Invalidated)
 		})
 
+		t.Run("reply to a multi-line comment threads under it", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 48\n", "Line 48--modified\n", 1)
+			content = strings.Replace(content, "Line 49\n", "Line 49--modified\n", 1)
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			comment := tester.multiLineCommentFromFilesChanged("file1.md", 48, 2)
+			assert.EqualValues(t, 2, comment.ExtraLinesCount)
+			assert.EqualValues(t, 50, comment.DisplayLine())
+
+			// Simulate a reply like the reply button does
+			req := NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d/files", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
+			resp := tester.session.MakeRequest(t, req, http.StatusOK)
+			form := NewHTMLParser(t, resp.Body).Find(`.conversation-holder[data-extra-lines-count="2"] form`)
+			field := func(name string) string {
+				return form.Find(fmt.Sprintf(`input[name=%q]`, name)).AttrOr("value", "")
+			}
+			require.Equal(t, "2", field("extra_lines_count"), "reply form must carry the parent's extra_lines_count")
+
+			const replyContent = "reply through the multi-line comment reply form"
+			req = NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/comments", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index), map[string]string{
+				"origin":            field("origin"),
+				"before_commit_id":  field("before_commit_id"),
+				"latest_commit_id":  field("latest_commit_id"),
+				"side":              field("side"),
+				"line":              field("line"),
+				"extra_lines_count": field("extra_lines_count"),
+				"path":              field("path"),
+				"reply":             field("reply"),
+				"content":           replyContent,
+			})
+			tester.session.MakeRequest(t, req, http.StatusOK)
+
+			// The reply threads under the parent: it shares the conversation grouping key
+			// (ReviewID + TreePath + DisplayLine, the end of the range).
+			reply := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{Content: replyContent})
+			assert.EqualValues(t, 2, reply.ExtraLinesCount)
+			assert.Equal(t, comment.ReviewID, reply.ReviewID)
+			assert.Equal(t, comment.TreePath, reply.TreePath)
+			assert.Equal(t, comment.DisplayLine(), reply.DisplayLine())
+		})
+
 		t.Run("multi-line proposed comment over unmodified-then-modified lines stays visible", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 			tester := newPullRequestCommentPlacementTester(t)
