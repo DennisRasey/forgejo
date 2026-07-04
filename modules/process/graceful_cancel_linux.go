@@ -4,25 +4,12 @@
 package process
 
 import (
-	"os"
 	"os/exec"
 	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
 )
-
-func isENOSYS(err error) bool {
-	errno, isErrno := err.(syscall.Errno)
-	if isErrno && errno == syscall.ENOSYS {
-		return true
-	}
-	syscallErr, isSyscallErr := err.(*os.SyscallError) // errno may be wrapped in SyscallError
-	if isSyscallErr && isENOSYS(syscallErr.Err) {
-		return true
-	}
-	return false
-}
 
 // Platform-specific implementation of graceful cancellation.  After sending SIGTERM, uses a pidfd to monitor for
 // process exit which isn't supported on all UNIXes.  pidfd is only supported on modern Linux (> 5.3), so a fallback to
@@ -37,9 +24,13 @@ func platformSpecificGracefulCancel(cmd *exec.Cmd) func() error {
 		// there'd be no chance of an error here.  But we wouldn't be able to close that FD if the process wasn't
 		// cancelled since SetupCancellableCommand doesn't interact with commands that don't cancel.
 		pidfd, err := unix.PidfdOpen(cmd.Process.Pid, 0)
-		if isENOSYS(err) {
+		if isErrno(err, syscall.ENOSYS) {
 			// pidfd not supported -- older than Linux 5.3 kernel.  Fallback to generic cancel routine.
 			return genericGracefulCancel(cmd)()
+		} else if isErrno(err, syscall.EINVAL) {
+			// EINVAL -- pid is not valid, process already exited.  Not common since we haven't send SIGTERM yet, but
+			// the process exit on its own before we cancel it.  Do nothing.
+			return nil
 		} else if killErrorSafeToIgnore(err) {
 			return nil
 		} else if err != nil {
