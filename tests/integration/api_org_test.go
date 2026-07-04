@@ -292,13 +292,13 @@ func TestAPIOrgDeny(t *testing.T) {
 
 	orgName := "user1_org"
 	req := NewRequestf(t, "GET", "/api/v1/orgs/%s", orgName)
-	MakeRequest(t, req, http.StatusNotFound)
+	MakeRequest(t, req, http.StatusForbidden)
 
 	req = NewRequestf(t, "GET", "/api/v1/orgs/%s/repos", orgName)
-	MakeRequest(t, req, http.StatusNotFound)
+	MakeRequest(t, req, http.StatusForbidden)
 
 	req = NewRequestf(t, "GET", "/api/v1/orgs/%s/members", orgName)
-	MakeRequest(t, req, http.StatusNotFound)
+	MakeRequest(t, req, http.StatusForbidden)
 }
 
 func TestAPIGetAll(t *testing.T) {

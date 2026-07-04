@@ -47,4 +47,20 @@ func TestExploreUser(t *testing.T) {
 		req := NewRequest(t, "GET", c).SetHeader("Accept", "text/html")
 		MakeRequest(t, req, http.StatusNotFound)
 	}
+
+	t.Run("REQUIRE_SIGNIN_VIEW", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Service.RequireSignInView, true)()
+		req := NewRequest(t, "GET", "/explore/users")
+		resp := MakeRequest(t, req, http.StatusSeeOther)
+		assert.Equal(t, "/user/login", resp.Header().Get("Location"))
+	})
+
+	t.Run("[explore].REQUIRE_SIGNIN_VIEW", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Service.Explore.RequireSigninView, true)()
+		req := NewRequest(t, "GET", "/explore/users")
+		resp := MakeRequest(t, req, http.StatusSeeOther)
+		assert.Equal(t, "/user/login", resp.Header().Get("Location"))
+	})
 }
