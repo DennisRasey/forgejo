@@ -10,6 +10,10 @@ ARG TAGS="sqlite sqlite_unlock_notify"
 ENV TAGS="bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
 
+# it's set to local by default in the base image
+# we want to use auto to let go choose the right toolchain
+ENV GOTOOLCHAIN=auto
+
 #
 # Transparently cross compile for the target platform
 #
