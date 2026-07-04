@@ -206,6 +206,44 @@ func TestIncomingEmail(t *testing.T) {
 
 				checkReply(t, payload, issue, issues_model.CommentTypeComment)
 			})
+
+			t.Run("MultiLineCodeComment", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				// A reply to a multi-line code comment must inherit the parent's extra_lines_count
+				issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 2})
+				require.NoError(t, issue.LoadRepo(db.DefaultContext))
+				review, err := issues_model.CreateReview(db.DefaultContext, issues_model.CreateReviewOptions{
+					Type:     issues_model.ReviewTypeComment,
+					Issue:    issue,
+					Reviewer: user,
+				})
+				require.NoError(t, err)
+				// Anchor the parent with a stored patch so the reply reuses it (no git resolution needed).
+				parent, err := issues_model.CreateComment(db.DefaultContext, &issues_model.CreateCommentOptions{
+					Type:            issues_model.CommentTypeCode,
+					Doer:            user,
+					Repo:            issue.Repo,
+					Issue:           issue,
+					Content:         "multi-line parent",
+					LineNum:         4,
+					ExtraLinesCount: 2,
+					TreePath:        "README.md",
+					CommitSHA:       "0000000000000000000000000000000000000000",
+					ReviewID:        review.ID,
+					Patch:           "@@ -4,3 +4,3 @@",
+				})
+				require.NoError(t, err)
+
+				payload, err := incoming_payload.CreateReferencePayload(parent)
+				require.NoError(t, err)
+
+				handler := &incoming.ReplyHandler{}
+				require.NoError(t, handler.Handle(db.DefaultContext, &incoming.MailContent{Content: "multi-line reply by mail"}, user, payload))
+
+				reply := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{Content: "multi-line reply by mail", IssueID: issue.ID, Type: issues_model.CommentTypeCode})
+				assert.EqualValues(t, 2, reply.ExtraLinesCount)
+			})
 		})
 
 		t.Run("Unsubscribe", func(t *testing.T) {

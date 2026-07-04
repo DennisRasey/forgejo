@@ -148,7 +148,7 @@ func (h *ReplyHandler) Handle(ctx context.Context, content *MailContent, doer *u
 				nil,
 				issue,
 				comment.Line,
-				0, // extraLinesCount: a reply to a comment inherit single line
+				comment.ExtraLinesCount, // inherit the parent's range so the reply threads under a multi-line comment
 				content.Content,
 				comment.TreePath,
 				false, // not pending review but a single review
