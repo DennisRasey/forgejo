@@ -36,6 +36,17 @@ export default {
       files: ['**/*.vue'],
       customSyntax: 'postcss-html',
     },
+    {
+      files: '**/*.tmpl',
+      ignoreFiles: [
+        'templates/shared/quota_overview.tmpl', // // the mix of go in the style attribute confuses the css parser
+      ],
+      customSyntax: 'postcss-html',
+      rules: {
+        '@stylistic/indentation': null,
+        'scale-unlimited/declaration-strict-value': null,
+      },
+    },
   ],
   rules: {
     '@stylistic/at-rule-name-case': null,

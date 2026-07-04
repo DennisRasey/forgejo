@@ -153,7 +153,7 @@ TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(FOMAN
 GO_DIRS := build cmd models modules routers services tests
 WEB_DIRS := web_src/js web_src/css
 
-STYLELINT_FILES := web_src/css web_src/js/components/*.vue
+STYLELINT_FILES := web_src/css web_src/js/components/*.vue templates/**/*.tmpl
 SPELLCHECK_FILES := $(GO_DIRS) $(WEB_DIRS) docs/content templates options/locale/locale_en-US.ini .github $(wildcard *.go *.js *.ts *.vue *.md *.yml *.yaml)
 
 GO_SOURCES := $(wildcard *.go)
