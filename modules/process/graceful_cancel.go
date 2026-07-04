@@ -6,6 +6,7 @@ package process
 import (
 	"os"
 	"os/exec"
+	"slices"
 	"syscall"
 	"time"
 )
@@ -13,16 +14,21 @@ import (
 // Identify errors that can occur in kill or wait that indicate the kill was actually successful as the process doesn't
 // exist anymore.
 func killErrorSafeToIgnore(err error) bool {
-	errno, isErrno := err.(syscall.Errno)
-	if isErrno {
-		switch errno {
-		case syscall.ESRCH, // No such process
-			syscall.ECHILD: // No child processes
+	return isErrno(err,
+		syscall.ESRCH,  // No such process
+		syscall.ECHILD, // No child processes
+	)
+}
+
+func isErrno(err error, errnoList ...syscall.Errno) bool {
+	errno, is := err.(syscall.Errno)
+	if is {
+		if slices.Contains(errnoList, errno) {
 			return true
 		}
 	}
 	syscallErr, isSyscallErr := err.(*os.SyscallError) // errno may be wrapped in SyscallError
-	if isSyscallErr && killErrorSafeToIgnore(syscallErr.Err) {
+	if isSyscallErr && isErrno(syscallErr.Err, errnoList...) {
 		return true
 	}
 	return false
