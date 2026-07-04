@@ -29,7 +29,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -39,12 +39,12 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 			{
 				Term:  "World",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -54,12 +54,12 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 			{
 				Term:  "World",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -69,12 +69,12 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 			{
 				Term:  "World",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -124,22 +124,42 @@ var testOpts = []testIssueQueryStringOpt{
 		},
 	},
 	{
+		Keyword: "Hello -World",
+		Results: []Token{
+			{
+				Term:  "Hello",
+				Fuzzy: true,
+				Kind:  BoolOptShould,
+			},
+			{
+				Term:  "World",
+				Fuzzy: true,
+				Kind:  BoolOptNot,
+			},
+		},
+	},
+	{
 		Keyword: "\"Hello World\"",
 		Results: []Token{
 			{
 				Term:  "Hello World",
 				Fuzzy: false,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
 	{
-		Keyword: "+\"Hello World\"",
+		Keyword: "+\"Hello World\" Hello",
 		Results: []Token{
 			{
 				Term:  "Hello World",
 				Fuzzy: false,
 				Kind:  BoolOptMust,
+			},
+			{
+				Term:  "Hello",
+				Fuzzy: true,
+				Kind:  BoolOptShould,
 			},
 		},
 	},
@@ -159,7 +179,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "+Hello -World",
 				Fuzzy: false,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -169,7 +189,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "+Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -179,7 +199,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "\\Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -189,7 +209,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "\"Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -207,7 +227,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "Hello",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -221,7 +241,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  " World ",
 				Fuzzy: false,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -231,7 +251,7 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "World",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
@@ -241,29 +261,29 @@ var testOpts = []testIssueQueryStringOpt{
 			{
 				Term:  "Best",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 			{
 				Term:  "Hello World",
 				Fuzzy: false,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 			{
 				Term:  "Ever",
 				Fuzzy: true,
-				Kind:  BoolOptShould,
+				Kind:  BoolOptMust,
 			},
 		},
 	},
 }
 
 func TestIssueQueryString(t *testing.T) {
-	var opt SearchOptions
 	ctx := t.Context()
 	for _, res := range testOpts {
 		t.Run(res.Keyword, func(t *testing.T) {
+			opt := &SearchOptions{}
 			require.NoError(t, opt.WithKeyword(ctx, res.Keyword))
-			assert.Equal(t, res.Results, opt.Tokens)
+			assert.Equal(t, res.Results, opt.Tokens, "failed for keyword `%s`", res.Keyword)
 		})
 	}
 }
@@ -326,7 +346,7 @@ func TestIssueQueryStringWithFilters(t *testing.T) {
 				Tokens: []Token{
 					{
 						Term:  "hi",
-						Kind:  BoolOptShould,
+						Kind:  BoolOptMust,
 						Fuzzy: true,
 					},
 				},
@@ -368,7 +388,7 @@ func TestIssueQueryStringWithFilters(t *testing.T) {
 				Tokens: []Token{
 					{
 						Term:  "test",
-						Kind:  BoolOptShould,
+						Kind:  BoolOptMust,
 						Fuzzy: true,
 					},
 				},
@@ -386,7 +406,7 @@ func TestIssueQueryStringWithFilters(t *testing.T) {
 				Tokens: []Token{
 					{
 						Term:  "author:",
-						Kind:  BoolOptShould,
+						Kind:  BoolOptMust,
 						Fuzzy: true,
 					},
 				},
@@ -402,12 +422,12 @@ func TestIssueQueryStringWithFilters(t *testing.T) {
 				Tokens: []Token{
 					{
 						Term:  "author:",
-						Kind:  BoolOptShould,
+						Kind:  BoolOptMust,
 						Fuzzy: true,
 					},
 					{
 						Term:  "test",
-						Kind:  BoolOptShould,
+						Kind:  BoolOptMust,
 						Fuzzy: true,
 					},
 				},
@@ -419,7 +439,7 @@ func TestIssueQueryStringWithFilters(t *testing.T) {
 				Tokens: []Token{
 					{
 						Term:  "modified:",
-						Kind:  BoolOptShould,
+						Kind:  BoolOptMust,
 						Fuzzy: true,
 					},
 				},

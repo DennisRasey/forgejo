@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"io"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -208,7 +209,19 @@ func (o *SearchOptions) WithKeyword(ctx context.Context, keyword string) (err er
 		return err
 	}
 
-	o.Tokens = tokens
+	// if the query only contains terms that are SHOULD the results returned are subpar.
+	// convert them to MUST in this case.
+	if slices.ContainsFunc(tokens, func(token Token) bool {
+		return token.Kind != BoolOptShould
+	}) {
+		o.Tokens = tokens
+	} else if len(tokens) != 0 {
+		o.Tokens = make([]Token, 0, len(tokens))
+		for _, token := range tokens {
+			token.Kind = BoolOptMust
+			o.Tokens = append(o.Tokens, token)
+		}
+	}
 
 	ids, err := user.GetUserIDsByNames(ctx, userNames, true)
 	if err != nil {
