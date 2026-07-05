@@ -11,7 +11,19 @@ import (
 )
 
 var _ = registerFunctionTest(apiv1_permissions.APIAuthorization, functionTest{
-	fulfillNeeds: func(t *testing.T, data *fixtureData) {
+	testCases: []*testCase{
+		{
+			data: newTestData(map[string]string{
+				"doer": "anonymous",
+			}),
+		},
+		{
+			data: newTestData(map[string]string{
+				"doer": "doerregular",
+			}),
+		},
+	},
+	fulfillNeeds: func(t *testing.T, data *testData) {
 		t.Helper()
 		data.SetDefault("doer", "doerregular")
 		if data.Get("doer") == user_model.ActionsUserName {
@@ -20,22 +32,10 @@ var _ = registerFunctionTest(apiv1_permissions.APIAuthorization, functionTest{
 		data.SetDefault("scope", "read:repository")
 		data.SetDefault("level", "read")
 	},
-	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
+	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
 		if data.Has("repository") && data.Get("doer") == user_model.ActionsUserName {
 			fixtureSetRepository(t, permissions, data)
 		}
 		fixtureSetDoer(t, permissions, data)
-	},
-	fixtures: []*fixtureType{
-		{
-			data: newFixtureData(map[string]string{
-				"doer": "anonymous",
-			}),
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"doer": "doerregular",
-			}),
-		},
 	},
 })

@@ -8,14 +8,14 @@ import (
 )
 
 var _ = registerFunctionTest(apiv1_permissions.MustNotBeArchived, functionTest{
-	fixtures: []*fixtureType{
+	testCases: []*testCase{
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"repository": "userowner/repositorypublic",
 			}),
 		},
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"repository": "userowner/repositoryarchived",
 			}),
 			error: "is archived",

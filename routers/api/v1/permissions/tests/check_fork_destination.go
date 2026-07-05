@@ -16,7 +16,55 @@ import (
 )
 
 var _ = registerFunctionTestWithCall(apiv1_permissions.CheckForkDestination, functionTest{
-	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
+	testCases: []*testCase{
+		{
+			data: newTestData(map[string]string{
+				"doer":         "regularorgowner",
+				"repository":   "userowner/repositorypublic",
+				"forkOrg":      "regularorg1",
+				"forkOrgOwner": "regularorgowner",
+			}),
+		},
+		{
+			data: newTestData(map[string]string{
+				"doer":                 "regularuser",
+				"repository":           "regularuser/repositorypublic",
+				"forkOrg":              "regularorg1",
+				"forkOrgOwner":         "regularorgowner",
+				"team":                 "team1",
+				"teamCanCreateOrgRepo": "true",
+			}),
+		},
+		{
+			data: newTestData(map[string]string{
+				"doer":                 "regularuser",
+				"repository":           "regularuser/repositorypublic",
+				"forkOrg":              "regularorg1",
+				"forkOrgOwner":         "regularorgowner",
+				"team":                 "team1",
+				"teamCanCreateOrgRepo": "false",
+			}),
+			error: "User is not allowed to create repos in Organisation",
+		},
+		{
+			data: newTestData(map[string]string{
+				"doer":         "doerregular",
+				"repository":   "userowner/repositorypublic",
+				"forkOrg":      "regularorg2",
+				"forkOrgOwner": "regularorgowner",
+			}),
+			error: "User is no Member of Organisation 'regularorg2'",
+		},
+		{
+			data: newTestData(map[string]string{
+				"doer":       "regularorgowner",
+				"repository": "userowner/repositorypublic",
+				"forkOrg":    "unknownOrg",
+			}),
+			error: "org does not exist",
+		},
+	},
+	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
 		require.True(t, data.Has("forkOrg"))
 		if data.Get("forkOrg") == "unknownOrg" {
 			return
@@ -35,57 +83,9 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.CheckForkDestination, fun
 			})
 		}
 	},
-	call: func(t *testing.T, ctx apiv1_permissions.Context, data *fixtureData, _ []any) {
+	call: func(t *testing.T, ctx apiv1_permissions.Context, data *testData, _ []any) {
 		forkOrg := data.Get("forkOrg")
 		t.Logf("calling CheckForkDestination(ctx, %s)", forkOrg)
 		apiv1_permissions.CheckForkDestination(ctx, &forkOrg)
-	},
-	fixtures: []*fixtureType{
-		{
-			data: newFixtureData(map[string]string{
-				"doer":         "regularorgowner",
-				"repository":   "userowner/repositorypublic",
-				"forkOrg":      "regularorg1",
-				"forkOrgOwner": "regularorgowner",
-			}),
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"doer":                 "regularuser",
-				"repository":           "regularuser/repositorypublic",
-				"forkOrg":              "regularorg1",
-				"forkOrgOwner":         "regularorgowner",
-				"team":                 "team1",
-				"teamCanCreateOrgRepo": "true",
-			}),
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"doer":                 "regularuser",
-				"repository":           "regularuser/repositorypublic",
-				"forkOrg":              "regularorg1",
-				"forkOrgOwner":         "regularorgowner",
-				"team":                 "team1",
-				"teamCanCreateOrgRepo": "false",
-			}),
-			error: "User is not allowed to create repos in Organisation",
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"doer":         "doerregular",
-				"repository":   "userowner/repositorypublic",
-				"forkOrg":      "regularorg2",
-				"forkOrgOwner": "regularorgowner",
-			}),
-			error: "User is no Member of Organisation 'regularorg2'",
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"doer":       "regularorgowner",
-				"repository": "userowner/repositorypublic",
-				"forkOrg":    "unknownOrg",
-			}),
-			error: "org does not exist",
-		},
 	},
 })

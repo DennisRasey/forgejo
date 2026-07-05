@@ -11,28 +11,28 @@ import (
 )
 
 var _ = registerFunctionTest(apiv1_permissions.ReqGitHook, functionTest{
-	protectSettingsBool: []*bool{
-		&setting.DisableGitHooks,
-	},
-	fulfillNeeds: func(t *testing.T, data *fixtureData) {
-		t.Helper()
-		data.SetDefault("doer", "doeradmin")
-	},
-	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
-		setting.DisableGitHooks = data.Get("DisableGitHooks") == "true"
-	},
-	fixtures: []*fixtureType{
+	testCases: []*testCase{
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer": "doeradmin",
 			}),
 		},
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer":            "doeradmin",
 				"DisableGitHooks": "true",
 			}),
 			error: "must be allowed to edit Git hooks",
 		},
+	},
+	protectSettingsBool: []*bool{
+		&setting.DisableGitHooks,
+	},
+	fulfillNeeds: func(t *testing.T, data *testData) {
+		t.Helper()
+		data.SetDefault("doer", "doeradmin")
+	},
+	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
+		setting.DisableGitHooks = data.Get("DisableGitHooks") == "true"
 	},
 })

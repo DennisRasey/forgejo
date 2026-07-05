@@ -13,31 +13,9 @@ import (
 )
 
 var _ = registerFunctionTestWithCall(apiv1_permissions.ReqRepoBranchWriter, functionTest{
-	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
-		require.True(t, data.Has("pullRequestBranch"))
-		fixtureCreateBranch(t, permissions, data.Get("pullRequestBranch"))
-		require.True(t, data.Has("pullRequestAuthor"))
-		require.True(t, data.Has("pullRequest"))
-		fixtureCreatePullRequest(t, permissions, data)
-	},
-	fulfillNeeds: func(t *testing.T, data *fixtureData) {
-		t.Helper()
-		owner, _, found := strings.Cut(data.Get("repository"), "/")
-		require.True(t, found)
-		data.Set("doer", owner)
-		data.SetDefault("repository-init", "true")
-		data.SetDefault("pullRequestAuthor", owner)
-		data.SetDefault("pullRequestBranch", "ReqRepoBranchWriter")
-		data.SetDefault("pullRequest", "ReqRepoBranchWriter")
-	},
-	call: func(t *testing.T, ctx apiv1_permissions.Context, data *fixtureData, _ []any) {
-		branch := data.Get("pullRequestBranch")
-		t.Logf("calling ReqRepoBranchWriter(ctx, %s)", branch)
-		apiv1_permissions.ReqRepoBranchWriter(ctx, branch)
-	},
-	fixtures: []*fixtureType{
+	testCases: []*testCase{
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer":              "userowner",
 				"repository":        "userowner/repositorypublic",
 				"repository-init":   "true",
@@ -47,7 +25,7 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.ReqRepoBranchWriter, func
 			}),
 		},
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer":              "regularuser",
 				"repository":        "userowner/repositorypublic",
 				"repository-init":   "true",
@@ -57,5 +35,27 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.ReqRepoBranchWriter, func
 			}),
 			error: "user should have a permission to write to this branch",
 		},
+	},
+	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
+		require.True(t, data.Has("pullRequestBranch"))
+		fixtureCreateBranch(t, permissions, data.Get("pullRequestBranch"))
+		require.True(t, data.Has("pullRequestAuthor"))
+		require.True(t, data.Has("pullRequest"))
+		fixtureCreatePullRequest(t, permissions, data)
+	},
+	fulfillNeeds: func(t *testing.T, data *testData) {
+		t.Helper()
+		owner, _, found := strings.Cut(data.Get("repository"), "/")
+		require.True(t, found)
+		data.Set("doer", owner)
+		data.SetDefault("repository-init", "true")
+		data.SetDefault("pullRequestAuthor", owner)
+		data.SetDefault("pullRequestBranch", "ReqRepoBranchWriter")
+		data.SetDefault("pullRequest", "ReqRepoBranchWriter")
+	},
+	call: func(t *testing.T, ctx apiv1_permissions.Context, data *testData, _ []any) {
+		branch := data.Get("pullRequestBranch")
+		t.Logf("calling ReqRepoBranchWriter(ctx, %s)", branch)
+		apiv1_permissions.ReqRepoBranchWriter(ctx, branch)
 	},
 })
