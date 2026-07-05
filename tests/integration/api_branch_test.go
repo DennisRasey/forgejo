@@ -279,3 +279,22 @@ func TestAPICreateBranchWithSyncBranches(t *testing.T) {
 		unittest.AssertExistsIf(t, true, &git_model.Branch{RepoID: 1, Name: "new_branch"})
 	})
 }
+
+func TestAPIGetAllBranchesOfEmptyRepo(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
+
+	createReq := NewRequestWithJSON(t, "POST", "/api/v1/user/repos", &api.CreateRepoOption{
+		Name:     "emptyrepo",
+		AutoInit: false,
+	}).AddTokenAuth(token)
+	MakeRequest(t, createReq, http.StatusCreated)
+
+	req := NewRequest(t, "GET", "/api/v1/repos/user2/emptyrepo/branches").
+		AddTokenAuth(token)
+	resp := MakeRequest(t, req, http.StatusOK)
+
+	assert.Equal(t, "[]\n", resp.Body.String())
+}

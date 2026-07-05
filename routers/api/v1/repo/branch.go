@@ -385,6 +385,8 @@ func ListBranches(ctx *context.APIContext) {
 			}
 			apiBranches = append(apiBranches, apiBranch)
 		}
+	} else {
+		apiBranches = make([]*api.Branch, 0)
 	}
 
 	ctx.SetLinkHeader(int(totalNumOfBranches), listOptions.PageSize)
