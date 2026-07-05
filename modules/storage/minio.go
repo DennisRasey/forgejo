@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/proxy"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 
@@ -102,9 +103,12 @@ func NewMinioStorage(ctx context.Context, cfg *setting.Storage) (ObjectStorage, 
 	log.Info("Creating Minio storage at %s:%s with base path %s", config.Endpoint, config.Bucket, config.BasePath)
 
 	minioClient, err := minio.New(config.Endpoint, &minio.Options{
-		Creds:        buildMinioCredentials(config, credentials.DefaultIAMRoleEndpoint),
-		Secure:       config.UseSSL,
-		Transport:    &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify}},
+		Creds:  buildMinioCredentials(config, credentials.DefaultIAMRoleEndpoint),
+		Secure: config.UseSSL,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
+			Proxy:           proxy.Proxy(),
+		},
 		Region:       config.Location,
 		BucketLookup: lookup,
 	})
