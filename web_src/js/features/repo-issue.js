@@ -594,14 +594,15 @@ export function initRepoPullRequestReview() {
     const filePath = this.closest('[data-path]')?.getAttribute('data-path');
     if (filePath !== multiLineDrag.path) return;
 
-    // Only extend downward (end >= start)
-    if (lineNum < multiLineDrag.startIdx) return;
-
     multiLineDrag.currentIdx = lineNum;
 
-    // Update highlight
+    // Update highlight; the drag can go both ways, highlightLineRange needs ordered bounds
     clearMultiLineSelection();
-    highlightLineRange(multiLineDrag.path, multiLineDrag.side, multiLineDrag.startIdx, multiLineDrag.currentIdx);
+    highlightLineRange(
+      multiLineDrag.path, multiLineDrag.side,
+      Math.min(multiLineDrag.startIdx, multiLineDrag.currentIdx),
+      Math.max(multiLineDrag.startIdx, multiLineDrag.currentIdx),
+    );
   });
 
   // Mouseup: finalize multi-line selection
