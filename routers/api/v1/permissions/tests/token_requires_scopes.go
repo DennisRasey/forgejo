@@ -43,7 +43,32 @@ var _ = registerFunctionTestBuilder([]string{"TokenRequiresScopes "}, func(t *te
 	readscope := strings.Join(scopes, ",")
 	t.Logf("%s scopes %s", signatureString, readscope)
 	signatureStringToFunctionTest[signatureString] = functionTest{
-		fulfillNeeds: func(t *testing.T, data *fixtureData) {
+		testCases: []*testCase{
+			{
+				data: newTestData(map[string]string{
+					"doer":  "doerregular",
+					"scope": readscope,
+					"level": "read",
+				}),
+			},
+			{
+				data: newTestData(map[string]string{
+					"doer":  "doerregular",
+					"scope": readscope,
+					"level": "write",
+				}),
+				error: "token does not have at least one of required scope(s)",
+			},
+			{
+				data: newTestData(map[string]string{
+					"doer":  "doerregular",
+					"scope": "read:misc",
+					"level": "read",
+				}),
+				error: "token does not have at least one of required scope(s)",
+			},
+		},
+		fulfillNeeds: func(t *testing.T, data *testData) {
 			t.Helper()
 			data.SetDefault("repository", "userowner/repositorypublic")
 			data.SetDefault("doer", "doerregular")
@@ -59,40 +84,15 @@ var _ = registerFunctionTestBuilder([]string{"TokenRequiresScopes "}, func(t *te
 
 			data.SetDefault("level", "read")
 		},
-		interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
+		interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
 			fixtureSetRepository(t, permissions, data)
 		},
 		staticArgs: 1,
-		call: func(t *testing.T, ctx apiv1_permissions.Context, data *fixtureData, args []any) {
+		call: func(t *testing.T, ctx apiv1_permissions.Context, data *testData, args []any) {
 			level := levelStringToLevel(data.Get("level"))
 			categories := args[0].([]auth_model.AccessTokenScopeCategory)
 			t.Logf("calling TokenRequiresScopes(ctx, %v, %v)", categories, level)
 			apiv1_permissions.TokenRequiresScopes(ctx, categories, level)
-		},
-		fixtures: []*fixtureType{
-			{
-				data: newFixtureData(map[string]string{
-					"doer":  "doerregular",
-					"scope": readscope,
-					"level": "read",
-				}),
-			},
-			{
-				data: newFixtureData(map[string]string{
-					"doer":  "doerregular",
-					"scope": readscope,
-					"level": "write",
-				}),
-				error: "token does not have at least one of required scope(s)",
-			},
-			{
-				data: newFixtureData(map[string]string{
-					"doer":  "doerregular",
-					"scope": "read:misc",
-					"level": "read",
-				}),
-				error: "token does not have at least one of required scope(s)",
-			},
 		},
 	}
 })

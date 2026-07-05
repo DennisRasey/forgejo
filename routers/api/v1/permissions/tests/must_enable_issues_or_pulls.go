@@ -10,22 +10,15 @@ import (
 )
 
 var _ = registerFunctionTest(apiv1_permissions.MustEnableIssuesOrPulls, functionTest{
-	fulfillNeeds: func(t *testing.T, data *fixtureData) {
-		t.Helper()
-		data.Set("repository-init", "true")
-	},
-	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
-		fixtureDisableUnits(t, permissions, data)
-	},
-	fixtures: []*fixtureType{
+	testCases: []*testCase{
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer":       "doerregular",
 				"repository": "userowner/repositorypublic",
 			}),
 		},
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer":            "doerregular",
 				"repository":      "userowner/repositorypublic",
 				"repository-init": "true",
@@ -33,5 +26,12 @@ var _ = registerFunctionTest(apiv1_permissions.MustEnableIssuesOrPulls, function
 			}),
 			error: "Not Found",
 		},
+	},
+	fulfillNeeds: func(t *testing.T, data *testData) {
+		t.Helper()
+		data.Set("repository-init", "true")
+	},
+	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
+		fixtureDisableUnits(t, permissions, data)
 	},
 })

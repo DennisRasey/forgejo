@@ -14,17 +14,69 @@ import (
 )
 
 var _ = registerFunctionTest(apiv1_permissions.ReqOrgMembership, functionTest{
+	testCases: []*testCase{
+		{
+			data: newTestData(map[string]string{
+				"org":    "ReqOrgMembershipOrg",
+				"setOrg": "true",
+			}),
+		},
+		{
+			data: newTestData(map[string]string{
+				"doer":   "doeradmin",
+				"setOrg": "true",
+			}),
+		},
+		{
+			data: newTestData(map[string]string{
+				"org":    "ReqOrgMembershipOrg",
+				"doer":   "regularuser",
+				"setOrg": "true",
+			}),
+		},
+		{
+			data: newTestData(map[string]string{
+				"org":      "ReqOrgMembershipOrg",
+				"orgOwner": "ReqOrgMembershipOrgOwner",
+				"doer":     "regularuser",
+				"setOrg":   "true",
+			}),
+			error: "Must be an organization member",
+		},
+		{
+			data: newTestData(map[string]string{
+				"org":     "ReqOrgMembershipOrg",
+				"doer":    "regularuser",
+				"setTeam": "true",
+			}),
+		},
+		{
+			data: newTestData(map[string]string{
+				"org":      "ReqOrgMembershipOrg",
+				"orgOwner": "ReqOrgMembershipOrgOwner",
+				"doer":     "regularuser",
+				"setTeam":  "true",
+			}),
+			error: "Not Found",
+		},
+		{
+			data: newTestData(map[string]string{
+				"setOrg": "true",
+			}),
+			error: "unprepared context",
+		},
+	},
 	sequenceFilter: []string{
 		"APIAuthorization",
 		"TokenRequiresScopes",
 		"ReqOrgMembership",
 	},
-	fulfillNeeds: func(t *testing.T, data *fixtureData) {
+	fulfillNeeds: func(t *testing.T, data *testData) {
 		t.Helper()
 		data.SetDefault("org", "ReqOrgMembership")
 		data.SetDefault("setOrg", "true")
 	},
-	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
+	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
 		orgOwner := data.Get("doer")
 		if data.Has("orgOwner") {
 			orgOwner = data.Get("orgOwner")
@@ -44,57 +96,5 @@ var _ = registerFunctionTest(apiv1_permissions.ReqOrgMembership, functionTest{
 			require.NoError(t, err)
 			permissions.SetTeam(team)
 		}
-	},
-	fixtures: []*fixtureType{
-		{
-			data: newFixtureData(map[string]string{
-				"org":    "ReqOrgMembershipOrg",
-				"setOrg": "true",
-			}),
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"doer":   "doeradmin",
-				"setOrg": "true",
-			}),
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"org":    "ReqOrgMembershipOrg",
-				"doer":   "regularuser",
-				"setOrg": "true",
-			}),
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"org":      "ReqOrgMembershipOrg",
-				"orgOwner": "ReqOrgMembershipOrgOwner",
-				"doer":     "regularuser",
-				"setOrg":   "true",
-			}),
-			error: "Must be an organization member",
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"org":     "ReqOrgMembershipOrg",
-				"doer":    "regularuser",
-				"setTeam": "true",
-			}),
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"org":      "ReqOrgMembershipOrg",
-				"orgOwner": "ReqOrgMembershipOrgOwner",
-				"doer":     "regularuser",
-				"setTeam":  "true",
-			}),
-			error: "Not Found",
-		},
-		{
-			data: newFixtureData(map[string]string{
-				"setOrg": "true",
-			}),
-			error: "unprepared context",
-		},
 	},
 })

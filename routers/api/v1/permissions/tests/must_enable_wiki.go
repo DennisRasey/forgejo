@@ -10,23 +10,23 @@ import (
 )
 
 var _ = registerFunctionTest(apiv1_permissions.MustEnableWiki, functionTest{
-	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData) {
-		fixtureDisableUnits(t, permissions, data)
-	},
-	fixtures: []*fixtureType{
+	testCases: []*testCase{
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer":       "doerregular",
 				"repository": "userowner/repositorypublic",
 			}),
 		},
 		{
-			data: newFixtureData(map[string]string{
+			data: newTestData(map[string]string{
 				"doer":          "doerregular",
 				"repository":    "userowner/repositorypublic",
 				"disable-units": "repo.wiki",
 			}),
 			error: "Not Found",
 		},
+	},
+	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
+		fixtureDisableUnits(t, permissions, data)
 	},
 })
