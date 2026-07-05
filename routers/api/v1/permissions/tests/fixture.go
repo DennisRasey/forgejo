@@ -7,8 +7,6 @@ package tests
 
 import (
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 	"testing"
 
@@ -26,9 +24,7 @@ import (
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/structs"
 	"forgejo.org/modules/util"
-	"forgejo.org/modules/web/routing"
 	apiv1_permissions "forgejo.org/routers/api/v1/permissions"
-	apiv1_permissions_testhelpers "forgejo.org/routers/api/v1/permissions/testhelpers"
 	"forgejo.org/services/auth"
 	"forgejo.org/services/authz"
 	issue_service "forgejo.org/services/issue"
@@ -151,34 +147,34 @@ func fixtureCreateTeam(t *testing.T, org *org_model.Organization, memberName str
 	return team
 }
 
-func fixtureSetPackageOwner(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureSetPackageOwner(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if !fixtureData.Has("packageOwner") {
+	if !testData.Has("packageOwner") {
 		return
 	}
-	owner := fixtureCreateUser(t, &user_model.User{Name: fixtureData.Get("packageOwner")})
+	owner := fixtureCreateUser(t, &user_model.User{Name: testData.Get("packageOwner")})
 	permissions.SetPackageOwner(owner)
 	mode, err := packages_service.DeterminePackageAccessMode(permissions.Context(), permissions.PackageOwner(), permissions.Doer())
 	require.NoError(t, err)
 	permissions.SetPackageAccessMode(mode)
 }
 
-func fixtureSetDoer(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureSetDoer(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if !fixtureData.Has("doer") {
+	if !testData.Has("doer") {
 		return
 	}
 	if doer := permissions.Doer(); doer != nil {
-		if doer.Name != fixtureData.Get("doer") {
-			panic(fmt.Sprintf("attempting to override already doer %s with %s", doer.Name, fixtureData.Get("doer")))
+		if doer.Name != testData.Get("doer") {
+			panic(fmt.Sprintf("attempting to override already doer %s with %s", doer.Name, testData.Get("doer")))
 		}
 		return
 	}
-	name := fixtureData.Get("doer")
+	name := testData.Get("doer")
 	if name == user_model.ActionsUserName {
-		fixtureSetDoerActionsUser(t, permissions, fixtureData)
+		fixtureSetDoerActionsUser(t, permissions, testData)
 	} else {
-		fixtureSetDoerRegularUser(t, permissions, fixtureData)
+		fixtureSetDoerRegularUser(t, permissions, testData)
 	}
 }
 
@@ -202,18 +198,18 @@ func (r *actionsTaskTokenAuthenticationResult) ActionsTaskID() optional.Option[i
 	return optional.Some(r.taskID)
 }
 
-func fixtureSetDoerActionsUser(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureSetDoerActionsUser(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	permissions.SetDoer(user_model.NewActionsUser())
 	repository := permissions.Repository()
 	require.NotNil(t, repository)
 	repositoryID := repository.ID
-	if fixtureData.Get("task.RepoID") == "unrelated" {
+	if testData.Get("task.RepoID") == "unrelated" {
 		repositoryID = 13245
 	}
 	task := &actions_model.ActionTask{
 		RepoID: repositoryID,
 	}
-	if fixtureData.Get("task.IsForkPullRequest") == "true" {
+	if testData.Get("task.IsForkPullRequest") == "true" {
 		task.IsForkPullRequest = true
 	}
 	task.GenerateToken()
@@ -281,15 +277,15 @@ func (*reverseProxyAuthenticationResult) IsReverseProxyAuthentication() bool {
 	return true
 }
 
-func fixtureSetDoerRegularUser(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureSetDoerRegularUser(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	var scope auth_model.AccessTokenScope
-	if fixtureData.Has("scope") {
-		scope = auth_model.AccessTokenScope(fixtureData.Get("scope"))
+	if testData.Has("scope") {
+		scope = auth_model.AccessTokenScope(testData.Get("scope"))
 	} else {
 		scope = auth_model.AccessTokenScopeAll
 	}
-	if fixtureData.Has("doer") {
-		doer := fixtureData.Get("doer")
+	if testData.Has("doer") {
+		doer := testData.Get("doer")
 		if doer != "anonymous" {
 			isAdmin := strings.Contains(doer, "admin")
 			user := &user_model.User{
@@ -311,7 +307,7 @@ func fixtureSetDoerRegularUser(t *testing.T, permissions *apiv1_permissions.Perm
 		tokenReducer, err := authz.GetAuthorizationReducerForAccessToken(t.Context(), token)
 		require.NoError(t, err)
 		permissions.SetIsSigned(true)
-		switch fixtureData.Get("authentication") {
+		switch testData.Get("authentication") {
 		case "basic":
 			permissions.SetAuthentication(&basicPasswordAuthenticationResult{user: permissions.Doer()})
 		case "proxy":
@@ -335,16 +331,16 @@ func fixtureCreateBranch(t *testing.T, permissions *apiv1_permissions.Permission
 	require.NoError(t, gitRepo.CreateBranch(branch, defaultBranch))
 }
 
-func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if !fixtureData.Has("pullRequest") {
+	if !testData.Has("pullRequest") {
 		return
 	}
 
 	repository := permissions.Repository()
 	require.NotNil(t, repository)
 
-	poster := fixtureGetUser(t, fixtureData.Get("pullRequestAuthor"))
+	poster := fixtureGetUser(t, testData.Get("pullRequestAuthor"))
 	require.NotNil(t, poster)
 
 	ctx, committer, err := db.TxContext(t.Context())
@@ -359,7 +355,7 @@ func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permi
 		Index:    idx,
 		RepoID:   repository.ID,
 		IsPull:   true,
-		Title:    fixtureData.Get("pullRequest"),
+		Title:    testData.Get("pullRequest"),
 		PosterID: poster.ID,
 		Poster:   poster,
 	}
@@ -376,7 +372,7 @@ func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permi
 	pr.IssueID = issue.ID
 	pr.HeadRepoID = repository.ID
 	pr.BaseRepoID = repository.ID
-	pr.HeadBranch = fixtureData.Get("pullRequestBranch")
+	pr.HeadBranch = testData.Get("pullRequestBranch")
 	_, err = sess.NoAutoTime().Insert(pr)
 	require.NoError(t, err)
 	require.NoError(t, committer.Commit())
@@ -385,25 +381,25 @@ func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permi
 	require.NoError(t, pull_service.PushToBaseRepo(ctx, pr))
 }
 
-func fixtureSetRepository(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureSetRepository(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if !fixtureData.Has("repository") {
+	if !testData.Has("repository") {
 		return
 	}
 	if repository := permissions.Repository(); repository != nil {
-		if repository.FullName() != fixtureData.Get("repository") {
-			panic(fmt.Sprintf("attempting to override already repository %s with %s", repository.FullName(), fixtureData.Get("repository")))
+		if repository.FullName() != testData.Get("repository") {
+			panic(fmt.Sprintf("attempting to override already repository %s with %s", repository.FullName(), testData.Get("repository")))
 		}
 		return
 	}
-	ownerName, repoName, found := strings.Cut(fixtureData.Get("repository"), "/")
+	ownerName, repoName, found := strings.Cut(testData.Get("repository"), "/")
 	require.True(t, found)
 	owner := fixtureCreateUser(t, &user_model.User{Name: ownerName})
 	opts := &forgery.CreateRepositoryOptions{
 		Name:      repoName,
 		IsPrivate: strings.Contains(repoName, "private"),
 	}
-	if fixtureData.Get("repository-init") == "true" {
+	if testData.Get("repository-init") == "true" {
 		opts.Files = forgery.FilesInit{}
 	}
 	repository := forgery.CreateRepository(t, owner, opts)
@@ -418,16 +414,10 @@ func fixtureSetRepository(t *testing.T, permissions *apiv1_permissions.Permissio
 	permissions.SetRepository(repository)
 }
 
-func dataToString(t *testing.T, fixtureData *fixtureData, key string) string {
-	t.Helper()
-	require.True(t, fixtureData.Has(key))
-	return fixtureData.Get(key)
-}
-
-func fixtureGetIssue(t *testing.T, fixtureData *fixtureData) *issues_model.Issue {
+func fixtureGetIssue(t *testing.T, testData *testData) *issues_model.Issue {
 	t.Helper()
 	var issue issues_model.Issue
-	found, err := db.GetEngine(t.Context()).Where("name = ?", dataToString(t, fixtureData, "issue")).Get(&issue)
+	found, err := db.GetEngine(t.Context()).Where("name = ?", dataToString(t, testData, "issue")).Get(&issue)
 	require.NoError(t, err)
 	if !found {
 		return nil
@@ -435,18 +425,18 @@ func fixtureGetIssue(t *testing.T, fixtureData *fixtureData) *issues_model.Issue
 	return &issue
 }
 
-func fixtureSetIssue(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureSetIssue(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if fixtureGetIssue(t, fixtureData) == nil {
-		authorName := fixtureData.Get("issueAuthor")
+	if fixtureGetIssue(t, testData) == nil {
+		authorName := testData.Get("issueAuthor")
 		author := fixtureCreateUser(t, &user_model.User{Name: authorName})
-		_ = fixtureCreateIssue(t, author, permissions.Repository(), dataToString(t, fixtureData, "issue"), "issue description")
+		_ = fixtureCreateIssue(t, author, permissions.Repository(), dataToString(t, testData, "issue"), "issue description")
 	}
 }
 
-func fixtureGetComment(t *testing.T, fixtureData *fixtureData) *issues_model.Comment {
+func fixtureGetComment(t *testing.T, testData *testData) *issues_model.Comment {
 	var comment issues_model.Comment
-	found, err := db.GetEngine(t.Context()).Where("content = ?", dataToString(t, fixtureData, "comment")).Get(&comment)
+	found, err := db.GetEngine(t.Context()).Where("content = ?", dataToString(t, testData, "comment")).Get(&comment)
 	require.NoError(t, err)
 	if !found {
 		return nil
@@ -455,17 +445,17 @@ func fixtureGetComment(t *testing.T, fixtureData *fixtureData) *issues_model.Com
 	return &comment
 }
 
-func fixtureCreateComment(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureCreateComment(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if fixtureGetComment(t, fixtureData) == nil {
-		authorName := fixtureData.Get("issueAuthor")
+	if fixtureGetComment(t, testData) == nil {
+		authorName := testData.Get("issueAuthor")
 		author := fixtureCreateUser(t, &user_model.User{Name: authorName})
 		_, err := issues_model.CreateComment(t.Context(), &issues_model.CreateCommentOptions{
 			Type:    issues_model.CommentTypeComment,
 			Doer:    author,
-			Issue:   fixtureGetIssue(t, fixtureData),
+			Issue:   fixtureGetIssue(t, testData),
 			Repo:    permissions.Repository(),
-			Content: dataToString(t, fixtureData, "comment"),
+			Content: dataToString(t, testData, "comment"),
 		})
 		require.NoError(t, err)
 	}
@@ -478,12 +468,12 @@ func fixtureDisableRepoUnit(t *testing.T, permissions *apiv1_permissions.Permiss
 	forgery.DisableRepoUnits(t, repo, unitType)
 }
 
-func fixtureDisableUnits(t *testing.T, permissions *apiv1_permissions.Permissions, fixtureData *fixtureData) {
+func fixtureDisableUnits(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if !fixtureData.Has("disable-units") {
+	if !testData.Has("disable-units") {
 		return
 	}
-	for unit := range strings.SplitSeq(fixtureData.Get("disable-units"), ",") {
+	for unit := range strings.SplitSeq(testData.Get("disable-units"), ",") {
 		unitType := unit_model.TypeFromKey(unit)
 		if unitType == unit_model.TypeInvalid {
 			panic(fmt.Errorf("unable to find a unit matching '%s'", unit))
@@ -491,132 +481,3 @@ func fixtureDisableUnits(t *testing.T, permissions *apiv1_permissions.Permission
 		fixtureDisableRepoUnit(t, permissions, unitType)
 	}
 }
-
-type fixtureData struct {
-	entries map[string]string
-}
-
-func (o *fixtureData) Set(key, value string) {
-	o.entries[key] = value
-}
-
-func (o *fixtureData) SetDefault(key, value string) {
-	if !o.Has(key) {
-		o.Set(key, value)
-	}
-}
-
-func (o *fixtureData) Get(key string) string {
-	return o.entries[key]
-}
-
-func (o *fixtureData) Has(key string) bool {
-	_, has := o.entries[key]
-	return has
-}
-
-func (o *fixtureData) String() string {
-	var s []string
-	for k, e := range o.entries {
-		s = append(s, fmt.Sprintf("%s:%s", k, e))
-	}
-	slices.Sort(s)
-	return strings.Join(s, ",")
-}
-
-func newFixtureData(data map[string]string) *fixtureData {
-	fixtureData := &fixtureData{
-		entries: make(map[string]string, 10),
-	}
-	for key, value := range data {
-		fixtureData.Set(key, value)
-	}
-	return fixtureData
-}
-
-func (o *fixtureData) Clone() *fixtureData {
-	return &fixtureData{entries: maps.Clone(o.entries)}
-}
-
-type fixtureType struct {
-	data  *fixtureData
-	error string
-
-	used bool
-}
-
-func (o *fixtureType) Clone() *fixtureType {
-	f := *o
-	f.data = o.data.Clone()
-	return &f
-}
-
-// See README.md for a documentation of the test logic that uses
-// this test description.
-type functionTest struct {
-	// The fixture will be constructed, when this function is the last
-	// one of the chain.  It will go through the fulfillNeeds and
-	// interpret of the previous functions in the chain, as well as its
-	// own interpret.
-	fixtures []*fixtureType
-
-	// List the settings which might be updated while interpreting the fixtureData
-	// so that they are restored upon test completion.
-	protectSettingsBool []*bool
-
-	// number of static arguments to pass to call's last argument
-	staticArgs int
-	// call the middleware (set automatically by [registerFunctionTest])
-	call func(t *testing.T, ctx apiv1_permissions.Context, data *fixtureData, staticArgs []any)
-
-	sequenceFilter []string
-	fulfillNeeds   func(t *testing.T, data *fixtureData)
-	interpret      func(t *testing.T, permissions *apiv1_permissions.Permissions, data *fixtureData)
-}
-
-func buildSignatureStringToFunctionTest(t *testing.T) {
-	for signatureString, signature := range apiv1_permissions_testhelpers.GetSignatureStringToSignature() {
-		for prefix, builder := range prefixToFunctionTestBuilder {
-			if strings.HasPrefix(signatureString, prefix) {
-				builder(t, signatureString, signature)
-			}
-		}
-	}
-}
-
-func registerFunctionTest(fun func(apiv1_permissions.Context), test functionTest) bool {
-	shortName := routing.GetFuncShortName(fun)
-	test.call = func(t *testing.T, ctx apiv1_permissions.Context, _ *fixtureData, _ []any) {
-		t.Logf("calling %s(ctx)", shortName)
-		fun(ctx)
-	}
-	return registerFunctionTestWithCall(fun, test)
-}
-
-func registerFunctionTestWithCall(fun any, test functionTest) bool {
-	signatureString := apiv1_permissions_testhelpers.SignatureToString([]any{fun})
-	if _, has := signatureStringToFunctionTest[signatureString]; has {
-		panic(fmt.Errorf("attempt to register %s twice", signatureString))
-	}
-	if test.call == nil {
-		panic("'call' field is required")
-	}
-	signatureStringToFunctionTest[signatureString] = test
-	return true
-}
-
-var signatureStringToFunctionTest = map[string]functionTest{}
-
-type functionTestBuilder func(t *testing.T, signatureString string, signature []any)
-
-func registerFunctionTestBuilder(prefixes []string, builder functionTestBuilder) bool {
-	for _, prefix := range prefixes {
-		if _, has := prefixToFunctionTestBuilder[prefix]; has {
-			panic(fmt.Errorf("attempt to register %s twice", prefix))
-		}
-		prefixToFunctionTestBuilder[prefix] = builder
-	}
-	return true
-}
-
-var prefixToFunctionTestBuilder = map[string]functionTestBuilder{}

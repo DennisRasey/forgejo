@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createFixture(t *testing.T, signatures [][]any, permissions *apiv1_permissions.Permissions, data *fixtureData) {
+func createFixture(t *testing.T, signatures [][]any, permissions *apiv1_permissions.Permissions, data *testData) {
 	for _, signature := range signatures[:len(signatures)-1] {
 		signatureString := apiv1_permissions_testhelpers.SignatureToString(signature)
 		functionTest, has := signatureStringToFunctionTest[signatureString]
@@ -49,8 +49,8 @@ func getFunctionTest(t *testing.T, signatures [][]any) functionTest {
 	return test
 }
 
-func getFixtures(t *testing.T, signatures [][]any) []*fixtureType {
-	return getFunctionTest(t, signatures).fixtures
+func getFixtures(t *testing.T, signatures [][]any) []*testCase {
+	return getFunctionTest(t, signatures).testCases
 }
 
 func protectVariables(t *testing.T, signatures [][]any) {
@@ -67,11 +67,11 @@ func protectVariables(t *testing.T, signatures [][]any) {
 func testSequence(t *testing.T, signatures [][]any, onlyForSuccess bool) int {
 	t.Helper()
 	signaturesString := apiv1_permissions_testhelpers.SignaturesToString(signatures)
-	var fixtures []*fixtureType
+	var fixtures []*testCase
 	if onlyForSuccess {
 		for _, fixture := range getFixtures(t, signatures) {
 			if fixture.error == "" {
-				fixtures = []*fixtureType{fixture}
+				fixtures = []*testCase{fixture}
 				break
 			}
 		}
@@ -239,7 +239,7 @@ func APIv1Permissions(t *testing.T) {
 	if !hasRunArg() {
 		unusedFixtures := false
 		for signatureString, test := range signatureStringToFunctionTest {
-			for _, fixture := range test.fixtures {
+			for _, fixture := range test.testCases {
 				if !fixture.used {
 					t.Logf("%s fixture %v not used", signatureString, fixture.data)
 					unusedFixtures = true
