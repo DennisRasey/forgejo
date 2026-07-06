@@ -8339,6 +8339,20 @@
             "name": "basehead",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "include verification status for each commit",
+            "name": "verification",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": true,
+            "description": "include which files changed by a commit",
+            "name": "files",
+            "in": "query"
           }
         ],
         "responses": {

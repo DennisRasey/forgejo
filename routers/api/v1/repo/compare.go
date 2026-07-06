@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	user_model "forgejo.org/models/user"
-	"forgejo.org/modules/gitrepo"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/services/context"
 	"forgejo.org/services/convert"
@@ -37,31 +36,30 @@ func CompareDiff(ctx *context.APIContext) {
 	//   description: compare two branches or commits
 	//   type: string
 	//   required: true
+	// - name: verification
+	//   in: query
+	//   description: include verification status for each commit
+	//   type: boolean
+	//   default: true
+	// - name: files
+	//   in: query
+	//   description: include which files changed by a commit
+	//   type: boolean
+	//   default: true
 	// responses:
 	//   "200":
 	//     "$ref": "#/responses/Compare"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	if ctx.Repo().GitRepo == nil {
-		gitRepo, err := gitrepo.OpenRepository(ctx, ctx.Repo().Repository)
-		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "OpenRepository", err)
-			return
-		}
-		ctx.Repo().GitRepo = gitRepo
-		defer gitRepo.Close()
-	}
-
 	infoPath := ctx.Params("*")
-	infos := []string{ctx.Repo().Repository.DefaultBranch, ctx.Repo().Repository.DefaultBranch}
-	if infoPath != "" {
-		infos = strings.SplitN(infoPath, "...", 2)
-		if len(infos) != 2 {
-			if infos = strings.SplitN(infoPath, "..", 2); len(infos) != 2 {
-				infos = []string{ctx.Repo().Repository.DefaultBranch, infoPath}
-			}
-		}
+	infos := [2]string{ctx.Repo().Repository.DefaultBranch, ctx.Repo().Repository.DefaultBranch}
+	if base, head, ok := strings.Cut(infoPath, "..."); ok {
+		infos[0], infos[1] = base, head
+	} else if base, head, ok := strings.Cut(infoPath, ".."); ok {
+		infos[0], infos[1] = base, head
+	} else if infoPath != "" {
+		infos[1] = infoPath
 	}
 
 	headRepository, headGitRepo, ci, _, _ := parseCompareInfo(ctx, api.CreatePullRequestOption{
