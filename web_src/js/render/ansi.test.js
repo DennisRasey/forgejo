@@ -1,4 +1,4 @@
-import {renderAnsi} from './ansi.js';
+import {renderAnsi, renderAnsiWithLinks} from './ansi.js';
 
 test('renderAnsi', () => {
   expect(renderAnsi('abc')).toEqual('abc');
@@ -26,4 +26,62 @@ test('renderAnsi', () => {
   expect(renderAnsi('\x1b]9;4;3\x07waiting...\x1b]9;4;3\x07')).toEqual('waiting...');
   expect(renderAnsi('\x1b]9;12\x07')).toEqual('');
   expect(renderAnsi('\x1b]9;4;1;25\x07\x1bMcompiling main.zig')).toEqual('compiling main.zig');
+});
+
+function renderLinked(line) {
+  const div = document.createElement('div');
+  div.innerHTML = renderAnsiWithLinks(line);
+  return div;
+}
+
+// build an OSC 8 hyperlink: ESC ] 8 ; ; <url> ST <text> ESC ] 8 ; ; ST, where the string
+// terminator ST is ESC \ (the default) or BEL.
+function osc8(url, text, st = '\x1b\\') {
+  return `\x1b]8;;${url}${st}${text}\x1b]8;;${st}`;
+}
+
+test('renderAnsiWithLinks: an OSC 8 hyperlink becomes an anchor with safe link attributes, showing the link text not the url', () => {
+  const div = renderLinked(`See ${osc8('https://example.com/path?x=1#frag', 'the build')}`);
+  const link = div.querySelector('a');
+  expect(link.getAttribute('href')).toEqual('https://example.com/path?x=1#frag');
+  expect(link.textContent).toEqual('the build');
+  expect(link.getAttribute('target')).toEqual('_blank');
+  expect(link.getAttribute('rel')).toEqual('noopener noreferrer nofollow');
+  expect(div.textContent).toEqual('See the build');
+});
+
+test('renderAnsiWithLinks: BEL also terminates the sequence', () => {
+  expect(renderLinked(osc8('http://example.com', 'x', '\x07')).querySelector('a').getAttribute('href')).toEqual('http://example.com');
+});
+
+test('renderAnsiWithLinks: several hyperlinks on one line', () => {
+  const div = renderLinked(`${osc8('https://example.com/a', 'a')} and ${osc8('http://example.test/b', 'b')}`);
+  expect(Array.from(div.querySelectorAll('a'), (a) => a.getAttribute('href'))).toEqual(['https://example.com/a', 'http://example.test/b']);
+});
+
+test('renderAnsiWithLinks: plain-text URLs are left as text; only OSC 8 hyperlinks are linked', () => {
+  const div = renderLinked('See https://example.com/path now');
+  expect(div.querySelectorAll('a').length).toEqual(0);
+  expect(div.textContent).toEqual('See https://example.com/path now');
+});
+
+test('renderAnsiWithLinks: a javascript: or data: scheme is never clickable', () => {
+  // eslint-disable-next-line no-script-url -- the point of the test is a javascript: link is dropped
+  expect(renderLinked(osc8('javascript:alert(1)', 'click')).querySelectorAll('a').length).toEqual(0);
+  expect(renderLinked(osc8('data:text/html,<script>alert(1)</script>', 'click')).querySelectorAll('a').length).toEqual(0);
+});
+
+test('renderAnsiWithLinks: HTML in the text or href stays escaped, so a hyperlink cannot inject markup or break out of the attribute', () => {
+  const div = renderLinked(osc8('https://example.com/"onmouseover=alert(1)', '<b>x</b>'));
+  const link = div.querySelector('a');
+  expect(link.getAttribute('onmouseover')).toBeNull();
+  expect(link.getAttribute('href')).toEqual('https://example.com/"onmouseover=alert(1)');
+  expect(link.querySelector('b')).toBeNull();
+  expect(link.textContent).toEqual('<b>x</b>');
+});
+
+test('renderAnsiWithLinks: text that is itself a url still yields one anchor pointing at the OSC 8 target, not the text', () => {
+  const div = renderLinked(osc8('https://example.com/real', 'https://example.com/shown'));
+  expect(div.querySelectorAll('a').length).toEqual(1);
+  expect(div.querySelector('a').getAttribute('href')).toEqual('https://example.com/real');
 });

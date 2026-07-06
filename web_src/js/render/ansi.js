@@ -45,3 +45,44 @@ export function renderAnsi(line) {
   // the log message element is with "white-space: break-spaces;", so use "\n" to break lines
   return lines.join('\n');
 }
+
+// link schemes ansi_up is allowed to emit; re-checked below because log output is
+// untrusted and a javascript: or data: href should not become clickable.
+const allowedLinkSchemes = new Set(['http:', 'https:']);
+
+// ansi_up renders OSC 8 hyperlink escape codes as <a> tags with the href and text already
+// escaped, but without link attributes. add them here, and drop any link whose scheme is
+// not http(s) by replacing it with its text. the html is parsed in a detached <template>,
+// which runs no scripts and loads no resources, and the href and text are re-escaped when
+// it is serialized back to a string.
+function hardenRenderedAnsiLinks(html) {
+  // the usual log line has no link, so skip the parse when there is no <a> to touch
+  if (!html.includes('<a ')) return html;
+
+  const template = document.createElement('template');
+  template.innerHTML = html;
+
+  for (const link of template.content.querySelectorAll('a')) {
+    let scheme = '';
+    try {
+      scheme = new URL(link.getAttribute('href') ?? '').protocol;
+    } catch {
+      // an empty, relative or malformed href has no scheme and is dropped below
+    }
+    if (!allowedLinkSchemes.has(scheme)) {
+      link.replaceWith(document.createTextNode(link.textContent));
+      continue;
+    }
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener noreferrer nofollow');
+  }
+
+  return template.innerHTML;
+}
+
+// render ANSI to HTML, turning OSC 8 hyperlink escape codes into links. a job opts in by
+// emitting OSC 8, the escape code terminals use for links, so output from a standalone
+// Forgejo Runner is linked too. plain-text URLs are left as text.
+export function renderAnsiWithLinks(line) {
+  return hardenRenderedAnsiLinks(renderAnsi(line));
+}

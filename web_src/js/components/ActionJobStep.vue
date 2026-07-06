@@ -8,7 +8,7 @@ import {SvgIcon} from '../svg.js';
 import ActionRunStatus from './ActionRunStatus.vue';
 import {toggleElem} from '../utils/dom.js';
 import {formatDatetime} from '../utils/time.js';
-import {renderAnsi} from '../render/ansi.js';
+import {renderAnsiWithLinks} from '../render/ansi.js';
 
 export default {
   name: 'ActionJobStep',
@@ -100,7 +100,7 @@ export default {
       toggleElem(logTimeSeconds, this.timeVisibleSeconds);
 
       let logMessage = document.createElement('span');
-      logMessage.innerHTML = renderAnsi(line.message);
+      logMessage.innerHTML = renderAnsiWithLinks(line.message);
       // If the input to renderAnsi is not empty and the output is empty we can
       // assume the input was only ANSI escape codes that have been removed. In
       // that case we should not display this message

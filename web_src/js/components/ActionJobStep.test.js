@@ -150,6 +150,23 @@ describe('ActionJobStep', () => {
       expect(container.children.length).toBe(3);
     });
 
+    test('renders OSC 8 hyperlinks in appended log messages as clickable links', () => {
+      const wrapper = createWrapper();
+      const logLines = [
+        // OSC 8 hyperlink: ESC ] 8 ; ; <url> ESC \ <text> ESC ] 8 ; ; ESC \
+        {index: 1, timestamp: 1765163618, message: 'See \x1b]8;;https://example.com/build\x1b\\the build\x1b]8;;\x1b\\'},
+      ];
+
+      wrapper.vm.appendLogs(logLines, 1765163618);
+
+      const logMessage = wrapper.get('.log-msg');
+      const link = logMessage.get('a');
+      expect(link.attributes('href')).toEqual('https://example.com/build');
+      expect(link.attributes('target')).toEqual('_blank');
+      expect(link.attributes('rel')).toEqual('noopener noreferrer nofollow');
+      expect(logMessage.text()).toEqual('See the build');
+    });
+
     test('if ANSI renders empty line, skip line & line number', async () => {
       const wrapper = createWrapper({
         expanded: true,
