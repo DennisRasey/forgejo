@@ -1,0 +1,13 @@
+-
+  id: 1
+  user_id: 4
+  ui: generic
+  scope: write:repository,read:issue
+  resource_all_repos: true
+  name: "Example AI"
+  description: "This is an authorized integration.\nThis example is just for viewing and editing."
+  issuer: "urn:forgejo:authorized-integrations:actions" # avoid an external dependency on validating an issuer on edit
+  audience: u:4:7a6a47fb-6252-48b2-b0bb-e39158b11a36
+  claim_rules: "{}"
+  created_unix: 1778959784
+  updated_unix: 1778959784

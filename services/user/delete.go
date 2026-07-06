@@ -102,6 +102,7 @@ func deleteUser(ctx context.Context, u *user_model.User, purge bool) (err error)
 		&user_model.BlockedUser{UserID: u.ID},
 		&actions_model.ActionRunnerToken{OwnerID: optional.Some(u.ID)},
 		&auth_model.AuthorizationToken{UID: u.ID},
+		&auth_model.AuthorizedIntegration{UserID: u.ID},
 	); err != nil {
 		return fmt.Errorf("deleteBeans: %w", err)
 	}
