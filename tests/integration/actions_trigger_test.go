@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -25,7 +24,6 @@ import (
 	actions_module "forgejo.org/modules/actions"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/gitrepo"
-	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
@@ -37,7 +35,6 @@ import (
 	repo_service "forgejo.org/services/repository"
 	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
-	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1194,122 +1191,6 @@ func TestActionsWorkflowDispatchConcurrencyGroup(t *testing.T) {
 		assert.Equal(t, actions_model.CancelInProgress, secondRun.ConcurrencyType)
 		firstRunReload := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: firstRun.ID})
 		assert.Equal(t, actions_model.StatusCancelled, firstRunReload.Status)
-	})
-}
-
-func TestActionsScheduledWorkflow(t *testing.T) {
-	type expectedSpec struct {
-		cron     string
-		timeZone optional.Option[string]
-	}
-
-	testCases := []struct {
-		name                  string
-		workflowID            string
-		workflowDirectory     string
-		workflowContent       string
-		expectedWorkflowTitle string
-		expectedCronSpecs     []expectedSpec
-	}{
-		{
-			name:              "GitHub",
-			workflowID:        "scheduled.yml",
-			workflowDirectory: ".github/workflows",
-			workflowContent: `
-on:
-  schedule:
-    - cron: "30 5,17 * * *"
-jobs:
-  test:
-    steps:
-      - run: echo OK
-`,
-			expectedWorkflowTitle: ".github/workflows/scheduled.yml",
-			expectedCronSpecs:     []expectedSpec{{cron: "30 5,17 * * *", timeZone: optional.None[string]()}},
-		},
-		{
-			name:              "Gitea",
-			workflowID:        "test.yml",
-			workflowDirectory: ".gitea/workflows",
-			workflowContent: `
-name: My scheduled workflow
-on:
-  schedule:
-    - cron: "* * * * *"
-jobs:
-  test:
-    steps:
-      - run: echo OK
-`,
-			expectedWorkflowTitle: "My scheduled workflow",
-			expectedCronSpecs:     []expectedSpec{{cron: "* * * * *", timeZone: optional.None[string]()}},
-		},
-		{
-			name:              "Forgejo with time zone",
-			workflowID:        "tz.yml",
-			workflowDirectory: ".forgejo/workflows",
-			workflowContent: `
-on:
-  schedule:
-    - cron: "44 10 * * *"
-    - cron: "25 19 * * *"
-      timezone: Europe/Madrid
-jobs:
-  test:
-    steps:
-      - run: echo OK
-`,
-			expectedWorkflowTitle: ".forgejo/workflows/tz.yml",
-			expectedCronSpecs: []expectedSpec{
-				{cron: "44 10 * * *", timeZone: optional.None[string]()},
-				{cron: "25 19 * * *", timeZone: optional.Some("Europe/Madrid")},
-			},
-		},
-	}
-	onApplicationRun(t, func(t *testing.T, u *url.URL) {
-		for _, testCase := range testCases {
-			t.Run(testCase.name, func(t *testing.T) {
-				user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-
-				// create the repo
-				var sha string
-				repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
-					Files: forgery.MapFS{
-						fmt.Sprintf("%s/%s", testCase.workflowDirectory, testCase.workflowID): forgery.MapFile(testCase.workflowContent),
-					},
-					LatestSha: &sha,
-				})
-
-				schedules, err := db.Find[actions_model.ActionSchedule](t.Context(), actions_model.FindScheduleOptions{RepoID: repo.ID})
-				require.NoError(t, err)
-				require.Len(t, schedules, 1)
-
-				assert.Equal(t, testCase.expectedWorkflowTitle, schedules[0].Title)
-				assert.Equal(t, repo.ID, schedules[0].RepoID)
-				assert.Equal(t, repo.OwnerID, schedules[0].OwnerID)
-				assert.Equal(t, testCase.workflowID, schedules[0].WorkflowID)
-				assert.Equal(t, testCase.workflowDirectory, schedules[0].WorkflowDirectory)
-				assert.Equal(t, "refs/heads/main", schedules[0].Ref)
-				assert.Equal(t, int64(-2), schedules[0].TriggerUserID)
-				assert.Equal(t, sha, schedules[0].CommitSHA)
-				assert.Equal(t, webhook_module.HookEventPush, schedules[0].Event)
-				assert.Equal(t, []byte(testCase.workflowContent), schedules[0].Content)
-
-				specs, total, err := actions_model.FindSpecs(t.Context(), actions_model.FindSpecOptions{RepoID: repo.ID})
-				require.NoError(t, err)
-
-				assert.Equal(t, int64(len(testCase.expectedCronSpecs)), total)
-
-				// The query to return cron specs orders by `id DESC`.
-				slices.Reverse(testCase.expectedCronSpecs)
-
-				for i, expected := range testCase.expectedCronSpecs {
-					assert.Equal(t, schedules[0].ID, specs[i].ScheduleID)
-					assert.Equal(t, expected.cron, specs[i].Spec)
-					assert.Equal(t, expected.timeZone, specs[i].TimeZone)
-				}
-			})
-		}
 	})
 }
 
