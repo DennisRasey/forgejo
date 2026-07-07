@@ -438,6 +438,7 @@
 	"admin.config.global_2fa_requirement.all": "All users",
 	"admin.config.global_2fa_requirement.admin": "Administrators",
 	"settings.visibility.description": "Profile visibility affects others' ability to access your non-private repositories. <a href=\"%s\" target=\"_blank\">Learn more</a>.",
+	"settings.profile.dotprofile.hint": "Advanced profile customization, including verification links, can be achieved with the <code>%s</code> repository. <a href=\"%s\" target=\"_blank\">Learn more</a>.",
 	"settings.twofa_unroll_unavailable": "Two-factor authentication is required for your account and cannot be disabled.",
 	"settings.twofa_reenroll": "Re-enroll two-factor authentication",
 	"settings.twofa_reenroll.description": "Re-enroll your two-factor authentication",
