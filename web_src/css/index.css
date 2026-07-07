@@ -50,6 +50,7 @@
 @import "./features/tom-select.css";
 @import "./features/console.css";
 
+@import "./markup/attention.css";
 @import "./markup/content.css";
 @import "./markup/codecopy.css";
 @import "./markup/asciicast.css";

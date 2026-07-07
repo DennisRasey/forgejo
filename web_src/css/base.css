@@ -29,6 +29,14 @@
   --page-spacing: 16px; /* space between page elements */
   --page-margin-x: 32px; /* minimum space on left and right side of page */
   --button-spacing: 0.33rem;
+
+  /* Colors for thin elements: octicons, text, borders */
+  --color-thin-green: oklch(var(--thin-lightness) var(--regular-chroma) var(--hue-green));
+  --color-thin-red: oklch(var(--thin-lightness) var(--regular-chroma) var(--hue-red));
+  --color-thin-purple: oklch(var(--thin-lightness) var(--regular-chroma) var(--hue-purple));
+  --color-thin-violet: oklch(var(--thin-lightness) var(--regular-chroma) var(--hue-violet));
+  --color-thin-orange: oklch(var(--thin-lightness) var(--regular-chroma) var(--hue-orange));
+  --color-thin-blue: oklch(var(--thin-lightness) var(--regular-chroma) var(--hue-blue));
 }
 
 @media (min-width: 768px) and (max-width: 1200px) {
@@ -665,11 +673,11 @@ img.ui.avatar,
 }
 
 .text.red {
-  color: var(--color-thin-red, var(--color-red)) !important;
+  color: var(--color-thin-red) !important;
 }
 
 .text.orange {
-  color: var(--color-thin-orange, var(--color-orange)) !important;
+  color: var(--color-thin-orange) !important;
 }
 
 .text.yellow {
@@ -677,7 +685,7 @@ img.ui.avatar,
 }
 
 .text.green {
-  color: var(--color-thin-green, var(--color-green)) !important;
+  color: var(--color-thin-green) !important;
 }
 
 .text.teal {
@@ -689,7 +697,7 @@ img.ui.avatar,
 }
 
 .text.purple {
-  color: var(--color-thin-purple, var(--color-purple)) !important;
+  color: var(--color-thin-purple) !important;
 }
 
 .text.brown {
@@ -933,50 +941,6 @@ img.ui.avatar,
   height: 0.67em;
   width: 0.67em;
   border-radius: var(--border-radius);
-}
-
-.attention-icon {
-  margin: auto 0.5em auto 0;
-}
-
-.attention-title {
-  align-items: center;
-  display: flex;
-}
-
-blockquote.attention-note {
-  border-inline-start-color: var(--color-blue-dark-1);
-}
-strong.attention-note, svg.attention-note {
-  color: var(--color-blue-dark-1);
-}
-
-blockquote.attention-tip {
-  border-inline-start-color: var(--color-success-text);
-}
-strong.attention-tip, svg.attention-tip {
-  color: var(--color-success-text);
-}
-
-blockquote.attention-important {
-  border-inline-start-color: var(--color-violet-dark-1);
-}
-strong.attention-important, svg.attention-important {
-  color: var(--color-violet-dark-1);
-}
-
-blockquote.attention-warning {
-  border-inline-start-color: var(--color-warning-text);
-}
-strong.attention-warning, svg.attention-warning {
-  color: var(--color-warning-text);
-}
-
-blockquote.attention-caution {
-  border-inline-start-color: var(--color-red-dark-1);
-}
-strong.attention-caution, svg.attention-caution {
-  color: var(--color-red-dark-1);
 }
 
 .center:not(.popup) {

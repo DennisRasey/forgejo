@@ -10,9 +10,6 @@
   --color-primary-dark-2: #31699f;
   --color-primary-dark-3: #2b5c8b;
   --color-primary-dark-4: #254f77;
-  --color-primary-dark-5: #193450;
-  --color-primary-dark-6: #0c1a28;
-  --color-primary-dark-7: #04080c;
   --color-primary-light-1: #548fca;
   --color-primary-light-2: #679cd0;
   --color-primary-light-3: #7aa8d6;
@@ -89,8 +86,6 @@
   --color-olive-light: #d3e942;
   --color-green-light: #46de6a;
   --color-teal-light: #08fff4;
-  --color-blue-light: #51a5e3;
-  --color-violet-light: #8b67d7;
   --color-purple-light: #bb64d8;
   --color-pink-light: #e86bb1;
   --color-brown-light: #c58b66;
@@ -102,7 +97,6 @@
   --color-olive-dark-1: #a3b816;
   --color-green-dark-1: #1ea73e;
   --color-teal-dark-1: #00a39c;
-  --color-blue-dark-1: #1e78bb;
   --color-violet-dark-1: #5a30b5;
   --color-purple-dark-1: #932eb4;
   --color-pink-dark-1: #db228a;
@@ -115,7 +109,6 @@
   --color-olive-dark-2: #91a313;
   --color-green-dark-2: #1a9537;
   --color-teal-dark-2: #00918a;
-  --color-blue-dark-2: #1a6aa6;
   --color-violet-dark-2: #502aa1;
   --color-purple-dark-2: #8229a0;
   --color-pink-dark-2: #c21e7b;
@@ -178,6 +171,17 @@
   --color-orange-badge: #f2711c;
   --color-orange-badge-bg: #f2711c1a;
   --color-orange-badge-hover-bg: #f2711c4d;
+
+  /* A more declarative way for themes */
+  --thin-lightness: 0.5555;
+  --regular-chroma: 0.17;
+  --hue-green: 142deg;
+  --hue-red: 27deg;
+  --hue-purple: 298deg;
+  --hue-violet: 291deg;
+  --hue-orange: 41deg;
+  --hue-blue: 247deg;
+
   /* target-based colors */
   --color-body: #ffffff;
   --color-box-header: #f1f3f5;

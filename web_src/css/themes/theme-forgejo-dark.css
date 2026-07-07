@@ -27,9 +27,6 @@
   --color-primary-dark-2: #fdba74;
   --color-primary-dark-3: #fed7aa;
   --color-primary-dark-4: #fed7aa;
-  --color-primary-dark-5: #ffedd5;
-  --color-primary-dark-6: #ffedd5;
-  --color-primary-dark-7: #fff7ed;
   --color-primary-light-1: #f97316;
   --color-primary-light-2: #ea580c;
   --color-primary-light-3: #c2410c;
@@ -107,8 +104,6 @@
   --color-olive-light: #839311;
   --color-green-light: #16a34a;
   --color-teal-light: #14b8a6;
-  --color-blue-light: #3b82f6;
-  --color-violet-light: #8b5cf6;
   --color-purple-light: #a855f7;
   --color-pink-light: #ec4899;
   --color-brown-light: #94674a;
@@ -121,7 +116,6 @@
   --color-olive-dark-1: #839311;
   --color-green-dark-1: #137337;
   --color-teal-dark-1: #0c857a;
-  --color-blue-dark-1: #1554e0;
   --color-violet-dark-1: #6a1feb;
   --color-purple-dark-1: #8519e7;
   --color-pink-dark-1: #c7216b;
@@ -134,7 +128,6 @@
   --color-olive-dark-2: #91a313;
   --color-green-dark-2: #15803d;
   --color-teal-dark-2: #0a766d;
-  --color-blue-dark-2: #2563eb;
   --color-violet-dark-2: #5c14d8;
   --color-purple-dark-2: #7c3aed;
   --color-pink-dark-2: #b11d5f;
@@ -196,13 +189,16 @@
   --color-orange-badge: #ea580c;
   --color-orange-badge-bg: #ea580c22;
   --color-orange-badge-hover-bg: #ea580c44;
-  /* Colors for thin elements: octicons, text, borders */
+
+  /* A more declarative way for themes */
   --thin-lightness: 0.68;
   --regular-chroma: 0.19;
-  --color-thin-green: oklch(var(--thin-lightness) var(--regular-chroma) 145deg);
-  --color-thin-red: oklch(var(--thin-lightness) var(--regular-chroma) 27deg);
-  --color-thin-purple: oklch(var(--thin-lightness) var(--regular-chroma) 298deg);
-  --color-thin-orange: oklch(var(--thin-lightness) var(--regular-chroma) 41deg);
+  --hue-green: 145deg;
+  --hue-red: 27deg;
+  --hue-purple: 298deg;
+  --hue-violet: 293deg;
+  --hue-orange: 41deg;
+  --hue-blue: 260deg;
 
   /* Ditto but when additional highlight is needed, e.g. on user interaction */
   --thin-lightness-highlight: 0.75;
@@ -344,15 +340,6 @@ i.grey.icon.icon.icon.icon {
 }
 .ui.yellow.label.pending-label {
   color: var(--color-warning-text) !important;
-}
-strong.attention-important, svg.attention-important {
-  color: var(--color-violet-light);
-}
-strong.attention-note, svg.attention-note {
-  color: var(--color-blue-light);
-}
-strong.attention-caution, svg.attention-caution {
-  color: var(--color-red-light);
 }
 .ui.basic.red.button {
   background-color: var(--color-red);

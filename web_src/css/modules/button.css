@@ -67,8 +67,8 @@
 .button.danger {
   /* Fallbacks are needed while -thin vars are not supplied by all themes */
   background: var(--color-danger-bg, var(--color-error-bg));
-  border: 1px solid var(--color-thin-red, var(--color-red));
-  color: var(--color-thin-red, var(--color-red));
+  border: 1px solid var(--color-thin-red);
+  color: var(--color-thin-red);
 
   &:hover,
   &:focus {

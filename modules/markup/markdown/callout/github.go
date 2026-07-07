@@ -125,7 +125,7 @@ func (r *GitHubCalloutHTMLRenderer) renderAttention(w util.BufWriter, source []b
 		default:
 			octiconName = "info"
 		}
-		_, _ = w.WriteString(string(svg.RenderHTML("octicon-"+octiconName, 16, "attention-icon attention-"+n.AttentionType)))
+		_, _ = w.WriteString(string(svg.RenderHTML("octicon-"+octiconName, 16)))
 	}
 	return ast.WalkContinue, nil
 }

@@ -6,22 +6,6 @@
   overflow-inline: auto;
 }
 
-.runner-container .runner-ops > a {
-  margin-inline-start: 0.5em;
-}
-
-.runner-container .runner-ops-delete {
-  color: var(--color-red-light);
-}
-
-.runner-container .runner-new-text {
-  color: var(--color-white);
-}
-
-.runner-container #runner-new:hover .runner-new-text {
-  color: var(--color-white) !important;
-}
-
 .runner-container .task-status-success {
   background-color: var(--color-green);
   color: var(--color-white);
