@@ -5,9 +5,14 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -256,4 +261,104 @@ func TestNewMinioStorageInitializationTimeout(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorIs(t, err, context.DeadlineExceeded, "err must be a context deadline exceeded error, but was %v", err)
 	assert.Nil(t, storage)
+}
+
+// newProxyServer starts an HTTP proxy server that implements CONNECT tunneling.
+// It sets proxied to true whenever any request is received.
+func newProxyServer(t *testing.T, proxied *atomic.Bool) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		proxied.Store(true)
+		if r.Method != http.MethodConnect {
+			http.Error(w, "only CONNECT is supported", http.StatusMethodNotAllowed)
+			return
+		}
+		targetConn, err := net.Dial("tcp", r.Host)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		defer targetConn.Close()
+		clientConn, _, err := w.(http.Hijacker).Hijack()
+		if err != nil {
+			return
+		}
+		defer clientConn.Close()
+		_, _ = clientConn.Write([]byte("HTTP/1.1 200 Connection Established\r\n\r\n"))
+		go io.Copy(targetConn, clientConn)
+		io.Copy(clientConn, targetConn)
+	}))
+}
+
+func TestMinioStorageProxy(t *testing.T) {
+	// Start a fake TLS S3-compatible server.
+	// `UseSSL: true` triggers CONNECT-style proxying.
+	// `InsecureSkipVerify: true` accepts the self-signed cert.
+	// `BucketLookup: path` forces path-style URLs so the fake server stays simple.
+	s3Server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			w.Header().Set("Content-Type", "application/xml")
+			fmt.Fprint(w, `<?xml version="1.0" encoding="UTF-8"?><VersioningConfiguration xmlns="http://test/"></VersioningConfiguration>`)
+		case http.MethodHead:
+			w.WriteHeader(http.StatusOK)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer s3Server.Close()
+
+	minioStorageCfg := func() *setting.Storage {
+		return &setting.Storage{
+			MinioConfig: setting.MinioStorageConfig{
+				Endpoint:           s3Server.Listener.Addr().String(),
+				AccessKeyID:        "123456",
+				SecretAccessKey:    "12345678",
+				Bucket:             "bucket",
+				Location:           "us-east-1",
+				UseSSL:             true,
+				InsecureSkipVerify: true,
+				BucketLookup:       "path",
+			},
+		}
+	}
+
+	t.Run("ProxyIsUsed", func(t *testing.T) {
+		var proxied atomic.Bool
+		proxyServer := newProxyServer(t, &proxied)
+		defer proxyServer.Close()
+
+		proxyURL, err := url.Parse(proxyServer.URL)
+		require.NoError(t, err)
+
+		defer test.MockVariableValue(&setting.Proxy.Enabled, true)()
+		defer test.MockVariableValue(&setting.Proxy.ProxyURL, proxyServer.URL)()
+		defer test.MockVariableValue(&setting.Proxy.ProxyURLFixed, proxyURL)()
+		defer test.MockVariableValue(&setting.Proxy.ProxyHosts, []string{"*"})()
+
+		storage, err := NewMinioStorage(t.Context(), minioStorageCfg())
+		require.NoError(t, err)
+		assert.NotNil(t, storage)
+		assert.True(t, proxied.Load(), "expected minio client to connect through the proxy")
+	})
+
+	t.Run("ProxyIsNotUsed", func(t *testing.T) {
+		var proxied atomic.Bool
+		proxyServer := newProxyServer(t, &proxied)
+		defer proxyServer.Close()
+
+		proxyURL, err := url.Parse(proxyServer.URL)
+		require.NoError(t, err)
+
+		// Proxy is fully configured but disabled; minioClient should connect directly to s3Server.
+		defer test.MockVariableValue(&setting.Proxy.Enabled, false)()
+		defer test.MockVariableValue(&setting.Proxy.ProxyURL, proxyServer.URL)()
+		defer test.MockVariableValue(&setting.Proxy.ProxyURLFixed, proxyURL)()
+		defer test.MockVariableValue(&setting.Proxy.ProxyHosts, []string{"*"})()
+
+		storage, err := NewMinioStorage(t.Context(), minioStorageCfg())
+		require.NoError(t, err)
+		assert.NotNil(t, storage)
+		assert.False(t, proxied.Load(), "expected minio client to bypass the proxy when proxy is disabled")
+	})
 }
