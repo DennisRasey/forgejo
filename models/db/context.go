@@ -179,10 +179,22 @@ func TxContext(parentCtx context.Context) (*Context, Committer, error) {
 	return txCtx, &hookCommitter{sess, txCtx}, nil
 }
 
-// WithTx represents executing database operations on a transaction, if the transaction exist,
-// this function will reuse it otherwise will create a new one and close it when finished.
-func WithTx(parentCtx context.Context, f func(ctx context.Context) error) error {
+type TransactionConfig struct {
+	IsolationLevel sql.IsolationLevel
+}
+
+// WithTxOpts represents executing database operations on a transaction, if the
+// transaction exist, this function will reuse it otherwise will create a new
+// one and close it when finished.
+//
+// If `config` is specified and the context is inside a transaction then a error
+// is returned.
+func WithTxOpts(parentCtx context.Context, config *TransactionConfig, f func(ctx context.Context) error) error {
 	if sess, ok := inTransaction(parentCtx); ok {
+		if config != nil {
+			return errors.New("unsupported operation: attempted to use WithTxOpts with a non-nil config in a transaction")
+		}
+
 		txCtx := newContext(parentCtx, sess, true)
 		err := f(txCtx)
 		if err != nil {
@@ -195,13 +207,18 @@ func WithTx(parentCtx context.Context, f func(ctx context.Context) error) error 
 		}
 		return err
 	}
-	return txWithNoCheck(parentCtx, f)
-}
 
-func txWithNoCheck(parentCtx context.Context, f func(ctx context.Context) error) error {
 	sess := x.NewSession()
 	defer sess.Close()
-	if err := sess.Begin(); err != nil {
+
+	isolationLevel := sql.LevelDefault
+	if config != nil {
+		isolationLevel = config.IsolationLevel
+	}
+
+	if err := sess.BeginOpts(&sql.TxOptions{
+		Isolation: isolationLevel,
+	}); err != nil {
 		return err
 	}
 
@@ -219,6 +236,12 @@ func txWithNoCheck(parentCtx context.Context, f func(ctx context.Context) error)
 	}
 
 	return nil
+}
+
+// WithTx represents executing database operations on a transaction, if the transaction exist,
+// this function will reuse it otherwise will create a new one and close it when finished.
+func WithTx(parentCtx context.Context, f func(ctx context.Context) error) error {
+	return WithTxOpts(parentCtx, nil, f)
 }
 
 // AfterTx registers a function to be called after the current transaction commits. If not in a transaction, the

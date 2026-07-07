@@ -5,6 +5,7 @@ package db_test
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
@@ -318,5 +319,69 @@ func TestRetryTx(t *testing.T) {
 
 		require.ErrorIs(t, err, testError)
 		assert.Equal(t, 1, attemptCount)
+	})
+}
+
+func TestWithTxOpts(t *testing.T) {
+	t.Run("nil config", func(t *testing.T) {
+		var called bool
+		err := db.WithTxOpts(t.Context(), nil, func(ctx context.Context) error {
+			assert.True(t, db.InTransaction(ctx))
+			called = true
+			return nil
+		})
+		require.NoError(t, err)
+		assert.True(t, called)
+	})
+
+	t.Run("isolation level", func(t *testing.T) {
+		var called bool
+		err := db.WithTxOpts(t.Context(), &db.TransactionConfig{IsolationLevel: sql.LevelReadCommitted}, func(ctx context.Context) error {
+			assert.True(t, db.InTransaction(ctx))
+			called = true
+			return nil
+		})
+		require.NoError(t, err)
+		assert.True(t, called)
+	})
+
+	t.Run("nested transaction", func(t *testing.T) {
+		t.Run("succeed", func(t *testing.T) {
+			var called bool
+			var called2 bool
+			err := db.WithTx(t.Context(), func(ctx context.Context) error {
+				assert.True(t, db.InTransaction(ctx))
+				called = true
+				err := db.WithTxOpts(ctx, nil, func(ctx context.Context) error {
+					assert.True(t, db.InTransaction(ctx))
+					called2 = true
+					return nil
+				})
+				require.NoError(t, err)
+				return nil
+			})
+			require.NoError(t, err)
+			assert.True(t, called)
+			assert.True(t, called2)
+		})
+
+		t.Run("unsupported operation", func(t *testing.T) {
+			var called bool
+			var called2 bool
+			err := db.WithTx(t.Context(), func(ctx context.Context) error {
+				assert.True(t, db.InTransaction(ctx))
+				called = true
+				err := db.WithTxOpts(ctx, &db.TransactionConfig{IsolationLevel: sql.LevelReadCommitted}, func(ctx context.Context) error {
+					assert.True(t, db.InTransaction(ctx))
+					called2 = true
+					return nil
+				})
+				require.ErrorContains(t, err, "unsupported operation")
+				return nil
+			})
+			require.NoError(t, err)
+			assert.True(t, called)
+			assert.False(t, called2)
+		})
 	})
 }

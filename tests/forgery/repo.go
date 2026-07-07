@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"testing"
 
+	"forgejo.org/models/db"
 	repo_model "forgejo.org/models/repo"
 	unit_model "forgejo.org/models/unit"
 	user_model "forgejo.org/models/user"
@@ -82,7 +83,7 @@ func CreateRepository(t testing.TB, owner *user_model.User, opts *CreateReposito
 	require.NoError(t, err)
 	if !opts.SkipCleanup {
 		t.Cleanup(func() {
-			_ = repo_service.DeleteRepository(t.Context(), owner, repo, false)
+			_ = repo_service.DeleteRepository(db.DefaultContext, owner, repo, false)
 		})
 	}
 	require.NotEmpty(t, repo)

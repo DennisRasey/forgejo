@@ -6,6 +6,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"forgejo.org/models"
@@ -49,23 +50,9 @@ type DeleteRepositoryOpts struct {
 // DeleteRepository deletes a repository for a user or organization.
 // make sure if you call this func to close open sessions (sqlite will otherwise get a deadlock)
 func DeleteRepositoryDirectly(ctx context.Context, repoID int64, opts DeleteRepositoryOpts) error {
-	ctx, committer, err := db.TxContext(ctx)
+	repo, err := repo_model.GetRepositoryByID(ctx, repoID)
 	if err != nil {
 		return err
-	}
-	defer committer.Close()
-	sess := db.GetEngine(ctx)
-
-	repo := &repo_model.Repository{}
-	has, err := sess.ID(repoID).Get(repo)
-	if err != nil {
-		return err
-	} else if !has {
-		return repo_model.ErrRepoNotExist{
-			ID:        repoID,
-			OwnerName: "",
-			Name:      "",
-		}
 	}
 
 	// Query the action tasks of this repo, they will be needed after they have been deleted to remove the logs
@@ -80,266 +67,286 @@ func DeleteRepositoryDirectly(ctx context.Context, repoID int64, opts DeleteRepo
 		return fmt.Errorf("list actions artifacts of repo %v: %w", repoID, err)
 	}
 
-	// In case owner is a organization, we have to change repo specific teams
-	// if ignoreOrgTeams is not true
-	var org *user_model.User
-	if !opts.IgnoreOrgTeams {
-		if org, err = user_model.GetUserByID(ctx, repo.OwnerID); err != nil {
-			return err
-		}
-	}
+	var needRewriteKeysFile bool
+	var attachmentPaths []string
+	var archivePaths []string
+	var lfsPaths []string
+	var releaseAttachments []string
+	var newAttachmentPaths []string
 
-	// Delete Deploy Keys
-	deployKeys, err := db.Find[asymkey_model.DeployKey](ctx, asymkey_model.ListDeployKeysOptions{RepoID: repoID})
-	if err != nil {
-		return fmt.Errorf("listDeployKeys: %w", err)
-	}
-	needRewriteKeysFile := len(deployKeys) > 0
-	for _, dKey := range deployKeys {
-		if err := models.DeleteDeployKey(ctx, dKey.ID, repoID); err != nil {
-			return fmt.Errorf("deleteDeployKeys: %w", err)
-		}
-	}
+	if err := db.WithTxOpts(ctx, &db.TransactionConfig{
+		// This transaction is gigantic, and of all transactions touches the most
+		// tables, not only to read from them but also to delete many rows from
+		// them. As such, we don't want to this transaction to lock rows and block
+		// other queries from completing. This locking behavior is problematic for
+		// large (public) instances, where deletion of large repositories will
+		// happen periodically and can practically halt the instance on a numerous
+		// of update/insert operations.
+		//
+		// This locking behavior is not observed when the isolation level is in
+		// READ COMMITED. There's a risk with this isolation level, that between the
+		// deletion query of some table and the COMMIT query that there's a window
+		// for orphaned records to come into existence. Orphaned records, most can
+		// be caught on a routinely basis by running the check-db-consistency doctor
+		// command.
+		IsolationLevel: sql.LevelReadCommitted,
+	}, func(ctx context.Context) error {
+		sess := db.GetEngine(ctx)
 
-	// If the repository was reported as abusive, a shadow copy should be created before deletion.
-	if err := repo_model.IfNeededCreateShadowCopyForRepository(ctx, repo, false); err != nil {
-		return err
-	}
-
-	if org != nil && org.IsOrganization() {
-		teams, err := organization.FindOrgTeams(ctx, org.ID)
-		if err != nil {
-			return err
-		}
-		for _, t := range teams {
-			if !organization.HasTeamRepo(ctx, t.OrgID, t.ID, repoID) {
-				continue
-			} else if err = removeRepositoryFromTeam(ctx, t, repo, false); err != nil {
+		// In case owner is a organization, we have to change repo specific teams
+		// if ignoreOrgTeams is not true
+		var org *user_model.User
+		if !opts.IgnoreOrgTeams {
+			if org, err = user_model.GetUserByID(ctx, repo.OwnerID); err != nil {
 				return err
 			}
 		}
-	}
 
-	attachments := make([]*repo_model.Attachment, 0, 20)
-	if err = sess.Join("INNER", "`release`", "`release`.id = `attachment`.release_id").
-		Where("`release`.repo_id = ?", repoID).
-		Find(&attachments); err != nil {
-		return err
-	}
-	releaseAttachments := make([]string, 0, len(attachments))
-	for i := 0; i < len(attachments); i++ {
-		releaseAttachments = append(releaseAttachments, attachments[i].RelativePath())
-	}
+		// Delete Deploy Keys
+		deployKeys, err := db.Find[asymkey_model.DeployKey](ctx, asymkey_model.ListDeployKeysOptions{RepoID: repoID})
+		if err != nil {
+			return fmt.Errorf("listDeployKeys: %w", err)
+		}
+		needRewriteKeysFile = len(deployKeys) > 0
+		for _, dKey := range deployKeys {
+			if err := models.DeleteDeployKey(ctx, dKey.ID, repoID); err != nil {
+				return fmt.Errorf("deleteDeployKeys: %w", err)
+			}
+		}
 
-	if _, err := db.Exec(ctx, "UPDATE `user` SET num_stars=num_stars-1 WHERE id IN (SELECT `uid` FROM `star` WHERE repo_id = ?)", repo.ID); err != nil {
-		return err
-	}
-
-	if setting.Database.Type.IsMySQL() {
-		// mariadb:10 does not use the hook_task KEY when using IN.
-		// https://codeberg.org/forgejo/forgejo/issues/3678
-		//
-		// Version 11 does support it, but is not available in debian yet.
-		// Version 11.4 LTS is not available yet (stable should be released mid 2024 https://mariadb.org/mariadb/all-releases/)
-
-		// Sqlite does not support the DELETE *** FROM *** syntax
-		// https://stackoverflow.com/q/24511153/3207406
-
-		// in the meantime, use a dedicated query for mysql...
-		if _, err := db.Exec(ctx, "DELETE `hook_task` FROM `hook_task` INNER JOIN `webhook` ON `webhook`.id = `hook_task`.hook_id WHERE `webhook`.repo_id = ?", repo.ID); err != nil {
+		// If the repository was reported as abusive, a shadow copy should be created before deletion.
+		if err := repo_model.IfNeededCreateShadowCopyForRepository(ctx, repo, false); err != nil {
 			return err
 		}
-	} else {
-		if _, err := db.GetEngine(ctx).In("hook_id", builder.Select("id").From("webhook").Where(builder.Eq{"webhook.repo_id": repo.ID})).
-			Delete(&webhook.HookTask{}); err != nil {
+
+		if org != nil && org.IsOrganization() {
+			teams, err := organization.FindOrgTeams(ctx, org.ID)
+			if err != nil {
+				return err
+			}
+			for _, t := range teams {
+				if !organization.HasTeamRepo(ctx, t.OrgID, t.ID, repoID) {
+					continue
+				} else if err = removeRepositoryFromTeam(ctx, t, repo, false); err != nil {
+					return err
+				}
+			}
+		}
+
+		attachments := make([]*repo_model.Attachment, 0, 20)
+		if err = sess.Join("INNER", "`release`", "`release`.id = `attachment`.release_id").
+			Where("`release`.repo_id = ?", repoID).
+			Find(&attachments); err != nil {
 			return err
 		}
-	}
+		releaseAttachments = make([]string, 0, len(attachments))
+		for i := 0; i < len(attachments); i++ {
+			releaseAttachments = append(releaseAttachments, attachments[i].RelativePath())
+		}
 
-	// CleanupEphemeralRunnersByPickedTaskOfRepo deletes ephemeral global/org/user that have started any task of this repo, as they cannot pick a second task
-	// This method will delete affected ephemeral global/org/user runners
-	// &actions_model.ActionRunner{RepoID: repoID} does only handle ephemeral repository runners
-	if err := actions_service.CleanupEphemeralRunnersByPickedTaskOfRepo(ctx, repoID); err != nil {
-		return fmt.Errorf("cleanupEphemeralRunners: %w", err)
-	}
+		if _, err := db.Exec(ctx, "UPDATE `user` SET num_stars=num_stars-1 WHERE id IN (SELECT `uid` FROM `star` WHERE repo_id = ?)", repo.ID); err != nil {
+			return err
+		}
 
-	if err := db.DeleteBeans(ctx,
-		&access_model.Access{RepoID: repo.ID},
-		&activities_model.Action{RepoID: repo.ID},
-		&repo_model.Collaboration{RepoID: repoID},
-		&issues_model.Comment{RefRepoID: repoID},
-		&git_model.CommitStatus{RepoID: repoID},
-		&git_model.Branch{RepoID: repoID},
-		&git_model.LFSLock{RepoID: repoID},
-		&repo_model.LanguageStat{RepoID: repoID},
-		&issues_model.Milestone{RepoID: repoID},
-		&repo_model.Mirror{RepoID: repoID},
-		&activities_model.Notification{RepoID: repoID},
-		&git_model.ProtectedBranch{RepoID: repoID},
-		&git_model.ProtectedTag{RepoID: repoID},
-		&repo_model.PushMirror{RepoID: repoID},
-		&repo_model.Release{RepoID: repoID},
-		&repo_model.RepoIndexerStatus{RepoID: repoID},
-		&repo_model.Redirect{RedirectRepoID: repoID},
-		&repo_model.Star{RepoID: repoID},
-		&repo_model.Watch{RepoID: repoID},
-		&webhook.Webhook{RepoID: repoID},
-		&secret_model.Secret{RepoID: repoID},
-		&actions_model.ActionTaskStep{RepoID: repoID},
-		&actions_model.ActionTask{RepoID: repoID},
-		&actions_model.ActionRunJob{RepoID: repoID},
-		&actions_model.ActionRun{RepoID: repoID},
-		&actions_model.ActionRunner{RepoID: repoID},
-		&actions_model.ActionScheduleSpec{RepoID: repoID},
-		&actions_model.ActionSchedule{RepoID: repoID},
-		&actions_model.ActionArtifact{RepoID: repoID},
-		&actions_model.ActionUser{RepoID: repoID},
-		&repo_model.RepoArchiveDownloadCount{RepoID: repoID},
-		&actions_model.ActionRunnerToken{RepoID: optional.Some(repoID)},
-		&auth_model.AccessTokenResourceRepo{RepoID: repoID},
-	); err != nil {
-		return fmt.Errorf("deleteBeans: %w", err)
-	}
+		if setting.Database.Type.IsMySQL() {
+			// mariadb:10 does not use the hook_task KEY when using IN.
+			// https://codeberg.org/forgejo/forgejo/issues/3678
+			//
+			// Version 11 does support it, but is not available in debian yet.
+			// Version 11.4 LTS is not available yet (stable should be released mid 2024 https://mariadb.org/mariadb/all-releases/)
 
-	if !opts.KeepMigrationBeans {
+			// Sqlite does not support the DELETE *** FROM *** syntax
+			// https://stackoverflow.com/q/24511153/3207406
+
+			// in the meantime, use a dedicated query for mysql...
+			if _, err := db.Exec(ctx, "DELETE `hook_task` FROM `hook_task` INNER JOIN `webhook` ON `webhook`.id = `hook_task`.hook_id WHERE `webhook`.repo_id = ?", repo.ID); err != nil {
+				return err
+			}
+		} else {
+			if _, err := db.GetEngine(ctx).In("hook_id", builder.Select("id").From("webhook").Where(builder.Eq{"webhook.repo_id": repo.ID})).
+				Delete(&webhook.HookTask{}); err != nil {
+				return err
+			}
+		}
+
+		// CleanupEphemeralRunnersByPickedTaskOfRepo deletes ephemeral global/org/user that have started any task of this repo, as they cannot pick a second task
+		// This method will delete affected ephemeral global/org/user runners
+		// &actions_model.ActionRunner{RepoID: repoID} does only handle ephemeral repository runners
+		if err := actions_service.CleanupEphemeralRunnersByPickedTaskOfRepo(ctx, repoID); err != nil {
+			return fmt.Errorf("cleanupEphemeralRunners: %w", err)
+		}
+
 		if err := db.DeleteBeans(ctx,
-			&admin_model.Task{RepoID: repoID},
-			&repo_model.RepoUnit{RepoID: repoID},
+			&access_model.Access{RepoID: repo.ID},
+			&activities_model.Action{RepoID: repo.ID},
+			&repo_model.Collaboration{RepoID: repoID},
+			&issues_model.Comment{RefRepoID: repoID},
+			&git_model.CommitStatus{RepoID: repoID},
+			&git_model.Branch{RepoID: repoID},
+			&git_model.LFSLock{RepoID: repoID},
+			&repo_model.LanguageStat{RepoID: repoID},
+			&issues_model.Milestone{RepoID: repoID},
+			&repo_model.Mirror{RepoID: repoID},
+			&activities_model.Notification{RepoID: repoID},
+			&git_model.ProtectedBranch{RepoID: repoID},
+			&git_model.ProtectedTag{RepoID: repoID},
+			&repo_model.PushMirror{RepoID: repoID},
+			&repo_model.Release{RepoID: repoID},
+			&repo_model.RepoIndexerStatus{RepoID: repoID},
+			&repo_model.Redirect{RedirectRepoID: repoID},
+			&repo_model.Star{RepoID: repoID},
+			&repo_model.Watch{RepoID: repoID},
+			&webhook.Webhook{RepoID: repoID},
+			&secret_model.Secret{RepoID: repoID},
+			&actions_model.ActionTaskStep{RepoID: repoID},
+			&actions_model.ActionTask{RepoID: repoID},
+			&actions_model.ActionRunJob{RepoID: repoID},
+			&actions_model.ActionRun{RepoID: repoID},
+			&actions_model.ActionRunner{RepoID: repoID},
+			&actions_model.ActionScheduleSpec{RepoID: repoID},
+			&actions_model.ActionSchedule{RepoID: repoID},
+			&actions_model.ActionArtifact{RepoID: repoID},
+			&actions_model.ActionUser{RepoID: repoID},
+			&repo_model.RepoArchiveDownloadCount{RepoID: repoID},
+			&actions_model.ActionRunnerToken{RepoID: optional.Some(repoID)},
+			&auth_model.AccessTokenResourceRepo{RepoID: repoID},
 		); err != nil {
 			return fmt.Errorf("deleteBeans: %w", err)
 		}
-	}
 
-	// Delete Pulls and related objects
-	if err := issues_model.DeletePullsByBaseRepoID(ctx, repoID); err != nil {
-		return err
-	}
-
-	if !opts.KeepMigrationBeans {
-		if cnt, err := sess.ID(repoID).Delete(&repo_model.Repository{}); err != nil {
-			return err
-		} else if cnt != 1 {
-			return repo_model.ErrRepoNotExist{
-				ID:        repoID,
-				OwnerName: "",
-				Name:      "",
+		if !opts.KeepMigrationBeans {
+			if err := db.DeleteBeans(ctx,
+				&admin_model.Task{RepoID: repoID},
+				&repo_model.RepoUnit{RepoID: repoID},
+			); err != nil {
+				return fmt.Errorf("deleteBeans: %w", err)
 			}
 		}
-	}
 
-	// Delete Labels and related objects
-	if err := issues_model.DeleteLabelsByRepoID(ctx, repoID); err != nil {
-		return err
-	}
-
-	// Delete Issues and related objects
-	var attachmentPaths []string
-	if attachmentPaths, err = issues_model.DeleteIssuesByRepoID(ctx, repoID); err != nil {
-		return err
-	}
-
-	// Delete issue index
-	if err := db.DeleteResourceIndex(ctx, "issue_index", repoID); err != nil {
-		return err
-	}
-
-	if repo.IsFork {
-		if _, err := db.Exec(ctx, "UPDATE `repository` SET num_forks=num_forks-1 WHERE id=?", repo.ForkID); err != nil {
-			return fmt.Errorf("decrease fork count: %w", err)
-		}
-	}
-
-	if _, err := db.Exec(ctx, "UPDATE `user` SET num_repos=num_repos-1 WHERE id=?", repo.OwnerID); err != nil {
-		return err
-	}
-
-	if len(repo.Topics) > 0 {
-		if err := repo_model.RemoveTopicsFromRepo(ctx, repo.ID); err != nil {
+		// Delete Pulls and related objects
+		if err := issues_model.DeletePullsByBaseRepoID(ctx, repoID); err != nil {
 			return err
 		}
-	}
 
-	if err := project_model.DeleteProjectByRepoID(ctx, repoID); err != nil {
-		return fmt.Errorf("unable to delete projects for repo[%d]: %w", repoID, err)
-	}
+		if !opts.KeepMigrationBeans {
+			if cnt, err := sess.ID(repoID).Delete(&repo_model.Repository{}); err != nil {
+				return err
+			} else if cnt != 1 {
+				return repo_model.ErrRepoNotExist{
+					ID:        repoID,
+					OwnerName: "",
+					Name:      "",
+				}
+			}
+		}
 
-	// Remove LFS objects
-	var lfsObjects []*git_model.LFSMetaObject
-	if err = sess.Where("repository_id=?", repoID).Find(&lfsObjects); err != nil {
-		return err
-	}
-
-	lfsPaths := make([]string, 0, len(lfsObjects))
-	for _, v := range lfsObjects {
-		count, err := db.CountByBean(ctx, &git_model.LFSMetaObject{Pointer: lfs.Pointer{Oid: v.Oid}})
-		if err != nil {
+		// Delete Labels and related objects
+		if err := issues_model.DeleteLabelsByRepoID(ctx, repoID); err != nil {
 			return err
 		}
-		if count > 1 {
-			continue
+
+		// Delete Issues and related objects
+		if attachmentPaths, err = issues_model.DeleteIssuesByRepoID(ctx, repoID); err != nil {
+			return err
 		}
 
-		lfsPaths = append(lfsPaths, v.RelativePath())
-	}
-
-	if _, err := db.DeleteByBean(ctx, &git_model.LFSMetaObject{RepositoryID: repoID}); err != nil {
-		return err
-	}
-
-	// Remove archives
-	var archives []*repo_model.RepoArchiver
-	if err = sess.Where("repo_id=?", repoID).Find(&archives); err != nil {
-		return err
-	}
-
-	archivePaths := make([]string, 0, len(archives))
-	for _, v := range archives {
-		archivePaths = append(archivePaths, v.RelativePath())
-	}
-
-	if _, err := db.DeleteByBean(ctx, &repo_model.RepoArchiver{RepoID: repoID}); err != nil {
-		return err
-	}
-
-	if repo.NumForks > 0 {
-		if _, err = sess.Exec("UPDATE `repository` SET fork_id=0,is_fork=? WHERE fork_id=?", false, repo.ID); err != nil {
-			log.Error("reset 'fork_id' and 'is_fork': %v", err)
+		// Delete issue index
+		if err := db.DeleteResourceIndex(ctx, "issue_index", repoID); err != nil {
+			return err
 		}
-	}
 
-	// Get all attachments with both issue_id and release_id are zero
-	var newAttachments []*repo_model.Attachment
-	if err := sess.Where(builder.Eq{
-		"repo_id":    repo.ID,
-		"issue_id":   0,
-		"release_id": 0,
-	}).Find(&newAttachments); err != nil {
+		if repo.IsFork {
+			if _, err := db.Exec(ctx, "UPDATE `repository` SET num_forks=num_forks-1 WHERE id=?", repo.ForkID); err != nil {
+				return fmt.Errorf("decrease fork count: %w", err)
+			}
+		}
+
+		if _, err := db.Exec(ctx, "UPDATE `user` SET num_repos=num_repos-1 WHERE id=?", repo.OwnerID); err != nil {
+			return err
+		}
+
+		if len(repo.Topics) > 0 {
+			if err := repo_model.RemoveTopicsFromRepo(ctx, repo.ID); err != nil {
+				return err
+			}
+		}
+
+		if err := project_model.DeleteProjectByRepoID(ctx, repoID); err != nil {
+			return fmt.Errorf("unable to delete projects for repo[%d]: %w", repoID, err)
+		}
+
+		// Remove LFS objects
+		var lfsObjects []*git_model.LFSMetaObject
+		if err = sess.Where("repository_id=?", repoID).Find(&lfsObjects); err != nil {
+			return err
+		}
+
+		lfsPaths = make([]string, 0, len(lfsObjects))
+		for _, v := range lfsObjects {
+			count, err := db.CountByBean(ctx, &git_model.LFSMetaObject{Pointer: lfs.Pointer{Oid: v.Oid}})
+			if err != nil {
+				return err
+			}
+			if count > 1 {
+				continue
+			}
+
+			lfsPaths = append(lfsPaths, v.RelativePath())
+		}
+
+		if _, err := db.DeleteByBean(ctx, &git_model.LFSMetaObject{RepositoryID: repoID}); err != nil {
+			return err
+		}
+
+		// Remove archives
+		var archives []*repo_model.RepoArchiver
+		if err = sess.Where("repo_id=?", repoID).Find(&archives); err != nil {
+			return err
+		}
+
+		archivePaths = make([]string, 0, len(archives))
+		for _, v := range archives {
+			archivePaths = append(archivePaths, v.RelativePath())
+		}
+
+		if _, err := db.DeleteByBean(ctx, &repo_model.RepoArchiver{RepoID: repoID}); err != nil {
+			return err
+		}
+
+		if repo.NumForks > 0 {
+			if _, err = sess.Exec("UPDATE `repository` SET fork_id=0,is_fork=? WHERE fork_id=?", false, repo.ID); err != nil {
+				log.Error("reset 'fork_id' and 'is_fork': %v", err)
+			}
+		}
+
+		// Get all attachments with both issue_id and release_id are zero
+		var newAttachments []*repo_model.Attachment
+		if err := sess.Where(builder.Eq{
+			"repo_id":    repo.ID,
+			"issue_id":   0,
+			"release_id": 0,
+		}).Find(&newAttachments); err != nil {
+			return err
+		}
+
+		newAttachmentPaths = make([]string, 0, len(newAttachments))
+		for _, attach := range newAttachments {
+			newAttachmentPaths = append(newAttachmentPaths, attach.RelativePath())
+		}
+
+		if _, err := sess.Where("repo_id=?", repo.ID).Delete(new(repo_model.Attachment)); err != nil {
+			return err
+		}
+
+		if err := federation_service.DeleteFollowingRepos(ctx, repo.ID); err != nil {
+			return err
+		}
+
+		// unlink packages linked to this repository
+		return packages_model.UnlinkRepositoryFromAllPackages(ctx, repoID)
+	}); err != nil {
 		return err
 	}
-
-	newAttachmentPaths := make([]string, 0, len(newAttachments))
-	for _, attach := range newAttachments {
-		newAttachmentPaths = append(newAttachmentPaths, attach.RelativePath())
-	}
-
-	if _, err := sess.Where("repo_id=?", repo.ID).Delete(new(repo_model.Attachment)); err != nil {
-		return err
-	}
-
-	if err := federation_service.DeleteFollowingRepos(ctx, repo.ID); err != nil {
-		return err
-	}
-
-	// unlink packages linked to this repository
-	if err = packages_model.UnlinkRepositoryFromAllPackages(ctx, repoID); err != nil {
-		return err
-	}
-
-	if err = committer.Commit(); err != nil {
-		return err
-	}
-
-	committer.Close()
 
 	if needRewriteKeysFile {
 		if err := asymkey_model.RewriteAllPublicKeys(ctx); err != nil {
