@@ -141,9 +141,7 @@
     },
     {
       "description": "Run end-to-end tests for some dependencies",
-      "matchPackageNames": [
-        "code.forgejo.org/forgejo/runner/**"
-      ],
+      "matchPackageNames": ["code.forgejo.org/forgejo/runner/**"],
       "addLabels": ["run-end-to-end-tests"]
     },
     {
@@ -162,9 +160,17 @@
     },
     {
       "description": "Disable updates for old stable branches but still allow security updates",
-      "matchBaseBranches": ["v11.0/forgejo", "v14.0/forgejo"],
+      "matchBaseBranches": ["v11.0/forgejo"],
       "matchUpdateTypes": ["minor", "patch", "digest"],
       "enabled": false
+    },
+    {
+      "description": "Enable go toolchain patch updates, they're usually security updates",
+      "matchDepNames": ["go"],
+      "matchDepTypes": ["toolchain"],
+      "matchUpdateTypes": ["patch"],
+      "dependencyDashboardApproval": false,
+      "enabled": true
     },
     {
       "description": "Require approval for stable branches (must be last rule to override all others)",
