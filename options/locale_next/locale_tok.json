@@ -4,5 +4,13 @@
 	"home.welcome.activity_hint": "sina pali la sona pali li lon ni.",
 	"home.explore_repos": "o alasa e poki",
 	"home.explore_users": "o alasa e jan",
-	"home.explore_orgs": "o alasa e kulupu"
+	"home.explore_orgs": "o alasa e kulupu",
+	"watch.n_watchers": "jan %s li lukin e poki ni",
+	"relativetime.1day": "tenpo suno poka weka",
+	"themes.names.forgejo-light": "nasin kule Forgejo walo",
+	"themes.names.forgejo-dark": "nasin kule Forgejo pimeja",
+	"error.not_found.title": "lipu pi lon ala",
+	"keys.ssh.link": "nimi len SSH",
+	"keys.gpg.link": "nimi len GPG",
+	"moderation.issue.deletion_success": "toki ni li weka"
 }

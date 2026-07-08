@@ -597,5 +597,7 @@
 	"actions.runners.version": "Verze",
 	"actions.workflow.unknown_job_in_needs": "Úloha s ID %[1]s odkazuje na neznámé úlohy v `needs`: %[2]s.",
 	"actions.workflow.rerun_impossible": "Workflow nelze znovu spustit.",
-	"actions.workflow.job_rerun_impossible": "Úlohu nelze znovu spustit."
+	"actions.workflow.job_rerun_impossible": "Úlohu nelze znovu spustit.",
+	"repo.packages.visibility_warning": "Tento repozitář je soukromý, ale odkazované balíčky jsou veřejné (majitel %s je veřejný).",
+	"actions.jobs.not_started": "nespuštěno"
 }

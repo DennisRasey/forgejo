@@ -524,5 +524,6 @@
 	"settings.access_token.no_repositories_found": "Nav atrasta neviena glabātava.",
 	"settings.access_token.remove": "Noņemt %s",
 	"settings.access_token.resource_all_help": "Ļaut piekļuvi visiem resursiem.",
-	"settings.access_token.resource_public_only_help": "Ļaut piekļuvi tikai visiem pieejamām glabātavām un apvienībām."
+	"settings.access_token.resource_public_only_help": "Ļaut piekļuvi tikai visiem pieejamām glabātavām un apvienībām.",
+	"actions.jobs.not_started": "nav sācies"
 }

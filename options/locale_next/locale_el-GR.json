@@ -357,7 +357,7 @@
 	"actions.status.success": "Επιτυχία",
 	"actions.status.failure": "Αποτυχία",
 	"actions.status.cancelled": "Ακυρώθηκε",
-	"actions.status.skipped": "Παρακάμφθηκε",
+	"actions.status.skipped": "Έγινε παράλειψη",
 	"actions.status.blocked": "Αποκλείστηκε",
 	"actions.runners": "Εκτελεστές",
 	"actions.runners.runner_manage_panel": "Διαχείριση εκτελεστών",
@@ -498,5 +498,13 @@
 	"actions.runners.runner_setup.button_copy_token_aria": "Αντιγραφή διακριτικού εκτελεστή",
 	"actions.runners.show_registration_token": "Εμφάνιση διακριτικού εγγραφής",
 	"actions.runners.token": "Διακριτικό",
-	"settings.specific_repo_access": "Πρόσβαση Αποθετηρίου"
+	"settings.specific_repo_access": "Πρόσβαση αποθετηρίου",
+	"settings.new_access_token": "Νέο διακριτικό πρόσβασης",
+	"settings.permissions_access_specific_repositories": "Συγκεκριμένα αποθετήρια",
+	"settings.access_token.available_repositories": "Διαθέσιμα αποθετήρια",
+	"settings.access_token.no_repositories_selected": "Κανένα αποθετήριο επιλεγμένο.",
+	"settings.access_token.no_repositories_found": "Δεν βρέθηκαν αποθετήρια.",
+	"settings.access_token.remove": "Αφαίρεση %s",
+	"actions.runners.ephemeral": "Εφήμερος",
+	"actions.runners.version": "Έκδοση"
 }

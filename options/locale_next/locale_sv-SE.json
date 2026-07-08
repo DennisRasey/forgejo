@@ -191,7 +191,7 @@
 		"other": "sammanfogade %[1]d incheckningar från <code>%[2]s</code> in i <code>%[3]s</code> %[4]s"
 	},
 	"repo.pulls.title_desc": {
-		"one": "vill sammanfoga %[1]d incheckning från <code>s[2]s</code> in i <code id=\"%[4]s\">%[3]s</code>",
+		"one": "vill sammanfoga %[1]d incheckning från <code>%[2]s</code> in i <code id=\"%[4]s\">%[3]s</code>",
 		"other": "vill sammanfoga %[1]d incheckningar från <code>s[2]s</code> in i <code id=\"%[4]s\">%[3]s</code>"
 	},
 	"search.milestone_kind": "Sök milstolpar…",
@@ -586,5 +586,7 @@
 	"actions.runners.version": "Version",
 	"actions.workflow.unknown_job_in_needs": "Jobb med ID %[1]s refererar till okända jobb i `needs`: %[2]s.",
 	"actions.workflow.rerun_impossible": "Arbetsflödet kan inte köras om.",
-	"actions.workflow.job_rerun_impossible": "Jobbet kan inte köras om."
+	"actions.workflow.job_rerun_impossible": "Jobbet kan inte köras om.",
+	"repo.packages.visibility_warning": "Detta kodförråd är privat, men länkade paket är offentliga (ägaren %s är offentlig).",
+	"actions.jobs.not_started": "inte påbörjad"
 }

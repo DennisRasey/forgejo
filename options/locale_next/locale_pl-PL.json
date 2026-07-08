@@ -466,5 +466,6 @@
 	"repo.issues.filter_sort.hint_with_placeholder": "Sortuj wg: %s",
 	"issues.filters.labels.exclude": "Wyklucz etykietę",
 	"issues.filters.labels.unexclude": "Usuń wykluczenie",
-	"repo.pulls.auto_merge.no_permission": "Nie masz uprawnień aby anulować auto merge tego pull requesta."
+	"repo.pulls.auto_merge.no_permission": "Nie masz uprawnień aby anulować auto merge tego pull requesta.",
+	"repo.view.gitmodules_too_large": "Plik .gitmodules jest za duży i będzie ignorowany (np. w wywołaniach API)"
 }

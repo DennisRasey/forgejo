@@ -451,5 +451,11 @@
 	"repo.issues.filter_poster.hint": "Filtra per autore",
 	"repo.issues.filter_assignee.hint": "Filtra per utente assegnatə",
 	"repo.pulls.auto_merge.no_permission": "Non hai i permessi di annullare l'immissione automatica di questa richiesta di modifica.",
-	"repo.pulls.poster_manage_approval": "Gestisci approvazione"
+	"repo.pulls.poster_manage_approval": "Gestisci approvazione",
+	"repo.pulls.poster_is_trusted.tooltip": "L'autore di questa richiesta di modifica è esplicitamente autorizzato ad eseguire flussi di lavoro innescati da eventi `pull_request`.",
+	"repo.pulls.poster_trust_deny": "Nega",
+	"repo.pulls.poster_trust_deny.tooltip": "I flussi di lavoro in attesa di approvazione saranno annullati.",
+	"repo.pulls.poster_trust_once": "Approva una volta",
+	"repo.pulls.poster_trust_always": "Approva sempre",
+	"keys.verify.token.hint": "Il token è valido solamente per 1 minuto <a href=\"%[1]s\">Ottieni un nuovo token se è scaduto</a>"
 }

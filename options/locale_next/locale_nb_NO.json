@@ -117,7 +117,7 @@
 	"repo.issues.filter_mention.hint": "Filtrer etter nevnt bruker",
 	"repo.issues.filter_modified.hint": "Filtrer etter sist endret dato",
 	"repo.pulls.poster_manage_approval": "Endre godkjenning",
-	"repo.pulls.poster_requires_approval": "Noen workflow <a href=\"%[1]s\">venter på å blir anmeldt.</a>",
+	"repo.pulls.poster_requires_approval": "Noen arbeidsflyter <a href=\"%[1]s\">venter på å bli vurdert</a>.",
 	"repo.pulls.poster_requires_approval.tooltip": "Skaperen av denne pull requesten er ikke verifisert til å kjøre workflow som blei kjørt av en pull request skapt i fra en forket repositorie eller med AGit. Workflowene som blei kjørt av `pull_request` event vil ikke kjøre inntil de blir godkjent.",
 	"repo.pulls.poster_is_trusted": "Skaperen av denne pull requesten er <a href=\"%[1]s\">alltid troverdige til å kjøre workflow-er.</a>",
 	"repo.pulls.poster_is_trusted.tooltip": "Skaperen av denne pull requesten har blitt eksplisitt troverdig til å kjøre workflow-er kjørt av `pull_request` event-er.",

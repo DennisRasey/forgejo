@@ -24,12 +24,12 @@
 	"dropzone.invalid_input_type": "Bu tür dosyalar yüklenemez.",
 	"dropzone.file_too_big": "Dosya boyutunuz ({{filesize}} MB), ({{maxFilesize}} MB) olan maksimum boyutu aşıyor.",
 	"dropzone.remove_file": "Dosyayı Kaldır",
-	"munits.data.b": "B",
-	"munits.data.kib": "Kilobayt",
-	"munits.data.mib": "Megabayt",
-	"munits.data.gib": "Gigabayt",
+	"munits.data.b": "Bayt",
+	"munits.data.kib": "KiloByte",
+	"munits.data.mib": "MegaByte",
+	"munits.data.gib": "GigaByte",
 	"munits.data.tib": "TiB(TeraByte)",
-	"munits.data.pib": "Petabayt",
+	"munits.data.pib": "PetaByte",
 	"munits.data.eib": "EiB",
 	"packages.title": "Paketler",
 	"packages.empty": "Henüz hiçbir paket yok.",
@@ -165,8 +165,8 @@
 		"other": "%s çatallar"
 	},
 	"stars.n_stars": {
-		"one": "%s yıldız",
-		"other": "%s yıldızlar"
+		"one": "%s yıldızlama",
+		"other": "%s yıldızlamalar"
 	},
 	"repo.pulls.merged_title_desc": {
 		"one": "<code>%[2]s</code> 'nden gelen %[1]d değişikliği(commit'i), <code>%[3]s</code> 'ine %[4]s olarak birleştirildi",
@@ -224,27 +224,27 @@
 	"repo.issue_indexer.title": "Sorun Endeksleyici",
 	"relativetime.mins": {
 		"one": "%d dakika önce",
-		"other": "%d dakikalar önce"
+		"other": "%d dakika_önce"
 	},
 	"relativetime.hours": {
 		"one": "%d saat önce",
-		"other": "%d saatler önce"
+		"other": "%d saat_önce"
 	},
 	"relativetime.days": {
 		"one": "%d gün önce",
-		"other": "%d günler önce"
+		"other": "%d gün_önce"
 	},
 	"relativetime.weeks": {
 		"one": "%d hafta önce",
-		"other": "%d haftalar önce"
+		"other": "%d hafta_önce"
 	},
 	"relativetime.months": {
 		"one": "%d ay önce",
-		"other": "%d aylar önce"
+		"other": "%d ay_önce"
 	},
 	"relativetime.years": {
 		"one": "%d yıl önce",
-		"other": "%d yıllar önce"
+		"other": "%d yıl_önce"
 	},
 	"repo.settings.push_mirror.branch_filter.label": "Dal süzgeci (isteğe bağlı)",
 	"repo.settings.push_mirror.branch_filter.description": "Yansıtılıcak dallar. Tüm dalları yansıtmak için boş bırakın. Sözdizimi için <a href=\"%[1]s\">$[2]s dokümantasyonuna</a> başvurun. Örneğin: <code>main, release/*</code>",
@@ -392,25 +392,25 @@
 	"meta.last_line": "Steve Jobs ile Nejat İşler'in kardeş olduğunu biliyor muydunuz.",
 	"repo.issues.filter_poster.hint": "Yazara göre filtrele",
 	"repo.issues.filter_assignee.hint": "Atanan kullanıcıya göre filtrele",
-	"repo.issues.filter_reviewers.hint": "Yorum yapan kullanıcıya göre filtrele",
+	"repo.issues.filter_reviewers.hint": "Değerlendiren kullanıcıya göre filtrele",
 	"repo.issues.filter_mention.hint": "Bahsedilen kullanıcıya göre filtrele",
-	"repo.issues.filter_modified.hint": "Son değiştirilme tarihine göre filtrele",
+	"repo.issues.filter_modified.hint": "Son düzenleyip değiştirilme tarihine göre filtrele",
 	"repo.issues.filter_sort.hint_with_placeholder": "Sıralama: %s",
-	"issues.updated": "güncellenenler %s",
+	"issues.updated": "%s güncel",
 	"issues.filters.labels.exclude": "Etiketi hariç tut",
 	"issues.filters.labels.unexclude": "Kesin olarak hariç tut",
-	"repo.pulls.auto_merge.no_permission": "Bu çekme isteğinin otomatik birleştirilmesini iptal etme izniniz yok.",
+	"repo.pulls.auto_merge.no_permission": "Bu çekme isteği'nin otomatik birleştirilmesini iptal etme izniniz yok.",
 	"repo.pulls.poster_manage_approval": "Onay Yönetimi",
 	"repo.pulls.poster_requires_approval": "Bazı iş akışları <a href=\"%[1]s\">incelenmeyi bekliyor</a>.",
 	"repo.pulls.poster_requires_approval.tooltip": "Bu çekme isteğinin yazarı, çatallanmış bir depodan oluşturulan veya AGit ile oluşturulan bir çekme isteği tarafından tetiklenen iş akışlarını çalıştırma konusunda güvenilir bulunmamaktadır. `pull_request` olayıyla tetiklenen iş akışları, onaylanana kadar çalıştırılmayacaktır.",
-	"repo.pulls.poster_is_trusted": "Bu çekme isteği'nin yazarı <a href=\"%[1]s\">her zaman güvenilir kabul edilir, workflows</a>iş akışlarını çalıştırma konusunda.",
+	"repo.pulls.poster_is_trusted": "Bu çekme isteğinin ( pull request ) yazarı <a href=\"%[1]s\">a her zaman iş akışlarını/ workflows</a> yürütme konusunda güvenilir bir yazardır.",
 	"repo.pulls.poster_is_trusted.tooltip": "Bu çekme isteğinin yazarı, `pull_request` olayları tarafından tetiklenen iş akışlarını çalıştırma konusunda açıkça güvenilir kabul edilmektedir.",
-	"repo.pulls.poster_trust_deny": "Reddet (Kabul etme)",
+	"repo.pulls.poster_trust_deny": "Reddet",
 	"repo.pulls.poster_trust_deny.tooltip": "Onay bekleyen iş akışları iptal edilecektir.",
 	"repo.pulls.poster_trust_once": "Tek seferlik onayla",
-	"repo.pulls.poster_trust_once.tooltip": "Bir `pull_request` olayıyla tetiklenen iş akışları bu commit üzerinde çalışacak, ancak bu pull request'e gönderilecek tüm gelecekteki commit'ler için onaylanması gerekecektir.",
+	"repo.pulls.poster_trust_once.tooltip": "Bir `pull_request` olayıyla tetiklenen iş akışları bu commit üzerinde çalışacak, ancak bu çekme isteği'ne gönderilecek tüm gelecekteki değişiklik(commit)'ler için onaylanması gerekecektir.",
 	"repo.pulls.poster_trust_always": "Her zaman onayla",
-	"repo.pulls.poster_trust_always.tooltip": "Bir `pull_request` olayıyla tetiklenen iş akışları bu commit üzerinde çalışacak ve bu pull request'ten veya aynı kullanıcı tarafından oluşturulan gelecekteki pull request'lerden gelen çalıştırmaları onaylamaya gerek kalmayacaktır.",
+	"repo.pulls.poster_trust_always.tooltip": "Bir `pull_request` olayıyla tetiklenen iş akışları bu değişiklik (commit) üzerinde çalışacaktır ve ayrıca bu çekme isteği'nden ya da aynı kullanıcı tarafından oluşturulan gelecekteki çekme isteklerinden gelen çalıştırma işlemlerini onaylamaya gerek kalmayacaktır.",
 	"repo.pulls.poster_trust_revoke": "Geri al",
 	"repo.pulls.poster_trust_revoke.tooltip": "Bu çekme isteğinin yazarı, artık `pull_request` olayıyla tetiklenen iş akışlarını çalıştırma konusunda güvenilir kabul edilmeyecek; her çalıştırma işlemi manuel olarak onaylanmalıdır.",
 	"repo.view.gitmodules_too_large": ".gitmodules dosyası çok büyük ve (örneğin API çağrılarında) göz ardı edilecektir",
@@ -498,7 +498,7 @@
 	"actions.runners.create_runner.title": "Yeni çalıştırıcı oluştur",
 	"actions.runners.create_runner.properties_fieldset": "Özellikler",
 	"actions.runners.create_runner.name_label": "Adı",
-	"actions.runners.create_runner.description_label": "Açıklamasının",
+	"actions.runners.create_runner.description_label": "Açıklaması",
 	"actions.runners.create_runner.create_button": "Yarat",
 	"actions.runners.create_runner.cancel_button": "İptal et",
 	"actions.runners.edit_runner.page_title": "%s çalıştırıcısını düzenle",
