@@ -26,6 +26,7 @@ import (
 
 func TestActivityPubPerson(t *testing.T) {
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	mock := test.NewFederationServerMock()
@@ -52,7 +53,7 @@ func TestActivityPubPerson(t *testing.T) {
 			require.NoError(t, err)
 
 			c, err := cf.WithKeysDirect(ctx, mock.Persons[0].PrivKey,
-				mock.Persons[0].KeyID(federatedSrv.URL))
+				mock.Persons[0].KeyID(federatedSrv.URL), nil)
 			require.NoError(t, err)
 
 			resp, err := c.GetBody(localUserURL)
@@ -81,6 +82,7 @@ func TestActivityPubMissingPerson(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
 	defer test.MockVariableValue(&setting.Federation.SignatureEnforced, false)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	req := NewRequest(t, "GET", "/api/v1/activitypub/user-id/999999999")
@@ -90,6 +92,7 @@ func TestActivityPubMissingPerson(t *testing.T) {
 
 func TestActivityPubPersonInbox(t *testing.T) {
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
@@ -101,7 +104,7 @@ func TestActivityPubPersonInbox(t *testing.T) {
 		ctx, _ := contexttest.MockAPIContext(t, user2inboxurl)
 		cf, err := activitypub.NewClientFactoryWithTimeout(60 * time.Second)
 		require.NoError(t, err)
-		c, err := cf.WithKeys(ctx, user1, user1url)
+		c, err := cf.WithKeys(ctx, user1, user1url, nil)
 		require.NoError(t, err)
 
 		// invalid request is rejected
@@ -113,6 +116,7 @@ func TestActivityPubPersonInbox(t *testing.T) {
 
 func TestActivityPubPersonOutbox(t *testing.T) {
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	mock := test.NewFederationServerMock()
@@ -128,7 +132,7 @@ func TestActivityPubPersonOutbox(t *testing.T) {
 		require.NoError(t, err)
 
 		c, err := cf.WithKeysDirect(ctx, mock.Persons[0].PrivKey,
-			mock.Persons[0].KeyID(federatedSrv.URL))
+			mock.Persons[0].KeyID(federatedSrv.URL), nil)
 		require.NoError(t, err)
 
 		// request outbox

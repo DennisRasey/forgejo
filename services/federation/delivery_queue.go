@@ -6,6 +6,7 @@ package federation
 import (
 	"fmt"
 	"io"
+	"net/url"
 
 	"forgejo.org/models/user"
 	"forgejo.org/modules/activitypub"
@@ -54,7 +55,13 @@ func deliverToInbox(item deliveryQueueItem) error {
 	if err != nil {
 		return err
 	}
-	apclient, err := clientFactory.WithKeys(ctx, item.Doer, item.Doer.APActorID()+"#main-key")
+
+	inboxURL, err := url.Parse(item.InboxURL)
+	if err != nil {
+		return fmt.Errorf("invalid delivery item inbox URL: %w", err)
+	}
+
+	apclient, err := clientFactory.WithKeys(ctx, item.Doer, item.Doer.APActorID()+"#main-key", []*url.URL{inboxURL})
 	if err != nil {
 		return err
 	}

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"forgejo.org/modules/activitypub"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/test"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,6 +65,7 @@ Set up a user called "me" for all tests
 */
 
 func TestClientCtx(t *testing.T) {
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	require.NoError(t, unittest.PrepareTestDatabase())
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	pubID := "myGpgId"
@@ -70,11 +73,36 @@ func TestClientCtx(t *testing.T) {
 	log.Debug("ClientFactory: %v\nError: %v", cf, err)
 	require.NoError(t, err)
 
-	c, err := cf.WithKeys(db.DefaultContext, user, pubID)
+	c, err := cf.WithKeys(db.DefaultContext, user, pubID, nil)
 
 	log.Debug("Client: %v\nError: %v", c, err)
 	require.NoError(t, err)
 	_ = activitypub.NewContext(db.DefaultContext, cf)
+}
+
+func TestClientNilHostsCtx(t *testing.T) {
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, false)()
+	require.NoError(t, unittest.PrepareTestDatabase())
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	pubID := "myGpgId"
+	cf, err := activitypub.NewClientFactory()
+	log.Debug("ClientFactory: %v\nError: %v", cf, err)
+	require.NoError(t, err)
+
+	_, err = cf.WithKeys(db.DefaultContext, user, pubID, nil)
+	require.Error(t, err)
+
+	_, err = cf.WithKeys(db.DefaultContext, user, pubID, nil)
+	require.Error(t, err)
+
+	_, err = cf.WithKeys(db.DefaultContext, user, pubID, []*url.URL{nil})
+	require.Error(t, err)
+
+	testURL, err := url.Parse("https://example.dev")
+	require.NoError(t, err)
+
+	_, err = cf.WithKeys(db.DefaultContext, user, pubID, []*url.URL{testURL, nil})
+	require.Error(t, err)
 }
 
 /* TODO: bring this test to work or delete
@@ -109,13 +137,10 @@ func TestActivityPubSignedGet(t *testing.T) {
 */
 
 func TestActivityPubSignedPost(t *testing.T) {
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	require.NoError(t, unittest.PrepareTestDatabase())
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	pubID := "https://example.com/pubID"
-	cf, err := activitypub.NewClientFactory()
-	require.NoError(t, err)
-	c, err := cf.WithKeys(db.DefaultContext, user, pubID)
-	require.NoError(t, err)
 
 	expected := "BODY"
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +153,13 @@ func TestActivityPubSignedPost(t *testing.T) {
 		fmt.Fprint(w, expected)
 	}))
 	defer srv.Close()
+
+	cf, err := activitypub.NewClientFactory()
+	require.NoError(t, err)
+	srvURL, err := url.Parse(srv.URL)
+	require.NoError(t, err)
+	c, err := cf.WithKeys(db.DefaultContext, user, pubID, []*url.URL{srvURL})
+	require.NoError(t, err)
 
 	r, err := c.Post([]byte(expected), srv.URL)
 	require.NoError(t, err)

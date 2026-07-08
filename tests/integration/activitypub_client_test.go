@@ -22,6 +22,7 @@ import (
 
 func TestActivityPubClientBodySize(t *testing.T) {
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
@@ -32,7 +33,7 @@ func TestActivityPubClientBodySize(t *testing.T) {
 		clientFactory, err := activitypub.NewClientFactoryWithTimeout(60 * time.Second)
 		require.NoError(t, err)
 
-		apClient, err := clientFactory.WithKeys(ctx, user1, user1.KeyID())
+		apClient, err := clientFactory.WithKeys(ctx, user1, user1.KeyID(), nil)
 		require.NoError(t, err)
 
 		// Request with normal MaxSize

@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"forgejo.org/models/forgefed"
 	"forgejo.org/models/user"
@@ -57,8 +58,25 @@ func FindOrCreateActorKey(ctx context.Context, keyID string) (pubKey any, err er
 		return pubKey, nil
 	}
 
+	port := uint16(443)
+	if keyURL.Port() != "" {
+		port64, err := strconv.ParseUint(keyURL.Port(), 10, 16)
+		if err != nil {
+			return nil, err
+		}
+		port = uint16(port64)
+	}
+
+	hostURL := *keyURL
+	// if the `Actor` is not an `Application`, check for a `FederationHost` record associated with the key ID
+	// for user `Actor`s, we should already have a `FederationHost` record in the database, so we ensure that the user `Actor` matches the respective `FederationHost` URL
+	// otherwise, we just match against the supplied key ID URL
+	if federationHost, err := forgefed.FindFederationHostByFqdnAndPort(ctx, keyURL.Hostname(), port); err == nil {
+		hostURL = federationHost.AsURL()
+	}
+
 	// Fetch missing key
-	pubKey, pubKeyBytes, actor, err := fetchKeyFromAp(ctx, *keyURL)
+	pubKey, pubKeyBytes, actor, err := fetchKeyFromAp(ctx, *keyURL, hostURL)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +154,7 @@ func updateFederationHostKey(ctx context.Context, federationHost *forgefed.Feder
 	return nil
 }
 
-func fetchKeyFromAp(ctx context.Context, keyURL url.URL) (pubKey any, pubKeyBytes []byte, apPerson *ap.Actor, err error) {
+func fetchKeyFromAp(ctx context.Context, keyURL, hostURL url.URL) (pubKey any, pubKeyBytes []byte, apPerson *ap.Actor, err error) {
 	log.Trace("keyURL %v", keyURL)
 	actionsUser := user.NewAPServerActor()
 
@@ -145,7 +163,7 @@ func fetchKeyFromAp(ctx context.Context, keyURL url.URL) (pubKey any, pubKeyByte
 		return nil, nil, nil, err
 	}
 
-	apClient, err := clientFactory.WithKeys(ctx, actionsUser, actionsUser.KeyID())
+	apClient, err := clientFactory.WithKeys(ctx, actionsUser, actionsUser.KeyID(), []*url.URL{&hostURL})
 	if err != nil {
 		return nil, nil, nil, err
 	}

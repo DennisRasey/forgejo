@@ -25,6 +25,7 @@ import (
 func TestActivityPubRepoFollowing(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 
 	mock := test.NewFederationServerMock()
 	federatedSrv := mock.DistantServer(t)
