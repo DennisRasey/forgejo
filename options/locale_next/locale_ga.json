@@ -627,5 +627,7 @@
 	"actions.secrets.mutation.value_description": "Ní thaispeánfar an luach atá ann cheana. Fág an réimse folamh mura mian leat é a mhodhnú. Coinnítear carachtair speisialta. Déantar CRLF (briseadh líne de stíl Windows) a thiontú go huathoibríoch go LF. Ionchódaigh an luach le Base64 más ceart briseadh líne a choinneáil.",
 	"form.RunnerName": "Ainm",
 	"graphs.recent_commits.title": "Líon na ngealltanas le bliain anuas",
-	"graphs.code_frequency.title": "Minicíocht chód thar stair {0}"
+	"graphs.code_frequency.title": "Minicíocht chód thar stair {0}",
+	"repo.packages.visibility_warning": "Tá an stórlann seo príobháideach, ach tá na pacáistí nasctha poiblí (tá an t-úinéir %s poiblí).",
+	"actions.jobs.not_started": "níor tosaíodh"
 }

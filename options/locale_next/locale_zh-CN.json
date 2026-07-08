@@ -539,5 +539,6 @@
 	"actions.workflow.unknown_job_in_needs": "ID为“%[1]s”的任务在`needs`中引用了未知任务“%[2]s”。",
 	"actions.workflow.rerun_impossible": "工作流无法重新运行。",
 	"actions.workflow.job_rerun_impossible": "任务无法重新运行。",
-	"repo.packages.visibility_warning": "此仓库是私有的，但有公开可见的软件包（所有者“%s”是公开的）。"
+	"repo.packages.visibility_warning": "此仓库是私有的，但有公开可见的软件包（所有者“%s”是公开的）。",
+	"actions.jobs.not_started": "未开始"
 }

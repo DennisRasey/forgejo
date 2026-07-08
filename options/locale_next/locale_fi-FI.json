@@ -446,5 +446,17 @@
 	"actions.secrets.mutation.success_message": "Salaisuus \"%s\" on päivitetty.",
 	"actions.secrets.mutation.failure_message": "Salaisuutta \"%s\" ei voitu päivittää.",
 	"pulls.manual_merge.copy.button": "Kopioi yhdistämiskommitin viesti",
-	"form.RunnerName": "Nimi"
+	"form.RunnerName": "Nimi",
+	"actions.runners.version": "Versio",
+	"actions.runners.list_runners.edit_column": "Muokkaa",
+	"actions.runners.list_runners.delete_column": "Poista",
+	"actions.runners.list_runners.delete_button": "Poista",
+	"actions.runners.list_runners.delete_button_aria": "Poista %s",
+	"actions.runners.list_runners.edit_button": "Muokkaa",
+	"actions.runners.list_runners.edit_button_aria": "Muokkaa %s",
+	"actions.runners.ephemeral.yes": "kyllä",
+	"actions.runners.ephemeral.no": "ei",
+	"actions.runners.create_runner.create_button": "Luo",
+	"actions.runners.edit_runner.properties_fieldset": "Ominaisuudet",
+	"graphs.recent_commits.title": "Kommittien määrä viimeisen vuoden aikana"
 }

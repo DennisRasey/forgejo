@@ -587,5 +587,6 @@
 	"actions.workflow.unknown_job_in_needs": "Upgaav mit ID %[1]s benöömt unbekannte Upgaven in `needs`: %[2]s.",
 	"actions.workflow.rerun_impossible": "De Warkwies kann nich weer lopen laten worden.",
 	"actions.workflow.job_rerun_impossible": "De Upgaav kann nich weer lopen laten worden.",
-	"repo.packages.visibility_warning": "Deeses Repositorium is privaat, aver verknüppt Paketen sünd publik (Eegner %s is publik)."
+	"repo.packages.visibility_warning": "Deeses Repositorium is privaat, aver verknüppt Paketen sünd publik (Eegner %s is publik).",
+	"actions.jobs.not_started": "nich begunnen"
 }

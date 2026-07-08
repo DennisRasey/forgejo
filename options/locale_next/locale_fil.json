@@ -552,5 +552,6 @@
 	"actions.runners.edit_runner.save_button": "I-save",
 	"actions.runners.edit_runner.cancel_button": "Kanselahin",
 	"actions.runners.runner_setup.title": "I-set up ang runner na %s",
-	"actions.runners.show_registration_token": "Ipakita ang token ng pagrehistro"
+	"actions.runners.show_registration_token": "Ipakita ang token ng pagrehistro",
+	"repo.packages.visibility_warning": "Pribado ang repositoryong ito, pero publiko ang mga naka-link na package (publiko ang %s)."
 }

@@ -602,5 +602,6 @@
 	"actions.runners.version": "Versão",
 	"actions.workflow.unknown_job_in_needs": "O trabalho com o ID %[1]s faz referência a trabalhos desconhecidos em `needs`: %[2]s.",
 	"actions.workflow.rerun_impossible": "A sequência de trabalho não pode ser executada novamente.",
-	"actions.workflow.job_rerun_impossible": "O trabalho não pode ser executado novamente."
+	"actions.workflow.job_rerun_impossible": "O trabalho não pode ser executado novamente.",
+	"repo.packages.visibility_warning": "Este repositório é privado, mas os pacotes associados são públicos (o proprietário %s é público)."
 }

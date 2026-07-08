@@ -581,5 +581,6 @@
 	"actions.runners.version": "Version",
 	"actions.runners.runner_setup.instruction_advanced_configurations": "Pour configurer l'exécuteur Forgejo dans des conteneurs ou pour des configurations avancées, consultez la <a href=\"%s\">documentation</a>.",
 	"actions.workflow.rerun_impossible": "Le workflow ne peut pas être relancé.",
-	"actions.workflow.job_rerun_impossible": "La tâche ne peut pas être relancé."
+	"actions.workflow.job_rerun_impossible": "La tâche ne peut pas être relancé.",
+	"repo.packages.visibility_warning": "Ce dépôt est privé, mais les paquets liés sont publics (le propriétaire %s est public)."
 }
