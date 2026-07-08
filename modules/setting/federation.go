@@ -12,23 +12,25 @@ import (
 // Federation settings
 var (
 	Federation = struct {
-		Enabled             bool
-		ShareUserStatistics bool
-		MaxSize             int64
-		SignatureAlgorithms []string
-		DigestAlgorithm     string
-		GetHeaders          []string
-		PostHeaders         []string
-		SignatureEnforced   bool
+		Enabled                   bool
+		ShareUserStatistics       bool
+		MaxSize                   int64
+		SignatureAlgorithms       []string
+		DigestAlgorithm           string
+		GetHeaders                []string
+		PostHeaders               []string
+		SignatureEnforced         bool
+		InsecureAllowInvalidHosts bool
 	}{
-		Enabled:             false,
-		ShareUserStatistics: true,
-		MaxSize:             4,
-		SignatureAlgorithms: []string{"rsa-sha256", "rsa-sha512", "ed25519"},
-		DigestAlgorithm:     "SHA-256",
-		GetHeaders:          []string{"(request-target)", "Date", "Host"},
-		PostHeaders:         []string{"(request-target)", "Date", "Host", "Digest"},
-		SignatureEnforced:   true,
+		Enabled:                   false,
+		ShareUserStatistics:       true,
+		MaxSize:                   4,
+		SignatureAlgorithms:       []string{"rsa-sha256", "rsa-sha512", "ed25519"},
+		DigestAlgorithm:           "SHA-256",
+		GetHeaders:                []string{"(request-target)", "Date", "Host"},
+		PostHeaders:               []string{"(request-target)", "Date", "Host", "Digest"},
+		SignatureEnforced:         true,
+		InsecureAllowInvalidHosts: false,
 	}
 )
 

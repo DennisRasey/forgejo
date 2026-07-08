@@ -27,6 +27,8 @@ import (
 // Flow of this test is documented at: https://codeberg.org/forgejo-contrib/federation/src/branch/main/doc/user-activity-following.md
 func TestActivityPubPersonInboxFollow(t *testing.T) {
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
+	defer test.MockVariableValue(&setting.Federation.SignatureEnforced, true)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	federation.Init()
@@ -60,7 +62,10 @@ func TestActivityPubPersonInboxFollow(t *testing.T) {
 		cf, err := activitypub.NewClientFactoryWithTimeout(60 * time.Second)
 		require.NoError(t, err)
 
-		c, err := cf.WithKeysDirect(ctx, mock.ApActor.PrivKey, mock.ApActor.KeyID(federatedSrv.URL))
+		distantURI, err := url.Parse(distantURL)
+		require.NoError(t, err)
+
+		c, err := cf.WithKeysDirect(ctx, mock.ApActor.PrivKey, mock.ApActor.KeyID(federatedSrv.URL), []*url.URL{distantURI})
 		require.NoError(t, err)
 
 		resp, err := c.Post(followActivity, localUser2Inbox)
@@ -99,7 +104,7 @@ func TestActivityPubPersonInboxFollow(t *testing.T) {
 		)
 
 		c, err = cf.WithKeysDirect(ctx, mock.ApActor.PrivKey,
-			mock.ApActor.KeyID(federatedSrv.URL))
+			mock.ApActor.KeyID(federatedSrv.URL), nil)
 
 		require.NoError(t, err)
 
@@ -120,6 +125,7 @@ func TestActivityPubPersonInboxFollow(t *testing.T) {
 func TestActivityPubFollowRefollow(t *testing.T) {
 	defer test.MockVariableValue(&setting.Federation.Enabled, true)()
 	defer test.MockVariableValue(&setting.Federation.SignatureEnforced, false)()
+	defer test.MockVariableValue(&setting.Federation.InsecureAllowInvalidHosts, true)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	require.NoError(t, federation.Init())
