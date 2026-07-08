@@ -32,5 +32,16 @@
 		"one": "hai %d ano",
 		"other": "hai %d anos"
 	},
-	"meta.last_line": " "
+	"meta.last_line": " ",
+	"home.welcome.no_activity": "Sen actividade",
+	"home.welcome.activity_hint": "Aínda non hai nada no teu feed. Tanto as túas accións como a actividade dos repositorios seguidos aparecerán aqui.",
+	"home.explore_repos": "Explorar repositorios",
+	"home.explore_users": "Explorar usuarios",
+	"home.explore_orgs": "Explorar organizacións",
+	"stars.list.none": "Ninguén lle dou unha estrela a este repo.",
+	"watch.list.none": "Ninguén está seguindo este repo.",
+	"followers.incoming.list.self.none": "Ninguén está seguindo o teu perfil.",
+	"followers.incoming.list.none": "Ninguén está seguindo este usuario.",
+	"repo.issues.filter_poster.hint": "Filtrar por autor",
+	"repo.issues.filter_assignee.hint": "Filtrar por usuario asignado"
 }

@@ -611,7 +611,7 @@
 	"actions.runners.runner_setup.program_options_snippet_aria": "Conas forgejo-runner a ghairm",
 	"actions.runners.runner_setup.instruction_replace_connection_name": "Cuir luach de do thaitin leat in ionad ainm an naisc (<code>forgejo</code> sa sampla).",
 	"actions.runners.runner_setup.heading_using_options": "Ag baint úsáide as roghanna cláir",
-	"actions.runners.runner_setup.instruction_advanced_configurations": "Chun Forgejo Runner a chumrú agus é ag rith i gcoimeádáin nó i gcumraíochtaí ardleibhéil, féach ar an <a href=\"%s\">doiciméadú</a>.",
+	"actions.runners.runner_setup.instruction_advanced_configurations": "Chun Forgejo Runner a chumrú ag rith i gcoimeádáin nó i gcumraíochtaí ardleibhéil, féach ar an <a href=\"%s\">dhoiciméadú</a>.",
 	"actions.runners.reset_registration_token.token": "Comhartha Clárúcháin (Imithe as Feidhm)",
 	"actions.runs.scheduled_description": "Rith sceidealaithe de thiomnú <a href=\"%[1]s\">%[2]s</a>",
 	"actions.runs.workflow_dispatch_description": "Rith an tiomnúcháin <a href=\"%[1]s\">%[2]s</a> spreagtha ag <a href=\"%[3]s\">%[4]s</a>",

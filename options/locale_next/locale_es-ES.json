@@ -259,7 +259,7 @@
 	"themes.names.forgejo-dark": "Forgejo oscuro",
 	"themes.names.forgejo-light": "Forgejo claro",
 	"home.welcome.no_activity": "Sin actividad",
-	"meta.last_line": "¡Gracias por traducir Forgejo! Esta línea no es vista por los usuarios pero sirve para otros propósitos en la gestión de la traducción. Puedes colocar un dato curioso en la traducción en lugar de traducirla.",
+	"meta.last_line": "¡Muchas gracias por la traducción, Forgejo!. Esta línea no es visible para los usuarios, pero se utiliza para otros fines relacionados con la gestión de la traducción. Puedes incluir un dato curioso en la traducción, en lugar de traducirla.",
 	"relativetime.now": "ahora",
 	"relativetime.mins": {
 		"one": "hace %d minuto",
@@ -483,5 +483,9 @@
 	"actions.runners.list_runners.delete_button": "Eliminar",
 	"actions.runners.list_runners.delete_button_aria": "Eliminar",
 	"teams.remove_all_repos.modal.header": "Retira todos los repositorios",
-	"admin.auths.oauth2_quota_group_map_removal": "Retire los usuarios desde los grupos de cuota sincronizados si el usuario no pertenece al grupo correspondiente."
+	"admin.auths.oauth2_quota_group_map_removal": "Retire los usuarios desde los grupos de cuota sincronizados si el usuario no pertenece al grupo correspondiente.",
+	"moderation.users.cannot_suspend_admins": "Los usuarios con privilegios de administrador no pueden ser bloqueados.",
+	"form.RunnerName": "Nombre",
+	"graphs.recent_commits.title": "Número de instantáneas (commit) en el último año",
+	"graphs.code_frequency.title": "Frecuencia de códigos a lo largo de la historia de {0}"
 }

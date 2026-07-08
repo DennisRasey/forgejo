@@ -582,5 +582,6 @@
 	"actions.runners.version": "Version",
 	"actions.workflow.unknown_job_in_needs": "Job mit ID %[1]s referenziert unbekannte Jobs in `needs`: %[2]s.",
 	"actions.workflow.rerun_impossible": "Der Workflow kann nicht erneut ausgeführt werden.",
-	"actions.workflow.job_rerun_impossible": "Der Job kann nicht erneut ausgeführt werden."
+	"actions.workflow.job_rerun_impossible": "Der Job kann nicht erneut ausgeführt werden.",
+	"repo.packages.visibility_warning": "Dieses Repository ist privat, aber verknüpfte Pakete sind öffentlich (Besitzer %s ist öffentlich)."
 }

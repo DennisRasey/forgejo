@@ -283,7 +283,7 @@
 	"moderation.abuse_category.other_violations": "Прочие нарушения правил",
 	"moderation.report_remarks": "Подробности",
 	"moderation.report_abuse": "Пожаловаться",
-	"moderation.report_remarks.placeholder": "Пожалуйста, предоставьте немного подробностей о содержимом, на которое вы жалуетесь.",
+	"moderation.report_remarks.placeholder": "Пожалуйста, объясните, почему вы жалуетесь на это содержимое.",
 	"moderation.reporting_failed": "Не удалось отправить жалобу: %v",
 	"moderation.report_content": "Пожаловаться",
 	"moderation.report_abuse_form.already_reported": "Вы уже пожаловались на это содержимое",
@@ -589,5 +589,8 @@
 	"actions.runs.on_push_description": "Коммит <a href=\"%[1]s\">%[2]s</a>, отправленный <a href=\"%[3]s\">%[4]s</a>",
 	"actions.secrets.edit_button": "Изменить секрет «%s»",
 	"actions.secrets.mutation.success_message": "Секрет «%s» был изменён.",
-	"actions.secrets.mutation.name_description": "Название секрета может содержать только буквы, цифры и нижние подчёркивания. Оно не может начинаться на FORGEJO_, GITEA_, GITHUB_, или на цифру. Оно будет сохранено в верхнем регистре."
+	"actions.secrets.mutation.name_description": "Название секрета может содержать только буквы, цифры и нижние подчёркивания. Оно не может начинаться на FORGEJO_, GITEA_, GITHUB_, или на цифру. Оно будет сохранено в верхнем регистре.",
+	"actions.runners.edit_runner.regenerate_token_help": "Существующий токен будет сразу же отозван. Новый токен будет предоставлен на следующей странице.",
+	"actions.runners.runner_details.labels_note": "Метки задаются на самом исполнителе в файле конфигурации или как аргументы запуска. Метки обновляются каждый раз, когда исполнитель устанавливает соединение с Forgejo.",
+	"actions.runs.scheduled_description": "Запланированный запуск для коммита <a href=\"%[1]s\">%[2]s</a>"
 }

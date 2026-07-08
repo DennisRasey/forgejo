@@ -602,5 +602,6 @@
 	"actions.runners.version": "Версія",
 	"actions.workflow.unknown_job_in_needs": "Завдання з ID %[1]s посилається на невідомі завдання в `needs`: %[2]s.",
 	"actions.workflow.rerun_impossible": "Робочий потік неможливо перезапустити.",
-	"actions.workflow.job_rerun_impossible": "Завдання неможливо перезапустити."
+	"actions.workflow.job_rerun_impossible": "Завдання неможливо перезапустити.",
+	"repo.packages.visibility_warning": "Це приватний репозиторій, але пов’язані з ним пакунки є загальнодоступними (власник %s є публічним)."
 }

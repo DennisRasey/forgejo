@@ -182,7 +182,7 @@
 	"packages.owner.settings.chef.title": "Chef注册中心",
 	"packages.owner.settings.chef.keypair": "生成密钥对",
 	"packages.owner.settings.chef.keypair.description": "发送至Chef注册中心的请求必须被加密签名以验证身份。在生成密钥对时，Forgejo仅保存公钥，您将得到供knife使用的私钥。生成新的密钥对将丢弃旧的密钥对。",
-	"fork.n_forks": "%s个派生",
+	"fork.n_forks": "%s个分叉",
 	"stars.n_stars": "%s次点赞",
 	"release.n_downloads": "%s次下载",
 	"repo.pulls.merged_title_desc": "于%[4]s将%[1]d次代码提交从<code>%[2]s</code>合并至<code>%[3]s</code>",
@@ -365,7 +365,7 @@
 	"teams.remove_all_repos.modal.header": "移除所有仓库",
 	"repo.pulls.poster_manage_approval": "管理批准",
 	"repo.pulls.poster_requires_approval": "有工作流正<a href=\"%[1]s\">等待审阅</a>。",
-	"repo.pulls.poster_requires_approval.tooltip": "此合并请求的作者未被信任以运行由派生仓库或AGit创建的PR触发的工作流。由`pull_request`事件触发的工作流在被批准前不会运行。",
+	"repo.pulls.poster_requires_approval.tooltip": "此合并请求的作者未被信任以运行由分叉仓库或AGit创建的PR触发的工作流。由`pull_request`事件触发的工作流在被批准前不会运行。",
 	"repo.pulls.poster_is_trusted": "此合并请求的作者<a href=\"%[1]s\">总是受到信任以运行工作流</a>。",
 	"repo.pulls.poster_is_trusted.tooltip": "此合并请求的作者被明确信任以运行由`pull_request`事件触发的工作流。",
 	"repo.pulls.poster_trust_deny": "拒绝",
@@ -538,5 +538,6 @@
 	"actions.runners.version": "版本",
 	"actions.workflow.unknown_job_in_needs": "ID为“%[1]s”的任务在`needs`中引用了未知任务“%[2]s”。",
 	"actions.workflow.rerun_impossible": "工作流无法重新运行。",
-	"actions.workflow.job_rerun_impossible": "任务无法重新运行。"
+	"actions.workflow.job_rerun_impossible": "任务无法重新运行。",
+	"repo.packages.visibility_warning": "此仓库是私有的，但有公开可见的软件包（所有者“%s”是公开的）。"
 }
