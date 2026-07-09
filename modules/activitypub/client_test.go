@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
@@ -167,4 +168,31 @@ func TestActivityPubSignedPost(t *testing.T) {
 	body, err := io.ReadAll(r.Body)
 	require.NoError(t, err)
 	assert.Equal(t, expected, string(body))
+}
+
+func TestActivityPubRedirect(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	pubID := "https://example.com/pubID"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		statusCode, _ := strconv.ParseInt(r.URL.Query()["code"][0], 10, 32)
+		w.WriteHeader(int(statusCode))
+		w.Header().Add("Location", "/evil-redirect")
+		w.Write([]byte("/evil-redirect"))
+	}))
+
+	cf, err := activitypub.NewClientFactory()
+	require.NoError(t, err)
+	srvURL, err := url.Parse(srv.URL)
+	require.NoError(t, err)
+	c, err := cf.WithKeys(db.DefaultContext, user, pubID, []*url.URL{srvURL})
+	require.NoError(t, err)
+
+	// try each HTTP status code (encoded in a query param for convenience)
+	// to ensure all redirects result in an error
+	for _, code := range []int{http.StatusMovedPermanently, http.StatusFound, http.StatusTemporaryRedirect, http.StatusPermanentRedirect, http.StatusMultipleChoices, http.StatusNotModified} {
+		_, err = c.Get(fmt.Sprintf("%s?code=%d", srv.URL, code))
+		require.Error(t, err)
+	}
 }

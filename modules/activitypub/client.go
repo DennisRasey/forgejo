@@ -72,6 +72,16 @@ func NewClientFactory() (c *ClientFactory, err error) {
 	return NewClientFactoryWithTimeout(5 * time.Second)
 }
 
+func checkRedirect(req *http.Request, via []*http.Request) error {
+	// NOTE: we don't want to allow any redirects for the ActivityPub client.
+	// For our use-case there is no legitimate context for a redirect,
+	// e.g. fetching keys, posting mailbox messages, etc.
+	//
+	// At some point in the future, we may want to support limited redirects,
+	// possibly configurable through a settings option.
+	return errors.New("activitypub: client: redirects are not allowed")
+}
+
 // NewClient function
 func NewClientFactoryWithTimeout(timeout time.Duration) (c *ClientFactory, err error) {
 	if err = containsRequiredHTTPHeaders(http.MethodGet, setting.Federation.GetHeaders); err != nil {
@@ -85,7 +95,8 @@ func NewClientFactoryWithTimeout(timeout time.Duration) (c *ClientFactory, err e
 			Transport: &http.Transport{
 				Proxy: proxy.Proxy(),
 			},
-			Timeout: timeout,
+			Timeout:       timeout,
+			CheckRedirect: checkRedirect,
 		},
 		algs:        setting.HttpsigAlgs,
 		digestAlg:   httpsig.DigestAlgorithm(setting.Federation.DigestAlgorithm),
