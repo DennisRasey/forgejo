@@ -66,6 +66,49 @@ func TestFileNameSanitize(t *testing.T) {
 	assert.Equal(t, "目标", fileNameSanitize("目标"))
 }
 
+func TestExpandTemplateVars(t *testing.T) {
+	expansionMap := map[string]string{
+		"REPO_NAME":           "my-repo",
+		"REPO_NAME_SNAKE":     "my_repo",
+		"REPO_OWNER":          "alice",
+		"REPO_OWNER_NOT_SANE": "../alice/..",
+	}
+
+	perlBareVariable := "perl -e '$REPO_NAME::suffix=value ; print $REPO_NAME::suffix=value'"
+	perlBracedVariable := "perl -e '${REPO_NAME::suffix=value} ; print ${REPO_NAME::suffix=value}'"
+
+	tests := []struct {
+		name             string
+		src              string
+		sanitizeFileName bool
+		expected         string
+	}{
+		{"bare known var", "$REPO_NAME", false, "my-repo"},
+		{"braced known var", "${REPO_NAME}", false, "my-repo"},
+		{"transformer suffix", "${REPO_NAME_SNAKE}", false, "my_repo"},
+		{"mixed", "$REPO_OWNER/${REPO_NAME}", false, "alice/my-repo"},
+		{"unknown braced var", "${UNKNOWN_VAR}", false, "${UNKNOWN_VAR}"},
+		{"unknown bare var", "$UNKNOWN_VAR", false, "$UNKNOWN_VAR"},
+		{"unknown in context", "Authorization: token ${AUTH_TOKEN}", false, "Authorization: token ${AUTH_TOKEN}"},
+		{"known prefix of unknown token", "$REPO_NAMEX", false, "$REPO_NAMEX"},
+		{"double dollar unknown", "$$UNKNOWN_VAR", false, "$$UNKNOWN_VAR"},
+		{"double dollar known", "$$REPO_NAME", false, "$my-repo"},
+		{"one letter variable", "cost is $5", false, "cost is $5"},
+		{"lone dollar", "lonely $", false, "lonely $"},
+		{"sanitize sane filename in known var", "${REPO_OWNER}", true, "alice"},
+		{"sanitize not sane filename in known var", "${REPO_OWNER_NOT_SANE}", true, "__alice__"},
+		{"bare perl variables may be replaced", perlBareVariable, false, "perl -e 'my-repo::suffix=value ; print my-repo::suffix=value'"},
+		{"braced perl variables will not be replaced", perlBracedVariable, false, perlBracedVariable},
+		{"multiline", "line0\nline1 $REPO_OWNER \nline2 ${REPO_NAME}\n", false, "line0\nline1 alice \nline2 my-repo\n"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, expandTemplateVars(tt.src, expansionMap, tt.sanitizeFileName))
+		})
+	}
+}
+
 func TestTransformers(t *testing.T) {
 	input := "Foo_Forgejo-BAR"
 

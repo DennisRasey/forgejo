@@ -238,10 +238,12 @@ func TestRepoGenerateTemplating(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		input := `# $REPO_NAME
 	This is a Repo By $REPO_OWNER
-	ThisIsThe${REPO_NAME}InAnInlineWay`
+	ThisIsThe${REPO_NAME}InAnInlineWay
+	CI token ${CI_DEPLOY_TOKEN} is left untouched`
 		expected := `# %s
 	This is a Repo By %s
-	ThisIsThe%sInAnInlineWay`
+	ThisIsThe%sInAnInlineWay
+	CI token ${CI_DEPLOY_TOKEN} is left untouched`
 
 		template := forgery.CreateRepository(t, nil, &forgery.CreateRepositoryOptions{
 			IsTemplate: true,

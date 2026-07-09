@@ -77,14 +77,24 @@ func generateExpansion(src string, templateRepo, generateRepo *repo_model.Reposi
 		}
 	}
 
-	return os.Expand(src, func(key string) string {
-		if expansion, ok := expansionMap[key]; ok {
-			if sanitizeFileName {
-				return fileNameSanitize(expansion)
-			}
-			return expansion
+	return expandTemplateVars(src, expansionMap, sanitizeFileName)
+}
+
+var templateVarPattern = regexp.MustCompile(`\$\w+|\${\w+}`)
+
+// expandTemplateVars substitutes recognized $VAR and ${VAR} references
+// but leaves unknown variables alone.
+func expandTemplateVars(src string, expansionMap map[string]string, sanitizeFileName bool) string {
+	return templateVarPattern.ReplaceAllStringFunc(src, func(match string) string {
+		key := strings.TrimSuffix(strings.TrimPrefix(match[1:], "{"), "}")
+		expansion, ok := expansionMap[key]
+		if !ok {
+			return match
 		}
-		return key
+		if sanitizeFileName {
+			return fileNameSanitize(expansion)
+		}
+		return expansion
 	})
 }
 
