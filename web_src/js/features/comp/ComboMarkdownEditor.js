@@ -78,6 +78,11 @@ class ComboMarkdownEditor {
     this.textarea.addEventListener('input', (e) => this.options?.onContentChanged?.(this, e));
     this.applyEditorHeights(this.textarea, this.options.editorHeights);
 
+    const monospaceEnabled = localStorage?.getItem('markdown-editor-monospace') === 'true';
+    if (monospaceEnabled) {
+      this.textarea.classList.add('tw-font-mono');
+    }
+
     if (this.textarea.getAttribute('data-disable-autosize') !== 'true') {
       this.textareaAutosize = autosize(this.textarea, {viewportMarginBottom: 130});
     }
@@ -173,7 +178,6 @@ class ComboMarkdownEditor {
     });
 
     const monospaceButton = this.container.querySelector('.markdown-switch-monospace');
-    const monospaceEnabled = localStorage?.getItem('markdown-editor-monospace') === 'true';
     const monospaceText = monospaceButton.getAttribute(monospaceEnabled ? 'data-disable-text' : 'data-enable-text');
     monospaceButton.setAttribute('data-tooltip-content', monospaceText);
     monospaceButton.setAttribute('aria-label', monospaceText);
