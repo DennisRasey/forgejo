@@ -2,34 +2,88 @@
   id: 1
   user_id: 1
   repo_id: 1
-  mode: 1 # normal
+  source: false # explicit
+  watch_selection_issues: true
+  watch_selection_pull_requests: true
+  watch_selection_releases: true
 
 -
   id: 2
   user_id: 4
   repo_id: 1
-  mode: 1 # normal
+  source: false # explicit
+  watch_selection_issues: true
+  watch_selection_pull_requests: true
+  watch_selection_releases: true
 
 -
   id: 3
   user_id: 9
   repo_id: 1
-  mode: 1 # normal
+  source: false # explicit
+  watch_selection_issues: true
+  watch_selection_pull_requests: true
+  watch_selection_releases: true
 
 -
   id: 4
   user_id: 8
   repo_id: 1
-  mode: 2 # don't watch
+  source: false # explicit
+  watch_selection_issues: false
+  watch_selection_pull_requests: false
+  watch_selection_releases: false
 
 -
   id: 5
   user_id: 11
   repo_id: 1
-  mode: 3 # auto
+  source: true # automatic
+  watch_selection_issues: true
+  watch_selection_pull_requests: true
+  watch_selection_releases: true
 
 -
   id: 6
   user_id: 4
   repo_id: 2
-  mode: 1 # normal
+  source: false # explicit
+  watch_selection_issues: true
+  watch_selection_pull_requests: true
+  watch_selection_releases: true
+
+-
+  id: 7
+  user_id: 4
+  repo_id: 3
+  source: false # explicit
+  watch_selection_issues: true
+  watch_selection_pull_requests: false
+  watch_selection_releases: false
+
+-
+  id: 8
+  user_id: 4
+  repo_id: 4
+  source: false # explicit
+  watch_selection_issues: false
+  watch_selection_pull_requests: true
+  watch_selection_releases: false
+
+-
+  id: 9
+  user_id: 4
+  repo_id: 5
+  source: false # explicit
+  watch_selection_issues: false
+  watch_selection_pull_requests: false
+  watch_selection_releases: true
+
+-
+  id: 10
+  user_id: 5
+  repo_id: 5
+  source: false # explicit
+  watch_selection_issues: false
+  watch_selection_pull_requests: true
+  watch_selection_releases: true

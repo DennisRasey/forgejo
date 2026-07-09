@@ -66,3 +66,8 @@
 .repo-buttons .ui.labeled.button.disabled > .button {
   pointer-events: none !important;
 }
+
+/* ToDo: convert all .repo-buttons to dynamic-height buttons */
+.repo-buttons details.dropdown > summary.button {
+  --button-min-height: 33.133px;
+}

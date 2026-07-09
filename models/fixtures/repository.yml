@@ -63,7 +63,7 @@
   lower_name: repo3
   name: repo3
   default_branch: master
-  num_watches: 0
+  num_watches: 1
   num_stars: 0
   num_forks: 0
   num_milestones: 0
@@ -93,7 +93,7 @@
   lower_name: repo4
   name: repo4
   default_branch: master
-  num_watches: 0
+  num_watches: 1
   num_stars: 1
   num_forks: 0
   num_milestones: 0
@@ -121,7 +121,7 @@
   lower_name: repo5
   name: repo5
   default_branch: master
-  num_watches: 0
+  num_watches: 2
   num_stars: 0
   num_forks: 0
   num_milestones: 0

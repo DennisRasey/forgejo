@@ -139,7 +139,7 @@ func (ns *notificationService) NewPullRequest(ctx context.Context, pr *issues_mo
 		return
 	}
 	toNotify := make(container.Set[int64], 32)
-	repoWatchers, err := repo_model.GetRepoWatchersIDs(ctx, pr.Issue.RepoID)
+	repoWatchers, err := repo_model.GetSelectWatcherIDs(ctx, pr.Issue.RepoID, repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false})
 	if err != nil {
 		log.Error("GetRepoWatchersIDs: %v", err)
 		return

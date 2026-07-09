@@ -131,6 +131,68 @@ func (at ActionType) String() string {
 	}
 }
 
+func (at ActionType) WatchSelection() repo_model.WatchSelection {
+	// WatchAllSelection generally means that there is no granular enough setting for this.
+	switch at {
+	case ActionCreateRepo:
+		return repo_model.WatchAllSelection
+	case ActionRenameRepo:
+		return repo_model.WatchAllSelection
+	case ActionStarRepo:
+		return repo_model.WatchAllSelection
+	case ActionWatchRepo:
+		return repo_model.WatchAllSelection
+	case ActionCommitRepo:
+		return repo_model.WatchAllSelection
+	case ActionCreateIssue:
+		return repo_model.WatchSelection{Issues: true, PullRequests: false, Releases: false}
+	case ActionCreatePullRequest:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionTransferRepo:
+		return repo_model.WatchAllSelection
+	case ActionPushTag:
+		return repo_model.WatchAllSelection
+	case ActionCommentIssue:
+		return repo_model.WatchSelection{Issues: true, PullRequests: false, Releases: false}
+	case ActionMergePullRequest:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionCloseIssue:
+		return repo_model.WatchSelection{Issues: true, PullRequests: false, Releases: false}
+	case ActionReopenIssue:
+		return repo_model.WatchSelection{Issues: true, PullRequests: false, Releases: false}
+	case ActionClosePullRequest:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionReopenPullRequest:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionDeleteTag:
+		return repo_model.WatchAllSelection
+	case ActionDeleteBranch:
+		return repo_model.WatchAllSelection
+	case ActionMirrorSyncPush:
+		return repo_model.WatchAllSelection
+	case ActionMirrorSyncCreate:
+		return repo_model.WatchAllSelection
+	case ActionMirrorSyncDelete:
+		return repo_model.WatchAllSelection
+	case ActionApprovePullRequest:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionRejectPullRequest:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionCommentPull:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionPublishRelease:
+		return repo_model.WatchSelection{Issues: false, PullRequests: false, Releases: true}
+	case ActionPullReviewDismissed:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionPullRequestReadyForReview:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	case ActionAutoMergePullRequest:
+		return repo_model.WatchSelection{Issues: false, PullRequests: true, Releases: false}
+	default:
+		return repo_model.WatchAllSelection
+	}
+}
+
 func (at ActionType) InActions(actions ...string) bool {
 	return slices.Contains(actions, at.String())
 }
@@ -636,7 +698,7 @@ func NotifyWatchers(ctx context.Context, actions ...*Action) ([]Action, error) {
 
 		if repoChanged {
 			// Add feeds for user self and all watchers.
-			watchers, err = repo_model.GetWatchers(ctx, act.RepoID)
+			watchers, err = repo_model.GetSelectWatchers(ctx, act.RepoID, act.GetOpType().WatchSelection())
 			if err != nil {
 				return nil, fmt.Errorf("get watchers: %w", err)
 			}

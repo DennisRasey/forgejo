@@ -1,16 +1,58 @@
-<form hx-target="this" hx-post="{{$.RepoLink}}/action/{{if $.IsWatchingRepo}}un{{end}}watch" hx-on::after-settle="this.querySelector('button').focus()" method="post" action="{{$.RepoLink}}/action/{{if $.IsWatchingRepo}}un{{end}}watch">
-	<div class="ui labeled button" {{if not $.IsSigned}}data-tooltip-content="{{ctx.Locale.Tr "repo.watch_guest_user"}}"{{end}}>
-		<button type="submit" class="ui compact small basic button"{{if not $.IsSigned}} disabled{{end}} aria-label="{{if $.IsWatchingRepo}}{{ctx.Locale.Tr "repo.unwatch"}}{{else}}{{ctx.Locale.Tr "repo.watch"}}{{end}}">
-			{{if $.IsWatchingRepo}}
-				{{svg "octicon-eye-closed" 16}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.unwatch"}}</span>
-			{{else}}
-				{{svg "octicon-eye"}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.watch"}}</span>
-			{{end}}
-		</button>
-		<a hx-boost="false" class="ui basic label" href="{{.RepoLink}}/watchers"
+{{if $.IsSigned}}
+	<details class="dropdown" id="watch-button">
+		<summary class="ui labeled small button">
+			<div class="ui compact small button">
+				{{svg "octicon-eye" 16}}
+				<span class="text not-mobile">{{if $.RepoWatchSelection.IsWatching}}{{ctx.Locale.Tr "repo.watching"}}{{else}}{{ctx.Locale.Tr "repo.watch"}}{{end}}</span>
+				{{svg "octicon-triangle-down" 14}}
+			</div>
+			<a class="ui basic label" href="{{.RepoLink}}/watchers"
+				aria-label="{{ctx.Locale.TrPluralString .Repository.NumWatches "watch.n_watchers" (printf "%d" .Repository.NumWatches)}}"
+				>
+				{{CountFmt .Repository.NumWatches}}
+			</a>
+		</summary>
+		<div class="content">
+			<form class="ui form tw-p-3" hx-target="#watch-button" method="post" hx-post="{{$.RepoLink}}/action/watch/select" action="{{$.RepoLink}}/action/watch/select" hx-swap="outerHTML">
+				<fieldset>
+					<label>
+						<input type="checkbox" name="watch_issues" value="true" {{if $.RepoWatchSelection.Issues}}checked{{end}}>
+						{{svg "octicon-issue-opened"}}
+						{{ctx.Locale.Tr "repo.watch.issues"}}
+					</label>
+					<label>
+						<input type="checkbox" name="watch_pull_requests" value="true" {{if $.RepoWatchSelection.PullRequests}}checked{{end}}>
+						{{svg "octicon-git-pull-request"}}
+						{{ctx.Locale.Tr "repo.watch.pull_requests"}}
+					</label>
+					<label>
+						<input type="checkbox" name="watch_releases" value="true" {{if $.RepoWatchSelection.Releases}}checked{{end}}>
+						{{svg "octicon-tag"}}
+						{{ctx.Locale.Tr "repo.watch.releases"}}
+						<span class="help">{{ctx.Locale.Tr "repo.watch.releases.hint"}}</span>
+					</label>
+					<div class="small button-sequence tw-mt-3">
+						<button type="submit" class="primary button">{{ctx.Locale.Tr "save"}}</button>
+						{{if $.RepoWatchSelection.IsWatching}}
+							<button type="button" class="secondary button" hx-post="{{$.RepoLink}}/action/unwatch" hx-target="#watch-button" hx-swap="outerHTML">
+								{{ctx.Locale.Tr "repo.unwatch"}}
+							</button>
+						{{end}}
+					</div>
+				</fieldset>
+			</form>
+		</div>
+	</details>
+{{else}}
+	{{/* not logged-in user */}}
+	<div class="ui disabled labeled button" data-tooltip-content="{{ctx.Locale.Tr "repo.watch_guest_user"}}">
+		<div class="ui compact small basic button">
+			{{svg "octicon-eye"}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.watch"}}</span>
+		</div>
+		<a class="ui basic label" href="{{.RepoLink}}/watchers"
 			aria-label="{{ctx.Locale.TrPluralString .Repository.NumWatches "watch.n_watchers" (printf "%d" .Repository.NumWatches)}}"
 			>
 			{{CountFmt .Repository.NumWatches}}
 		</a>
 	</div>
-</form>
+{{end}}

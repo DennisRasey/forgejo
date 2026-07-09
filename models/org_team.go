@@ -54,7 +54,7 @@ func InsertTeamRepository(ctx context.Context, t *organization.Team, repo *repo_
 			return nil, fmt.Errorf("getMembers: %w", err)
 		}
 		for _, u := range t.Members {
-			if err = repo_model.WatchRepo(ctx, u.ID, repo.ID, true); err != nil {
+			if err = repo_model.WatchIfAutoWatchNewRepos(ctx, u.ID, repo.ID); err != nil {
 				return nil, fmt.Errorf("watchRepo: %w", err)
 			}
 		}
@@ -135,7 +135,7 @@ func removeAllRepositories(ctx context.Context, t *organization.Team) (err error
 				continue
 			}
 
-			if err = repo_model.WatchRepo(ctx, user.ID, repo.ID, false); err != nil {
+			if err = repo_model.WatchRepoExplicitly(ctx, user.ID, repo.ID, repo_model.WatchNoneSelection); err != nil {
 				return err
 			}
 
@@ -450,7 +450,7 @@ func InsertTeamMember(ctx context.Context, team *organization.Team, userID int64
 		// FIXME: in the goroutine, it can't access the "ctx", it could only use db.DefaultContext at the moment
 		go func(repos []*repo_model.Repository) {
 			for _, repo := range repos {
-				if err = repo_model.WatchRepo(db.DefaultContext, userID, repo.ID, true); err != nil {
+				if err = repo_model.WatchIfAutoWatchNewRepos(db.DefaultContext, userID, repo.ID); err != nil {
 					log.Error("watch repo failed: %v", err)
 				}
 			}
@@ -559,7 +559,7 @@ func ReconsiderWatches(ctx context.Context, repo *repo_model.Repository, uid int
 	if has, err := access_model.HasAccess(ctx, uid, repo); err != nil || has {
 		return err
 	}
-	if err := repo_model.WatchRepo(ctx, uid, repo.ID, false); err != nil {
+	if err := repo_model.WatchRepoExplicitly(ctx, uid, repo.ID, repo_model.WatchNoneSelection); err != nil {
 		return err
 	}
 

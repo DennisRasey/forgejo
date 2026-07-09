@@ -35,7 +35,7 @@ func DeleteCollaboration(ctx context.Context, repo *repo_model.Repository, uid i
 		return err
 	}
 
-	if err = repo_model.WatchRepo(ctx, uid, repo.ID, false); err != nil {
+	if err = repo_model.WatchRepoExplicitly(ctx, uid, repo.ID, repo_model.WatchNoneSelection); err != nil {
 		return err
 	}
 

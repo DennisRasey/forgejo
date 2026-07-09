@@ -57,7 +57,8 @@ export function initDropdowns() {
         // User pressed ArrowDown on a focused summary of a closed dropdown.
         // We'll open the dropdown and focus it's first item
         parentDropdown.setAttribute('open', 'true');
-        parentDropdown.querySelector<HTMLElement>('.content > ul > li > :is(a, button)').focus();
+        const firstFocusable = parentDropdown.querySelector<HTMLElement>('.content > ul > li :is(a, button, input)');
+        firstFocusable?.focus();
         event.preventDefault();
         return;
       }
@@ -99,7 +100,7 @@ export function initDropdowns() {
         dropdown.removeAttribute('open');
         return;
       }
-      dropdownItems[activeLiIndex - 1].querySelector<HTMLElement>(':is(a, button)').focus();
+      dropdownItems[activeLiIndex - 1].querySelector<HTMLElement>(':is(a, button, input)')?.focus();
     }
 
     if (event.key === 'ArrowDown') {
@@ -108,7 +109,7 @@ export function initDropdowns() {
         // First child is already selected
         return;
       }
-      dropdownItems[activeLiIndex + 1].querySelector<HTMLElement>(':is(a, button)').focus();
+      dropdownItems[activeLiIndex + 1].querySelector<HTMLElement>(':is(a, button, input)')?.focus();
     }
   });
 }

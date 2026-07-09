@@ -41,7 +41,7 @@ func GetStarredRepos(ctx context.Context, userID int64, private bool, listOption
 func GetWatchedRepos(ctx context.Context, userID int64, private bool, listOptions db.ListOptions, reducer RepositoryAuthorizationReducer) ([]*Repository, int64, error) {
 	sess := db.GetEngine(ctx).
 		Where("watch.user_id=?", userID).
-		And("`watch`.mode<>?", WatchModeDont).
+		And(BuilderWatchAnything()).
 		Join("LEFT", "watch", "`repository`.id=`watch`.repo_id")
 	if !private {
 		sess = sess.And("is_private=?", false)
@@ -153,7 +153,10 @@ func GetReviewers(ctx context.Context, repo *Repository, doerID, posterID int64)
 		).Or(builder.In("`user`.id",
 			builder.Select("user_id").From("watch").
 				Where(builder.Eq{"repo_id": repo.ID}.
-					And(builder.In("mode", WatchModeNormal, WatchModeAuto))),
+					And(
+						// Only care about user watching this repo's pull requests.
+						builder.Eq{"`watch`.watch_selection_pull_requests": true},
+					)),
 		).Or(builder.In("`user`.id",
 			builder.Select("uid").From("org_user").
 				Where(builder.Eq{"org_id": repo.OwnerID}),
@@ -193,7 +196,7 @@ func GetWatchedRepoIDsOwnedBy(ctx context.Context, userID, ownedByUserID int64) 
 		Select("`repository`.id").
 		Join("LEFT", "watch", "`repository`.id=`watch`.repo_id").
 		Where("`watch`.user_id=?", userID).
-		And("`watch`.mode<>?", WatchModeDont).
+		And(BuilderWatchAnything()).
 		And("`repository`.owner_id=?", ownedByUserID).Find(&repoIDs)
 	return repoIDs, err
 }
