@@ -26,9 +26,10 @@ type CreateRepositoryOptions struct {
 	// Use [MapFS] or [FilesInit] to setup the initial files.
 	Files fs.FS
 
-	ObjectFormat git.ObjectFormat // If nil, SHA1
-	IsTemplate   bool
-	IsPrivate    bool
+	ObjectFormat  git.ObjectFormat // If nil, SHA1
+	IsTemplate    bool
+	IsPrivate     bool
+	DefaultBranch string
 
 	LatestSha   *string // if not nil, the commit sha after initializing the repo with the Files will be written to this ref
 	SkipCleanup bool    // if true the repo will not be deleted at the end of the test (can be useful to debug locally)
@@ -63,11 +64,16 @@ func CreateRepository(t testing.TB, owner *user_model.User, opts *CreateReposito
 
 	gitFormat := cmp.Or(opts.ObjectFormat, git.Sha1ObjectFormat)
 
+	defaultBranch := "main"
+	if opts.DefaultBranch != "" {
+		defaultBranch = opts.DefaultBranch
+	}
+
 	// Create the repository
 	createOptions := repo_service.CreateRepoOptions{
 		Name:             repoName,
 		Description:      "Test Repo",
-		DefaultBranch:    "main",
+		DefaultBranch:    defaultBranch,
 		IsTemplate:       opts.IsTemplate,
 		ObjectFormatName: gitFormat.Name(),
 		IsPrivate:        opts.IsPrivate,
