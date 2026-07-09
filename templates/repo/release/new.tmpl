@@ -76,7 +76,7 @@
 								<input name="attachment-edit-exturl-{{.UUID}}" placeholder="{{ctx.Locale.Tr "repo.release.asset_external_url"}}" class="attachment_edit" required value="{{.ExternalURL}}">
 							{{else}}
 								<span class="ui text grey tw-whitespace-nowrap tw-ml-auto tw-pl-3">{{ctx.Locale.TrPluralString
-								.DownloadCount "release.n_downloads" (ctx.Locale.PrettyNumber .DownloadCount)}} · {{.Size | ctx.Locale.TrSize}}</span>
+								.DownloadCount "release.n_downloads" (ctx.Locale.PrettyNumber .DownloadCount)}} · {{DateUtils.TimeSince .CreatedUnix}} · {{.Size | ctx.Locale.TrSize}}</span>
 							{{end}}
 						</div>
 						<a class="ui mini red button remove-rel-attach tw-ml-3" data-id="{{.ID}}" data-uuid="{{.UUID}}">

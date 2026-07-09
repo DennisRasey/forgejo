@@ -424,6 +424,12 @@ func TestAttachmentTimestamp(t *testing.T) {
 
 	formattedTime := time.Unix(timeStamp, 0).Format(time.RFC3339)
 	htmlDoc.AssertElement(t, fmt.Sprintf("details.download relative-time[datetime='%s']", formattedTime), true)
+
+	session := loginUser(t, "user2")
+	req = NewRequest(t, "GET", "user2/repo1/releases/edit/v1.1")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc = NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, fmt.Sprintf("relative-time[datetime='%s']", formattedTime), true)
 }
 
 func TestDownloadReleaseAttachment(t *testing.T) {
