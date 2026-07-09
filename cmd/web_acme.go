@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -122,9 +123,11 @@ func runACME(listenAddr string, m http.Handler) error {
 			_, _, finished := process.GetManager().AddTypedContext(graceful.GetManager().HammerContext(), "Web: ACME HTTP challenge server", process.SystemProcessType, true)
 			defer finished()
 
-			log.Info("Running Let's Encrypt handler on %s", setting.HTTPAddr+":"+setting.PortToRedirect)
+			acmeListenAddr := net.JoinHostPort(setting.HTTPAddr, setting.PortToRedirect)
+
+			log.Info("Running Let's Encrypt handler on %s", acmeListenAddr)
 			// all traffic coming into HTTP will be redirect to HTTPS automatically (LE HTTP-01 validation happens here)
-			err := runHTTP("tcp", setting.HTTPAddr+":"+setting.PortToRedirect, "Let's Encrypt HTTP Challenge", myACME.HTTPChallengeHandler(http.HandlerFunc(runLetsEncryptFallbackHandler)), setting.RedirectorUseProxyProtocol)
+			err := runHTTP("tcp", acmeListenAddr, "Let's Encrypt HTTP Challenge", myACME.HTTPChallengeHandler(http.HandlerFunc(runLetsEncryptFallbackHandler)), setting.RedirectorUseProxyProtocol)
 			if err != nil {
 				log.Fatal("Failed to start the Let's Encrypt handler on port %s: %v", setting.PortToRedirect, err)
 			}
