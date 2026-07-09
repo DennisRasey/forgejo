@@ -22,6 +22,7 @@ import (
 	"forgejo.org/modules/util"
 	"forgejo.org/tests"
 
+	gouuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -194,7 +195,7 @@ func doGitAddSomeCommits(dstPath, branch string) func(*testing.T) {
 	return func(t *testing.T) {
 		doGitCheckoutBranch(dstPath, branch)(t)
 
-		require.NoError(t, os.WriteFile(filepath.Join(dstPath, fmt.Sprintf("file-%s.txt", branch)), []byte(fmt.Sprintf("file %s", branch)), 0o644))
+		require.NoError(t, os.WriteFile(filepath.Join(dstPath, fmt.Sprintf("file-%s.txt", branch)), []byte(fmt.Sprintf("file %s %s", branch, gouuid.New().String())), 0o644))
 		require.NoError(t, git.AddChanges(dstPath, true))
 		signature := git.Signature{
 			Email: "test@test.test",
@@ -228,6 +229,14 @@ func doGitPull(dstPath string, args ...string) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Helper()
 		_, _, err := git.NewCommandContextNoGlobals(git.DefaultContext, git.AllowLFSFiltersArgs()...).AddArguments("pull").AddArguments(git.ToTrustedCmdArgs(args)...).RunStdString(&git.RunOpts{Dir: dstPath})
+		require.NoError(t, err)
+	}
+}
+
+func doGitFetch(dstPath string, args ...string) func(*testing.T) {
+	return func(t *testing.T) {
+		t.Helper()
+		_, _, err := git.NewCommandContextNoGlobals(git.DefaultContext, git.AllowLFSFiltersArgs()...).AddArguments("fetch").AddArguments(git.ToTrustedCmdArgs(args)...).RunStdString(&git.RunOpts{Dir: dstPath})
 		require.NoError(t, err)
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 	"forgejo.org/models/db"
 	git_model "forgejo.org/models/git"
+	issues_model "forgejo.org/models/issues"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
@@ -18,6 +19,7 @@ import (
 	"forgejo.org/modules/log"
 	repo_module "forgejo.org/modules/repository"
 	"forgejo.org/modules/test"
+	pull_service "forgejo.org/services/pull"
 	repo_service "forgejo.org/services/repository"
 	"forgejo.org/tests"
 
@@ -261,7 +263,7 @@ func testOptionsGitPush(t *testing.T, u *url.URL) {
 		collaborator := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
 		u.User = url.UserPassword(collaborator.LowerName, userPassword)
 		doGitAddRemote(gitPath, "collaborator", u)(t)
-		repo_module.AddCollaborator(db.DefaultContext, repo, collaborator)
+		require.NoError(t, repo_module.AddCollaborator(db.DefaultContext, repo, collaborator))
 
 		t.Run("Collaborator with write access is allowed to push", func(t *testing.T) {
 			branchName := "branch3"
@@ -286,5 +288,92 @@ func testOptionsGitPush(t *testing.T, u *url.URL) {
 		})
 
 		require.NoError(t, repo_service.DeleteRepositoryDirectly(db.DefaultContext, user, repo.ID))
+	})
+}
+
+func TestGitPushAllowMaintainerEditRestrictedHead(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		baseRepoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
+
+		// Create a base repository as a target for the pull request
+		baseRepo, err := repo_service.CreateRepository(db.DefaultContext, baseRepoOwner, baseRepoOwner, repo_service.CreateRepoOptions{
+			Name:          "base-repo-for-git-pushes",
+			Description:   "test git push",
+			AutoInit:      false,
+			DefaultBranch: "master",
+			IsPrivate:     false,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, baseRepo)
+
+		baseRepoPath := t.TempDir()
+		doGitInitTestRepository(baseRepoPath, git.Sha1ObjectFormat)(t)
+		u.Path = baseRepo.FullName() + ".git"
+		u.User = url.UserPassword(baseRepoOwner.LowerName, userPassword)
+		doGitAddRemote(baseRepoPath, "origin", u)(t)
+		doGitPushTestRepository(baseRepoPath, "origin", baseRepo.DefaultBranch)(t)
+
+		// Fork the base repo
+		forkUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		forkRepo, err := repo_service.ForkRepositoryAndUpdates(t.Context(), forkUser, forkUser, repo_service.ForkRepoOptions{
+			BaseRepo:    baseRepo,
+			Name:        "repo-pr-update",
+			Description: "desc",
+		})
+		require.NoError(t, err)
+		forkRepoPath := t.TempDir()
+		u.Path = forkRepo.FullName() + ".git"
+		u.User = url.UserPassword(forkUser.LowerName, userPassword)
+		doGitClone(forkRepoPath, u)(t)
+
+		// Make a modification in the fork repo
+		branchName := "my-branch-for-pr"
+		doGitCreateBranch(forkRepoPath, branchName)(t)
+		doGitAddSomeCommits(forkRepoPath, branchName)(t)
+		doGitPushTestRepository(forkRepoPath, "origin", branchName)(t)
+
+		// Create a pull request in the base repo to incorporate the fork's modification
+		pullIssue := &issues_model.Issue{
+			RepoID:   baseRepo.ID,
+			Title:    "Test Pull Request from Fork",
+			PosterID: forkUser.ID,
+			Poster:   forkUser,
+			IsPull:   true,
+		}
+		pullRequest := &issues_model.PullRequest{
+			HeadRepo:            forkRepo,
+			HeadRepoID:          forkRepo.ID,
+			HeadBranch:          branchName,
+			BaseRepo:            baseRepo,
+			BaseRepoID:          baseRepo.ID,
+			BaseBranch:          baseRepo.DefaultBranch,
+			Type:                issues_model.PullRequestGitea,
+			AllowMaintainerEdit: true,
+		}
+		err = pull_service.NewPullRequest(git.DefaultContext, baseRepo, pullIssue, nil, nil, pullRequest, nil)
+		require.NoError(t, err)
+
+		// The existence of the pull request allows maintainers of the base repo (baseRepoOwner) to write to the fork
+		// repo, but *only* to the branch for the pull request.  Set up for editing as the baseRepoOwner...
+		u.Path = forkRepo.FullName() + ".git"
+		u.User = url.UserPassword(baseRepoOwner.LowerName, userPassword)
+		doGitAddRemote(baseRepoPath, "fork", u)(t)
+		doGitFetch(baseRepoPath, "fork")(t)
+		doGitCheckoutBranch(baseRepoPath, branchName)(t)
+
+		// Test writing to the PR branch, should succeed:
+		doGitAddSomeCommits(baseRepoPath, branchName)(t)
+		doGitPushTestRepository(baseRepoPath, "fork", branchName)(t)
+
+		// We're allowed to write to the PR branch, but not to another branch:
+		doGitCreateBranch(baseRepoPath, "another-branch")(t)
+		doGitAddSomeCommits(baseRepoPath, "another-branch")(t)
+		doGitPushTestRepositoryFail(baseRepoPath, "fork", "another-branch")(t)
+
+		// Verify that each branch being pushed is checked independently -- pushing to a branch we're permitted to, and
+		// then a branch that we're not, does not allow the push:
+		doGitAddSomeCommits(baseRepoPath, branchName)(t)       // Ensure we have new commits ready to push
+		doGitAddSomeCommits(baseRepoPath, "another-branch")(t) // Ensure we have new commits ready to push
+		doGitPushTestRepositoryFail(baseRepoPath, "fork", branchName, "another-branch")(t)
 	})
 }

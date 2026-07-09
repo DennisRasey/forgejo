@@ -36,12 +36,6 @@ type preReceiveContext struct {
 	userPerm            access_model.Permission
 	deployKeyAccessMode perm_model.AccessMode
 
-	canCreatePullRequest        bool
-	checkedCanCreatePullRequest bool
-
-	canWriteCode        bool
-	checkedCanWriteCode bool
-
 	protectedTags    []*git_model.ProtectedTag
 	gotProtectedTags bool
 
@@ -50,25 +44,22 @@ type preReceiveContext struct {
 	opts *private.HookOptions
 
 	isOverQuota bool
-
-	branchName string
 }
 
-// CanWriteCode returns true if pusher can write code
-func (ctx *preReceiveContext) CanWriteCode() bool {
-	if !ctx.checkedCanWriteCode {
-		if !ctx.loadPusherAndPermission() {
-			return false
-		}
-		ctx.canWriteCode = issues_model.CanMaintainerWriteToBranch(ctx, ctx.userPerm, ctx.branchName, ctx.user) || ctx.deployKeyAccessMode >= perm_model.AccessModeWrite
-		ctx.checkedCanWriteCode = true
+// canWriteCodeToBranch returns true if pusher can write code to the specified branch name on the ctx repository.
+// Permitted if the user has write access to the code unit of the repository, or if there is a PR that allows maintainer
+// edit, or if a write deploy key is in-use.
+func (ctx *preReceiveContext) canWriteCodeToBranch(branchName string) bool {
+	if !ctx.loadPusherAndPermission() {
+		return false
 	}
-	return ctx.canWriteCode
+	return issues_model.CanMaintainerWriteToBranch(ctx, ctx.userPerm, branchName, ctx.user) || ctx.deployKeyAccessMode >= perm_model.AccessModeWrite
 }
 
-// AssertCanWriteCode returns true if pusher can write code
-func (ctx *preReceiveContext) AssertCanWriteCode() bool {
-	if !ctx.CanWriteCode() {
+// assertCanWriteCodeToBranch verifies that the pusher can write code to the specified branch name on the ctx
+// repository.  If the user cannot write, an error response is written to the HTTP context.
+func (ctx *preReceiveContext) assertCanWriteCodeToBranch(branchName string) bool {
+	if !ctx.canWriteCodeToBranch(branchName) {
 		if ctx.Written() {
 			return false
 		}
@@ -80,16 +71,39 @@ func (ctx *preReceiveContext) AssertCanWriteCode() bool {
 	return true
 }
 
-// CanCreatePullRequest returns true if pusher can create pull requests
-func (ctx *preReceiveContext) CanCreatePullRequest() bool {
-	if !ctx.checkedCanCreatePullRequest {
-		if !ctx.loadPusherAndPermission() {
+// canWriteCodeToBranch returns true if pusher can write code to the ctx repository.  Use [canWriteCodeToBranch] instead
+// if the write is to a named branch.  Permitted if the user has write access to the code unit, or if a write deploy key
+// is in-use.
+func (ctx *preReceiveContext) canWriteCode() bool {
+	if !ctx.loadPusherAndPermission() {
+		return false
+	}
+	return ctx.userPerm.CanWrite(unit.TypeCode) || ctx.deployKeyAccessMode >= perm_model.AccessModeWrite
+}
+
+// assertCanWriteCode verifies that the pusher can write code to the repository.  Use [assertCanWriteCodeToBranch]
+// instead if the write is to a named branch.  If the user cannot write, an error response is written to the HTTP
+// context.
+func (ctx *preReceiveContext) assertCanWriteCode() bool {
+	if !ctx.canWriteCode() {
+		if ctx.Written() {
 			return false
 		}
-		ctx.canCreatePullRequest = ctx.userPerm.CanRead(unit.TypePullRequests)
-		ctx.checkedCanCreatePullRequest = true
+		msg := fmt.Sprintf("User '%s' is not allowed to push to repository '%s/%s'.", ctx.user.Name, ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: msg,
+		})
+		return false
 	}
-	return ctx.canCreatePullRequest
+	return true
+}
+
+// CanCreatePullRequest returns true if pusher can create pull requests
+func (ctx *preReceiveContext) CanCreatePullRequest() bool {
+	if !ctx.loadPusherAndPermission() {
+		return false
+	}
+	return ctx.userPerm.CanRead(unit.TypePullRequests)
 }
 
 // AssertCreatePullRequest returns true if can create pull requests
@@ -212,7 +226,7 @@ func HookPreReceive(ctx *gitea_context.PrivateContext) {
 				ourCtx.quotaExceeded()
 				return
 			}
-			ourCtx.AssertCanWriteCode()
+			ourCtx.assertCanWriteCode()
 		}
 		if ctx.Written() {
 			return
@@ -224,9 +238,7 @@ func HookPreReceive(ctx *gitea_context.PrivateContext) {
 
 func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, refFullName git.RefName) {
 	branchName := refFullName.BranchName()
-	ctx.branchName = branchName
-
-	if !ctx.AssertCanWriteCode() {
+	if !ctx.assertCanWriteCodeToBranch(branchName) {
 		return
 	}
 
@@ -466,7 +478,7 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 }
 
 func preReceiveTag(ctx *preReceiveContext, oldCommitID, newCommitID string, refFullName git.RefName) { //nolint:unparam
-	if !ctx.AssertCanWriteCode() {
+	if !ctx.assertCanWriteCode() {
 		return
 	}
 
