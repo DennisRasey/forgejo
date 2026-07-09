@@ -178,6 +178,47 @@ func TestAPIPullsFiles(t *testing.T) {
 	})
 }
 
+func TestAPIPullsFilesSkipTo(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+
+	ctx := NewAPITestContext(t, "user2", repo.Name, auth_model.AccessTokenScopeReadRepository)
+
+	req := NewRequest(t, "GET", "/api/v1/repos/user2/commitsonpr/pulls/1/files?skip-to=test10.txt&limit=2").AddTokenAuth(ctx.Token)
+	resp := ctx.Session.MakeRequest(t, req, http.StatusOK)
+
+	var changedFiles []*api.ChangedFile
+	DecodeJSON(t, resp, &changedFiles)
+
+	if assert.Len(t, changedFiles, 2) {
+		assert.Equal(t, "9", resp.Header().Get("X-Total-Count")) // skip-to removes the skipped files range from the total count
+		assert.Equal(t, "true", resp.Header().Get("X-HasMore"))
+		assert.Equal(t, "1", resp.Header().Get("X-Page"))
+		assert.Equal(t, "2", resp.Header().Get("X-PerPage"))
+		assert.Equal(t, "5", resp.Header().Get("X-PageCount"))
+
+		assert.Equal(t, "test10.txt", changedFiles[0].Filename)
+		assert.Empty(t, changedFiles[0].PreviousFilename)
+		assert.Equal(t, "added", changedFiles[0].Status)
+		assert.Equal(t, 1, changedFiles[0].Changes)
+		assert.Equal(t, 1, changedFiles[0].Additions)
+		assert.Equal(t, 0, changedFiles[0].Deletions)
+		assert.Equal(t, setting.AppURL+"api/v1/repos/user2/commitsonpr/contents/test10.txt?ref=9b93963cf6de4dc33f915bb67f192d099c301f43", changedFiles[0].ContentsURL)
+		assert.Equal(t, setting.AppURL+"user2/commitsonpr/raw/commit/9b93963cf6de4dc33f915bb67f192d099c301f43/test10.txt", changedFiles[0].RawURL)
+		assert.Equal(t, setting.AppURL+"user2/commitsonpr/src/commit/9b93963cf6de4dc33f915bb67f192d099c301f43/test10.txt", changedFiles[0].HTMLURL)
+
+		assert.Equal(t, "test2.txt", changedFiles[1].Filename)
+		assert.Empty(t, changedFiles[1].PreviousFilename)
+		assert.Equal(t, "added", changedFiles[1].Status)
+		assert.Equal(t, 1, changedFiles[1].Changes)
+		assert.Equal(t, 1, changedFiles[1].Additions)
+		assert.Equal(t, 0, changedFiles[1].Deletions)
+		assert.Equal(t, setting.AppURL+"api/v1/repos/user2/commitsonpr/contents/test2.txt?ref=9b93963cf6de4dc33f915bb67f192d099c301f43", changedFiles[1].ContentsURL)
+		assert.Equal(t, setting.AppURL+"user2/commitsonpr/raw/commit/9b93963cf6de4dc33f915bb67f192d099c301f43/test2.txt", changedFiles[1].RawURL)
+		assert.Equal(t, setting.AppURL+"user2/commitsonpr/src/commit/9b93963cf6de4dc33f915bb67f192d099c301f43/test2.txt", changedFiles[1].HTMLURL)
+	}
+}
+
 func TestAPIViewPullsFilterByBaseHead(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
