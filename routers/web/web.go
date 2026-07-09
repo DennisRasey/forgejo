@@ -14,6 +14,7 @@ import (
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/perm"
 	quota_model "forgejo.org/models/quota"
+	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unit"
 	"forgejo.org/modules/avatar"
 	"forgejo.org/modules/log"
@@ -1333,8 +1334,9 @@ func registerRoutes(m *web.Route) {
 	}, reqSignIn, context.RepoAssignment, context.UnitTypes(), reqRepoAdmin, context.RepoRef())
 
 	m.Group("/{username}/{reponame}/action", func() {
-		m.Post("/watch", repo.ActionWatch(true))
-		m.Post("/unwatch", repo.ActionWatch(false))
+		m.Post("/watch/select", repo.ActionWatch)
+		m.Post("/watch", repo.ActionWatchConst(repo_model.WatchAllSelection))
+		m.Post("/unwatch", repo.ActionWatchConst(repo_model.WatchNoneSelection))
 		m.Post("/accept_transfer", repo.ActionTransfer(true))
 		m.Post("/reject_transfer", repo.ActionTransfer(false))
 		if !setting.Repository.DisableStars {

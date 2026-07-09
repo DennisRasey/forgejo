@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -17,88 +16,132 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func testRepoStarringOrWatching(t *testing.T, action, listURI string, expectEmpty bool) {
+func TestRepoStarUnstarUI(t *testing.T) {
 	t.Helper()
 
 	defer tests.PrepareTestEnv(t)()
 
-	oppositeAction := "un" + action
 	session := loginUser(t, "user5")
 
-	// Star/Watch the repo as user5
-	req := NewRequest(t, "POST", fmt.Sprintf("/user2/repo1/action/%s", action))
+	// Star the repo as user5
+	req := NewRequest(t, "POST", "/user2/repo1/action/star")
 	session.MakeRequest(t, req, http.StatusOK)
 
 	// Load the repo home as user5
 	req = NewRequest(t, "GET", "/user2/repo1")
 	resp := session.MakeRequest(t, req, http.StatusOK)
 
-	// Verify that the star/watch button is now the opposite
+	// Verify that the star button is now unstar
 	htmlDoc := NewHTMLParser(t, resp.Body)
-	actionButton := htmlDoc.Find(fmt.Sprintf("form[action='/user2/repo1/action/%s']", oppositeAction))
+	actionButton := htmlDoc.Find("form[action='/user2/repo1/action/unstar']")
 	assert.Equal(t, 1, actionButton.Length())
 	text := strings.ToLower(actionButton.Find("button span.text").Text())
-	assert.Equal(t, oppositeAction, text)
+	assert.Equal(t, "unstar", text)
 
-	listLink := htmlDoc.Find(fmt.Sprintf("a[href$='/%s']", listURI))
+	listLink := htmlDoc.Find("a[href$='/stars']")
 	ariaLabel, _ := listLink.Attr("aria-label")
-	if listURI == "stars" {
-		assert.Equal(t, "1 star", ariaLabel)
-	} else {
-		assert.Equal(t, "5 watchers", ariaLabel)
-	}
+	assert.Equal(t, "1 star", ariaLabel)
 
-	// Load stargazers/watchers as user5
-	req = NewRequestf(t, "GET", "/user2/repo1/%s", listURI)
+	// Load stargazers as user5
+	req = NewRequestf(t, "GET", "/user2/repo1/stars")
 	resp = session.MakeRequest(t, req, http.StatusOK)
 
-	// Verify that "user5" is among the stargazers/watchers
+	// Verify that "user5" is among the stargazers
 	htmlDoc = NewHTMLParser(t, resp.Body)
 	htmlDoc.AssertElement(t, ".user-cards .list .card > a[href='/user5']", true)
 
-	if expectEmpty {
-		// Verify which user-cards elements are present
-		htmlDoc.AssertElement(t, ".user-cards > .list", true)
-		htmlDoc.AssertElement(t, ".user-cards > div", false)
-	}
+	// Verify which user-cards elements are present
+	htmlDoc.AssertElement(t, ".user-cards > .list", true)
+	htmlDoc.AssertElement(t, ".user-cards > div", false)
 
-	// Unstar/unwatch the repo as user5
-	req = NewRequest(t, "POST", fmt.Sprintf("/user2/repo1/action/%s", oppositeAction))
+	// Unstar the repo as user5
+	req = NewRequest(t, "POST", "/user2/repo1/action/unstar")
 	session.MakeRequest(t, req, http.StatusOK)
 
 	// Load the repo home as user5
 	req = NewRequest(t, "GET", "/user2/repo1")
 	resp = session.MakeRequest(t, req, http.StatusOK)
 
-	// Verify that the star/watch button is now back to its default
+	// Verify that the star button is now back to star
 	htmlDoc = NewHTMLParser(t, resp.Body)
-	actionButton = htmlDoc.Find(fmt.Sprintf("form[action='/user2/repo1/action/%s']", action))
+	actionButton = htmlDoc.Find("form[action='/user2/repo1/action/star']")
 	assert.Equal(t, 1, actionButton.Length())
 	text = strings.ToLower(actionButton.Find("button span.text").Text())
-	assert.Equal(t, action, text)
+	assert.Equal(t, "star", text)
 
-	// Load stargazers/watchers as user5
-	req = NewRequestf(t, "GET", "/user2/repo1/%s", listURI)
+	// Load stargazers as user5
+	req = NewRequestf(t, "GET", "/user2/repo1/stars")
 	resp = session.MakeRequest(t, req, http.StatusOK)
 
-	// Verify that "user5" is not among the stargazers/watchers
+	// Verify that "user5" is not among the stargazers
 	htmlDoc = NewHTMLParser(t, resp.Body)
 	htmlDoc.AssertElement(t, ".user-cards .list .item.ui.segment > a[href='/user2']", false)
 
-	if expectEmpty {
-		// Verify which user-cards elements are present
-		htmlDoc.AssertElement(t, ".user-cards > .list", false)
-		htmlDoc.AssertElement(t, ".user-cards > div", true)
-	}
-}
-
-func TestRepoStarUnstarUI(t *testing.T) {
-	testRepoStarringOrWatching(t, "star", "stars", true)
+	// Verify which user-cards elements are present
+	htmlDoc.AssertElement(t, ".user-cards > .list", false)
+	htmlDoc.AssertElement(t, ".user-cards > div", true)
 }
 
 func TestRepoWatchUnwatchUI(t *testing.T) {
-	testRepoStarringOrWatching(t, "watch", "watchers", false)
-	// Empty list state is not checked because repo is watched by many users
+	t.Helper()
+
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user5")
+
+	// Watch the repo as user5 (using watch/settings endpoint with all events)
+	req := NewRequestWithValues(t, "POST", "/user2/repo1/action/watch/select", map[string]string{
+		"watch_issues":        "true",
+		"watch_pull_requests": "true",
+		"watch_releases":      "true",
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// Load the repo home as user5
+	req = NewRequest(t, "GET", "/user2/repo1")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	// Verify that the watch dropdown shows "Watching"
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	watchButton := htmlDoc.Find("details.dropdown#watch-button summary span.text")
+	assert.Equal(t, 1, watchButton.Length())
+	text := strings.TrimSpace(watchButton.Text())
+	assert.Equal(t, "Watching", text)
+
+	listLink := htmlDoc.Find("a[href$='/watchers']")
+	ariaLabel, _ := listLink.Attr("aria-label")
+	assert.Equal(t, "5 watchers", ariaLabel)
+
+	// Load watchers as user5
+	req = NewRequestf(t, "GET", "/user2/repo1/watchers")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	// Verify that "user5" is among the watchers
+	htmlDoc = NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, ".user-cards .list .card > a[href='/user5']", true)
+
+	// Unwatch the repo as user5
+	req = NewRequest(t, "POST", "/user2/repo1/action/unwatch")
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// Load the repo home as user5
+	req = NewRequest(t, "GET", "/user2/repo1")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	// Verify that the watch dropdown shows "Watch"
+	htmlDoc = NewHTMLParser(t, resp.Body)
+	watchButton = htmlDoc.Find("details.dropdown#watch-button summary span.text")
+	assert.Equal(t, 1, watchButton.Length())
+	text = strings.TrimSpace(watchButton.Text())
+	assert.Equal(t, "Watch", text)
+
+	// Load watchers as user5
+	req = NewRequestf(t, "GET", "/user2/repo1/watchers")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	// Verify that "user5" is not among the watchers
+	htmlDoc = NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, ".user-cards .list .item.ui.segment > a[href='/user2']", false)
 }
 
 func TestDisabledStars(t *testing.T) {

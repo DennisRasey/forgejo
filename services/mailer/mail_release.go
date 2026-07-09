@@ -31,7 +31,7 @@ func MailNewRelease(ctx context.Context, rel *repo_model.Release) {
 		return
 	}
 
-	watcherIDList, err := repo_model.GetRepoWatchersIDs(ctx, rel.RepoID)
+	watcherIDList, err := repo_model.GetSelectWatcherIDs(ctx, rel.RepoID, repo_model.WatchSelection{Issues: false, PullRequests: false, Releases: true})
 	if err != nil {
 		log.Error("GetRepoWatchersIDs(%d): %v", rel.RepoID, err)
 		return

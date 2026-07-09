@@ -44,7 +44,7 @@ test.describe('Pull: Toggle WIP', () => {
     await page.locator('#issue-title-edit-show').click();
     await page.locator('#issue-title-editor input').fill(title);
     const loadPromise = page.waitForEvent('load');
-    await page.getByText('Save').click();
+    await page.locator('#issue-title-editor').getByText('Save').click();
     await loadPromise;
   }
 

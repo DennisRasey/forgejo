@@ -317,20 +317,45 @@ const (
 	tplStarUnstar   base.TplName = "repo/star_unstar"
 )
 
-func ActionWatch(watch bool) func(ctx *context.Context) {
+func ActionWatch(ctx *context.Context) {
+	watchSelection := repo_model.WatchSelection{
+		Issues:       ctx.FormBool("watch_issues"),
+		PullRequests: ctx.FormBool("watch_pull_requests"),
+		Releases:     ctx.FormBool("watch_releases"),
+	}
+
+	err := repo_model.WatchRepoExplicitly(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, watchSelection)
+	if err != nil {
+		ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watchSelection), err)
+		return
+	}
+
+	ctx.Data["RepoWatchSelection"] = repo_model.GetWatchSelection(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
+
+	// we have to reload the repository because NumStars or NumWatching (used in the templates) has just changed
+	ctx.Data["Repository"], err = repo_model.GetRepositoryByName(ctx, ctx.Repo.Repository.OwnerID, ctx.Repo.Repository.Name)
+	if err != nil {
+		ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watchSelection), err)
+		return
+	}
+
+	ctx.HTML(http.StatusOK, tplWatchUnwatch)
+}
+
+func ActionWatchConst(watchSelection repo_model.WatchSelection) func(ctx *context.Context) {
 	return func(ctx *context.Context) {
-		err := repo_model.WatchRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, watch)
+		err := repo_model.WatchRepoExplicitly(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, watchSelection)
 		if err != nil {
-			ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watch), err)
+			ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watchSelection), err)
 			return
 		}
 
-		ctx.Data["IsWatchingRepo"] = repo_model.IsWatching(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
+		ctx.Data["RepoWatchSelection"] = repo_model.GetWatchSelection(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
 
-		// we have to reload the repository because NumStars or NumWatching (used in the templates) has just changed
+		// We have to reload the repository because NumWatching (used in the templates) might have just changed.
 		ctx.Data["Repository"], err = repo_model.GetRepositoryByName(ctx, ctx.Repo.Repository.OwnerID, ctx.Repo.Repository.Name)
 		if err != nil {
-			ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watch), err)
+			ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watchSelection), err)
 			return
 		}
 

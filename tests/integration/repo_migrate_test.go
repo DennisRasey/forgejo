@@ -23,13 +23,10 @@ func testRepoMigrate(t testing.TB, session *TestSession, cloneAddr, repoName str
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	htmlDoc := NewHTMLParser(t, resp.Body)
 
-	link, exists := htmlDoc.doc.Find("form.ui.form").Attr("action")
-	assert.True(t, exists, "The template has changed")
-
 	uid, exists := htmlDoc.doc.Find("#uid").Attr("value")
 	assert.True(t, exists, "The template has changed")
 
-	req = NewRequestWithValues(t, "POST", link, map[string]string{
+	req = NewRequestWithValues(t, "POST", "/repo/migrate", map[string]string{
 		"clone_addr": cloneAddr,
 		"uid":        uid,
 		"repo_name":  repoName,

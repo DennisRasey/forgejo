@@ -224,6 +224,32 @@ func TestNotifyWatchers(t *testing.T) {
 	})
 }
 
+func TestNotifySelectWatchers(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	action := &activities_model.Action{
+		ActUserID: 8,
+		RepoID:    5,
+		OpType:    activities_model.ActionPullReviewDismissed,
+	}
+	_, err := activities_model.NotifyWatchers(db.DefaultContext, action)
+	require.NoError(t, err)
+
+	unittest.AssertExistsAndLoadBean(t, &activities_model.Action{
+		ActUserID: action.ActUserID,
+		UserID:    5,
+		RepoID:    action.RepoID,
+		OpType:    action.OpType,
+	})
+	// Notice that user 9 isn't here because they don't watch PRs on this repo.
+	unittest.AssertNotExistsBean(t, &activities_model.Action{
+		ActUserID: action.ActUserID,
+		UserID:    4,
+		RepoID:    action.RepoID,
+		OpType:    action.OpType,
+	})
+}
+
 func TestGetFeedsCorrupted(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})

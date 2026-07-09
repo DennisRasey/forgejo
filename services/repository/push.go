@@ -271,7 +271,7 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 			}
 
 			// Even if user delete a branch on a repository which he didn't watch, he will be watch that.
-			if err = repo_model.WatchIfAuto(ctx, opts.PusherID, repo.ID); err != nil {
+			if err = repo_model.WatchIfAutoWatchOnChanges(ctx, opts.PusherID, repo.ID); err != nil {
 				log.Warn("Fail to perform auto watch on user %v for repo %v: %v", opts.PusherID, repo.ID, err)
 			}
 		} else {

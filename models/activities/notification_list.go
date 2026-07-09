@@ -108,7 +108,7 @@ func createOrUpdateIssueNotifications(ctx context.Context, issueID, commentID, n
 		}
 		toNotify.AddMultiple(issueWatches...)
 		if !issue.IsPull || !issues_model.HasWorkInProgressPrefix(issue.Title) {
-			repoWatches, err := repo_model.GetRepoWatchersIDs(ctx, issue.RepoID)
+			repoWatches, err := repo_model.GetSelectWatcherIDs(ctx, issue.RepoID, repo_model.WatchSelection{Issues: !issue.IsPull, PullRequests: issue.IsPull, Releases: false})
 			if err != nil {
 				return err
 			}

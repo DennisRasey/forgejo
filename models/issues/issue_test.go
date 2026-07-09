@@ -157,7 +157,7 @@ func TestUpdateIssueCols(t *testing.T) {
 
 func TestIssues(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
-	for _, test := range []struct {
+	for idx, test := range []struct {
 		Opts             issues_model.IssuesOptions
 		ExpectedIssueIDs []int64
 	}{
@@ -228,7 +228,16 @@ func TestIssues(t *testing.T) {
 			issues_model.IssuesOptions{
 				SubscriberID: 4,
 			},
-			[]int64{11, 5, 7, 4, 3, 2, 1},
+			[]int64{12, 11, 6, 5, 7, 4, 3, 2, 1},
+		},
+		{
+			// This user watches repo 5 but not its issues.
+			// Therefore, they are not a subscriber of its issues (namely issue_id 15)
+			// user 5 commented on issue 1 and 3.
+			issues_model.IssuesOptions{
+				SubscriberID: 5,
+			},
+			[]int64{3, 1},
 		},
 		{
 			issues_model.IssuesOptions{
@@ -245,9 +254,9 @@ func TestIssues(t *testing.T) {
 	} {
 		issues, err := issues_model.Issues(db.DefaultContext, &test.Opts)
 		require.NoError(t, err)
-		if assert.Len(t, issues, len(test.ExpectedIssueIDs)) {
+		if assert.Len(t, issues, len(test.ExpectedIssueIDs), "idx: %d", idx) {
 			for i, issue := range issues {
-				assert.Equal(t, test.ExpectedIssueIDs[i], issue.ID)
+				assert.Equal(t, test.ExpectedIssueIDs[i], issue.ID, "idx: %d", idx)
 			}
 		}
 	}

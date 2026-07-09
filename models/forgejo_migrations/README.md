@@ -75,7 +75,7 @@ func myMigrationFunction(x *xorm.Engine) error {
     // add migration logic here
     //
     // to prevent `make watch` from recording this migration as done when it
-    // isn't authored yet, returh an error until the implementation is done
+    // isn't authored yet, return an error until the implementation is done
     return errors.New("not implemented yet")
 }
 ```

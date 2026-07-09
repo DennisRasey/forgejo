@@ -446,7 +446,7 @@ func removeRepositoryFromTeam(ctx context.Context, t *organization.Team, repo *r
 			continue
 		}
 
-		if err = repo_model.WatchRepo(ctx, teamUser.UID, repo.ID, false); err != nil {
+		if err = repo_model.WatchRepoExplicitly(ctx, teamUser.UID, repo.ID, repo_model.WatchNoneSelection); err != nil {
 			return err
 		}
 

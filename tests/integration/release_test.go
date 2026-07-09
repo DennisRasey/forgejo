@@ -45,7 +45,7 @@ func createNewReleaseTarget(t *testing.T, session *TestSession, repoURL, tag, ti
 	page.AssertElement(t, `form a.danger.button[data-modal-id="delete-release"]`, false)
 	page.AssertElement(t, `form a.button[href$="/releases"]`, false) // Cancel
 
-	link, exists := page.Find("form.ui.form").Attr("action")
+	link, exists := page.Find("form[action$='/releases/new']").Attr("action")
 	assert.True(t, exists, "The template has changed")
 
 	postData := map[string]string{

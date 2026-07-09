@@ -73,7 +73,7 @@ func RemoveOrgUser(ctx context.Context, orgID, userID int64) error {
 		return fmt.Errorf("GetUserRepositories [%d]: %w", userID, err)
 	}
 	for _, repoID := range repoIDs {
-		if err = repo_model.WatchRepo(ctx, userID, repoID, false); err != nil {
+		if err = repo_model.WatchRepoExplicitly(ctx, userID, repoID, repo_model.WatchNoneSelection); err != nil {
 			return err
 		}
 	}
