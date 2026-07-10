@@ -455,7 +455,7 @@ func (g *GithubDownloaderV3) GetIssues(page, perPage int) ([]*base.Issue, bool, 
 	if err != nil {
 		return nil, false, fmt.Errorf("error while listing repos: %w", err)
 	}
-	log.Trace("Request get issues %d/%d, but in fact get %d", perPage, page, len(issues))
+	log.Trace("Request get issues %d/%d, but in fact get %d. After pagination %s", perPage, page, len(issues), resp.After)
 	g.setRate(&resp.Rate)
 	for _, issue := range issues {
 		if issue.IsPullRequest() {
@@ -521,7 +521,7 @@ func (g *GithubDownloaderV3) GetIssues(page, perPage int) ([]*base.Issue, bool, 
 		})
 	}
 
-	return allIssues, len(issues) < perPage, nil
+	return allIssues, resp.After == "", nil
 }
 
 // SupportGetRepoComments return true if it supports get repo comments
