@@ -315,6 +315,15 @@ func TestGitHubDownloadRepo(t *testing.T) {
 		},
 	}, issues)
 
+	t.Run("Stop condition", func(t *testing.T) {
+		// matching total issues count with perPage variable
+		downloader.githubPagingInfo.After = ""
+		issues, isEnd, err = downloader.GetIssues(1, 7)
+		require.NoError(t, err)
+		assert.True(t, isEnd)
+		assert.Len(t, issues, 5) // Two are PRs who get filtered out.
+	})
+
 	// downloader.GetComments()
 	comments, _, err := downloader.GetComments(&base.Issue{Number: 2, ForeignIndex: 2})
 	require.NoError(t, err)
