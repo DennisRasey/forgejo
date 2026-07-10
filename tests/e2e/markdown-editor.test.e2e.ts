@@ -674,3 +674,41 @@ test('Monospace button aria-label', async ({page}) => {
   await monospaceButton.click();
   await assertAriaLabel(enabled);
 });
+
+test('Persistent monospace preference across multiple editors', async ({page}) => {
+  // Load page with editor
+  const response = await page.goto('/user2/repo1/issues/1');
+  expect(response?.status()).toBe(200);
+
+  // Toggle monospace preference ON in case it is not
+  const monospaceButton = page.locator('.markdown-switch-monospace').first();
+  const isMonospaceButtonChecked = await monospaceButton.getAttribute('aria-checked') === 'true';
+  if (!isMonospaceButtonChecked) {
+    await monospaceButton.click();
+  }
+
+  // Open a second editor (by clicking "Edit" in the context menu of a message)
+  const openSecondEditor = async () => {
+    const contextMenu = page.locator('.timeline-item [aria-label="Comment menu"]:has(.edit-content)').first();
+    const editButton = contextMenu.getByRole('menuitem').getByText('Edit').first();
+    await contextMenu.click();
+    await editButton.click();
+  };
+  await openSecondEditor();
+
+  // Check if monospaced class is applied to all visible editors
+  const checkMonospacePreferenceAcrossEditors = async () => {
+    const editors = page.locator('.markdown-text-editor');
+    for (const editor of await editors.all()) {
+      await expect(editor).toHaveClass(/tw-font-mono/);
+    }
+  };
+  await checkMonospacePreferenceAcrossEditors();
+
+  // Reloads page to check persitance of monospace preference
+  const response2 = await page.goto('/user2/repo1/issues/1');
+  expect(response2?.status()).toBe(200);
+
+  await openSecondEditor();
+  await checkMonospacePreferenceAcrossEditors();
+});
