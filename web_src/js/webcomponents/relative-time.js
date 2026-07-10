@@ -19,6 +19,29 @@ const ABSOLUTE_DATETIME_FORMAT = new Intl.DateTimeFormat(navigator.language, {
 });
 const FALLBACK_DATETIME_FORMAT = new Intl.RelativeTimeFormat(navigator.language, {style: 'long'});
 
+// Fallback formatter for duration units, used only when the corresponding
+// `relativetime.duration.*` string is untranslated. Localizes via the browser
+// rather than Forgejo's translations, so it follows navigator.language.
+const DURATION_FORMATTERS = {};
+function GetDurationFormatter(unit) {
+  if (!DURATION_FORMATTERS[unit]) {
+    DURATION_FORMATTERS[unit] = new Intl.NumberFormat(navigator.language, {
+      style: 'unit',
+      unit,
+      unitDisplay: 'long',
+    });
+  }
+  return DURATION_FORMATTERS[unit];
+}
+
+// Joins the (up to two) duration units with a locale-correct separator, e.g.
+// "1 year, 5 days". The unit words themselves come from Forgejo translations;
+// this only supplies the punctuation/conjunction between them.
+const DURATION_LIST_FORMAT = new Intl.ListFormat(navigator.language, {
+  style: 'long',
+  type: 'unit',
+});
+
 /**
  * A list of plural rules for all languages.
  * `plural_rules.go` defines the index for each of the 14 known plural rules.
@@ -92,6 +115,64 @@ function GetPluralizedStringOrFallback(key, n, unit) {
   return FALLBACK_DATETIME_FORMAT.format(-n, unit);
 }
 
+// Maps a dayjs/Intl time unit to its `relativetime.duration.*` translation key.
+const DURATION_KEYS = {
+  year: 'relativetime.duration.years',
+  month: 'relativetime.duration.months',
+  week: 'relativetime.duration.weeks',
+  day: 'relativetime.duration.days',
+  hour: 'relativetime.duration.hours',
+  minute: 'relativetime.duration.mins',
+  second: 'relativetime.duration.secs',
+};
+
+/**
+ * Format amount `n` of the given time unit as a localized, suffix-free duration
+ * word (e.g. "5 days") using Forgejo's translations, falling back to the
+ * browser's Intl formatting when the string is untranslated.
+ */
+function FormatDurationUnit(n, unit) {
+  const translation = pageData.PLURALSTRINGS_LANG[DURATION_KEYS[unit]]?.[PLURAL_RULES[pageData.PLURAL_RULE_LANG](n)];
+  if (translation) return translation.replace('%d', n);
+  return GetDurationFormatter(unit).format(n);
+}
+
+// Ordered coarsest-to-finest. For each entry, when the primary unit fits, we
+// also try to express the leftover in the `remainder` unit ("1 year, 5 days").
+// `next` is the recommended refresh interval, paced by the displayed remainder
+// so the visible text doesn't grow stale.
+const DURATION_UNITS = [
+  {primary: 'year', remainder: 'day', next: ONE_DAY},
+  {primary: 'month', remainder: 'day', next: ONE_DAY},
+  {primary: 'week', remainder: 'day', next: ONE_DAY},
+  {primary: 'day', remainder: 'hour', next: ONE_HOUR},
+  {primary: 'hour', remainder: 'minute', next: ONE_MINUTE},
+  {primary: 'minute', remainder: 'second', next: HALF_MINUTE},
+];
+
+/**
+ * Format the difference between two dayjs UTC instants as a localized,
+ * absolute-value duration string (e.g. "2 months, 5 days", "3 hours, 5
+ * minutes") with no "ago"/"in" suffix. Shows up to two units, joined with
+ * locale-correct separators via Intl.ListFormat; omits the remainder when
+ * it rounds down to zero. Returns [text, recommendedUpdateIntervalMs].
+ */
+function FormatAsDuration(nowJS, thenJS) {
+  if (nowJS.isBefore(thenJS)) [nowJS, thenJS] = [thenJS, nowJS];
+
+  for (const {primary, remainder, next} of DURATION_UNITS) {
+    const n = Math.floor(nowJS.diff(thenJS, primary));
+    if (n < 1) continue;
+    const parts = [FormatDurationUnit(n, primary)];
+    const r = Math.floor(nowJS.diff(thenJS.add(n, primary), remainder));
+    if (r >= 1) parts.push(FormatDurationUnit(r, remainder));
+    return [DURATION_LIST_FORMAT.format(parts), next];
+  }
+
+  const seconds = Math.max(Math.floor(nowJS.diff(thenJS, 'second')), 0);
+  return [FormatDurationUnit(seconds, 'second'), HALF_MINUTE];
+}
+
 /**
  * Update the displayed text of the given relative-time DOM element with its
  * human-readable, localized relative time string.
@@ -110,6 +191,12 @@ export function DoUpdateRelativeTime(object, now) {
   const thenJS = dayjs.utc(absoluteTime);
 
   object.setAttribute('data-tooltip-content', ABSOLUTE_DATETIME_FORMAT.format(thenJS.toDate()));
+
+  if (object.getAttribute('format') === 'duration') {
+    const [text, next] = FormatAsDuration(nowJS, thenJS);
+    object.textContent = text;
+    return next;
+  }
 
   if (nowJS.isBefore(thenJS)) {
     // Datetime is in the future.
@@ -188,7 +275,7 @@ export function DoUpdateRelativeTime(object, now) {
 }
 
 window.customElements.define('relative-time', class extends HTMLElement {
-  static observedAttributes = ['datetime'];
+  static observedAttributes = ['datetime', 'format'];
 
   alive = false;
   contentSpan = null;
@@ -201,6 +288,10 @@ window.customElements.define('relative-time', class extends HTMLElement {
       this.contentSpan = document.createElement('span');
       this.contentSpan.setAttribute('part', 'relative-time');
       this.shadowRoot.append(this.contentSpan);
+      // Remove light DOM children (the fallback datetime text from the
+      // template) so they don't leak into text extraction by Playwright
+      // or other tools that read both light and shadow DOM content.
+      this.replaceChildren();
     }
 
     const next = DoUpdateRelativeTime(this);
@@ -217,7 +308,7 @@ window.customElements.define('relative-time', class extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
-    if (name === 'datetime' && oldValue !== newValue) this.update(false);
+    if ((name === 'datetime' || name === 'format') && oldValue !== newValue) this.update(false);
   }
 
   set textContent(value) {

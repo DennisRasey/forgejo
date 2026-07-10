@@ -205,6 +205,7 @@ func Contexter() func(next http.Handler) http.Handler {
 			ctx.PageData["PLURALSTRINGS_FALLBACK"] = map[string][]string{}
 
 			ctx.AddPluralStringsToPageData([]string{"relativetime.mins", "relativetime.hours", "relativetime.days", "relativetime.weeks", "relativetime.months", "relativetime.years"})
+			ctx.AddPluralStringsToPageData([]string{"relativetime.duration.secs", "relativetime.duration.mins", "relativetime.duration.hours", "relativetime.duration.days", "relativetime.duration.weeks", "relativetime.duration.months", "relativetime.duration.years"})
 
 			ctx.PageData["DATETIMESTRINGS"] = map[string]string{
 				"FUTURE": ctx.Locale.TrString("relativetime.future"),
