@@ -76,31 +76,6 @@
 									{{ctx.Locale.Tr "repo.release.downloads"}}
 								</summary>
 								<ul class="list">
-									{{if $hasArchiveLinks}}
-										<li>
-											<a class="archive-link tw-flex-1 flex-text-inline tw-font-bold" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow" type="application/zip">
-												{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (ZIP)
-											</a>
-											<div class="tw-mr-2">
-												<span class="text grey">{{ctx.Locale.TrPluralString .Release.ArchiveDownloadCount.Zip "release.n_downloads" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.Zip)}}</span>
-											</div>
-											<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
-												{{svg "octicon-info"}}
-											</span>
-										</li>
-										<li class="{{if $hasReleaseAttachment}}start-gap{{end}}">
-											<a class="archive-link tw-flex-1 flex-text-inline tw-font-bold" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow" type="application/gzip">
-												{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)
-											</a>
-											<div class="tw-mr-2">
-												<span class="text grey">{{ctx.Locale.TrPluralString .Release.ArchiveDownloadCount.TarGz "release.n_downloads" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.TarGz)}}</span>
-											</div>
-											<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
-												{{svg "octicon-info"}}
-											</span>
-										</li>
-										{{if $hasReleaseAttachment}}<hr>{{end}}
-									{{end}}
 									{{range $release.Attachments}}
 										{{if .ExternalURL}}
 											<li>
@@ -118,6 +93,31 @@
 												</div>
 											</li>
 										{{end}}
+									{{end}}
+									{{if $hasArchiveLinks}}
+										{{if $hasReleaseAttachment}}<hr>{{end}}
+										<li>
+											<a class="archive-link tw-flex-1 flex-text-inline tw-font-bold" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow" type="application/zip">
+												{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (ZIP)
+											</a>
+											<div class="tw-mr-2">
+												<span class="text grey">{{ctx.Locale.TrPluralString .Release.ArchiveDownloadCount.Zip "release.n_downloads" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.Zip)}}</span>
+											</div>
+											<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
+												{{svg "octicon-info"}}
+											</span>
+										</li>
+										<li>
+											<a class="archive-link tw-flex-1 flex-text-inline tw-font-bold" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow" type="application/gzip">
+												{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)
+											</a>
+											<div class="tw-mr-2">
+												<span class="text grey">{{ctx.Locale.TrPluralString .Release.ArchiveDownloadCount.TarGz "release.n_downloads" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.TarGz)}}</span>
+											</div>
+											<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
+												{{svg "octicon-info"}}
+											</span>
+										</li>
 									{{end}}
 								</ul>
 							</details>
