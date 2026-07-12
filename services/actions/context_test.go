@@ -84,6 +84,9 @@ func TestGenerateGiteaContext(t *testing.T) {
 		assert.Equal(t, false, context["ref_protected"])
 		assert.Equal(t, "Actions", context["secret_source"])
 		assert.Equal(t, setting.AppURL, context["server_url"])
+		assert.Equal(t, setting.Actions.DefaultActionsURL.URL(), context["gitea_default_actions_url"])
+		assert.Equal(t, setting.Actions.DefaultActionsURL.URL(), context["forgejo_default_actions_url"])
+		assert.Equal(t, setting.AppVer, context["forgejo_server_version"])
 
 		event, ok := context["event"].(map[string]any)
 		require.True(t, ok)
