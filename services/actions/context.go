@@ -115,7 +115,8 @@ func GenerateGiteaContext(run *actions_model.ActionRun, job *actions_model.Actio
 	gitContext["workflow"] = run.WorkflowID                                     // string, The name of the workflow. If the workflow file doesn't specify a name, the value of this property is the full path of the workflow file in the repository.
 
 	// additional contexts
-	gitContext["gitea_default_actions_url"] = setting.Actions.DefaultActionsURL.URL()
+	gitContext["gitea_default_actions_url"] = setting.Actions.DefaultActionsURL.URL() // Remove after Forgejo 19.
+	gitContext["forgejo_default_actions_url"] = setting.Actions.DefaultActionsURL.URL()
 	gitContext["forgejo_server_version"] = setting.AppVer
 
 	if job != nil {
