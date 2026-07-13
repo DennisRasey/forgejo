@@ -48,6 +48,34 @@
 		"one": "%d year ago",
 		"other": "%d years ago"
 	},
+	"relativetime.duration.secs": {
+		"one": "%d second",
+		"other": "%d seconds"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minute",
+		"other": "%d minutes"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d hour",
+		"other": "%d hours"
+	},
+	"relativetime.duration.days": {
+		"one": "%d day",
+		"other": "%d days"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d week",
+		"other": "%d weeks"
+	},
+	"relativetime.duration.months": {
+		"one": "%d month",
+		"other": "%d months"
+	},
+	"relativetime.duration.years": {
+		"one": "%d year",
+		"other": "%d years"
+	},
 	"relativetime.1day": "yesterday",
 	"relativetime.1week": "last week",
 	"relativetime.1month": "last month",
