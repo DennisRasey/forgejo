@@ -2,5 +2,10 @@
   "go.buildTags": "sqlite,sqlite_unlock_notify",
   "go.testFlags": ["-v"],
   "go.lintTool": "golangci-lint",
-  "go.lintFlags": ["--fast"]
+  "go.lintFlags": ["--fast"],
+  "go.testEnvVars": {
+    "GITEA_ROOT": "${workspaceRoot}",
+    "GITEA_CONF": "tests/sqlite.ini",
+  },
+  "chat.disableAIFeatures": true,
 }

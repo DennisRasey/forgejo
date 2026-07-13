@@ -10,6 +10,7 @@
       "program": "${workspaceRoot}/main.go",
       "env": {
         "GITEA_WORK_DIR": "${workspaceRoot}",
+        "GITEA_ROOT": "${workspaceRoot}"
       },
       "args": ["web"],
       "showLog": true
@@ -23,6 +24,7 @@
       "program": "${workspaceRoot}/main.go",
       "env": {
         "GITEA_WORK_DIR": "${workspaceRoot}",
+        "GITEA_ROOT": "${workspaceRoot}"
       },
       "args": ["web"],
       "showLog": true
