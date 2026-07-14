@@ -233,4 +233,13 @@ func Test_getIDTokenSettingsForActions(t *testing.T) {
 	require.NoError(t, err)
 	err = loadActionsFrom(cfg)
 	require.ErrorContains(t, err, "[actions] Invalid config key: ID_TOKEN_SECRET_URI - must be removed")
+
+	iniStr = `
+  [actions]
+	ID_TOKEN_KEYS_ACCEPTED = HS384:ForgejoForgejoForgejoForgejoForgejoForgejo_
+	`
+	cfg, err = NewConfigProviderFromData(iniStr)
+	require.NoError(t, err)
+	err = loadActionsFrom(cfg)
+	require.ErrorContains(t, err, "[actions] Unexpected algorithm: ID_TOKEN_KEYS_ACCEPTED = HS384, needs to be one of [RS256 RS384 RS512 ES256 ES384 ES512 EdDSA]")
 }

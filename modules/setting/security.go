@@ -166,33 +166,67 @@ func loadAsymmeticSigningKeyPath(sec ConfigSection, pfx, defaultFile string) *st
 	return &keyPath
 }
 
-type checkKeyCfg func(rootCfg ConfigProvider, cfgSection, pfx string) error
+type (
+	checkFunc   func(rootCfg ConfigProvider, cfgSection, pfx string) error
+	checkKeyCfg struct {
+		signing      checkFunc
+		verification checkFunc
+	}
+)
+
+func checkSigningOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	sec := rootCfg.Section(cfgSection)
+	cfgAlg := pfx + "SIGNING_ALGORITHM"
+
+	if sec.HasKey(cfgAlg) {
+		alg := sec.Key(cfgAlg).String()
+		if !jwtx.IsValidAsymmetricAlgorithm(alg) {
+			return fmt.Errorf("Unexpected algorithm: %s = %s, needs to be one of %v",
+				cfgAlg, alg, jwtx.ValidAsymmetricAlgorithms)
+		}
+	}
+
+	noCfg := []string{
+		pfx + "SECRET_URI",
+		pfx + "SECRET",
+	}
+
+	for _, cfg := range noCfg {
+		if sec.HasKey(cfg) {
+			return fmt.Errorf("Invalid config key: %s - must be removed", cfg)
+		}
+	}
+
+	return nil
+}
+
+func checkValidationOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	sec := rootCfg.Section(cfgSection)
+	cfg := pfx + "KEYS_ACCEPTED"
+
+	if !sec.HasKey(cfg) {
+		return nil
+	}
+
+	for _, spec := range sec.Key(cfg).Strings(" ") {
+		algo, _, found := strings.Cut(spec, ":")
+		if !found {
+			// error to be handled by loadVerificationKeyCfg
+			continue
+		}
+
+		if !jwtx.IsValidAsymmetricAlgorithm(algo) {
+			return fmt.Errorf("Unexpected algorithm: %s = %s, needs to be one of %v",
+				cfg, algo, jwtx.ValidAsymmetricAlgorithms)
+		}
+	}
+	return nil
+}
 
 func onlyAsymmetric() checkKeyCfg {
-	return func(rootCfg ConfigProvider, cfgSection, pfx string) error {
-		sec := rootCfg.Section(cfgSection)
-		cfgAlg := pfx + "SIGNING_ALGORITHM"
-
-		if sec.HasKey(cfgAlg) {
-			alg := sec.Key(cfgAlg).String()
-			if !jwtx.IsValidAsymmetricAlgorithm(alg) {
-				return fmt.Errorf("Unexpected algorithm: %s = %s, needs to be one of %v",
-					cfgAlg, alg, jwtx.ValidAsymmetricAlgorithms)
-			}
-		}
-
-		noCfg := []string{
-			pfx + "SECRET_URI",
-			pfx + "SECRET",
-		}
-
-		for _, cfg := range noCfg {
-			if sec.HasKey(cfg) {
-				return fmt.Errorf("Invalid config key: %s - must be removed", cfg)
-			}
-		}
-
-		return nil
+	return checkKeyCfg{
+		signing:      checkSigningOnlyAsymmetric,
+		verification: checkValidationOnlyAsymmetric,
 	}
 }
 
@@ -206,7 +240,10 @@ func onlyAsymmetric() checkKeyCfg {
 
 func loadSigningKeyCfg(rootCfg ConfigProvider, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile string, checks ...checkKeyCfg) (*jwtx.SigningKeyCfg, error) {
 	for _, check := range checks {
-		err := check(rootCfg, cfgSection, pfx)
+		if check.signing == nil {
+			continue
+		}
+		err := check.signing(rootCfg, cfgSection, pfx)
 		if err != nil {
 			return nil, err
 		}
@@ -231,13 +268,140 @@ func loadSigningKeyCfg(rootCfg ConfigProvider, cfgSection, pfx, defaultAlg, defa
 	return &cfg, err
 }
 
-func loadKeyCfg(rootCfg ConfigProvider, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile string, checks ...checkKeyCfg) (*jwtx.KeyCfg, error) {
-	signing, err := loadSigningKeyCfg(rootCfg, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile, checks...)
+// expand file URLs with wildcards (see filepath.Glob())
+//
+// NB: via url.Parse() / .RequestURI() we already support a non-standard file:<name>
+// URL scheme (no authority), this is another extension
+func expandFileURItoPaths(uri string) ([]string, error) {
+	var parsedURI *url.URL
+
+	parsedURI, err := url.Parse(uri)
 	if err != nil {
-		err = fmt.Errorf("[%s] %v", cfgSection, err)
 		return nil, err
 	}
-	return &jwtx.KeyCfg{Signing: signing}, nil
+	if parsedURI.Scheme != "file" {
+		return nil, fmt.Errorf("Unsupported URI-Scheme %q in %q", parsedURI.Scheme, uri)
+	}
+
+	file := parsedURI.RequestURI()
+	if !filepath.IsAbs(file) {
+		file = filepath.Join(AppDataPath, file)
+	}
+
+	files, err := filepath.Glob(file)
+	// for no matches/malformed patterh, return the input, ENOFILE will be hit later
+	if files == nil || err != nil {
+		return []string{file}, nil
+	}
+	return files, nil
+}
+
+// for passing expandFileURItoPaths to loadSecretFromURI, which we use to retain
+// compatibility
+func prependFile(in []string) (out []string) {
+	for _, f := range in {
+		out = append(out, "file:"+f)
+	}
+	return out
+}
+
+// loadVerificationKeyCfg() loads additional keys to accept for verification
+//
+// [pfx]KEYS_ACCEPTED = <alg>:[<base64>|<uri>] <alg>:[<base64>|<uri>] ...
+func loadVerificationKeyCfg(rootCfg ConfigProvider, cfgSection, pfx string, checks ...checkKeyCfg) ([]*jwtx.VerificationKeyCfg, error) {
+	for _, check := range checks {
+		if check.verification == nil {
+			continue
+		}
+		err := check.verification(rootCfg, cfgSection, pfx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	sec := rootCfg.Section(cfgSection)
+	cfg := pfx + "KEYS_ACCEPTED"
+
+	if !sec.HasKey(cfg) {
+		return nil, nil
+	}
+	var vcfgs []*jwtx.VerificationKeyCfg
+	for _, spec := range sec.Key(cfg).Strings(" ") {
+		algo, uri, found := strings.Cut(spec, ":")
+		if !found {
+			return nil, fmt.Errorf("Seperator : not found in %s spec %s", cfg, spec)
+		}
+
+		err := func() error {
+			if jwtx.IsValidSymmetricAlgorithm(algo) {
+				var b64s []string
+
+				if strings.ContainsRune(uri, ':') {
+					paths, err := expandFileURItoPaths(uri)
+					// ignore error here, let loadSecretFromURI generate it
+					if err == nil {
+						paths = prependFile(paths)
+					} else {
+						paths = []string{uri}
+					}
+					for _, path := range paths {
+						b64, err := loadSecretFromURI(path)
+						if err != nil {
+							return err
+						}
+						b64s = append(b64s, b64)
+					}
+				} else {
+					b64s = []string{uri}
+				}
+				for _, b64 := range b64s {
+					secret, err := generate.DecodeJwtSecret(b64)
+					if err != nil {
+						return err
+					}
+					vcfgs = append(vcfgs, &jwtx.VerificationKeyCfg{
+						Algorithm:   algo,
+						SecretBytes: &secret,
+					})
+				}
+			} else if jwtx.IsValidAsymmetricAlgorithm(algo) {
+				paths, err := expandFileURItoPaths(uri)
+				if err != nil {
+					return err
+				}
+				for _, path := range paths {
+					vcfgs = append(vcfgs, &jwtx.VerificationKeyCfg{
+						Algorithm:     algo,
+						PublicKeyPath: &path,
+					})
+				}
+			} else {
+				return fmt.Errorf("Invalid algorithm %s in %s", algo, cfg)
+			}
+			return nil
+		}()
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", cfg, err)
+		}
+	}
+	return vcfgs, nil
+}
+
+func loadKeyCfg(rootCfg ConfigProvider, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile string, checks ...checkKeyCfg) (*jwtx.KeyCfg, error) {
+	var err error
+	kCfg := &jwtx.KeyCfg{}
+
+	kCfg.Signing, err = loadSigningKeyCfg(rootCfg, cfgSection, pfx, defaultAlg, defaultPrivateKeyFile, checks...)
+
+	if err == nil {
+		kCfg.Verification, err = loadVerificationKeyCfg(rootCfg, cfgSection, pfx, checks...)
+	}
+
+	if err == nil {
+		return kCfg, nil
+	}
+	err = fmt.Errorf("[%s] %v", cfgSection, err)
+	return nil, err
 }
 
 // generateSaveInternalToken generates and saves the internal token to app.ini

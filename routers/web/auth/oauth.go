@@ -397,7 +397,8 @@ func IntrospectOAuth(ctx *context.Context) {
 	}
 
 	form := web.GetForm(ctx).(*forms.IntrospectTokenForm)
-	token, err := oauth2.ParseToken(form.Token, oauth2.DefaultSigningKey)
+	var token oauth2.Token
+	_, err := oauth2.DefaultVerifier.ParseWithClaims(form.Token, &token)
 	if err == nil {
 		grant, err := auth.GetOAuth2GrantByID(ctx, token.GrantID)
 		if err == nil && grant != nil {
@@ -748,7 +749,7 @@ func AccessTokenOAuth(ctx *context.Context) {
 
 	switch form.GrantType {
 	case "refresh_token":
-		handleRefreshToken(ctx, form, serverKey, clientKey)
+		handleRefreshToken(ctx, form, oauth2.DefaultVerifier, serverKey, clientKey)
 	case "authorization_code":
 		handleAuthorizationCode(ctx, form, serverKey, clientKey)
 	default:
@@ -759,7 +760,7 @@ func AccessTokenOAuth(ctx *context.Context) {
 	}
 }
 
-func handleRefreshToken(ctx *context.Context, form forms.AccessTokenForm, serverKey, clientKey jwtx.SigningKey) {
+func handleRefreshToken(ctx *context.Context, form forms.AccessTokenForm, verifier *jwtx.Verifier, serverKey, clientKey jwtx.SigningKey) {
 	app, err := auth.GetOAuth2ApplicationByClientID(ctx, form.ClientID)
 	if err != nil {
 		handleAccessTokenError(ctx, AccessTokenErrorResponse{
@@ -784,7 +785,8 @@ func handleRefreshToken(ctx *context.Context, form forms.AccessTokenForm, server
 		return
 	}
 
-	token, err := oauth2.ParseToken(form.RefreshToken, serverKey)
+	var token oauth2.Token
+	_, err = verifier.ParseWithClaims(form.RefreshToken, &token)
 	if err != nil {
 		handleAccessTokenError(ctx, AccessTokenErrorResponse{
 			ErrorCode:        AccessTokenErrorCodeUnauthorizedClient,

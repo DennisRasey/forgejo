@@ -35,8 +35,8 @@ type SigningKeyCfg struct {
 }
 
 type KeyCfg struct {
-	Signing *SigningKeyCfg
-	// more later
+	Signing      *SigningKeyCfg
+	Verification []*VerificationKeyCfg
 }
 
 // ErrInvalidAlgorithmType represents an invalid algorithm error.
@@ -61,6 +61,7 @@ type SigningKey interface {
 	SignKey() any
 	VerifyKey() any
 	ToJWK() (map[string]string, error)
+	ID() string
 	PreProcessToken(*jwt.Token)
 	// convenience: jwt.NewWithClaims + PreProcessToken + SignedString
 	JWT(jwt.Claims, ...jwt.TokenOption) (string, error)
@@ -92,6 +93,10 @@ func (key hmacSigningKey) ToJWK() (map[string]string, error) {
 		"kty": "oct",
 		"alg": key.SigningMethod().Alg(),
 	}, nil
+}
+
+func (key hmacSigningKey) ID() string {
+	return ""
 }
 
 func (key hmacSigningKey) PreProcessToken(*jwt.Token) {}
@@ -145,6 +150,10 @@ func (key rsaSigningKey) ToJWK() (map[string]string, error) {
 		"e":   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(pubKey.E)).Bytes()),
 		"n":   base64.RawURLEncoding.EncodeToString(pubKey.N.Bytes()),
 	}, nil
+}
+
+func (key rsaSigningKey) ID() string {
+	return key.id
 }
 
 func (key rsaSigningKey) PreProcessToken(token *jwt.Token) {
@@ -202,6 +211,10 @@ func (key eddsaSigningKey) ToJWK() (map[string]string, error) {
 	}, nil
 }
 
+func (key eddsaSigningKey) ID() string {
+	return key.id
+}
+
 func (key eddsaSigningKey) PreProcessToken(token *jwt.Token) {
 	token.Header["kid"] = key.id
 }
@@ -256,6 +269,10 @@ func (key ecdsaSigningKey) ToJWK() (map[string]string, error) {
 		"x":   base64.RawURLEncoding.EncodeToString(pubKey.X.Bytes()), //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to x, even if unsafe.
 		"y":   base64.RawURLEncoding.EncodeToString(pubKey.Y.Bytes()), //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to y, even if unsafe.
 	}, nil
+}
+
+func (key ecdsaSigningKey) ID() string {
+	return key.id
 }
 
 func (key ecdsaSigningKey) PreProcessToken(token *jwt.Token) {
@@ -381,7 +398,7 @@ func createAsymmetricKey(keyPath, algorithm string) error {
 	return pem.Encode(f, privateKeyPEM)
 }
 
-func loadAsymmetricKey(keyPath string) (any, error) {
+func loadPrivateKey(keyPath string) (any, error) {
 	bytes, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
@@ -410,7 +427,36 @@ func loadOrCreateAsymmetricKey(keyPath, algorithm string) (any, error) {
 			return nil, fmt.Errorf("Error generating private key %s: %v", keyPath, err)
 		}
 	}
-	return loadAsymmetricKey(keyPath)
+	return loadPrivateKey(keyPath)
+}
+
+// save the public key for a private key
+func savePublicKey(keyPath string, signingKey SigningKey) error {
+	if signingKey.IsSymmetric() {
+		return fmt.Errorf("Saving symmatric key deliberately not supported (path: \"%s\")", keyPath)
+	}
+	bytes, err := x509.MarshalPKIXPublicKey(signingKey.VerifyKey())
+	if err != nil {
+		return err
+	}
+
+	publicKeyPEM := &pem.Block{Type: "PUBLIC KEY", Bytes: bytes}
+
+	if err := os.MkdirAll(filepath.Dir(keyPath), os.ModePerm); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err = f.Close(); err != nil {
+			log.Error("Close: %v", err)
+		}
+	}()
+
+	return pem.Encode(f, publicKeyPEM)
 }
 
 // InitSigningKey creates a signing key from SigningKeyCfg
@@ -562,4 +608,34 @@ func ParseJWKToPublicKey(jwk map[string]any) (any, error) {
 	default:
 		return nil, fmt.Errorf("unsupported key type in JWK: %s", kty)
 	}
+}
+
+// Init Signing Key and Verifier
+func InitWithParser(keyCfgP **KeyCfg, parser *jwt.Parser) (SigningKey, *Verifier, error) {
+	keyCfg := *keyCfgP
+	*keyCfgP = nil
+
+	signingKey, err := InitSigningKey(&keyCfg.Signing)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// we always add the signing key to the verifier (we accept tokens which
+	// we issue). No idea if there could be future cases where we do not
+	// want this, but for now antything else would be very un-POLA
+	verifier := NewVerifierWithParser(parser)
+	err = verifier.AddKey(signingKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	err = verifier.AddVerificationKeyCfg(&keyCfg.Verification)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return signingKey, verifier, nil
+}
+
+func Init(keyCfgP **KeyCfg) (SigningKey, *Verifier, error) {
+	return InitWithParser(keyCfgP, jwt.NewParser())
 }

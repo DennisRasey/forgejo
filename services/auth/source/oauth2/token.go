@@ -4,8 +4,6 @@
 package oauth2
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
 	"forgejo.org/modules/jwtx"
@@ -39,28 +37,6 @@ type Token struct {
 	Type    TokenType `json:"tt"`
 	Counter int64     `json:"cnt,omitempty"`
 	jwt.RegisteredClaims
-}
-
-// ParseToken parses a signed jwt string
-func ParseToken(jwtToken string, signingKey jwtx.SigningKey) (*Token, error) {
-	parsedToken, err := jwt.ParseWithClaims(jwtToken, &Token{}, func(token *jwt.Token) (any, error) {
-		if token.Method == nil || token.Method.Alg() != signingKey.SigningMethod().Alg() {
-			return nil, fmt.Errorf("unexpected signing algo: %v", token.Header["alg"])
-		}
-		return signingKey.VerifyKey(), nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !parsedToken.Valid {
-		return nil, errors.New("invalid token")
-	}
-	var token *Token
-	var ok bool
-	if token, ok = parsedToken.Claims.(*Token); !ok || !parsedToken.Valid {
-		return nil, errors.New("invalid token")
-	}
-	return token, nil
 }
 
 // SignToken signs the token with the JWT secret

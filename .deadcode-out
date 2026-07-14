@@ -131,6 +131,11 @@ forgejo.org/modules/json
 	StdJSON.NewDecoder
 	StdJSON.Indent
 
+forgejo.org/modules/jwtx
+	savePublicKey
+	NewVerifier
+	Verifier.Parse
+
 forgejo.org/modules/log
 	eventWriterBuffer.Close
 	eventWriterBuffer.Write
