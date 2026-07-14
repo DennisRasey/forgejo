@@ -96,7 +96,7 @@ require (
 	github.com/urfave/cli/v3 v3.9.1
 	github.com/valyala/fastjson v1.6.10
 	github.com/yohcop/openid-go v1.0.1
-	github.com/yuin/goldmark v1.8.2
+	github.com/yuin/goldmark v1.8.4
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	gitlab.com/gitlab-org/api/client-go v0.143.2
 	go.yaml.in/yaml/v3 v3.0.4
