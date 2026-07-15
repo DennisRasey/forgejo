@@ -807,5 +807,41 @@
 	"members.user_already_member": "Šis lietotājs jau ir apvienības dalībnieks.",
 	"members.no_team_selected": "Apvienības dalībniekiem ir jābūt vismaz vienā komandā.",
 	"pulls.status_checks.skipped": "Dažas pārbaudes tika izlaistas",
-	"members.invite_member": "Uzaicināt dalībnieku"
+	"members.invite_member": "Uzaicināt dalībnieku",
+	"repo.issues.context.copy_markdown": "Ievietot Markdown starpliktuvē",
+	"relativetime.duration.years": {
+		"zero": "%d gadu",
+		"one": "%d gads",
+		"other": "%d gadi"
+	},
+	"relativetime.duration.months": {
+		"zero": "%d mēnešu",
+		"one": "%d mēnesis",
+		"other": "%d mēneši"
+	},
+	"relativetime.duration.weeks": {
+		"zero": "%d nedēļu",
+		"one": "%d nedēļa",
+		"other": "%d nedēļas"
+	},
+	"relativetime.duration.days": {
+		"zero": "%d dienu",
+		"one": "%d diena",
+		"other": "%d dienas"
+	},
+	"relativetime.duration.hours": {
+		"zero": "%d stundu",
+		"one": "%d stunda",
+		"other": "%d stundas"
+	},
+	"relativetime.duration.mins": {
+		"zero": "%d minūšu",
+		"one": "%d minūte",
+		"other": "%d minūtes"
+	},
+	"relativetime.duration.secs": {
+		"zero": "%d sekunžu",
+		"one": "%d sekunde",
+		"other": "%d sekundes"
+	}
 }

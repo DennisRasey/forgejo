@@ -94,7 +94,10 @@
 	"packages.container.labels.value": "Gildi",
 	"packages.npm.details.tag": "Merki",
 	"packages.pypi.requires": "Þarfnast Python",
-	"repo.pulls.title_desc": "vill sameina %[1]d framlög frá <code>%[2]s</code> í <code id=\"%[4]s\">%[3]s</code>",
+	"repo.pulls.title_desc": {
+		"one": "vill sameina %[1]d framlög frá <code>%[2]s</code> í <code id=\"%[4]s\">%[3]s</code>",
+		"other": ""
+	},
 	"migrate.git.description": "Flytja hugbúnaðarsafn aðeins frá Git þjónustu.",
 	"migrate.items.wiki": "Handbók",
 	"migrate.items.milestones": "Tímamót",

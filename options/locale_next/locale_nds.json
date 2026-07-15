@@ -945,5 +945,42 @@
 	"actions.runs.deprioritize_run": "Utföhren nich vörtrecken",
 	"actions.runs.options": "Instellens",
 	"actions.runs.prioritization_success": "Warkwies-Utföhren #%d word nu vörtrucken.",
-	"actions.runs.deprioritization_success": "Warkwies-Utföhren #%d word nich mehr vörtrucken."
+	"actions.runs.deprioritization_success": "Warkwies-Utföhren #%d word nich mehr vörtrucken.",
+	"actions.workflow.pre_execution_warning": "Warkwies-Wahrschauen:",
+	"actions.workflow.permissions_warning": "Upgaav <code>%[1]s</code> of hör Warkwies hett een <code>permissions</code>-Feld, wat in Forgejo nich unnerstütt word un minnacht word. Bruuk in Stee daarvun <a href=\"%[2]s\">tolaten Integratioonen</a>, um deeser Upgaav Künnen to geven.",
+	"repo.issues.context.copy_markdown": "Markdown koperen",
+	"settings.profile.dotprofile.hint": "Wiedere Profil-Anpassens, to’n Bispööl Nakiekens-Verwiesen, könen mit de Repositorium »<code>%s</code>« torechtkregen worden. <a href=\"%s\" target=\"_blank\">Mehr erfahren</a>.",
+	"repo.watching": "Beluren",
+	"repo.watch.issues": "Gefallens",
+	"repo.watch.pull_requests": "Haalvörslagen",
+	"repo.watch.releases": "Publizerens",
+	"repo.watch.releases.hint": "(blots E-Mail)",
+	"relativetime.duration.secs": {
+		"one": "%d Sekünn",
+		"other": "%d Sekünnen"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d Menüüt",
+		"other": "%d Menüten"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d Stünn",
+		"other": "%d Stünnen"
+	},
+	"relativetime.duration.days": {
+		"one": "%d Dag",
+		"other": "%d Dagen"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d Week",
+		"other": "%d Weken"
+	},
+	"relativetime.duration.months": {
+		"one": "%d Maant",
+		"other": "%d Maanten"
+	},
+	"relativetime.duration.years": {
+		"one": "%d Jahr",
+		"other": "%d Jahren"
+	}
 }

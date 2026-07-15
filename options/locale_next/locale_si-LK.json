@@ -162,8 +162,14 @@
 	"packages.filter.type": "වර්ගය",
 	"packages.alpine.repository.branches": "ශාඛා",
 	"packages.alpine.repository.repositories": "කෝෂ්ඨ",
-	"repo.pulls.merged_title_desc": "මර්ජ්%[1]d සිට <code>%[2]s</code> දක්වා <code>%[3]s</code> %[4]s",
-	"repo.pulls.title_desc": "%[1]d සිට <code>%[2]s</code> දක්වා <code id=\"%[4]s\">%[3]s</code>",
+	"repo.pulls.merged_title_desc": {
+		"one": "මර්ජ්%[1]d සිට <code>%[2]s</code> දක්වා <code>%[3]s</code> %[4]s",
+		"other": ""
+	},
+	"repo.pulls.title_desc": {
+		"one": "%[1]d සිට <code>%[2]s</code> දක්වා <code id=\"%[4]s\">%[3]s</code>",
+		"other": ""
+	},
 	"migrate.git.description": "ඕනෑම Git සේවාවකින් පමණක් ගබඩාවක් සංක්රමණය කරන්න.",
 	"migrate.gitea.description": "Gitea.com හෝ වෙනත් Gitea අවස්ථා වලින් දත්ත සංක්රමණය කරන්න.",
 	"migrate.gitlab.description": "gitlab.com හෝ වෙනත් GitLab අවස්ථා වලින් දත්ත සංක්රමණය කරන්න.",

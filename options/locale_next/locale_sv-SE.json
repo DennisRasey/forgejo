@@ -945,5 +945,42 @@
 	"actions.runs.deprioritize_run": "Prioritera inte körning",
 	"actions.runs.options": "Alternativ",
 	"actions.runs.prioritization_success": "Arbetsflöde körning #%d prioriteras nu.",
-	"actions.runs.deprioritization_success": "Arbetsflöde körning #%d kommer inte längre att prioriteras."
+	"actions.runs.deprioritization_success": "Arbetsflöde körning #%d kommer inte längre att prioriteras.",
+	"actions.workflow.pre_execution_warning": "Arbetsflöde varningar:",
+	"actions.workflow.permissions_warning": "Jobb <code>%[1]s</code> eller dess arbetsflöde har ett <code>behörigheter</code> fält, vilket inte stöds i Forgejo och kommer att ignoreras. Använd <a href=\"%[2]s\">Auktoriserade integrationer</a> för att ge kapabiliteter till det här jobbet istället.",
+	"repo.issues.context.copy_markdown": "Kopiera Markdown",
+	"relativetime.duration.secs": {
+		"one": "%d sekund",
+		"other": "%d sekunder"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minut",
+		"other": "%d minuter"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d timme",
+		"other": "%d timmar"
+	},
+	"relativetime.duration.days": {
+		"one": "%d dag",
+		"other": "%d dagar"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d vecka",
+		"other": "%d veckor"
+	},
+	"relativetime.duration.months": {
+		"one": "%d månad",
+		"other": "%d månader"
+	},
+	"relativetime.duration.years": {
+		"one": "%d år",
+		"other": "%d flera år"
+	},
+	"settings.profile.dotprofile.hint": "Avancerad profilanpassning, inklusive verifieringslänkar, kan uppnås med <code>%s</code>kodförråd.<a href=\"%s\" target=\"_blank\">Läs mer</a>.",
+	"repo.watching": "Följa",
+	"repo.watch.issues": "Ärenden",
+	"repo.watch.pull_requests": "Ändringsförfrågningar",
+	"repo.watch.releases": "Utgåvor",
+	"repo.watch.releases.hint": "(e-post endast)"
 }

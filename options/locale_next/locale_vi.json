@@ -14,18 +14,9 @@
 	"webauthn.press_button": "Hãy nhấn nút trên khóa bảo mật…",
 	"webauthn.sign_in": "Nhấn nút trên khóa bảo mật, nếu không có nút thì bạn hãy rút ra rồi cắm lại.",
 	"webauthn.insert_key": "Cắm khóa bảo mật của bạn vào",
-	"counters.n_branches": {
-		"one": "%s nhánh",
-		"other": "%s nhánh"
-	},
-	"counters.n_tags": {
-		"one": "%s nhãn",
-		"other": "%s nhãn"
-	},
-	"counters.n_releases": {
-		"one": "%s bản phát hành",
-		"other": "%s bản phát hành"
-	},
+	"counters.n_branches": "%s nhánh",
+	"counters.n_tags": "%s nhãn",
+	"counters.n_releases": "%s bản phát hành",
 	"packages.filter.container.tagged": "Được gắn nhãn",
 	"packages.filter.container.untagged": "Không được gắn nhãn",
 	"packages.details.project_site": "Trang mạng dự án",

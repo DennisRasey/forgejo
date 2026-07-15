@@ -967,5 +967,49 @@
 	"actions.runs.prioritize_run": "Надати пріоритет",
 	"actions.runs.deprioritize_run": "Зняти пріоритет",
 	"actions.runs.prioritization_success": "Запуск робочого потоку №%d тепер має пріоритет.",
-	"actions.runs.deprioritization_success": "Запуск робочого потоку №%d більше не має пріоритету."
+	"actions.runs.deprioritization_success": "Запуск робочого потоку №%d більше не має пріоритету.",
+	"actions.workflow.pre_execution_warning": "Попередження щодо робочого потоку:",
+	"actions.workflow.permissions_warning": "У завдання <code>%[1]s</code> або його робочого потоку є поле <code>permissions</code>, яке не підтримується в Forgejo і буде проігноровано. Щоб надати цьому завданню відповідні можливості, скористайтеся функцією <a href=\"%[2]s\">Авторизовані інтеграції</a>.",
+	"repo.issues.context.copy_markdown": "Копіювати з розміткою",
+	"settings.profile.dotprofile.hint": "Розширене налаштування профілю, зокрема посилань для підтвердження, можна здійснити за допомогою репозиторію <code>%s</code>. <a href=\"%s\" target=\"_blank\">Дізнатися більше</a>.",
+	"repo.watch.releases": "Випуски",
+	"repo.watch.pull_requests": "Запити на злиття",
+	"repo.watch.issues": "Задачі",
+	"repo.watching": "Відстежується",
+	"repo.watch.releases.hint": "(Тільки email)",
+	"relativetime.duration.secs": {
+		"one": "%d секунда",
+		"few": "%d секунди",
+		"many": "%d секунд"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d хвилина",
+		"few": "%d хвилини",
+		"many": "%d хвилин"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d година",
+		"few": "%d години",
+		"many": "%d годин"
+	},
+	"relativetime.duration.days": {
+		"one": "%d день",
+		"few": "%d дні",
+		"many": "%d днів"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d тиждень",
+		"few": "%d тижні",
+		"many": "%d тижнів"
+	},
+	"relativetime.duration.months": {
+		"one": "%d місяць",
+		"few": "%d місяці",
+		"many": "%d місяців"
+	},
+	"relativetime.duration.years": {
+		"one": "%d рік",
+		"few": "%d роки",
+		"many": "%d років"
+	}
 }

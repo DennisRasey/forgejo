@@ -967,5 +967,49 @@
 	"actions.runs.deprioritize_run": "No priorizar la ejecución",
 	"actions.runs.options": "Opciones",
 	"actions.runs.prioritization_success": "El flujo de trabajo n.º %d tiene prioridad.",
-	"actions.runs.deprioritization_success": "El flujo de trabajo n.º %d carece de prioridad."
+	"actions.runs.deprioritization_success": "El flujo de trabajo n.º %d carece de prioridad.",
+	"actions.workflow.pre_execution_warning": "Advertencias de flujo de trabajo:",
+	"repo.issues.context.copy_markdown": "Copiar Markdown",
+	"actions.workflow.permissions_warning": "El trabajo <code>%[1]s</code> o su flujo de trabajo tiene el campo <code>permisos</code>, que Forgejo no soporta y será ignorado. Use <a href=\"%[2]s\">integraciones autorizadas</a> para otorgar habilidades a este trabajo en su lugar.",
+	"settings.profile.dotprofile.hint": "La personalización avanzada del perfil, incluidos los enlaces de verificación, se puede llevar a cabo con el repositorio <code>%s</code>. <a href=\"%s\" target=\"_blank\">Más información</a>.",
+	"repo.watching": "Vigilando",
+	"repo.watch.issues": "Problemas",
+	"repo.watch.pull_requests": "Solicitudes de extracción",
+	"repo.watch.releases.hint": "(Solo por correo electrónico)",
+	"relativetime.duration.secs": {
+		"one": "%d segundo",
+		"many": "%d segundos",
+		"other": "%d segundos"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minuto",
+		"many": "%d minutos",
+		"other": "%d minutos"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d hora",
+		"many": "%d horas",
+		"other": "%d horas"
+	},
+	"relativetime.duration.days": {
+		"one": "%d día",
+		"many": "%d días",
+		"other": "%d días"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d semana",
+		"many": "%d semanas",
+		"other": "%d semanas"
+	},
+	"relativetime.duration.months": {
+		"one": "%d mes",
+		"many": "%d meses",
+		"other": "%d meses"
+	},
+	"relativetime.duration.years": {
+		"one": "%d año",
+		"many": "%d años",
+		"other": "%d años"
+	},
+	"repo.watch.releases": "Versiones"
 }

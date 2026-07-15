@@ -733,5 +733,41 @@
 	"members.user": "Użytkownik",
 	"members.user_already_member": "Ten użytkownik jest już członkiem tej organizacji.",
 	"members.no_team_selected": "Członkowie organizacji muszą należeć do przynajmniej jednego zespołu.",
-	"repo.view.gitmodules_too_large": "Plik .gitmodules jest za duży i będzie ignorowany (np. w wywołaniach API)"
+	"repo.view.gitmodules_too_large": "Plik .gitmodules jest za duży i będzie ignorowany (np. w wywołaniach API)",
+	"relativetime.duration.years": {
+		"one": "%d rok",
+		"few": "%d lata",
+		"many": "%d lat"
+	},
+	"relativetime.duration.secs": {
+		"one": "%d sekunda",
+		"few": "%d sekundy",
+		"many": "%d sekund"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minuta",
+		"few": "%d minuty",
+		"many": "%d minut"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d godzina",
+		"few": "%d godziny",
+		"many": "%d godzin"
+	},
+	"relativetime.duration.days": {
+		"one": "%d dzień",
+		"few": "%d dni",
+		"many": "%d dni"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d tydzień",
+		"few": "%d tygodnie",
+		"many": "%d tygodni"
+	},
+	"relativetime.duration.months": {
+		"one": "%d miesiąc",
+		"few": "%d miesiące",
+		"many": "%d miesięcy"
+	},
+	"repo.issues.context.copy_markdown": "Skopiuj Markdown"
 }
