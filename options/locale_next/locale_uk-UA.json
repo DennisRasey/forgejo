@@ -967,5 +967,12 @@
 	"actions.runs.prioritize_run": "Надати пріоритет",
 	"actions.runs.deprioritize_run": "Зняти пріоритет",
 	"actions.runs.prioritization_success": "Запуск робочого потоку №%d тепер має пріоритет.",
-	"actions.runs.deprioritization_success": "Запуск робочого потоку №%d більше не має пріоритету."
+	"actions.runs.deprioritization_success": "Запуск робочого потоку №%d більше не має пріоритету.",
+	"actions.workflow.pre_execution_warning": "Попередження щодо робочого потоку:",
+	"actions.workflow.permissions_warning": "У завдання <code>%[1]s</code> або його робочого потоку є поле <code>permissions</code>, яке не підтримується в Forgejo і буде проігноровано. Щоб надати цьому завданню відповідні можливості, скористайтеся функцією <a href=\"%[2]s\">Авторизовані інтеграції</a>.",
+	"repo.watching": "Відстежується",
+	"repo.watch.issues": "Задачі",
+	"repo.watch.pull_requests": "Запити на злиття",
+	"repo.watch.releases": "Випуски",
+	"repo.watch.releases.hint": "(Тільки email)"
 }

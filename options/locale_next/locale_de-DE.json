@@ -945,5 +945,12 @@
 	"actions.runs.deprioritize_run": "Run nicht priorisieren",
 	"actions.runs.options": "Optionen",
 	"actions.runs.prioritization_success": "Workflow-Run #%d ist jetzt priorisiert.",
-	"actions.runs.deprioritization_success": "Workflow-Run #%d wird nicht mehr priotisiert."
+	"actions.runs.deprioritization_success": "Workflow-Run #%d wird nicht mehr priotisiert.",
+	"actions.workflow.pre_execution_warning": "Workflow-Warnungen:",
+	"actions.workflow.permissions_warning": "Job <code>%[1]s</code> oder sein Workflow hat ein <code>permissions</code>-Feld, welches in Forgejo nicht unterstützt wird, der Job wird daher ignoriert. Benutzen Sie stattdessen <a href=\"%[2]s\">Autorisierte Integrationen</a>, um Fähigkeiten diesem Job zuzuweisen.",
+	"repo.watching": "Beobachten",
+	"repo.watch.issues": "Issues",
+	"repo.watch.pull_requests": "Pull-Requests",
+	"repo.watch.releases": "Releases",
+	"repo.watch.releases.hint": "(nur E-Mail)"
 }

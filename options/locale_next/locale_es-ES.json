@@ -967,5 +967,12 @@
 	"actions.runs.deprioritize_run": "No priorizar la ejecución",
 	"actions.runs.options": "Opciones",
 	"actions.runs.prioritization_success": "El flujo de trabajo n.º %d tiene prioridad.",
-	"actions.runs.deprioritization_success": "El flujo de trabajo n.º %d carece de prioridad."
+	"actions.runs.deprioritization_success": "El flujo de trabajo n.º %d carece de prioridad.",
+	"actions.workflow.pre_execution_warning": "Advertencias de flujo de trabajo:",
+	"actions.workflow.permissions_warning": "El trabajo <code>%[1]s</code> o su flujo de trabajo tiene el campo <code>permisos</code>, que Forgejo no soporta y será ignorado. Use <a href=\"%[2]s\">integraciones autorizadas</a> para otorgar habilidades a este trabajo en su lugar.",
+	"repo.watching": "Vigilando",
+	"repo.watch.issues": "Problemas",
+	"repo.watch.pull_requests": "Solicitudes de extracción",
+	"repo.watch.releases": "Versiones",
+	"repo.watch.releases.hint": "(Solo por correo electrónico)"
 }
