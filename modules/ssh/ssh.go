@@ -66,7 +66,20 @@ func sessionHandler(session ssh.Session) {
 	args := []string{"--config=" + setting.CustomConf, "serv", "key-" + keyID}
 	logger.Trace("SSH: Arguments: %v", args)
 
-	ctx, cancel := context.WithCancel(session.Context())
+	// Previously we would use `session.Context()` here, which would cause the context to cancel when the SSH session is
+	// closed, which causes the `forgejo` subprocess to be cancelled when the session is closed.  This behaviour was a
+	// deviation from OpenSSH, which allows subprocesses to continue past the SSH session and relies on the subprocess's
+	// stdin being closed and stdout being unwritable (EPIPE) to indicate that the subprocess should finish.  As an
+	// effect of that, `forgejo serv` subprocesses would be killed, and their `git` subprocesses would be killed (due to
+	// `SetupCancellableCommand`), and `git`'s subprocess post-receive hooks would be killed, all resulting in a desync
+	// between the on-disk repository and Forgejo's knowledge about the repository branches.
+	//
+	// Instead of that, we try to mirror OpenSSH's behaviour -- create a context that won't automatically kill the
+	// subprocesses, and rely on the stdin/stdout pipes to signal to subprocesses their cancellation.  We still
+	// terminate those processes if Forgejo's graceful shutdown hits the hammer timeout -- during a graceful shutdown
+	// the SSH server still stop accepting new connections, and these connections just need to finish before the hammer
+	// timeout, or, be terminated at that timeout.
+	ctx, cancel := context.WithCancel(graceful.GetManager().HammerContext())
 	defer cancel()
 
 	gitProtocol := ""
