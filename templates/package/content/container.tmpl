@@ -25,7 +25,7 @@
 	</div>
 	{{if .PackageDescriptor.Metadata.Manifests}}
 		<h4 class="ui top attached header">{{ctx.Locale.Tr "packages.container.images.title"}}</h4>
-		<div class="ui attached segment">
+		<div id="container-manifests" class="ui attached segment">
 			<table class="ui very basic compact table">
 				<thead>
 					<tr>
@@ -50,13 +50,13 @@
 	{{end}}
 	{{if .PackageDescriptor.Metadata.Description}}
 		<h4 class="ui top attached header">{{ctx.Locale.Tr "packages.about"}}</h4>
-		<div class="ui attached segment">
+		<div id="container-description" class="ui attached segment">
 			{{.PackageDescriptor.Metadata.Description}}
 		</div>
 	{{end}}
 	{{if .PackageDescriptor.Metadata.ImageLayers}}
 		<h4 class="ui top attached header">{{ctx.Locale.Tr "packages.container.layers"}}</h4>
-		<div class="ui attached segment tw-break-anywhere">
+		<div id="container-layers" class="ui attached segment tw-break-anywhere">
 			<table class="ui very basic compact table">
 				<tbody>
 					{{range .PackageDescriptor.Metadata.ImageLayers}}
@@ -70,7 +70,7 @@
 	{{end}}
 	{{if .PackageDescriptor.Metadata.Labels}}
 		<h4 class="ui top attached header">{{ctx.Locale.Tr "packages.container.labels"}}</h4>
-		<div class="ui attached segment">
+		<div id="container-labels" class="ui attached segment">
 			<table class="ui very basic compact table">
 				<thead>
 					<tr>

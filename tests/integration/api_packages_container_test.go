@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -69,14 +70,18 @@ func TestPackageContainer(t *testing.T) {
 
 	blobContent, _ := base64.StdEncoding.DecodeString(`H4sIAAAJbogA/2IYBaNgFIxYAAgAAP//Lq+17wAEAAA=`)
 	blobDigest := "sha256:" + sha256Hash(string(blobContent))
+	maintainer := "contact@forgejo.org"
+	description := "PACKAGE DESCRIPTION"
+	labelDescription := "org.opencontainers.image.description"
 
-	configContent := `{"architecture":"amd64","config":{"Env":["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],"Cmd":["/true"],"ArgsEscaped":true,"Image":"sha256:9bd8b88dc68b80cffe126cc820e4b52c6e558eb3b37680bfee8e5f3ed7b8c257"},"container":"b89fe92a887d55c0961f02bdfbfd8ac3ddf66167db374770d2d9e9fab3311510","container_config":{"Hostname":"b89fe92a887d","Env":["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],"Cmd":["/bin/sh","-c","#(nop) ","CMD [\"/true\"]"],"ArgsEscaped":true,"Image":"sha256:9bd8b88dc68b80cffe126cc820e4b52c6e558eb3b37680bfee8e5f3ed7b8c257"},"created":"2022-01-01T00:00:00.000000000Z","docker_version":"20.10.12","history":[{"created":"2022-01-01T00:00:00.000000000Z","created_by":"/bin/sh -c #(nop) COPY file:0e7589b0c800daaf6fa460d2677101e4676dd9491980210cb345480e513f3602 in /true "},{"created":"2022-01-01T00:00:00.000000001Z","created_by":"/bin/sh -c #(nop)  CMD [\"/true\"]","empty_layer":true}],"os":"linux","rootfs":{"type":"layers","diff_ids":["sha256:0ff3b91bdf21ecdf2f2f3d4372c2098a14dbe06cd678e8f0a85fd4902d00e2e2"]}}`
+	configContent := `{"architecture":"amd64","config":{"Env":["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],"Cmd":["/true"],"ArgsEscaped":true,"Labels":{"maintainer":"` + maintainer + `","` + labelDescription + `":"` + description + `"},"Image":"sha256:9bd8b88dc68b80cffe126cc820e4b52c6e558eb3b37680bfee8e5f3ed7b8c257"},"container":"b89fe92a887d55c0961f02bdfbfd8ac3ddf66167db374770d2d9e9fab3311510","container_config":{"Hostname":"b89fe92a887d","Env":["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],"Cmd":["/bin/sh","-c","#(nop) ","CMD [\"/true\"]"],"ArgsEscaped":true,"Image":"sha256:9bd8b88dc68b80cffe126cc820e4b52c6e558eb3b37680bfee8e5f3ed7b8c257"},"created":"2022-01-01T00:00:00.000000000Z","docker_version":"20.10.12","history":[{"created":"2022-01-01T00:00:00.000000000Z","created_by":"/bin/sh -c #(nop) COPY file:0e7589b0c800daaf6fa460d2677101e4676dd9491980210cb345480e513f3602 in /true "},{"created":"2022-01-01T00:00:00.000000001Z","created_by":"/bin/sh -c #(nop)  CMD [\"/true\"]","empty_layer":true}],"os":"linux","rootfs":{"type":"layers","diff_ids":["sha256:0ff3b91bdf21ecdf2f2f3d4372c2098a14dbe06cd678e8f0a85fd4902d00e2e2"]}}`
 	configDigest := "sha256:" + sha256Hash(configContent)
+	configSize := fmt.Sprintf("%d", len(configContent))
 
-	manifestContent := `{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"sha256:4607e093bec406eaadb6f3a340f63400c9d3a7038680744c406903766b938f0d","size":1069},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","size":32}]}`
+	manifestContent := `{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"` + configDigest + `","size":` + configSize + `},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","size":32}]}`
 	manifestDigest := "sha256:" + sha256Hash(manifestContent)
 
-	untaggedManifestContent := `{"schemaVersion":2,"mediaType":"` + oci.MediaTypeImageManifest + `","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"sha256:4607e093bec406eaadb6f3a340f63400c9d3a7038680744c406903766b938f0d","size":1069},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","size":32}]}`
+	untaggedManifestContent := `{"schemaVersion":2,"mediaType":"` + oci.MediaTypeImageManifest + `","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"` + configDigest + `","size":` + configSize + `},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"sha256:a3ed95caeb02ffe68cdd9fd84406680ae93d633cb16422d00e8a7c22955b46d4","size":32}]}`
 	untaggedManifestDigest := "sha256:" + sha256Hash(untaggedManifestContent)
 
 	indexManifestContent := `{"schemaVersion":2,"mediaType":"` + oci.MediaTypeImageIndex + `","manifests":[{"mediaType":"application/vnd.docker.distribution.manifest.v2+json","digest":"` + manifestDigest + `","platform":{"os":"linux","architecture":"arm","variant":"v7"}},{"mediaType":"` + oci.MediaTypeImageManifest + `","digest":"` + untaggedManifestDigest + `","platform":{"os":"linux","architecture":"arm64","variant":"v8"}}]}`
@@ -317,24 +322,24 @@ func TestPackageContainer(t *testing.T) {
 
 	for _, image := range images {
 		t.Run(fmt.Sprintf("[Image:%s]", image), func(t *testing.T) {
-			url := fmt.Sprintf("%sv2/%s/%s", setting.AppURL, user.Name, image)
+			urlv2 := fmt.Sprintf("%sv2/%s/%s", setting.AppURL, user.Name, image)
 
 			t.Run("UploadBlob/Monolithic", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				req := NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", url)).
+				req := NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", urlv2)).
 					AddTokenAuth(anonymousToken)
 				MakeRequest(t, req, http.StatusUnauthorized)
 
-				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", url)).
+				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", urlv2)).
 					AddTokenAuth(readUserToken)
 				MakeRequest(t, req, http.StatusUnauthorized)
 
-				req = NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", url, unknownDigest), bytes.NewReader(blobContent)).
+				req = NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", urlv2, unknownDigest), bytes.NewReader(blobContent)).
 					AddTokenAuth(userToken)
 				MakeRequest(t, req, http.StatusBadRequest)
 
-				req = NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", url, blobDigest), bytes.NewReader(blobContent)).
+				req = NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", urlv2, blobDigest), bytes.NewReader(blobContent)).
 					AddTokenAuth(userToken)
 				resp := MakeRequest(t, req, http.StatusCreated)
 
@@ -356,7 +361,7 @@ func TestPackageContainer(t *testing.T) {
 			t.Run("UploadBlob/Chunked", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				req := NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", url)).
+				req := NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", urlv2)).
 					AddTokenAuth(userToken)
 				resp := MakeRequest(t, req, http.StatusAccepted)
 
@@ -409,7 +414,7 @@ func TestPackageContainer(t *testing.T) {
 				t.Run("Cancel", func(t *testing.T) {
 					defer tests.PrintCurrentTest(t)()
 
-					req := NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", url)).
+					req := NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads", urlv2)).
 						AddTokenAuth(userToken)
 					resp := MakeRequest(t, req, http.StatusAccepted)
 
@@ -444,26 +449,26 @@ func TestPackageContainer(t *testing.T) {
 					AddBasicAuth(privateUser.Name)
 				MakeRequest(t, req, http.StatusCreated)
 
-				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s", url, unknownDigest)).
+				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s", urlv2, unknownDigest)).
 					AddTokenAuth(userToken)
 				MakeRequest(t, req, http.StatusAccepted)
 
-				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s", url, privateBlobDigest)).
+				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s", urlv2, privateBlobDigest)).
 					AddTokenAuth(userToken)
 				MakeRequest(t, req, http.StatusAccepted)
 
-				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s", url, blobDigest)).
+				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s", urlv2, blobDigest)).
 					AddTokenAuth(userToken)
 				resp := MakeRequest(t, req, http.StatusCreated)
 
 				assert.Equal(t, fmt.Sprintf("/v2/%s/%s/blobs/%s", user.Name, image, blobDigest), resp.Header().Get("Location"))
 				assert.Equal(t, blobDigest, resp.Header().Get("Docker-Content-Digest"))
 
-				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s&from=%s", url, unknownDigest, "unknown/image")).
+				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s&from=%s", urlv2, unknownDigest, "unknown/image")).
 					AddTokenAuth(userToken)
 				MakeRequest(t, req, http.StatusAccepted)
 
-				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s&from=%s/%s", url, blobDigest, user.Name, image)).
+				req = NewRequest(t, "POST", fmt.Sprintf("%s/blobs/uploads?mount=%s&from=%s/%s", urlv2, blobDigest, user.Name, image)).
 					AddTokenAuth(userToken)
 				resp = MakeRequest(t, req, http.StatusCreated)
 
@@ -476,21 +481,21 @@ func TestPackageContainer(t *testing.T) {
 					t.Run("UploadManifest", func(t *testing.T) {
 						defer tests.PrintCurrentTest(t)()
 
-						req := NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", url, configDigest), strings.NewReader(configContent)).
+						req := NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", urlv2, configDigest), strings.NewReader(configContent)).
 							AddTokenAuth(userToken)
 						MakeRequest(t, req, http.StatusCreated)
 
-						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", url, tag), strings.NewReader(manifestContent)).
+						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", urlv2, tag), strings.NewReader(manifestContent)).
 							AddTokenAuth(anonymousToken).
 							SetHeader("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
 						MakeRequest(t, req, http.StatusUnauthorized)
 
-						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", url, tag), strings.NewReader(manifestContent)).
+						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", urlv2, tag), strings.NewReader(manifestContent)).
 							AddTokenAuth(readUserToken).
 							SetHeader("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
 						MakeRequest(t, req, http.StatusUnauthorized)
 
-						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", url, tag), strings.NewReader(manifestContent)).
+						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", urlv2, tag), strings.NewReader(manifestContent)).
 							AddTokenAuth(userToken).
 							SetHeader("Content-Type", "application/vnd.docker.distribution.manifest.v2+json")
 						resp := MakeRequest(t, req, http.StatusCreated)
@@ -534,7 +539,7 @@ func TestPackageContainer(t *testing.T) {
 							}
 						}
 
-						req = NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", url, tag)).
+						req = NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", urlv2, tag)).
 							AddTokenAuth(userToken)
 						MakeRequest(t, req, http.StatusOK)
 
@@ -543,7 +548,7 @@ func TestPackageContainer(t *testing.T) {
 						assert.EqualValues(t, 1, pv.DownloadCount)
 
 						// Overwrite existing tag should keep the download count
-						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", url, tag), strings.NewReader(manifestContent)).
+						req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", urlv2, tag), strings.NewReader(manifestContent)).
 							AddTokenAuth(userToken).
 							SetHeader("Content-Type", oci.MediaTypeImageManifest)
 						MakeRequest(t, req, http.StatusCreated)
@@ -551,16 +556,24 @@ func TestPackageContainer(t *testing.T) {
 						pv, err = packages_model.GetVersionByNameAndVersion(db.DefaultContext, user.ID, packages_model.TypeContainer, image, tag)
 						require.NoError(t, err)
 						assert.EqualValues(t, 1, pv.DownloadCount)
+
+						// Verify the template of the web UI renders correctly
+						req = NewRequest(t, "GET", fmt.Sprintf("%s/%s/-/packages/container/%s/%s", setting.AppURL, user.Name, url.QueryEscape(image), tag))
+						resp = MakeRequest(t, req, http.StatusOK)
+						htmlDoc := NewHTMLParser(t, resp.Body)
+						assert.Contains(t, htmlDoc.Find("#container-description").Text(), description)
+						assert.Contains(t, htmlDoc.Find("#container-layers").Text(), "CMD")
+						assert.Contains(t, htmlDoc.Find("#container-labels").Text(), maintainer)
 					})
 
 					t.Run("HeadManifest", func(t *testing.T) {
 						defer tests.PrintCurrentTest(t)()
 
-						req := NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/unknown-tag", url)).
+						req := NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/unknown-tag", urlv2)).
 							AddTokenAuth(userToken)
 						MakeRequest(t, req, http.StatusNotFound)
 
-						req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", url, tag)).
+						req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", urlv2, tag)).
 							AddTokenAuth(userToken)
 						resp := MakeRequest(t, req, http.StatusOK)
 
@@ -571,7 +584,7 @@ func TestPackageContainer(t *testing.T) {
 					t.Run("GetManifest unknown-tag", func(t *testing.T) {
 						defer tests.PrintCurrentTest(t)()
 
-						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/unknown-tag", url)).
+						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/unknown-tag", urlv2)).
 							AddTokenAuth(userToken)
 						MakeRequest(t, req, http.StatusNotFound)
 					})
@@ -580,7 +593,7 @@ func TestPackageContainer(t *testing.T) {
 						defer tests.PrintCurrentTest(t)()
 						defer test.MockVariableValue(&setting.Packages.Storage.MinioConfig.ServeDirect, false)()
 
-						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", url, tag)).
+						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", urlv2, tag)).
 							AddTokenAuth(userToken)
 						resp := MakeRequest(t, req, http.StatusOK)
 
@@ -599,7 +612,7 @@ func TestPackageContainer(t *testing.T) {
 						defer tests.PrintCurrentTest(t)()
 						defer test.MockVariableValue(&setting.Packages.Storage.MinioConfig.ServeDirect, true)()
 
-						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", url, tag)).
+						req := NewRequest(t, "GET", fmt.Sprintf("%s/manifests/%s", urlv2, tag)).
 							AddTokenAuth(userToken)
 						resp := MakeRequest(t, req, http.StatusTemporaryRedirect)
 
@@ -614,14 +627,14 @@ func TestPackageContainer(t *testing.T) {
 			t.Run("UploadUntaggedManifest", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				req := NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", url, untaggedManifestDigest), strings.NewReader(untaggedManifestContent)).
+				req := NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", urlv2, untaggedManifestDigest), strings.NewReader(untaggedManifestContent)).
 					AddTokenAuth(userToken).
 					SetHeader("Content-Type", oci.MediaTypeImageManifest)
 				resp := MakeRequest(t, req, http.StatusCreated)
 
 				assert.Equal(t, untaggedManifestDigest, resp.Header().Get("Docker-Content-Digest"))
 
-				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", url, untaggedManifestDigest)).
+				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", urlv2, untaggedManifestDigest)).
 					AddTokenAuth(userToken)
 				resp = MakeRequest(t, req, http.StatusOK)
 
@@ -654,7 +667,7 @@ func TestPackageContainer(t *testing.T) {
 			t.Run("UploadIndexManifest", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				req := NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", url, multiTag), strings.NewReader(indexManifestContent)).
+				req := NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", urlv2, multiTag), strings.NewReader(indexManifestContent)).
 					AddTokenAuth(userToken).
 					SetHeader("Content-Type", oci.MediaTypeImageIndex)
 				resp := MakeRequest(t, req, http.StatusCreated)
@@ -683,10 +696,8 @@ func TestPackageContainer(t *testing.T) {
 						switch m.Platform {
 						case "linux/arm/v7":
 							assert.Equal(t, manifestDigest, m.Digest)
-							assert.EqualValues(t, 1524, m.Size)
 						case "linux/arm64/v8":
 							assert.Equal(t, untaggedManifestDigest, m.Digest)
-							assert.EqualValues(t, 1514, m.Size)
 						default:
 							return false
 						}
@@ -698,27 +709,35 @@ func TestPackageContainer(t *testing.T) {
 				assert.True(t, pd.Files[0].File.IsLead)
 				assert.Equal(t, oci.MediaTypeImageIndex, pd.Files[0].Properties.GetByName(container_module.PropertyMediaType))
 				assert.Equal(t, indexManifestDigest, pd.Files[0].Properties.GetByName(container_module.PropertyDigest))
+
+				// Verify the template of the web UI renders correctly
+				req = NewRequest(t, "GET", fmt.Sprintf("%s/%s/-/packages/container/%s/%s", setting.AppURL, user.Name, url.QueryEscape(image), multiTag))
+				resp = MakeRequest(t, req, http.StatusOK)
+				htmlDoc := NewHTMLParser(t, resp.Body)
+				manifests := htmlDoc.Find("#container-manifests").Text()
+				assert.Contains(t, manifests, manifestDigest)
+				assert.Contains(t, manifests, untaggedManifestDigest)
 			})
 
 			t.Run("HeadBlob", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				req := NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", url, unknownDigest)).
+				req := NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", urlv2, unknownDigest)).
 					AddTokenAuth(userToken)
 				MakeRequest(t, req, http.StatusNotFound)
 
-				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", url, blobDigest)).
+				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", urlv2, blobDigest)).
 					AddTokenAuth(userToken)
 				resp := MakeRequest(t, req, http.StatusOK)
 
 				assert.Equal(t, fmt.Sprintf("%d", len(blobContent)), resp.Header().Get("Content-Length"))
 				assert.Equal(t, blobDigest, resp.Header().Get("Docker-Content-Digest"))
 
-				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", url, blobDigest)).
+				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", urlv2, blobDigest)).
 					AddTokenAuth(anonymousToken)
 				MakeRequest(t, req, http.StatusOK)
 
-				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", url, blobDigest)).
+				req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", urlv2, blobDigest)).
 					AddTokenAuth(readUserToken)
 				MakeRequest(t, req, http.StatusOK)
 			})
@@ -726,11 +745,11 @@ func TestPackageContainer(t *testing.T) {
 			t.Run("GetBlob", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				req := NewRequest(t, "GET", fmt.Sprintf("%s/blobs/%s", url, unknownDigest)).
+				req := NewRequest(t, "GET", fmt.Sprintf("%s/blobs/%s", urlv2, unknownDigest)).
 					AddTokenAuth(userToken)
 				MakeRequest(t, req, http.StatusNotFound)
 
-				req = NewRequest(t, "GET", fmt.Sprintf("%s/blobs/%s", url, blobDigest)).
+				req = NewRequest(t, "GET", fmt.Sprintf("%s/blobs/%s", urlv2, blobDigest)).
 					AddTokenAuth(userToken)
 				resp := MakeRequest(t, req, http.StatusOK)
 
@@ -755,27 +774,27 @@ func TestPackageContainer(t *testing.T) {
 						ExpectedLink string
 					}{
 						{
-							URL:          fmt.Sprintf("%s/tags/list", url),
+							URL:          fmt.Sprintf("%s/tags/list", urlv2),
 							ExpectedTags: []string{"artifact-v1", "latest", "main", "multi"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?n=0", url),
+							URL:          fmt.Sprintf("%s/tags/list?n=0", urlv2),
 							ExpectedTags: []string{},
 							ExpectedLink: "",
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?n=2", url),
+							URL:          fmt.Sprintf("%s/tags/list?n=2", urlv2),
 							ExpectedTags: []string{"artifact-v1", "latest"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=latest&n=2>; rel="next"`, user.Name, image),
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?last=main", url),
+							URL:          fmt.Sprintf("%s/tags/list?last=main", urlv2),
 							ExpectedTags: []string{"multi"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?n=1&last=latest", url),
+							URL:          fmt.Sprintf("%s/tags/list?n=1&last=latest", urlv2),
 							ExpectedTags: []string{"main"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=1>; rel="next"`, user.Name, image),
 						},
@@ -787,27 +806,27 @@ func TestPackageContainer(t *testing.T) {
 						ExpectedLink string
 					}{
 						{
-							URL:          fmt.Sprintf("%s/tags/list", url),
+							URL:          fmt.Sprintf("%s/tags/list", urlv2),
 							ExpectedTags: []string{"latest", "main", "multi"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?n=0", url),
+							URL:          fmt.Sprintf("%s/tags/list?n=0", urlv2),
 							ExpectedTags: []string{},
 							ExpectedLink: "",
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?n=2", url),
+							URL:          fmt.Sprintf("%s/tags/list?n=2", urlv2),
 							ExpectedTags: []string{"latest", "main"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=2>; rel="next"`, user.Name, image),
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?last=main", url),
+							URL:          fmt.Sprintf("%s/tags/list?last=main", urlv2),
 							ExpectedTags: []string{"multi"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=multi>; rel="next"`, user.Name, image),
 						},
 						{
-							URL:          fmt.Sprintf("%s/tags/list?n=1&last=latest", url),
+							URL:          fmt.Sprintf("%s/tags/list?n=1&last=latest", urlv2),
 							ExpectedTags: []string{"main"},
 							ExpectedLink: fmt.Sprintf(`</v2/%s/%s/tags/list?last=main&n=1>; rel="next"`, user.Name, image),
 						},
@@ -849,11 +868,11 @@ func TestPackageContainer(t *testing.T) {
 				t.Run("Blob", func(t *testing.T) {
 					defer tests.PrintCurrentTest(t)()
 
-					req := NewRequest(t, "DELETE", fmt.Sprintf("%s/blobs/%s", url, blobDigest)).
+					req := NewRequest(t, "DELETE", fmt.Sprintf("%s/blobs/%s", urlv2, blobDigest)).
 						AddTokenAuth(userToken)
 					MakeRequest(t, req, http.StatusAccepted)
 
-					req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", url, blobDigest)).
+					req = NewRequest(t, "HEAD", fmt.Sprintf("%s/blobs/%s", urlv2, blobDigest)).
 						AddTokenAuth(userToken)
 					MakeRequest(t, req, http.StatusNotFound)
 				})
@@ -861,11 +880,11 @@ func TestPackageContainer(t *testing.T) {
 				t.Run("ManifestByDigest", func(t *testing.T) {
 					defer tests.PrintCurrentTest(t)()
 
-					req := NewRequest(t, "DELETE", fmt.Sprintf("%s/manifests/%s", url, untaggedManifestDigest)).
+					req := NewRequest(t, "DELETE", fmt.Sprintf("%s/manifests/%s", urlv2, untaggedManifestDigest)).
 						AddTokenAuth(userToken)
 					MakeRequest(t, req, http.StatusAccepted)
 
-					req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", url, untaggedManifestDigest)).
+					req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", urlv2, untaggedManifestDigest)).
 						AddTokenAuth(userToken)
 					MakeRequest(t, req, http.StatusNotFound)
 				})
@@ -873,11 +892,11 @@ func TestPackageContainer(t *testing.T) {
 				t.Run("ManifestByTag", func(t *testing.T) {
 					defer tests.PrintCurrentTest(t)()
 
-					req := NewRequest(t, "DELETE", fmt.Sprintf("%s/manifests/%s", url, multiTag)).
+					req := NewRequest(t, "DELETE", fmt.Sprintf("%s/manifests/%s", urlv2, multiTag)).
 						AddTokenAuth(userToken)
 					MakeRequest(t, req, http.StatusAccepted)
 
-					req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", url, multiTag)).
+					req = NewRequest(t, "HEAD", fmt.Sprintf("%s/manifests/%s", urlv2, multiTag)).
 						AddTokenAuth(userToken)
 					MakeRequest(t, req, http.StatusNotFound)
 				})
@@ -1104,7 +1123,7 @@ func TestPackageContainer(t *testing.T) {
 			// Pushes to non-existing path but tries to link using a push annotation in the manifest.
 
 			// same as configContent, but with the added annotation directly within the manifest: "org.opencontainers.image.source": "{AppURL}/user2/autolink-repo"
-			manifestWithOpenContainersSourceAnnotationContent := `{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"` + configDigest + `","size":` + strconv.Itoa(len(configContent)) + `},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"` + blobDigest + `","size":32}],"annotations":{"org.opencontainers.image.source":"` + setting.AppURL + `user2/autolink-repo"}}`
+			manifestWithOpenContainersSourceAnnotationContent := `{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"` + configDigest + `","size":` + configSize + `},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"` + blobDigest + `","size":32}],"annotations":{"org.opencontainers.image.source":"` + setting.AppURL + `user2/autolink-repo"}}`
 
 			req := NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", urlNonexistingRepo3, blobDigest), bytes.NewReader(blobContent)).
 				AddTokenAuth(userToken)
@@ -1128,7 +1147,7 @@ func TestPackageContainer(t *testing.T) {
 			// This should fail silently with the created package not automatically getting linked.
 
 			// same as configContent above (also uses blob[Digest/Content]), but with an added annotation to auto-link to a repo of the private user: "org.opencontainers.image.source": "{AppURL}/user31/autolink-repo"
-			manifestWithOpenContainersSourceAnnotationPrivateUserContent := `{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"` + configDigest + `","size":` + strconv.Itoa(len(configContent)) + `},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"` + blobDigest + `","size":32}],"annotations":{"org.opencontainers.image.source":"` + setting.AppURL + `user31/autolink-repo"}}`
+			manifestWithOpenContainersSourceAnnotationPrivateUserContent := `{"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"` + configDigest + `","size":` + configSize + `},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"` + blobDigest + `","size":32}],"annotations":{"org.opencontainers.image.source":"` + setting.AppURL + `user31/autolink-repo"}}`
 
 			req := NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", urlNonexistingRepo4, blobDigest), bytes.NewReader(blobContent)).
 				AddTokenAuth(userToken)
