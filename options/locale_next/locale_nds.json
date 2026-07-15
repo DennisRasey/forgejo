@@ -945,5 +945,12 @@
 	"actions.runs.deprioritize_run": "Utföhren nich vörtrecken",
 	"actions.runs.options": "Instellens",
 	"actions.runs.prioritization_success": "Warkwies-Utföhren #%d word nu vörtrucken.",
-	"actions.runs.deprioritization_success": "Warkwies-Utföhren #%d word nich mehr vörtrucken."
+	"actions.runs.deprioritization_success": "Warkwies-Utföhren #%d word nich mehr vörtrucken.",
+	"actions.workflow.pre_execution_warning": "Warkwies-Wahrschauen:",
+	"actions.workflow.permissions_warning": "Upgaav <code>%[1]s</code> of hör Warkwies hett een <code>permissions</code>-Feld, wat in Forgejo nich unnerstütt word un minnacht word. Bruuk in Stee daarvun <a href=\"%[2]s\">tolaten Integratioonen</a>, um deeser Upgaav Künnen to geven.",
+	"repo.watching": "Beluren",
+	"repo.watch.issues": "Gefallens",
+	"repo.watch.pull_requests": "Haalvörslagen",
+	"repo.watch.releases": "Publizerens",
+	"repo.watch.releases.hint": "(blots E-Mail)"
 }
