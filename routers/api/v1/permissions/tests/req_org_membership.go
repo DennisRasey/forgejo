@@ -16,53 +16,61 @@ import (
 var _ = registerFunctionTest(apiv1_permissions.ReqOrgMembership, functionTest{
 	testCases: []*testCase{
 		{
+			// pass because the org owner is a member of the org
 			data: newTestData(map[string]string{
 				"org":    "ReqOrgMembershipOrg",
 				"setOrg": "true",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 		},
 		{
+			// pass because the doer admin although it is not a member of
+			// the org
 			data: newTestData(map[string]string{
-				"doer":   "doeradmin",
-				"setOrg": "true",
-			}),
+				"orgOwner": "ReqOrgMembershipOrgOwner",
+				"setOrg":   "true",
+			}, newSharedData().
+				SetDoer().
+				SetDoerAdmin(true),
+			),
 		},
 		{
-			data: newTestData(map[string]string{
-				"org":    "ReqOrgMembershipOrg",
-				"doer":   "regularuser",
-				"setOrg": "true",
-			}),
-		},
-		{
+			// fail because the doer is not a member of the org
 			data: newTestData(map[string]string{
 				"org":      "ReqOrgMembershipOrg",
 				"orgOwner": "ReqOrgMembershipOrgOwner",
-				"doer":     "regularuser",
 				"setOrg":   "true",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 			error: "Must be an organization member",
 		},
 		{
+			// pass because the doer a member of the context team
 			data: newTestData(map[string]string{
 				"org":     "ReqOrgMembershipOrg",
-				"doer":    "regularuser",
 				"setTeam": "true",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 		},
 		{
+			// fail because the doer is not a member of the context team
 			data: newTestData(map[string]string{
 				"org":      "ReqOrgMembershipOrg",
 				"orgOwner": "ReqOrgMembershipOrgOwner",
-				"doer":     "regularuser",
 				"setTeam":  "true",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 			error: "Not Found",
 		},
 		{
+			// fail because org is not set in the context
 			data: newTestData(map[string]string{
 				"setOrg": "true",
-			}),
+			}, newSharedData()),
 			error: "unprepared context",
 		},
 	},
@@ -77,7 +85,7 @@ var _ = registerFunctionTest(apiv1_permissions.ReqOrgMembership, functionTest{
 		data.SetDefault("setOrg", "true")
 	},
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-		orgOwner := data.Get("doer")
+		orgOwner := data.shared.DoerName()
 		if data.Has("orgOwner") {
 			orgOwner = data.Get("orgOwner")
 		}

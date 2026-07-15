@@ -15,27 +15,35 @@ var _ = registerFunctionTestBuilder([]string{"ReqOwner ", "ReqOwner"}, func(t *t
 	unitTypes := signature[1].([]unit_model.Type)
 	fixtures := []*testCase{
 		{
-			data: newTestData(map[string]string{
-				"doer":       "userowner",
-				"repository": "userowner/repositorypublic",
-				"scope":      "read:user,write:repository",
-			}),
+			// pass because the doer owns the repository
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().SetDoerName("userowner").
+				SetDoerScope("read:user,write:repository").
+				SetRepository().SetRepositoryName("userowner/repositorypublic"),
+			),
 		},
 		{
-			data: newTestData(map[string]string{
-				"doer":       "regular",
-				"repository": "userowner/repositorypublic",
-				"scope":      "read:user,write:repository",
-			}),
+			// pass because the doer does not own the repository
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().
+				SetDoerScope("read:user,write:repository").
+				SetRepository(),
+			),
 			error: "user should be the owner of the repo",
+		},
+		{
+			// pass because the doer is admin even if it does not own the repository
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().
+				SetDoerAdmin(true).
+				SetRepository(),
+			),
 		},
 	}
 	for _, unitType := range unitTypes {
-		unit := unitsTypeToString(unitType)
 		fixtures = append(fixtures, &testCase{
-			data: newTestData(map[string]string{
-				"disable-units": unit,
-			}),
+			data: newTestData(map[string]string{}, newSharedData().
+				SetRepositoryDisabledUnits([]unit_model.Type{unitType})),
 			error: "Not Found",
 		})
 	}
@@ -46,11 +54,12 @@ var _ = registerFunctionTestBuilder([]string{"ReqOwner ", "ReqOwner"}, func(t *t
 			"ReqOwner",
 		},
 		interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-			fixtureDisableUnits(t, permissions, data)
+			fixtureDisableUnits(t, permissions, data.shared.RepositoryDisabledUnits())
 		},
 		fulfillNeeds: func(t *testing.T, data *testData) {
 			t.Helper()
-			data.Set("doer", "doeradmin")
+			data.shared.SetDoer()
+			data.shared.SetDoerAdmin(true)
 		},
 		testCases:  fixtures,
 		staticArgs: 1,

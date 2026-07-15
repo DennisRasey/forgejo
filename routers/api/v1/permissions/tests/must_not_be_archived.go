@@ -10,14 +10,17 @@ import (
 var _ = registerFunctionTest(apiv1_permissions.MustNotBeArchived, functionTest{
 	testCases: []*testCase{
 		{
-			data: newTestData(map[string]string{
-				"repository": "userowner/repositorypublic",
-			}),
+			// pass if a repository is present
+			data: newTestData(map[string]string{}, newSharedData().
+				SetRepository(),
+			),
 		},
 		{
-			data: newTestData(map[string]string{
-				"repository": "userowner/repositoryarchived",
-			}),
+			// fail if a repository is present but is archived
+			data: newTestData(map[string]string{}, newSharedData().
+				SetRepository().
+				SetRepositoryArchived(true),
+			),
 			error: "is archived",
 		},
 	},

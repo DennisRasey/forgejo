@@ -39,126 +39,195 @@ var categoryStringToCategory = map[string]auth_model.AccessTokenScopeCategory{
 var _ = registerFunctionTestWithCall(apiv1_permissions.CheckTokenPublicOnly, functionTest{
 	testCases: []*testCase{
 		{
-			data: newTestData(map[string]string{}),
+			// pass if public only is not set
+			data: newTestData(map[string]string{}, newSharedData()),
 		},
 		{
-			data: newTestData(map[string]string{
-				"repository": "userowner/repositorypublic",
-				"scope":      fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
-			}),
+			// pass if public only is set and a public repository is present
+			data: newTestData(map[string]string{}, newSharedData().
+				SetRepository().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// pass if public only is set and a public repository is present
+			// and the token has a repository scope
 			data: newTestData(map[string]string{
-				"repository":              "userowner/repositorypublic",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryRepository,
-			}),
+			}, newSharedData().
+				SetRepository().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// fail if public only is set and a private repository is present
+			// and the token has a repository scope
 			data: newTestData(map[string]string{
-				"repository":              "userowner/repositoryprivate",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryRepository,
-			}),
+			}, newSharedData().
+				SetRepository().
+				SetRepositoryPrivate(true).
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public repos",
 		},
 		{
+			// pass if public only is set and a public repository with issues is present
+			// and the token has an issue scope
 			data: newTestData(map[string]string{
-				"repository":              "userowner/repositorypublic",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryIssue,
-			}),
+			}, newSharedData().
+				SetRepository().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// fail if public only is set and a private repository with issues is present
+			// and the token has an issue scope
 			data: newTestData(map[string]string{
-				"repository":              "userowner/repositoryprivate",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryIssue,
-			}),
+			}, newSharedData().
+				SetRepository().
+				SetRepositoryPrivate(true).
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public issues",
 		},
 		{
+			// pass if public only is set and a public repository is present
+			// and the token has a notification scope
 			data: newTestData(map[string]string{
-				"repository":              "userowner/repositorypublic",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryNotification,
-			}),
+			}, newSharedData().
+				SetRepository().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// fail if public only is set and a private repository is present
+			// and the token has a notification scope
 			data: newTestData(map[string]string{
-				"repository":              "userowner/repositoryprivate",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryNotification,
-			}),
+			}, newSharedData().
+				SetRepository().
+				SetRepositoryPrivate(true).
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public notifications",
 		},
 		{
+			// pass if public only is set and a context user is present
+			// and the token has a user scope
 			data: newTestData(map[string]string{
-				"user":                    "regularuser",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryUser,
-			}),
+				"user":                    "someuser",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// fail if public only is set and a private context user is present
+			// and the token has a user scope
 			data: newTestData(map[string]string{
-				"user":                    "privateuser",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryUser,
-			}),
+				"user":                    "username",
+				"userVisibility":          "private",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public users",
 		},
 		{
+			// pass if public only is set and a context user is present
+			// and the token has an ActivityPub scope
 			data: newTestData(map[string]string{
-				"user":                    "regularuser",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryActivityPub,
-			}),
+				"user":                    "someuser",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// fail if public only is set and a private context user is present
+			// and the token has an ActivityPub scope
 			data: newTestData(map[string]string{
-				"user":                    "privateuser",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryActivityPub,
-			}),
+				"user":                    "username",
+				"userVisibility":          "private",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public activitypub",
 		},
 		{
+			// pass if public only is set and a context org is present
+			// and the token has an organization scope
 			data: newTestData(map[string]string{
-				"org":                     "regularorg",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryOrganization,
-			}),
+				"org":                     "orgname",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// fail if public only is set and a private context org is present
+			// and the token has an organization scope
 			data: newTestData(map[string]string{
-				"org":                     "privateorg",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryOrganization,
-			}),
+				"org":                     "orgname",
+				"orgVisibility":           "private",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public orgs",
 		},
 		{
+			// pass if public only is set and a context user is present
+			// but really is an organization
+			// and the token has an organization scope
 			data: newTestData(map[string]string{
-				"org":                     "privateorg",
+				"requiredScopeCategories": categoryOrganization,
+				"org":                     "orgname",
 				"orgAsUser":               "true",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
+		},
+		{
+			// fail if public only is set and a context user is present
+			// but really is a private organization
+			// and the token has an organization scope
+			data: newTestData(map[string]string{
 				"requiredScopeCategories": categoryOrganization,
-			}),
+				"org":                     "orgname",
+				"orgVisibility":           "private",
+				"orgAsUser":               "true",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public orgs",
 		},
 		{
+			// pass if public only is set and a context package is present
+			// and the token has a package scope
 			data: newTestData(map[string]string{
-				"packageOwner":            "regularuser",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryPackage,
-			}),
+				"packageOwner":            "someuser",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 		},
 		{
+			// fail if public only is set and a context package is present
+			// and the owner is a private user
+			// and the token has a package scope
 			data: newTestData(map[string]string{
-				"packageOwner":            "privateuser",
-				"scope":                   fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly),
 				"requiredScopeCategories": categoryPackage,
-			}),
+				"packageOwner":            "username",
+				"packageOwnerVisibility":  "private",
+			}, newSharedData().
+				SetDoerScope(fmt.Sprintf("%s", auth_model.AccessTokenScopePublicOnly)),
+			),
 			error: "token scope is limited to public packages",
 		},
 	},
@@ -167,18 +236,18 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.CheckTokenPublicOnly, fun
 		"CheckTokenPublicOnly",
 	},
 	fulfillNeeds: func(t *testing.T, data *testData) {
-		data.SetDefault("doer", "regularuser")
-		data.SetDefault("repository", "regularuser/repositorypublic")
+		data.shared.SetDoerDefault()
+		data.shared.SetRepositoryDefault()
 	},
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
 		if data.Has("user") {
-			fixtureCreateUser(t, &user_model.User{Name: data.Get("user")})
+			fixtureCreateUser(t, &user_model.User{Name: data.Get("user"), Visibility: stringToVisibility(data.Get("userVisibility"))})
 		}
 		if data.Has("org") {
-			fixtureCreateOrg(t, &org_model.Organization{Name: data.Get("org")}, &user_model.User{Name: data.Get("doer")})
+			fixtureCreateOrg(t, &org_model.Organization{Name: data.Get("org"), Visibility: stringToVisibility(data.Get("orgVisibility"))}, &user_model.User{Name: data.shared.DoerName()})
 		}
 		if data.Has("packageOwner") {
-			fixtureCreateUser(t, &user_model.User{Name: data.Get("packageOwner")})
+			fixtureCreateUser(t, &user_model.User{Name: data.Get("packageOwner"), Visibility: stringToVisibility(data.Get("packageOwnerVisibility"))})
 		}
 		if data.Has("requiredScopeCategories") {
 			var categories []auth_model.AccessTokenScopeCategory
@@ -187,7 +256,7 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.CheckTokenPublicOnly, fun
 			}
 			permissions.SetRequiredScopeCategories(categories)
 		}
-		fixtureSetRepository(t, permissions, data)
+		fixtureSetRepository(t, permissions, data.shared.RepositoryName(), data.shared.RepositoryInit(), data.shared.RepositoryPrivate(), data.shared.RepositoryArchived())
 	},
 	call: func(t *testing.T, ctx apiv1_permissions.Context, data *testData, _ []any) {
 		t.Helper()

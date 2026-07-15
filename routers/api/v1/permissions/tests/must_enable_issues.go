@@ -6,27 +6,30 @@ package tests
 import (
 	"testing"
 
+	"forgejo.org/models/unit"
 	apiv1_permissions "forgejo.org/routers/api/v1/permissions"
 )
 
 var _ = registerFunctionTest(apiv1_permissions.MustEnableIssues, functionTest{
 	testCases: []*testCase{
 		{
-			data: newTestData(map[string]string{
-				"doer":       "doerregular",
-				"repository": "userowner/repositorypublic",
-			}),
+			// pass if a repository with issues unit set is present
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 		},
 		{
-			data: newTestData(map[string]string{
-				"doer":          "doerregular",
-				"repository":    "userowner/repositorypublic",
-				"disable-units": "repo.issues",
-			}),
+			// fail if a repository is present but the issues unit is disabled
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().
+				SetRepository().
+				SetRepositoryDisabledUnits([]unit.Type{unit.TypeIssues}),
+			),
 			error: "Not Found",
 		},
 	},
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-		fixtureDisableUnits(t, permissions, data)
+		fixtureDisableUnits(t, permissions, data.shared.RepositoryDisabledUnits())
 	},
 })

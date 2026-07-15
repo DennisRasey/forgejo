@@ -13,48 +13,60 @@ import (
 var _ = registerFunctionTestWithCall(apiv1_permissions.ReqValidCommentID, functionTest{
 	testCases: []*testCase{
 		{
+			// pass because the ID is for a comment that belongs to an issue that
+			// belongs to the repository
 			data: newTestData(map[string]string{
-				"doer":        "doerregular",
-				"repository":  "userowner/repositorypublic",
 				"issue":       "issueOne",
 				"issueAuthor": "issueAuthor",
 				"comment":     "comment for ReqValidCommentID",
-			}),
+			}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 		},
 		// This fixture is unreachable because this permissions function is always used after
 		// a RepoAccess that enforces the same restriction for non admin users
 		// {
 		// 	data: newTestData(map[string]string{
-		// 		"doer":        "doerregular",
-		// 		"repository":  "userowner/repositoryprivate",
 		// 		"issue":       "issueOne",
 		// 		"issueAuthor": "issueAuthor",
 		// 		"comment":     "comment for ReqValidCommentID",
-		// 	}),
+		// 	}, newSharedData().
+		// 		SetDoer().
+		// 		SetRepository().
+		// 		SetRepositoryPrivate(true),
+		// 	),
 		// 	error: "Not Found",
 		// },
 		{
+			// fail because the comment pointer to the issue is nil, which
+			// can happen when it fails to load
 			data: newTestData(map[string]string{
-				"doer":        "doerregular",
-				"repository":  "userowner/repositorypublic",
 				"issue":       "issueOne",
 				"issueAuthor": "issueAuthor",
 				"comment":     "comment for ReqValidCommentID",
 
 				"NilIssue": "true",
-			}),
+			}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 			error: "Not Found",
 		},
 		{
+			// fail because the issue associated with the comment belongs to
+			// a repository that is different from the repository found in
+			// the context
 			data: newTestData(map[string]string{
-				"doer":        "doerregular",
-				"repository":  "userowner/repositorypublic",
 				"issue":       "issueOne",
 				"issueAuthor": "issueAuthor",
 				"comment":     "comment for ReqValidCommentID",
 
 				"InconsistentID": "true",
-			}),
+			}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 			error: "Not Found",
 		},
 	},
@@ -70,13 +82,13 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.ReqValidCommentID, functi
 		data.SetDefault("comment", "comment for ReqValidCommentID")
 	},
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-		fixtureCreateUser(t, &user_model.User{Name: data.Get("issueAuthor")})
-		fixtureSetIssue(t, permissions, data)
-		fixtureCreateComment(t, permissions, data)
+		issueAuthor := fixtureCreateUser(t, &user_model.User{Name: data.Get("issueAuthor")})
+		issue := fixtureSetIssue(t, permissions, data.Get("issue"), issueAuthor.Name)
+		fixtureCreateComment(t, permissions, issue, data.Get("comment"))
 	},
 	call: func(t *testing.T, ctx apiv1_permissions.Context, data *testData, _ []any) {
 		t.Helper()
-		comment := fixtureGetComment(t, data)
+		comment := fixtureGetComment(t, data.Get("comment"))
 		if data.Has("NilIssue") {
 			comment.Issue = nil
 		}

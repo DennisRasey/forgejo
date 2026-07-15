@@ -18,49 +18,63 @@ import (
 var _ = registerFunctionTestWithCall(apiv1_permissions.CheckForkDestination, functionTest{
 	testCases: []*testCase{
 		{
+			// the doer creates the fork in an organization where it is the
+			// owner
 			data: newTestData(map[string]string{
-				"doer":         "regularorgowner",
-				"repository":   "userowner/repositorypublic",
-				"forkOrg":      "regularorg1",
-				"forkOrgOwner": "regularorgowner",
-			}),
+				"forkOrg":      "someorg1",
+				"forkOrgOwner": "someorgowner",
+			}, newSharedData().
+				SetDoer().SetDoerName("someorgowner").
+				SetRepository(),
+			),
 		},
 		{
+			// the doer creates the fork in an organization where it
+			// belongs to a team that is allowed to create repos
 			data: newTestData(map[string]string{
-				"doer":                 "regularuser",
-				"repository":           "regularuser/repositorypublic",
-				"forkOrg":              "regularorg1",
-				"forkOrgOwner":         "regularorgowner",
+				"forkOrg":              "someorg1",
+				"forkOrgOwner":         "someorgowner",
 				"team":                 "team1",
 				"teamCanCreateOrgRepo": "true",
-			}),
+			}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 		},
 		{
+			// the doer is not allowed to create a fork in a organization
+			// where it belongs to a team that is not allowed to create repos
 			data: newTestData(map[string]string{
-				"doer":                 "regularuser",
-				"repository":           "regularuser/repositorypublic",
-				"forkOrg":              "regularorg1",
-				"forkOrgOwner":         "regularorgowner",
+				"forkOrg":              "someorg1",
+				"forkOrgOwner":         "someorgowner",
 				"team":                 "team1",
 				"teamCanCreateOrgRepo": "false",
-			}),
+			}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 			error: "User is not allowed to create repos in Organisation",
 		},
 		{
+			// the doer is not allowed to create a fork in an organization
+			// where it is not a member of any team
 			data: newTestData(map[string]string{
-				"doer":         "doerregular",
-				"repository":   "userowner/repositorypublic",
-				"forkOrg":      "regularorg2",
-				"forkOrgOwner": "regularorgowner",
-			}),
-			error: "User is no Member of Organisation 'regularorg2'",
+				"forkOrg":      "someorg2",
+				"forkOrgOwner": "someorgowner",
+			}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
+			error: "User is no Member of Organisation 'someorg2'",
 		},
 		{
+			// an attempt to create a fork in an unknown organization fails
 			data: newTestData(map[string]string{
-				"doer":       "regularorgowner",
-				"repository": "userowner/repositorypublic",
-				"forkOrg":    "unknownOrg",
-			}),
+				"forkOrg": "unknownOrg",
+			}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 			error: "org does not exist",
 		},
 	},
@@ -75,7 +89,7 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.CheckForkDestination, fun
 		org := fixtureCreateOrg(t, &org_model.Organization{Name: name}, &user_model.User{Name: owner})
 
 		if data.Has("team") {
-			fixtureCreateTeam(t, org, data.Get("doer"), &forgery.CreateTeamOptions{
+			fixtureCreateTeam(t, org, data.shared.DoerName(), &forgery.CreateTeamOptions{
 				Name:             data.Get("team"),
 				CanCreateOrgRepo: data.Get("teamCanCreateOrgRepo") != "false",
 

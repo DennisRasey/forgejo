@@ -15,6 +15,7 @@ import (
 	access_model "forgejo.org/models/perm/access"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
+	api "forgejo.org/modules/structs"
 	"forgejo.org/services/auth"
 	"forgejo.org/services/authz"
 )
@@ -231,16 +232,16 @@ func (o *Permissions) Strings() []string {
 		s = append(s, fmt.Sprintf("%T(ID=%d Token=%s)", o.token, o.token.ID, o.token.Token))
 	}
 	if o.doer != nil {
-		s = append(s, fmt.Sprintf("%T(Name=%s)", o.doer, o.doer.Name))
+		s = append(s, fmt.Sprintf("doer=%T(Name=%s, Private=%v, Admin=%v)", o.doer, o.doer.Name, o.doer.Visibility != api.VisibleTypePublic, o.doer.IsAdmin))
 	}
 	if o.user != nil {
-		s = append(s, fmt.Sprintf("%T(Name=%s)", o.user, o.user.Name))
+		s = append(s, fmt.Sprintf("user=%T(Name=%s, Private=%v, Admin=%v)", o.user, o.user.Name, o.user.Visibility != api.VisibleTypePublic, o.user.IsAdmin))
 	}
 	if o.team != nil {
 		s = append(s, fmt.Sprintf("%T(Name=%s)", o.team, o.team.Name))
 	}
 	if o.org != nil {
-		s = append(s, fmt.Sprintf("%T(Name=%s)", o.org, o.org.Name))
+		s = append(s, fmt.Sprintf("org=%T(Name=%s)", o.org, o.org.Name))
 	}
 	if o.isSigned {
 		s = append(s, fmt.Sprintf("isSigned(%v)", o.isSigned))

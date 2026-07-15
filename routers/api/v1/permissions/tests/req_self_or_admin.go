@@ -13,36 +13,47 @@ import (
 var _ = registerFunctionTest(apiv1_permissions.ReqSelfOrAdmin, functionTest{
 	testCases: []*testCase{
 		{
-			data: newTestData(map[string]string{
-				"doer": "doeradmin",
-			}),
+			// pass because the doer is an admin user
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().
+				SetDoerAdmin(true)),
 		},
 		{
+			// pass because the context user "someuser" is the same as the doer
 			data: newTestData(map[string]string{
-				"doer": "regularuser",
-				"user": "regularuser",
-			}),
+				"user": "someuser",
+			}, newSharedData().
+				SetDoer().
+				SetDoerName("someuser"),
+			),
 		},
 		{
+			// fail because the doer is neither an admin nor is it equal to
+			// the context user
 			data: newTestData(map[string]string{
-				"doer": "regularuser",
 				"user": "otheruser",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 			error: "doer should be the site admin or be same as the contextUser",
 		},
 	},
+	sequenceFilter: []string{
+		"APIAuthorization",
+		"ReqSelfOrAdmin",
+	},
 	fulfillNeeds: func(t *testing.T, data *testData) {
 		t.Helper()
-		data.SetDefault("doer", "doeradmin")
+		if !data.shared.HasDoerName() {
+			data.shared.SetDoer()
+			data.shared.SetDoerAdmin(true)
+		}
 	},
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-		if data.Has("user") && data.Get("user") != "anonymous" {
+		if data.Has("user") {
 			name := data.Get("user")
-			user := permissions.User()
-			if user == nil {
-				fixtureCreateUser(t, &user_model.User{Name: name})
-				permissions.SetUser(fixtureGetUser(t, name))
-			}
+			fixtureCreateUser(t, &user_model.User{Name: name})
+			permissions.SetUser(fixtureGetUser(t, name))
 		}
 	},
 })

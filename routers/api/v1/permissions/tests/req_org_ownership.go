@@ -16,53 +16,64 @@ import (
 var _ = registerFunctionTest(apiv1_permissions.ReqOrgOwnership, functionTest{
 	testCases: []*testCase{
 		{
+			// pass because the doer is the owner of the org
 			data: newTestData(map[string]string{
 				"org":    "ReqOrgOwnershipOrg",
 				"setOrg": "true",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 		},
 		{
-			data: newTestData(map[string]string{
-				"doer":   "doeradmin",
-				"setOrg": "true",
-			}),
-		},
-		{
-			data: newTestData(map[string]string{
-				"org":    "ReqOrgOwnershipOrg",
-				"doer":   "regularuser",
-				"setOrg": "true",
-			}),
-		},
-		{
+			// pass because the doer is admin even though it is not the
+			// owner of the org
 			data: newTestData(map[string]string{
 				"org":      "ReqOrgOwnershipOrg",
 				"orgOwner": "ReqOrgOwnershipOrgOwner",
-				"doer":     "regularuser",
 				"setOrg":   "true",
-			}),
+			}, newSharedData().
+				SetDoer().
+				SetDoerAdmin(true),
+			),
+		},
+		{
+			// fail because the doer is not the owner of the org
+			data: newTestData(map[string]string{
+				"org":      "ReqOrgOwnershipOrg",
+				"orgOwner": "ReqOrgOwnershipOrgOwner",
+				"setOrg":   "true",
+			}, newSharedData().
+				SetDoer(),
+			),
 			error: "Must be an organization owner",
 		},
 		{
+			// pass because the doer is in the context team that owns the
+			// org
 			data: newTestData(map[string]string{
 				"org":     "ReqOrgOwnershipOrg",
-				"doer":    "regularuser",
 				"setTeam": "true",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 		},
 		{
+			// fail because the doer is in the context team that does
+			// not own the org
 			data: newTestData(map[string]string{
 				"org":      "ReqOrgOwnershipOrg",
 				"orgOwner": "ReqOrgOwnershipOrgOwner",
-				"doer":     "regularuser",
 				"setTeam":  "true",
-			}),
+			}, newSharedData().
+				SetDoer(),
+			),
 			error: "Not Found",
 		},
 		{
+			// fail because the context org is not set
 			data: newTestData(map[string]string{
 				"setOrg": "true",
-			}),
+			}, newSharedData()),
 			error: "reqOrgOwnership: unprepared context",
 		},
 	},
@@ -77,7 +88,7 @@ var _ = registerFunctionTest(apiv1_permissions.ReqOrgOwnership, functionTest{
 		data.SetDefault("setOrg", "true")
 	},
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-		orgOwner := data.Get("doer")
+		orgOwner := data.shared.DoerName()
 		if data.Has("orgOwner") {
 			orgOwner = data.Get("orgOwner")
 		}

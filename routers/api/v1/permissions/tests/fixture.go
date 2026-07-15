@@ -22,7 +22,6 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/optional"
-	"forgejo.org/modules/structs"
 	"forgejo.org/modules/util"
 	apiv1_permissions "forgejo.org/routers/api/v1/permissions"
 	"forgejo.org/services/auth"
@@ -97,16 +96,11 @@ func fixtureCreateUser(t *testing.T, user *user_model.User) *user_model.User {
 	if existingUser := fixtureGetUser(t, user.Name); existingUser != nil {
 		return existingUser
 	}
-	overwriteDefault := &user_model.CreateUserOverwriteOptions{}
 	user.Email = user.Name + "@test.forgejo.org"
 	user.Passwd = "password"
-	if strings.Contains(user.Name, "private") {
-		visibility := structs.VisibleTypePrivate
-		overwriteDefault.Visibility = &visibility
-	} else if strings.Contains(user.Name, "limited") {
-		visibility := structs.VisibleTypeLimited
-		overwriteDefault.Visibility = &visibility
-	}
+	overwriteDefault := &user_model.CreateUserOverwriteOptions{}
+	visibility := user.Visibility
+	overwriteDefault.Visibility = &visibility
 	require.NoError(t, user_model.CreateUser(t.Context(), user, overwriteDefault))
 	return user
 }
@@ -117,9 +111,6 @@ func fixtureCreateOrg(t *testing.T, org *org_model.Organization, owner *user_mod
 		return existing
 	}
 	owner = fixtureCreateUser(t, owner)
-	if strings.Contains(org.Name, "private") {
-		org.Visibility = structs.VisibleTypePrivate
-	}
 	require.NoError(t, org_model.CreateOrganization(t.Context(), org, owner))
 	return org
 }
@@ -147,12 +138,12 @@ func fixtureCreateTeam(t *testing.T, org *org_model.Organization, memberName str
 	return team
 }
 
-func fixtureSetPackageOwner(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureSetPackageOwner(t *testing.T, permissions *apiv1_permissions.Permissions, packageOwner, visibility string) {
 	t.Helper()
-	if !testData.Has("packageOwner") {
+	if packageOwner == "" {
 		return
 	}
-	owner := fixtureCreateUser(t, &user_model.User{Name: testData.Get("packageOwner")})
+	owner := fixtureCreateUser(t, &user_model.User{Name: packageOwner, Visibility: stringToVisibility(visibility)})
 	permissions.SetPackageOwner(owner)
 	mode, err := packages_service.DeterminePackageAccessMode(permissions.Context(), permissions.PackageOwner(), permissions.Doer())
 	require.NoError(t, err)
@@ -161,20 +152,21 @@ func fixtureSetPackageOwner(t *testing.T, permissions *apiv1_permissions.Permiss
 
 func fixtureSetDoer(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
 	t.Helper()
-	if !testData.Has("doer") {
+	if testData.shared.Anonymous() {
+		permissions.SetAuthentication(&auth.UnauthenticatedResult{})
 		return
 	}
+	name := testData.shared.DoerName()
 	if doer := permissions.Doer(); doer != nil {
-		if doer.Name != testData.Get("doer") {
-			panic(fmt.Sprintf("attempting to override already doer %s with %s", doer.Name, testData.Get("doer")))
+		if doer.Name != name {
+			panic(fmt.Sprintf("attempting to override doer %s with %s", doer.Name, name))
 		}
 		return
 	}
-	name := testData.Get("doer")
 	if name == user_model.ActionsUserName {
-		fixtureSetDoerActionsUser(t, permissions, testData)
+		fixtureSetDoerActionsUser(t, permissions, testData.shared)
 	} else {
-		fixtureSetDoerRegularUser(t, permissions, testData)
+		fixtureSetDoerRegularUser(t, permissions, testData.shared)
 	}
 }
 
@@ -198,20 +190,18 @@ func (r *actionsTaskTokenAuthenticationResult) ActionsTaskID() optional.Option[i
 	return optional.Some(r.taskID)
 }
 
-func fixtureSetDoerActionsUser(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureSetDoerActionsUser(t *testing.T, permissions *apiv1_permissions.Permissions, data *sharedData) {
 	permissions.SetDoer(user_model.NewActionsUser())
 	repository := permissions.Repository()
 	require.NotNil(t, repository)
 	repositoryID := repository.ID
-	if testData.Get("task.RepoID") == "unrelated" {
-		repositoryID = 13245
+	if data.HasDoerActionsRepoID() {
+		repositoryID = data.DoerActionsRepoID()
 	}
 	task := &actions_model.ActionTask{
 		RepoID: repositoryID,
 	}
-	if testData.Get("task.IsForkPullRequest") == "true" {
-		task.IsForkPullRequest = true
-	}
+	task.IsForkPullRequest = data.DoerActionsIsForkPullRequest()
 	task.GenerateToken()
 	{
 		_, err := db.GetEngine(t.Context()).Insert(task)
@@ -277,45 +267,37 @@ func (*reverseProxyAuthenticationResult) IsReverseProxyAuthentication() bool {
 	return true
 }
 
-func fixtureSetDoerRegularUser(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureSetDoerRegularUser(t *testing.T, permissions *apiv1_permissions.Permissions, data *sharedData) {
 	var scope auth_model.AccessTokenScope
-	if testData.Has("scope") {
-		scope = auth_model.AccessTokenScope(testData.Get("scope"))
+	if data.HasDoerScope() {
+		scope = auth_model.AccessTokenScope(data.DoerScope())
 	} else {
 		scope = auth_model.AccessTokenScopeAll
 	}
-	if testData.Has("doer") {
-		doer := testData.Get("doer")
-		if doer != "anonymous" {
-			isAdmin := strings.Contains(doer, "admin")
-			user := &user_model.User{
-				Name:    doer,
-				IsAdmin: isAdmin,
-			}
-			fixtureCreateUser(t, user)
-			permissions.SetDoer(user)
+	if !data.Anonymous() {
+		user := &user_model.User{
+			Name:    data.DoerName(),
+			IsAdmin: data.DoerAdmin(),
 		}
+		fixtureCreateUser(t, user)
+		permissions.SetDoer(user)
 	} else {
 		panic(fmt.Errorf("attempting to set doer with no name"))
 	}
 
-	if permissions.Doer() == nil {
-		permissions.SetAuthentication(&auth.UnauthenticatedResult{})
-	} else {
-		token, err := fixtureCreateToken(t, permissions.Doer(), scope)
-		require.NoError(t, err)
-		tokenReducer, err := authz.GetAuthorizationReducerForAccessToken(t.Context(), token)
-		require.NoError(t, err)
-		permissions.SetIsSigned(true)
-		switch testData.Get("authentication") {
-		case "basic":
-			permissions.SetAuthentication(&basicPasswordAuthenticationResult{user: permissions.Doer()})
-		case "proxy":
-			permissions.SetAuthentication(&reverseProxyAuthenticationResult{user: permissions.Doer()})
-		default:
-			permissions.SetToken(token)
-			permissions.SetAuthentication(&accessTokenAuthenticationResult{user: permissions.Doer(), scope: token.Scope, reducer: tokenReducer})
-		}
+	token, err := fixtureCreateToken(t, permissions.Doer(), scope)
+	require.NoError(t, err)
+	tokenReducer, err := authz.GetAuthorizationReducerForAccessToken(t.Context(), token)
+	require.NoError(t, err)
+	permissions.SetIsSigned(true)
+	switch data.DoerAuthentication() {
+	case "basic":
+		permissions.SetAuthentication(&basicPasswordAuthenticationResult{user: permissions.Doer()})
+	case "proxy":
+		permissions.SetAuthentication(&reverseProxyAuthenticationResult{user: permissions.Doer()})
+	default:
+		permissions.SetToken(token)
+		permissions.SetAuthentication(&accessTokenAuthenticationResult{user: permissions.Doer(), scope: token.Scope, reducer: tokenReducer})
 	}
 }
 
@@ -331,16 +313,16 @@ func fixtureCreateBranch(t *testing.T, permissions *apiv1_permissions.Permission
 	require.NoError(t, gitRepo.CreateBranch(branch, defaultBranch))
 }
 
-func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permissions, pullRequest, pullRequestAuthor, pullRequestBranch string) {
 	t.Helper()
-	if !testData.Has("pullRequest") {
+	if pullRequest == "" {
 		return
 	}
 
 	repository := permissions.Repository()
 	require.NotNil(t, repository)
 
-	poster := fixtureGetUser(t, testData.Get("pullRequestAuthor"))
+	poster := fixtureGetUser(t, pullRequestAuthor)
 	require.NotNil(t, poster)
 
 	ctx, committer, err := db.TxContext(t.Context())
@@ -355,7 +337,7 @@ func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permi
 		Index:    idx,
 		RepoID:   repository.ID,
 		IsPull:   true,
-		Title:    testData.Get("pullRequest"),
+		Title:    pullRequest,
 		PosterID: poster.ID,
 		Poster:   poster,
 	}
@@ -372,7 +354,7 @@ func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permi
 	pr.IssueID = issue.ID
 	pr.HeadRepoID = repository.ID
 	pr.BaseRepoID = repository.ID
-	pr.HeadBranch = testData.Get("pullRequestBranch")
+	pr.HeadBranch = pullRequestBranch
 	_, err = sess.NoAutoTime().Insert(pr)
 	require.NoError(t, err)
 	require.NoError(t, committer.Commit())
@@ -381,25 +363,25 @@ func fixtureCreatePullRequest(t *testing.T, permissions *apiv1_permissions.Permi
 	require.NoError(t, pull_service.PushToBaseRepo(ctx, pr))
 }
 
-func fixtureSetRepository(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureSetRepository(t *testing.T, permissions *apiv1_permissions.Permissions, name string, init, private, archived bool) {
 	t.Helper()
-	if !testData.Has("repository") {
+	if name == "" {
 		return
 	}
 	if repository := permissions.Repository(); repository != nil {
-		if repository.FullName() != testData.Get("repository") {
-			panic(fmt.Sprintf("attempting to override already repository %s with %s", repository.FullName(), testData.Get("repository")))
+		if repository.FullName() != name {
+			panic(fmt.Sprintf("attempting to override already repository %s with %s", repository.FullName(), name))
 		}
 		return
 	}
-	ownerName, repoName, found := strings.Cut(testData.Get("repository"), "/")
+	ownerName, repoName, found := strings.Cut(name, "/")
 	require.True(t, found)
 	owner := fixtureCreateUser(t, &user_model.User{Name: ownerName})
 	opts := &forgery.CreateRepositoryOptions{
 		Name:      repoName,
-		IsPrivate: strings.Contains(repoName, "private"),
+		IsPrivate: private,
 	}
-	if testData.Get("repository-init") == "true" {
+	if init {
 		opts.Files = forgery.FilesInit{}
 	}
 	repository := forgery.CreateRepository(t, owner, opts)
@@ -408,35 +390,37 @@ func fixtureSetRepository(t *testing.T, permissions *apiv1_permissions.Permissio
 	for _, unitType := range unit_model.DefaultRepoUnits {
 		forgery.EnableRepoUnit(t, repository, unitType, nil)
 	}
-	if strings.Contains(repoName, "archived") {
+	if archived {
 		require.NoError(t, repo_model.SetArchiveRepoState(t.Context(), repository, true))
 	}
 	permissions.SetRepository(repository)
 }
 
-func fixtureGetIssue(t *testing.T, testData *testData) *issues_model.Issue {
+func fixtureGetIssue(t *testing.T, issueName string) *issues_model.Issue {
 	t.Helper()
 	var issue issues_model.Issue
-	found, err := db.GetEngine(t.Context()).Where("name = ?", dataToString(t, testData, "issue")).Get(&issue)
+	found, err := db.GetEngine(t.Context()).Where("name = ?", issueName).Get(&issue)
 	require.NoError(t, err)
 	if !found {
 		return nil
 	}
+	issue.LoadPoster(t.Context())
 	return &issue
 }
 
-func fixtureSetIssue(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureSetIssue(t *testing.T, permissions *apiv1_permissions.Permissions, issueName, issueAuthor string) *issues_model.Issue {
 	t.Helper()
-	if fixtureGetIssue(t, testData) == nil {
-		authorName := testData.Get("issueAuthor")
-		author := fixtureCreateUser(t, &user_model.User{Name: authorName})
-		_ = fixtureCreateIssue(t, author, permissions.Repository(), dataToString(t, testData, "issue"), "issue description")
+	issue := fixtureGetIssue(t, issueName)
+	if issue == nil {
+		author := fixtureCreateUser(t, &user_model.User{Name: issueAuthor})
+		issue = fixtureCreateIssue(t, author, permissions.Repository(), issueName, "issue description")
 	}
+	return issue
 }
 
-func fixtureGetComment(t *testing.T, testData *testData) *issues_model.Comment {
+func fixtureGetComment(t *testing.T, content string) *issues_model.Comment {
 	var comment issues_model.Comment
-	found, err := db.GetEngine(t.Context()).Where("content = ?", dataToString(t, testData, "comment")).Get(&comment)
+	found, err := db.GetEngine(t.Context()).Where("content = ?", content).Get(&comment)
 	require.NoError(t, err)
 	if !found {
 		return nil
@@ -445,17 +429,15 @@ func fixtureGetComment(t *testing.T, testData *testData) *issues_model.Comment {
 	return &comment
 }
 
-func fixtureCreateComment(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureCreateComment(t *testing.T, permissions *apiv1_permissions.Permissions, issue *issues_model.Issue, comment string) {
 	t.Helper()
-	if fixtureGetComment(t, testData) == nil {
-		authorName := testData.Get("issueAuthor")
-		author := fixtureCreateUser(t, &user_model.User{Name: authorName})
+	if fixtureGetComment(t, comment) == nil {
 		_, err := issues_model.CreateComment(t.Context(), &issues_model.CreateCommentOptions{
 			Type:    issues_model.CommentTypeComment,
-			Doer:    author,
-			Issue:   fixtureGetIssue(t, testData),
+			Doer:    issue.Poster,
+			Issue:   issue,
 			Repo:    permissions.Repository(),
-			Content: dataToString(t, testData, "comment"),
+			Content: comment,
 		})
 		require.NoError(t, err)
 	}
@@ -468,16 +450,9 @@ func fixtureDisableRepoUnit(t *testing.T, permissions *apiv1_permissions.Permiss
 	forgery.DisableRepoUnits(t, repo, unitType)
 }
 
-func fixtureDisableUnits(t *testing.T, permissions *apiv1_permissions.Permissions, testData *testData) {
+func fixtureDisableUnits(t *testing.T, permissions *apiv1_permissions.Permissions, unitTypes []unit_model.Type) {
 	t.Helper()
-	if !testData.Has("disable-units") {
-		return
-	}
-	for unit := range strings.SplitSeq(testData.Get("disable-units"), ",") {
-		unitType := unit_model.TypeFromKey(unit)
-		if unitType == unit_model.TypeInvalid {
-			panic(fmt.Errorf("unable to find a unit matching '%s'", unit))
-		}
+	for _, unitType := range unitTypes {
 		fixtureDisableRepoUnit(t, permissions, unitType)
 	}
 }

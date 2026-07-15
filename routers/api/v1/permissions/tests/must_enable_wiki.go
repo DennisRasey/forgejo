@@ -6,27 +6,30 @@ package tests
 import (
 	"testing"
 
+	unit_model "forgejo.org/models/unit"
 	apiv1_permissions "forgejo.org/routers/api/v1/permissions"
 )
 
 var _ = registerFunctionTest(apiv1_permissions.MustEnableWiki, functionTest{
 	testCases: []*testCase{
 		{
-			data: newTestData(map[string]string{
-				"doer":       "doerregular",
-				"repository": "userowner/repositorypublic",
-			}),
+			// pass if a repository with wiki unit set is present
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().
+				SetRepository(),
+			),
 		},
 		{
-			data: newTestData(map[string]string{
-				"doer":          "doerregular",
-				"repository":    "userowner/repositorypublic",
-				"disable-units": "repo.wiki",
-			}),
+			// fail if a repository is present but the wiki unit is disabled
+			data: newTestData(map[string]string{}, newSharedData().
+				SetDoer().
+				SetRepository().
+				SetRepositoryDisabledUnits([]unit_model.Type{unit_model.TypeWiki}),
+			),
 			error: "Not Found",
 		},
 	},
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-		fixtureDisableUnits(t, permissions, data)
+		fixtureDisableUnits(t, permissions, data.shared.RepositoryDisabledUnits())
 	},
 })

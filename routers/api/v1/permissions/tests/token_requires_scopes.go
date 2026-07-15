@@ -45,51 +45,57 @@ var _ = registerFunctionTestBuilder([]string{"TokenRequiresScopes "}, func(t *te
 	signatureStringToFunctionTest[signatureString] = functionTest{
 		testCases: []*testCase{
 			{
-				data: newTestData(map[string]string{
-					"doer":  "doerregular",
-					"scope": readscope,
-					"level": "read",
-				}),
+				// pass because the doer token has the required scope read
+				// level
+				data: newTestData(map[string]string{}, newSharedData().
+					SetDoer().
+					SetDoerScope(readscope).
+					SetTokenLevel("read"),
+				),
 			},
 			{
-				data: newTestData(map[string]string{
-					"doer":  "doerregular",
-					"scope": readscope,
-					"level": "write",
-				}),
+				// fail because the doer token does not have write level for
+				// the required scope
+				data: newTestData(map[string]string{}, newSharedData().
+					SetDoer().
+					SetDoerScope(readscope).
+					SetTokenLevel("write"),
+				),
 				error: "token does not have at least one of required scope(s)",
 			},
 			{
-				data: newTestData(map[string]string{
-					"doer":  "doerregular",
-					"scope": "read:misc",
-					"level": "read",
-				}),
+				// fail because the doer token does not have the required
+				// scope at all
+				data: newTestData(map[string]string{}, newSharedData().
+					SetDoer().
+					SetDoerScope("read:misc").
+					SetTokenLevel("write"),
+				),
 				error: "token does not have at least one of required scope(s)",
 			},
 		},
 		fulfillNeeds: func(t *testing.T, data *testData) {
 			t.Helper()
-			data.SetDefault("repository", "userowner/repositorypublic")
-			data.SetDefault("doer", "doerregular")
-			if data.Has("scope") {
-				scope := data.Get("scope")
+			data.shared.SetRepositoryDefault()
+			data.shared.SetDoerDefault()
+			if data.shared.HasDoerScope() {
+				scope := data.shared.DoerScope()
 				if !strings.Contains(scope, readscope) {
 					writescope := strings.ReplaceAll(readscope, "read", "write")
-					data.Set("scope", strings.Join([]string{scope, writescope}, ","))
+					data.shared.SetDoerScope(strings.Join([]string{scope, writescope}, ","))
 				}
 			} else {
-				data.Set("scope", readscope)
+				data.shared.SetDoerScope(readscope)
 			}
 
-			data.SetDefault("level", "read")
+			data.shared.SetTokenLevelDefault("read")
 		},
 		interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
-			fixtureSetRepository(t, permissions, data)
+			fixtureSetRepository(t, permissions, data.shared.RepositoryName(), data.shared.RepositoryInit(), data.shared.RepositoryPrivate(), data.shared.RepositoryArchived())
 		},
 		staticArgs: 1,
 		call: func(t *testing.T, ctx apiv1_permissions.Context, data *testData, args []any) {
-			level := levelStringToLevel(data.Get("level"))
+			level := levelStringToLevel(data.shared.TokenLevel())
 			categories := args[0].([]auth_model.AccessTokenScopeCategory)
 			t.Logf("calling TokenRequiresScopes(ctx, %v, %v)", categories, level)
 			apiv1_permissions.TokenRequiresScopes(ctx, categories, level)

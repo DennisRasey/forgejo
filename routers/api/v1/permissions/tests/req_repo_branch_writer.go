@@ -15,24 +15,28 @@ import (
 var _ = registerFunctionTestWithCall(apiv1_permissions.ReqRepoBranchWriter, functionTest{
 	testCases: []*testCase{
 		{
+			// pass because the doer is the owner of the repository
 			data: newTestData(map[string]string{
-				"doer":              "userowner",
-				"repository":        "userowner/repositorypublic",
-				"repository-init":   "true",
 				"pullRequestAuthor": "userowner",
 				"pullRequestBranch": "ReqRepoBranchWriter",
 				"pullRequest":       "ReqRepoBranchWriter",
-			}),
+			}, newSharedData().
+				SetDoer().SetDoerName("userowner").
+				SetRepository().SetRepositoryName("userowner/repositorypublic").
+				SetRepositoryInit(true),
+			),
 		},
 		{
+			// fail because the doer has no write permissions on the repository
 			data: newTestData(map[string]string{
-				"doer":              "regularuser",
-				"repository":        "userowner/repositorypublic",
-				"repository-init":   "true",
 				"pullRequestAuthor": "userowner",
 				"pullRequestBranch": "ReqRepoBranchWriter",
 				"pullRequest":       "ReqRepoBranchWriter",
-			}),
+			}, newSharedData().
+				SetDoer().
+				SetRepositoryName("userowner/repositorypublic").
+				SetRepositoryInit(true),
+			),
 			error: "user should have a permission to write to this branch",
 		},
 	},
@@ -41,14 +45,15 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.ReqRepoBranchWriter, func
 		fixtureCreateBranch(t, permissions, data.Get("pullRequestBranch"))
 		require.True(t, data.Has("pullRequestAuthor"))
 		require.True(t, data.Has("pullRequest"))
-		fixtureCreatePullRequest(t, permissions, data)
+		fixtureCreatePullRequest(t, permissions, data.Get("pullRequest"), data.Get("pullRequestAuthor"), data.Get("pullRequestBranch"))
 	},
 	fulfillNeeds: func(t *testing.T, data *testData) {
 		t.Helper()
-		owner, _, found := strings.Cut(data.Get("repository"), "/")
+		owner, _, found := strings.Cut(data.shared.RepositoryName(), "/")
 		require.True(t, found)
-		data.Set("doer", owner)
-		data.SetDefault("repository-init", "true")
+		data.shared.SetDoer()
+		data.shared.SetDoerName(owner)
+		data.shared.SetRepositoryInitDefault(true)
 		data.SetDefault("pullRequestAuthor", owner)
 		data.SetDefault("pullRequestBranch", "ReqRepoBranchWriter")
 		data.SetDefault("pullRequest", "ReqRepoBranchWriter")
