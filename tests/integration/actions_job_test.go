@@ -479,9 +479,12 @@ jobs:
 				assert.Equal(t, actionRun.WorkflowID, gtCtx["workflow"].GetStringValue())
 				assert.Contains(t, gtCtx["workflow_ref"].GetStringValue(), fmt.Sprintf("user2/actions-gitea-context/%s@refs/pull", tc.treePath))
 				assert.Equal(t, setting.Actions.DefaultActionsURL.URL(), gtCtx["gitea_default_actions_url"].GetStringValue())
+				assert.Equal(t, setting.Actions.DefaultActionsURL.URL(), gtCtx["forgejo_default_actions_url"].GetStringValue())
 				assert.Equal(t, setting.AppVer, gtCtx["forgejo_server_version"].GetStringValue())
 				token := gtCtx["token"].GetStringValue()
 				assert.Equal(t, actionTask.TokenLastEight, token[len(token)-8:])
+				assert.NotEmpty(t, gtCtx["gitea_runtime_token"].GetStringValue())
+				assert.NotEmpty(t, gtCtx["forgejo_runtime_token"].GetStringValue())
 				if tc.enableOpenIDConnect {
 					assert.NotEmpty(t, gtCtx["forgejo_actions_id_token_request_token"].GetStringValue())
 					assert.Equal(t,

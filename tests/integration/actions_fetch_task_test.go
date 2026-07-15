@@ -165,7 +165,7 @@ jobs:
 			// expected to be present, so we test for equal length.  "gitea_runtime_token" is a signed JWT which can
 			// change between invocations based upon precise timestamps used, and so similarly should be validated to be
 			// present not necessarily identical.
-			if k == "token" || k == "gitea_runtime_token" {
+			if k == "token" || k == "gitea_runtime_token" || k == "forgejo_runtime_token" {
 				assert.Len(t, v1.(string), len(v2.(string)))
 			} else {
 				assert.EqualValues(t, v1, v2, "context[%q]", k)
