@@ -69,6 +69,7 @@ jobs:
 		require.NotEmpty(t, taskContext.Fields["forgejo_actions_id_token_request_token"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["forgejo_actions_id_token_request_url"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["gitea_runtime_token"].GetStringValue())
+		require.NotEmpty(t, taskContext.Fields["forgejo_runtime_token"].GetStringValue())
 	})
 
 	t.Run("openid connect enabled from fork with pull_request_target event", func(t *testing.T) {
@@ -79,6 +80,7 @@ jobs:
 		require.NotEmpty(t, taskContext.Fields["forgejo_actions_id_token_request_token"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["forgejo_actions_id_token_request_url"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["gitea_runtime_token"].GetStringValue())
+		require.NotEmpty(t, taskContext.Fields["forgejo_runtime_token"].GetStringValue())
 	})
 
 	t.Run("openid connect enabled from fork with pull_request event", func(t *testing.T) {
@@ -89,6 +91,7 @@ jobs:
 		require.Empty(t, taskContext.Fields["forgejo_actions_id_token_request_token"].GetStringValue())
 		require.Empty(t, taskContext.Fields["forgejo_actions_id_token_request_url"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["gitea_runtime_token"].GetStringValue())
+		require.NotEmpty(t, taskContext.Fields["forgejo_runtime_token"].GetStringValue())
 	})
 
 	t.Run("openid connect disabled", func(t *testing.T) {
@@ -99,6 +102,7 @@ jobs:
 		require.Empty(t, taskContext.Fields["forgejo_actions_id_token_request_token"].GetStringValue())
 		require.Empty(t, taskContext.Fields["forgejo_actions_id_token_request_url"].GetStringValue())
 		require.NotEmpty(t, taskContext.Fields["gitea_runtime_token"].GetStringValue())
+		require.NotEmpty(t, taskContext.Fields["forgejo_runtime_token"].GetStringValue())
 	})
 }
 
