@@ -175,7 +175,8 @@ func generateTaskContext(t *actions_model.ActionTask) (*structpb.Struct, error) 
 		return nil, err
 	}
 
-	gitCtx["gitea_runtime_token"] = giteaRuntimeToken
+	gitCtx["gitea_runtime_token"] = giteaRuntimeToken // Can be removed after Forgejo 19.
+	gitCtx["forgejo_runtime_token"] = giteaRuntimeToken
 
 	if enableOpenIDConnect {
 		gitCtx["forgejo_actions_id_token_request_token"] = giteaRuntimeToken
