@@ -8,7 +8,7 @@
 // web_src/js/features/clipboard.js
 // @watch end
 
-import {expect} from '@playwright/test';
+import {expect, type Page} from '@playwright/test';
 import {test} from './utils_e2e.ts';
 import {screenshot} from './shared/screenshots.ts';
 
@@ -27,45 +27,53 @@ test('copy src file path to clipboard', async ({page}) => {
   await screenshot(page, page.getByText('Copied'), 50);
 });
 
-test('copy issue content to clipboard', async ({page}) => {
-  const response = await page.goto('/user2/repo1/issues/1');
+async function evaluateCommentCopyMarkdown(page: Page, url: string, commentId: string, clipboardExpectations?: string[]): Promise<boolean> {
+  const response = await page.goto(url);
   expect(response?.status()).toBe(200);
 
-  await page.click('#issue-1 .comment-container .context-menu');
-  await page.locator('#issue-1 .comment-container .menu').getByText('Copy Markdown').click();
+  const areaOfInterest = page.locator(`#${commentId} .comment-container details.dropdown`);
 
+  // Open dropdown
+  await areaOfInterest.locator('summary').click();
+  await expect(areaOfInterest).toHaveAttribute('open');
+
+  // Request copy and check if it succeeded
+  await areaOfInterest.locator('.content ul li button').getByText('Copy Markdown').click();
   await expect(async () => {
     const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clipboardText).toBe('content for the first issue');
-  }).toPass();
-});
+    for (const expectation of clipboardExpectations) {
+      expect(clipboardText).toContain(expectation);
+    }
+  }).toPass({timeout: 3000});
 
-test('copy comment content copies the original markdown', async ({page}) => {
-  const response = await page.goto('/user2/repo1/issues/1');
-  expect(response?.status()).toBe(200);
+  // Dropdown should have been closed
+  await expect(areaOfInterest).not.toHaveAttribute('open');
 
-  await page.click('#issuecomment-1001 .comment-container .context-menu');
-  await page.locator('#issuecomment-1001 .comment-container .menu').getByText('Copy Markdown').click();
+  return true;
+}
 
-  await expect(async () => {
-    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clipboardText).toContain('## Lorem Ipsum');
-    expect(clipboardText).toContain('**I am not appealed**');
-    expect(clipboardText).toContain('`feature`');
-  }).toPass();
-});
+test.describe('Copy comment as Markdown to clipboard', () => {
+  test('Issue top comment', async ({page}) => {
+    await expect(async () => {
+      await evaluateCommentCopyMarkdown(page, '/user2/repo1/issues/1', 'issue-1', ['content for the first issue']);
+    }).toPass({timeout: 3000});
+  });
 
-test('copy pull request content to clipboard', async ({page}) => {
-  const response = await page.goto('/user2/repo1/pulls/5');
-  expect(response?.status()).toBe(200);
+  test('Issue reply comment', async ({page}) => {
+    await expect(async () => {
+      await evaluateCommentCopyMarkdown(page, '/user2/repo1/issues/1', 'issuecomment-1001', [
+        '## Lorem Ipsum',
+        '**I am not appealed**',
+        '`feature`',
+      ]);
+    }).toPass({timeout: 3000});
+  });
 
-  await page.click('#issue-11 .comment-container .context-menu');
-  await page.locator('#issue-11 .comment-container .menu').getByText('Copy Markdown').click();
-
-  await expect(async () => {
-    const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-    expect(clipboardText).toBe('content for the a pull request');
-  }).toPass();
+  test('PR top comment', async ({page}) => {
+    await expect(async () => {
+      await evaluateCommentCopyMarkdown(page, '/user2/repo1/pulls/5', 'issue-11', ['content for the a pull request']);
+    }).toPass({timeout: 3000});
+  });
 });
 
 test('copy diff file path to clipboard', async ({page}) => {

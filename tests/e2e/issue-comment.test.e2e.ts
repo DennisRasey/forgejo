@@ -15,10 +15,10 @@ import {screenshot} from './shared/screenshots.ts';
 test.use({user: 'user2'});
 
 for (const run of [
-  {title: 'JS off', js: true},
-  {title: 'JS on', js: false},
+  {title: 'JS off', useJs: false},
+  {title: 'JS on', useJs: true},
 ]) {
-  test.describe(`Create issue & comment`, () => {
+  test.describe(`Create issue & comment, delete comment`, () => {
     // playwright/valid-title says: [error] Title must be a string
     test(`${run.title}`, async ({browser}, workerInfo) => {
       test.skip(['Mobile Chrome'].includes(workerInfo.project.name), 'Mobile Chrome has trouble clicking Comment button with JS enabled');
@@ -27,7 +27,7 @@ for (const run of [
       const issueContent = dynamic_id();
       const commentContent = dynamic_id();
 
-      const context = await login_user(browser, workerInfo, 'user2', {javaScriptEnabled: run.js});
+      const context = await login_user(browser, workerInfo, 'user2', {javaScriptEnabled: run.useJs});
       const page = await context.newPage();
 
       let response = await page.goto('/user2/repo1/issues/new');
@@ -38,7 +38,7 @@ for (const run of [
       await page.getByPlaceholder('Leave a comment').fill(issueContent);
       await page.getByRole('button', {name: 'Create issue'}).click();
 
-      if (run.js) {
+      if (run.useJs) {
         await expect(page).toHaveURL(/\/user2\/repo1\/issues\/\d+$/);
       } else {
         // NoJS clients end up on a .../comments JSON file and browsers surround it with some HTML
@@ -51,8 +51,10 @@ for (const run of [
       await page.locator('#comment-form').getByPlaceholder('Leave a comment').fill(commentContent);
       await page.locator('#comment-form button.primary').filter({hasText: 'Comment'}).click();
 
-      if (!run.js) {
+      // NoJS has bad UX: user gets sent to a page with raw JSON response
+      if (!run.useJs) {
         const redirectUrl = await JSON.parse(await page.locator('body').textContent())['redirect'];
+        // Follow the redirect link in the response to get back to the issue
         response = await page.goto(redirectUrl);
         expect(response?.status()).toBe(200);
       }
@@ -61,6 +63,15 @@ for (const run of [
       await expect(page.locator('h1')).toContainText(issueTitle);
       await expect(page.locator('.comment').filter({hasText: issueContent})).toHaveCount(1);
       await expect(page.locator('.comment').filter({hasText: commentContent})).toHaveCount(1);
+
+      // Delete the newly created comment
+      if (run.useJs) {
+        // Not possible w/o JS ATM
+        await page.locator('.comment').filter({hasText: commentContent}).getByLabel('Comment menu').click();
+        page.on('dialog', (dialog) => dialog.accept());
+        await page.locator('.comment').filter({hasText: commentContent}).locator('details.dropdown .content button[data-url$="/delete"]').click();
+        await expect(page.locator('.comment').filter({hasText: commentContent})).toHaveCount(0);
+      }
     });
   });
 }
@@ -163,17 +174,20 @@ test('Always focus edit tab first on edit', async ({page}) => {
   const response = await page.goto('/user2/repo1/issues/1');
   expect(response?.status()).toBe(200);
 
+  const opener = page.locator('#issue-1 .comment-container details.dropdown summary');
+  const editButton = page.locator('#issue-1 .comment-container details.dropdown .content .edit-content');
+
   // Switch to preview tab and save
-  await page.click('#issue-1 .comment-container .context-menu');
-  await page.click('#issue-1 .comment-container .menu>.edit-content');
+  await opener.click();
+  await editButton.click();
   await page.locator('#issue-1 .comment-container [data-tab-for=markdown-previewer]').click();
   await page.click('#issue-1 .comment-container .save');
 
   await page.waitForLoadState();
 
   // Edit again and assert that edit tab should be active (and not preview tab)
-  await page.click('#issue-1 .comment-container .context-menu');
-  await page.click('#issue-1 .comment-container .menu>.edit-content');
+  await opener.click();
+  await editButton.click();
   const editTab = page.locator('#issue-1 .comment-container [data-tab-for=markdown-writer]');
   const previewTab = page.locator('#issue-1 .comment-container [data-tab-for=markdown-previewer]');
 
@@ -186,19 +200,21 @@ test('Reset content of comment edit field on cancel', async ({page}) => {
   const response = await page.goto('/user2/repo1/issues/1');
   expect(response?.status()).toBe(200);
 
+  const opener = page.locator('#issue-1 .comment-container details.dropdown summary');
+  const editButton = page.locator('#issue-1 .comment-container details.dropdown .content .edit-content');
   const editorTextarea = page.locator('[id="_combo_markdown_editor_1"]');
 
   // Change the content of the edit field
-  await page.click('#issue-1 .comment-container .context-menu');
-  await page.click('#issue-1 .comment-container .menu>.edit-content');
+  await opener.click();
+  await editButton.click();
   await expect(editorTextarea).toHaveValue('content for the first issue');
   await editorTextarea.fill('some random string');
   await expect(editorTextarea).toHaveValue('some random string');
   await page.click('#issue-1 .comment-container .edit .cancel');
 
   // Edit again and assert that the edit field should be reset to the initial content
-  await page.click('#issue-1 .comment-container .context-menu');
-  await page.click('#issue-1 .comment-container .menu>.edit-content');
+  await opener.click();
+  await editButton.click();
   await expect(editorTextarea).toHaveValue('content for the first issue');
   await screenshot(page, page.locator('.issue-content-left'));
 });
@@ -208,10 +224,11 @@ test('Quote reply', async ({page}, workerInfo) => {
   const response = await page.goto('/user2/repo1/issues/1');
   expect(response?.status()).toBe(200);
 
+  const opener = page.locator('#issuecomment-1001 .comment-container details.dropdown summary');
   const editorTextarea = page.locator('textarea.markdown-text-editor');
 
   // Full quote.
-  await page.click('#issuecomment-1001 .comment-container .context-menu');
+  await opener.click();
   await page.click('#issuecomment-1001 .quote-reply');
 
   await expect(editorTextarea).toHaveValue('@user2 wrote in http://localhost:3003/user2/repo1/issues/1#issuecomment-1001:\n\n' +
@@ -234,7 +251,7 @@ test('Quote reply', async ({page}, workerInfo) => {
   await editorTextarea.fill('');
 
   // Partial quote.
-  await page.click('#issuecomment-1001 .comment-container .context-menu');
+  await opener.click();
 
   await page.evaluate(() => {
     const range = new Range();
@@ -257,7 +274,7 @@ test('Quote reply', async ({page}, workerInfo) => {
   await editorTextarea.fill('');
 
   // Another partial quote.
-  await page.click('#issuecomment-1001 .comment-container .context-menu');
+  await opener.click();
 
   await page.evaluate(() => {
     const range = new Range();
@@ -286,7 +303,7 @@ test('Pull quote reply', async ({page}, workerInfo) => {
   const editorTextarea = page.locator('form.comment-form textarea.markdown-text-editor');
 
   // Full quote with no reply handler being open.
-  await page.click('.comment-code-cloud .context-menu');
+  await page.click('.comment-code-cloud details.dropdown summary');
   await page.click('.comment-code-cloud .quote-reply');
 
   await expect(editorTextarea).toHaveValue('@user2 wrote in http://localhost:3003/user2/commitsonpr/pulls/1/files#issuecomment-1002:\n\n' +
@@ -360,8 +377,8 @@ test.describe('Comment history', () => {
 
     // Make a change.
     const editorTextarea = page.locator('[id="_combo_markdown_editor_1"]');
-    await page.click('.comment-container .context-menu');
-    await page.click('.comment-container .menu>.edit-content');
+    await page.click('.comment-container details.dropdown summary');
+    await page.click('.comment-container details.dropdown .content .edit-content');
     await editorTextarea.fill(dynamic_id());
     await page.click('.comment-container .edit .save');
 

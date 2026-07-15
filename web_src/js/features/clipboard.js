@@ -28,7 +28,16 @@ export function initGlobalCopyToClipboardListener() {
 
     if (text) {
       const success = await clippie(text);
-      showTemporaryTooltip(target, success ? copy_success : copy_error);
+      let tippyTarget = target;
+
+      // If successful, auto-close parent dropdown, change tippy target to opener
+      const dropdownParent = target.closest('details.dropdown');
+      if (success && dropdownParent) {
+        dropdownParent.removeAttribute('open');
+        tippyTarget = dropdownParent.querySelector('summary');
+      }
+
+      showTemporaryTooltip(tippyTarget, success ? copy_success : copy_error);
     }
   });
 }

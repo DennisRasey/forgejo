@@ -359,8 +359,8 @@ test('Markdown insert table', async ({page}) => {
 
     if (isEditing) {
       // Preparations for evaluating comment editing
-      await area.locator('.context-dropdown').click();
-      await area.locator('.context-dropdown .edit-content').click();
+      await area.locator('.comment-header-right.actions details.dropdown').click();
+      await area.locator('.comment-header-right.actions details.dropdown .edit-content').click();
       expectedContent = `good work!${expectedContent}`;
     }
 
@@ -395,7 +395,7 @@ test('Markdown insert table', async ({page}) => {
   await expect(async () => {
     await evaluateTableInsertion(page, '#comment-form', false);
     await evaluateTableInsertion(page, '#issuecomment-2', true);
-  }).toPass();
+  }).toPass({timeout: 3000});
 });
 
 test('Markdown insert link', async ({page}) => {
@@ -409,8 +409,8 @@ test('Markdown insert link', async ({page}) => {
 
     if (isEditing) {
       // Preparations for evaluating comment editing
-      await area.locator('.context-dropdown').click();
-      await area.locator('.context-dropdown .edit-content').click();
+      await area.locator('.comment-header-right.actions details.dropdown').click();
+      await area.locator('.comment-header-right.actions details.dropdown .edit-content').click();
       expectedContent = `good work!${expectedContent}`;
     }
 
@@ -689,8 +689,8 @@ test('Persistent monospace preference across multiple editors', async ({page}) =
 
   // Open a second editor (by clicking "Edit" in the context menu of a message)
   const openSecondEditor = async () => {
-    const contextMenu = page.locator('.timeline-item [aria-label="Comment menu"]:has(.edit-content)').first();
-    const editButton = contextMenu.getByRole('menuitem').getByText('Edit').first();
+    const contextMenu = page.locator('.timeline-item details:has(summary[aria-label="Comment menu"]):has(.edit-content)').first();
+    const editButton = contextMenu.locator('.content').getByText('Edit').first();
     await contextMenu.click();
     await editButton.click();
   };

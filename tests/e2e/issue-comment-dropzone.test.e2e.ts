@@ -87,11 +87,11 @@ test('Re-add images to dropzone on edit', async ({page}) => {
   await page.getByRole('button', {name: 'Create issue'}).click();
 
   await expect(page).toHaveURL(/\/user2\/repo1\/issues\/\d+$/);
-  await page.click('.comment-container .context-menu');
+  await page.click('.comment-container details.dropdown summary');
   const waitForAttachmentsLoad = page.waitForResponse((response) => {
     return response.request().method() === 'GET' && response.url().endsWith('/attachments');
   });
-  await page.click('.comment-container .menu > .edit-content');
+  await page.click('.comment-container details.dropdown .content .edit-content');
   await waitForAttachmentsLoad;
 
   const dropzone = page.locator('.dropzone');

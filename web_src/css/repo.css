@@ -2069,7 +2069,7 @@ details.repo-search-result summary::marker {
   inset-inline-start: 7px;
 }
 
-.comment-header-right.actions a:not(.label) {
+.comment-header-right.actions .add-reaction {
   padding: 0.5rem;
 }
 
