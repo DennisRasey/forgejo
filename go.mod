@@ -14,7 +14,7 @@ require (
 	code.forgejo.org/forgejo/runner/v12 v12.12.0
 	code.forgejo.org/go-chi/binding v1.0.1
 	code.forgejo.org/go-chi/cache v1.0.1
-	code.forgejo.org/go-chi/captcha v1.0.2
+	code.forgejo.org/go-chi/captcha v1.0.3
 	code.forgejo.org/go-chi/session v1.0.4
 	code.forgejo.org/xorm/xorm v1.4.0
 	code.gitea.io/sdk/gitea v0.21.0
