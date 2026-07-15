@@ -214,18 +214,10 @@
 	"webauthn.press_button": "กรุณากดปุ่มบนคีย์ความปลอดภัยของคุณ…",
 	"webauthn.sign_in": "กดปุ่มบนคีย์ความปลอดภัยของคุณ หากคีย์ความปลอดภัยของคุณไม่มีปุ่ม ให้เสียบใหม่อีกครั้ง",
 	"webauthn.insert_key": "โปรดเสียบคีย์ความปลอดภัยของคุณ",
-	"counters.n_commits": {
-		"other": "%s คอมมิต"
-	},
-	"counters.n_branches": {
-		"other": "%s สาขา"
-	},
-	"counters.n_tags": {
-		"other": "%s แท็ก"
-	},
-	"counters.n_releases": {
-		"other": "%s รีลีส"
-	},
+	"counters.n_commits": "%s คอมมิต",
+	"counters.n_branches": "%s สาขา",
+	"counters.n_tags": "%s แท็ก",
+	"counters.n_releases": "%s รีลีส",
 	"gpg.default_key": "ลงนามด้วยคีย์เริ่มต้น",
 	"gpg.error.extract_sign": "ไม่สามารถแยกข้อมูลลายเซ็นได้",
 	"gpg.error.generate_hash": "ไม่สามารถสร้างแฮชของคอมมิตได้",

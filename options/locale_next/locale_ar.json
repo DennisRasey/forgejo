@@ -126,7 +126,6 @@
 	"actions.runners.description": "الوصف",
 	"actions.runners.labels": "التصنيفات",
 	"actions.runners.last_online": "آخر مرة كان متصلا",
-	"actions.runners.runner_title": "",
 	"actions.runners.task_list.no_tasks": "لا توجد مهام بعد.",
 	"actions.runners.task_list.run": "شغّل",
 	"actions.runners.task_list.status": "الحالة",

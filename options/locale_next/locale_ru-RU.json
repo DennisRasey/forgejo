@@ -927,7 +927,59 @@
 	"settings.authorized_integration.name.required": "Авторизованной интеграции необходимо название.",
 	"settings.authorized_integration.delete.header": "Удалить авторизованную интеграцию",
 	"search.match_inside_quotes": "Включить лишь результаты, идентичные термину в кавычках",
-	"search.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">В документации</a> есть подробная информация о поиске, операторах и фильтрах.",
-	"settings.authorized_integration.claims.generic": "Общие правила JWT",
-	"actions.runners.edit_runner.regenerate_token_label": "Обновить токен"
+	"search.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Ознакомьтесь с документацией</a>, чтобы узнать больше о поиске, операторах и фильтрах.",
+	"settings.authorized_integration.claims.generic": "Обычные правила JWT",
+	"actions.runners.edit_runner.regenerate_token_label": "Обновить токен",
+	"settings.authorized_integration.field.claim_rules": "Правила заявления в JSON",
+	"repo.issues.context.copy_markdown": "Копировать как Markdown",
+	"settings.authorized_integration.claim_rules.invalid": "Проверка правил заявления провалилась: %s",
+	"settings.authorized_integration.specified_repos_none": "Авторизованные интеграции с этими репозиториями должны включать хотя бы один репозиторий.",
+	"settings.authorized_integration.forgejo_actions_local.select_repository": "Выберите репозиторий: (репозитории со включенными Действиями Forgejo)",
+	"settings.profile.dotprofile.hint": "Расширенная кастомизация профиля, включая подтверждающие ссылки, доступна с репозиторием <code>%s</code>. <a href=\"%s\" target=\"_blank\">Подробнее</a>.",
+	"repo.watch.issues": "Задачи",
+	"repo.watch.pull_requests": "Запр. слияний",
+	"repo.watch.releases": "Выпуски",
+	"repo.watching": "Наблюдение",
+	"relativetime.duration.secs": {
+		"one": "%d секунда",
+		"few": "%d секунды",
+		"many": "%d секунд"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d минута",
+		"few": "%d минуты",
+		"many": "%d минут"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d час",
+		"few": "%d часа",
+		"many": "%d часов"
+	},
+	"relativetime.duration.days": {
+		"one": "%d день",
+		"few": "%d дня",
+		"many": "%d дней"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d неделя",
+		"few": "%d недели",
+		"many": "%d недель"
+	},
+	"relativetime.duration.months": {
+		"one": "%d месяц",
+		"few": "%d месяца",
+		"many": "%d месяцев"
+	},
+	"relativetime.duration.years": {
+		"one": "%d год",
+		"few": "%d года",
+		"many": "%d лет"
+	},
+	"settings.authorized_integration.delete.body": "Удаление авторизованной интеграции приведёт к отзыву доступа приложений. Это действие перманентно и не может быть отменено. Созданная заново авторизованная интеграция не будет иметь такую же заявку Аудитории (<code>aud</code>). Продолжить?",
+	"settings.authorized_integration.forgejo_actions_local.git_ref.label": "Ссылка Git:",
+	"settings.authorized_integration.forgejo_actions_local.git_ref.help": "Пусто – разрешена любая. Ознакомьтесь с синтаксисом в <a href=\"%[1]s\">документации %[2]s</a>.<br>Примеры: <code>refs/heads/main</code>, <code>refs/pull/*/head</code>.",
+	"actions.runners.edit_runner.properties_options": "Опции",
+	"actions.workflow.pre_execution_warning": "Предупреждения р. потока:",
+	"actions.secrets.mutation.header": "Изменить секрет «%s»",
+	"actions.secrets.mutation.failure_message": "Не удалось изменить секрет «%s»."
 }

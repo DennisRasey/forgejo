@@ -500,7 +500,7 @@
 	"actions.runners.task_list.commit": "Подаване",
 	"actions.runners.task_list.done_at": "Завършено на",
 	"actions.runners.edit_runner_button": "Редактиране на изпълнителя",
-	"actions.runners.create_runner.page_title": "Създаване на нов изпълнител",
+	"actions.runners.create_runner.page_title": "Нов изпълнител",
 	"actions.runners.create_runner.title": "Създаване на нов изпълнител",
 	"actions.runners.create_runner.create_button": "Създаване",
 	"actions.runners.edit_runner.page_title": "Редактиране на изпълнител %s",
