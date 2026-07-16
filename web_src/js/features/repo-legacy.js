@@ -375,9 +375,9 @@ async function onEditContent(event) {
     editContentZone.innerHTML = document.getElementById('issue-comment-editor-template').innerHTML;
     initDisabledInputs(editContentZone);
     const dropzone = editContentZone.querySelector('.dropzone');
-    if (!dropzone.dropzone) await initDropzone(dropzone, editContentZone);
+    if (dropzone && !dropzone.dropzone) await initDropzone(dropzone, editContentZone);
     comboMarkdownEditor = await initComboMarkdownEditor(editContentZone.querySelector('.combo-markdown-editor'));
-    dropzone.dropzone.emit('reload');
+    dropzone?.dropzone?.emit('reload');
     editContentZone.addEventListener('ce-quick-submit', saveAndRefresh);
     editContentZone.querySelector('button[data-button-name="cancel-edit"]').addEventListener('click', cancelAndReset);
     editContentZone.querySelector('button[data-button-name="save-edit"]').addEventListener('click', saveAndRefresh);
