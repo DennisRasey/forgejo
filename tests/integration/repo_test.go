@@ -374,65 +374,105 @@ func TestViewFileInRepoRSSFeed(t *testing.T) {
 	})
 }
 
-// TestBlameFileInRepo repo description, topics and summary should not be displayed when running blame on a file
 func TestBlameFileInRepo(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	session := loginUser(t, "user2")
-
-	t.Run("Assert", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-
-		req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
-		resp := session.MakeRequest(t, req, http.StatusOK)
-
-		htmlDoc := NewHTMLParser(t, resp.Body)
-		description := htmlDoc.doc.Find("#repo-desc")
-		repoTopics := htmlDoc.doc.Find("#repo-topics")
-		repoSummary := htmlDoc.doc.Find(".repository-summary")
-
-		assert.Equal(t, 0, description.Length())
-		assert.Equal(t, 0, repoTopics.Length())
-		assert.Equal(t, 0, repoSummary.Length())
-	})
-
-	t.Run("File size", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-
-		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
-		gitRepo, err := git.OpenRepository(git.DefaultContext, repo.RepoPath())
-		require.NoError(t, err)
-		defer gitRepo.Close()
-
-		commit, err := gitRepo.GetCommit("HEAD")
-		require.NoError(t, err)
-
-		blob, err := commit.GetBlobByPath("README.md")
-		require.NoError(t, err)
-
-		fileSize := blob.Size()
-		require.NotZero(t, fileSize)
-
-		t.Run("Above maximum", func(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		t.Run("Assert", func(t *testing.T) {
+			// TestBlameFileInRepo repo description, topics and summary should not be displayed when running blame on a file
 			defer tests.PrintCurrentTest(t)()
-			defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize)()
 
-			req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
-			resp := session.MakeRequest(t, req, http.StatusOK)
+			repo := forgery.CreateRepository(t, nil, &forgery.CreateRepositoryOptions{
+				Files: forgery.MapFS{
+					"README.md": forgery.MapFile("hello, world"),
+				},
+			})
+
+			req := NewRequest(t, "GET", fmt.Sprintf("/%s/blame/branch/main/README.md", repo.FullName()))
+			resp := MakeRequest(t, req, http.StatusOK)
 
 			htmlDoc := NewHTMLParser(t, resp.Body)
-			assert.Contains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+			description := htmlDoc.doc.Find("#repo-desc")
+			repoTopics := htmlDoc.doc.Find("#repo-topics")
+			repoSummary := htmlDoc.doc.Find(".repository-summary")
+
+			assert.Equal(t, 0, description.Length())
+			assert.Equal(t, 0, repoTopics.Length())
+			assert.Equal(t, 0, repoSummary.Length())
 		})
 
-		t.Run("Under maximum", func(t *testing.T) {
+		t.Run("File size", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
-			defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize+1)()
 
-			req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
-			resp := session.MakeRequest(t, req, http.StatusOK)
+			content := "hello, world"
+			fileSize := int64(len(content))
+			repo := forgery.CreateRepository(t, nil, &forgery.CreateRepositoryOptions{
+				Files: forgery.MapFS{
+					"README.md": forgery.MapFile(content),
+				},
+			})
+
+			t.Run("Above maximum", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+				defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize)()
+
+				req := NewRequest(t, "GET", fmt.Sprintf("/%s/blame/branch/main/README.md", repo.FullName()))
+				resp := MakeRequest(t, req, http.StatusOK)
+
+				htmlDoc := NewHTMLParser(t, resp.Body)
+				assert.Contains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+			})
+
+			t.Run("Under maximum", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+				defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize+1)()
+
+				req := NewRequest(t, "GET", fmt.Sprintf("/%s/blame/branch/main/README.md", repo.FullName()))
+				resp := MakeRequest(t, req, http.StatusOK)
+
+				htmlDoc := NewHTMLParser(t, resp.Body)
+				assert.NotContains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+			})
+		})
+
+		t.Run("Commit with empty message", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			user := forgery.CreateUser(t, nil)
+			twolines := "line1\nline2\n"
+			repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+				Files: forgery.MapFS{
+					"README.md": forgery.MapFile(twolines),
+				},
+			})
+
+			dstPath := t.TempDir()
+			uClone := *u
+			uClone.Path = repo.FullName()
+			uClone.User = url.UserPassword(user.Name, userPassword)
+			t.Run("Clone", doGitClone(dstPath, &uClone))
+			threelines := twolines + "line3\n"
+			require.NoError(t, os.WriteFile(path.Join(dstPath, "README.md"), []byte(threelines), 0o666))
+			_, _, err := git.NewCommand(git.DefaultContext, "add", "README.md").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, err)
+			_, _, err = git.NewCommand(git.DefaultContext, "commit", "--allow-empty-message", "-m", "").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, err)
+			_, _, err = git.NewCommand(git.DefaultContext, "push").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, err)
+
+			req := NewRequest(t, "GET", fmt.Sprintf("/%s/blame/branch/main/README.md", repo.FullName()))
+			resp := MakeRequest(t, req, http.StatusOK)
 
 			htmlDoc := NewHTMLParser(t, resp.Body)
-			assert.NotContains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+			for i, expected := range []struct {
+				content string
+				message string
+			}{
+				{"line1", "init"},                 // first commit message
+				{"line2", ""},                     // first commit message is not repeated
+				{"line3", "Empty commit message"}, // second commit message
+			} {
+				row := htmlDoc.Find(fmt.Sprintf("table tbody tr:nth-child(%d)", i+1))
+				assert.Equal(t, expected.message, strings.TrimSpace(row.Find(".lines-commit .blame-message a").Text()))
+				assert.Equal(t, expected.content, strings.TrimSpace(row.Find(".lines-code").Text()))
+			}
 		})
 	})
 }

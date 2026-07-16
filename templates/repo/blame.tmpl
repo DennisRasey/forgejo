@@ -51,7 +51,7 @@
 										</div>
 										<div class="blame-message">
 											<a class="suppressed tw-text-text" href="{{$row.CommitURL}}" title="{{$row.CommitMessage}}">
-												{{$row.CommitMessage}}
+												{{template "repo/commit_message" dict "root" . "commitMessage" $row.CommitMessage "commitURL" $row.CommitURL}}
 											</a>
 										</div>
 										<div class="blame-time not-mobile">

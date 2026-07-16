@@ -1,0 +1,5 @@
+{{if and (eq .commitMessage "") (not (eq .commitURL ""))}}
+	<i>{{ctx.Locale.Tr "repo.empty_commit_message"}}</i>
+{{else}}
+	{{.commitMessage}}
+{{end}}

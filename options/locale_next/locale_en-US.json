@@ -82,6 +82,7 @@
 	"relativetime.1year": "last year",
 	"repo.files.caption": "Repository files (latest commit first)",
 	"repo.files.filename": "Filename",
+	"repo.empty_commit_message": "Empty commit message",
 	"repo.files.last_commit_message": "Latest commit message",
 	"repo.files.last_commit_date": "Latest commit date",
 	"repo.issues.filter_poster.hint": "Filter by the author",
