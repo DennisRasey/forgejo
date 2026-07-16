@@ -5,7 +5,6 @@
 	"admin.config.git.mirror_timeout": "Časovna omejitev posodobitve zrcala",
 	"admin.config.git.migrate_timeout": "Časovna omejitev migracije",
 	"admin.config.git.gc_args": "Argumenti GC",
-	"admin.config.git.diff.max_files": "Prikazane največje razlike v datotekah",
 	"admin.config.git.diff.max_line_characters": "Največ različnih znakov na vrstico",
 	"admin.config.git.diff.max_lines": "Največ razlikovalnih vrstic na datoteko",
 	"admin.config.git.disable_diff_highlight": "Onemogočite razlikovanje sintakse",

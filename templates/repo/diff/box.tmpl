@@ -1,4 +1,4 @@
-{{$showFileTree := (and (not .DiffNotAvailable) (gt .Diff.NumFiles 1))}}
+{{$showFileTree := (and (not .DiffNotAvailable) (gt .DiffMetadata.TotalNumberOfFiles 1))}}
 <div>
 	<div class="diff-detail-box diff-box">
 		<div class="tw-flex tw-items-center tw-flex-wrap tw-gap-2 tw-ml-0.5">
@@ -19,7 +19,7 @@
 			{{end}}
 			{{if not .DiffNotAvailable}}
 				<div class="diff-detail-stats tw-flex tw-items-center tw-flex-wrap">
-					{{svg "octicon-diff" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.diff.stats_desc" .Diff.NumFiles .Diff.TotalAddition .Diff.TotalDeletion}}
+					{{svg "octicon-diff" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.diff.stats_desc" .DiffMetadata.TotalNumberOfFiles .Diff.TotalAddition .Diff.TotalDeletion}}
 				</div>
 			{{end}}
 		</div>
@@ -27,9 +27,9 @@
 			{{if and .PageIsPullFiles $.SignedUserID (not .IsArchived) (not .DiffNotAvailable)}}
 				<div class="not-mobile tw-flex tw-items-center tw-flex-col tw-whitespace-nowrap tw-mr-1">
 					<label for="viewed-files-summary" id="viewed-files-summary-label" data-text-changed-template="{{ctx.Locale.Tr "repo.pulls.viewed_files_label"}}">
-						{{ctx.Locale.Tr "repo.pulls.viewed_files_label" .Diff.NumViewedFiles .Diff.NumFiles}}
+						{{ctx.Locale.Tr "repo.pulls.viewed_files_label" .DiffMetadata.NumberOfViewedFiles .DiffMetadata.TotalNumberOfFiles}}
 					</label>
-					<progress id="viewed-files-summary" value="{{.Diff.NumViewedFiles}}" max="{{.Diff.NumFiles}}"></progress>
+					<progress id="viewed-files-summary" value="{{.DiffMetadata.NumberOfViewedFiles}}" max="{{.DiffMetadata.TotalNumberOfFiles}}"></progress>
 				</div>
 			{{end}}
 			{{template "repo/diff/whitespace_dropdown" .}}
@@ -61,14 +61,13 @@
 			</div>
 		{{end}}
 		<script id="diff-data-script" type="module">
-			const diffDataFiles = [{{range $i, $file := .Diff.Files}}{Name:"{{$file.Name}}",NameHash:"{{$file.NameHash}}",Type:{{$file.Type}},IsBin:{{$file.IsBin}},Addition:{{$file.Addition}},Deletion:{{$file.Deletion}},IsViewed:{{$file.IsViewed}}},{{end}}];
+			const diffDataFiles = [{{range $i, $file := .DiffFileMetadata}}{Name:"{{$file.Name}}",NameHash:"{{$file.NameHash}}",Type:{{$file.Type}},OnPage:{{$file.OnPage}},IsViewed:{{$file.IsViewed}}},{{end}}];
 			const diffData = {
-				isIncomplete: {{.Diff.IsIncomplete}},
 				tooManyFilesMessage: "{{ctx.Locale.Tr "repo.diff.too_many_files"}}",
 				binaryFileMessage: "{{ctx.Locale.Tr "repo.diff.bin"}}",
 				showMoreMessage: "{{ctx.Locale.Tr "repo.diff.show_more"}}",
 				statisticsMessage: "{{ctx.Locale.Tr "repo.diff.stats_desc_file"}}",
-				linkLoadMore: "?skip-to={{.Diff.End}}&file-only=true",
+				currentPage: {{.DiffMetadata.CurrentPage}},
 			};
 
 			// for first time loading, the diffFileInfo is a plain object
@@ -225,16 +224,15 @@
 						</div>
 					</div>
 				{{end}}
-
-				{{if .Diff.IsIncomplete}}
-					<div class="diff-file-box diff-box file-content tw-mt-2" id="diff-incomplete">
-						<h4 class="ui top attached header tw-font-normal tw-flex tw-items-center tw-justify-between">
-							{{ctx.Locale.Tr "repo.diff.too_many_files"}}
-							<a class="ui basic tiny button" id="diff-show-more-files" data-href="?skip-to={{.Diff.End}}&file-only=true">{{ctx.Locale.Tr "repo.diff.show_more"}}</a>
-						</h4>
-					</div>
-				{{end}}
 			</div>
+			{{if .DiffMetadata.HasNext}}
+				<div class="diff-file-box diff-box file-content tw-mt-2" id="diff-incomplete">
+					<h4 class="ui top attached header tw-font-normal tw-flex tw-items-center tw-justify-between">
+						{{ctx.Locale.Tr "repo.diff.too_many_files"}}
+						<a class="ui basic tiny button" id="diff-show-more-files" data-href="?{{range $i, $f := .FileSelection}}{{if $i}}&{{end}}files={{$f}}{{end}}&diff-page={{len (printf "a%*s" .DiffMetadata.CurrentPage "")}}&file-only=true">{{ctx.Locale.Tr "repo.diff.show_more"}}</a>
+					</h4>
+				</div>
+			{{end}}
 		{{end}}
 		</div>
 	</div>

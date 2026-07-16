@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Yansı Güncelleme Zaman Aşımı",
 	"admin.config.git.migrate_timeout": "Göç işlemi zaman aşımı",
 	"admin.config.git.gc_args": "GC Argümanları",
-	"admin.config.git.diff.max_files": "Maksimum Değişiklik Dosyaları (gösterilecek)",
 	"admin.config.git.diff.max_line_characters": "Maksimum Değişiklik Karakteri (tek bir satır için)",
 	"admin.config.git.diff.max_lines": "Maksimum Değişiklik Satırı (tek bir dosya için)",
 	"admin.config.git.disable_diff_highlight": "Değişiklik Sözdizimi Vurgusunu Devre Dışı Bırak",

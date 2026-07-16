@@ -20,7 +20,6 @@
 	"admin.config.git.mirror_timeout": "මිරර් යාවත්කාලීන වේලාව",
 	"admin.config.git.migrate_timeout": "සංක්රමණ කාලය",
 	"admin.config.git.gc_args": "GC තර්ක",
-	"admin.config.git.diff.max_files": "මැක්ස් ඩිෆ් ගොනු (පෙන්වීමට)",
 	"admin.config.git.diff.max_line_characters": "මැක්ස් ඩිෆ් චරිත (තනි රේඛාවක් සඳහා)",
 	"admin.config.git.diff.max_lines": "මැක්ස් ඩිෆ් ලයින්ස් (තනි ගොනුවක් සඳහා)",
 	"admin.config.git.disable_diff_highlight": "ඩිෆ් සයින්ටැක්ස් ඉස්මතු කරන්න අක්රීය කරන්න",

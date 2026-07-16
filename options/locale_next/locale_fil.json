@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Timeout ng pag-update ng mirror",
 	"admin.config.git.migrate_timeout": "Timeout ng paglipat",
 	"admin.config.git.gc_args": "Mga argument ng GC",
-	"admin.config.git.diff.max_files": "Pinakamataas na mga diff file na ipapakita",
 	"admin.config.git.diff.max_line_characters": "Pinakamataas na mga character ng diff bawat linya",
 	"admin.config.git.diff.max_lines": "Pinakamataas na mga linya ng diff bawat file",
 	"admin.config.git.disable_diff_highlight": "I-disable ang diff syntax highlighting",

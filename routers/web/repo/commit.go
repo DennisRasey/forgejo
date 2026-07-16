@@ -27,6 +27,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 	"forgejo.org/modules/web"
+	"forgejo.org/routers/utils"
 	"forgejo.org/services/context"
 	"forgejo.org/services/forms"
 	"forgejo.org/services/gitdiff"
@@ -340,21 +341,37 @@ func Diff(ctx *context.Context) {
 	}
 
 	fileOnly := ctx.FormBool("file-only")
-	maxLines, maxFiles := setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffFiles
 	files := ctx.FormStrings("files")
-	if fileOnly && (len(files) == 2 || len(files) == 1) {
-		maxLines, maxFiles = -1, -1
+	ctx.Data["FileSelection"] = files
+	maxLines := setting.Git.MaxGitDiffLines
+	diffFileMetadata, err := gitdiff.GetDiffNameStatus(ctx, gitRepo, "", commitID, setting.UI.DiffPagingNum, files...)
+	if err != nil {
+		ctx.ServerError("GetDiffNameStatus", err)
+		return
+	}
+	ctx.Data["DiffFileMetadata"] = diffFileMetadata
+
+	pager, pagedFiles := utils.PaginateDiffFiles(ctx, diffFileMetadata)
+
+	diffMetadata, err := gitdiff.GetDiffMetadata(nil, pager.Paginater, len(diffFileMetadata))
+	if err != nil {
+		ctx.ServerError("GetDiffMetadata", err)
+		return
+	}
+
+	ctx.Data["DiffMetadata"] = diffMetadata
+
+	if fileOnly && (len(diffFileMetadata) == 2 || len(diffFileMetadata) == 1) {
+		maxLines = -1
 	}
 
 	diff, err := gitdiff.GetDiffFull(ctx, gitRepo, &gitdiff.DiffOptions{
 		AfterCommitID:      commitID,
-		SkipTo:             ctx.FormString("skip-to"),
 		MaxLines:           maxLines,
 		MaxLineCharacters:  setting.Git.MaxGitDiffLineCharacters,
-		MaxFiles:           maxFiles,
 		WhitespaceBehavior: gitdiff.GetWhitespaceFlag(ctx.Data["WhitespaceBehavior"].(string)),
 		FileOnly:           fileOnly,
-	}, files...)
+	}, pagedFiles...)
 	if err != nil {
 		ctx.ServerError("GetDiff", err)
 		return
@@ -400,7 +417,7 @@ func Diff(ctx *context.Context) {
 	ctx.Data["Verification"] = verification
 	ctx.Data["Author"] = user_model.ValidateCommitWithEmail(ctx, commit)
 	ctx.Data["Parents"] = parents
-	ctx.Data["DiffNotAvailable"] = diff.NumFiles == 0
+	ctx.Data["DiffNotAvailable"] = len(diff.Files) == 0
 
 	if err := asymkey_model.CalculateTrustStatus(verification, ctx.Repo.Repository.GetTrustModel(), func(user *user_model.User) (bool, error) {
 		return repo_model.IsOwnerMemberCollaborator(ctx, ctx.Repo.Repository, user.ID)

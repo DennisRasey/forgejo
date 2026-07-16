@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Spoguļglabātavas atjaunināšanas noildze",
 	"admin.config.git.migrate_timeout": "Pārcelšanas noildze",
 	"admin.config.git.gc_args": "GC argumenti",
-	"admin.config.git.diff.max_files": "Lielākais parādāmo salīdzināmo datņu skaits",
 	"admin.config.git.diff.max_line_characters": "Lielākais rindas salīdzināmo rakstzīmju skaits",
 	"admin.config.git.diff.max_lines": "Lielākais salīdzināmo rindu skaits datnē",
 	"admin.config.git.disable_diff_highlight": "Atspējot salīdzināšanas sintakses iekrāsošanu",

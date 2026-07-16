@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "หมดเวลาการอัปเดตมิเรอร์",
 	"admin.config.git.migrate_timeout": "หมดเวลาการย้าย",
 	"admin.config.git.gc_args": "อาร์กิวเมนต์ GC",
-	"admin.config.git.diff.max_files": "จำนวนไฟล์ diff สูงสุดที่แสดง",
 	"admin.config.git.diff.max_line_characters": "จำนวนอักขระ diff สูงสุดต่อบรรทัด",
 	"admin.config.git.diff.max_lines": "จำนวนบรรทัด diff สูงสุดต่อไฟล์",
 	"admin.config.git.disable_diff_highlight": "ปิดใช้งานการเน้นไวยากรณ์ diff",

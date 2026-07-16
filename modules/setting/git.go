@@ -19,7 +19,6 @@ var Git = struct {
 
 	MaxGitDiffLines          int
 	MaxGitDiffLineCharacters int
-	MaxGitDiffFiles          int
 	CommitsRangeSize         int // CommitsRangeSize the default commits range size
 	BranchesRangeSize        int // BranchesRangeSize the default branches range size
 	VerbosePush              bool
@@ -40,7 +39,6 @@ var Git = struct {
 	DisableDiffHighlight:     false,
 	MaxGitDiffLines:          1000,
 	MaxGitDiffLineCharacters: 5000,
-	MaxGitDiffFiles:          100,
 	CommitsRangeSize:         50,
 	BranchesRangeSize:        20,
 	VerbosePush:              true,
@@ -85,6 +83,7 @@ var GitConfig = GitConfigType{
 
 func loadGitFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("git")
+	deprecatedSettingWarning(rootCfg, "git", "MAX_GIT_DIFF_FILES", "ui", "DIFF_PAGING_NUM")
 	if err := sec.MapTo(&Git); err != nil {
 		log.Fatal("Failed to map Git settings: %v", err)
 	}

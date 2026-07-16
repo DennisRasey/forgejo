@@ -16,6 +16,7 @@ import (
 	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	"forgejo.org/modules/gitrepo"
+	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
 	repo_service "forgejo.org/services/repository"
 	"forgejo.org/tests"
@@ -247,6 +248,49 @@ func TestCompareBranches(t *testing.T) {
 	session.MakeRequest(t, req, http.StatusOK)
 	req = NewRequest(t, "GET", "/user2/repo16/compare/master..patch.diff")
 	session.MakeRequest(t, req, http.StatusOK)
+}
+
+func TestCompareBranchesPaginatesDiff(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	defer func(old int) {
+		setting.UI.DiffPagingNum = old
+	}(setting.UI.DiffPagingNum)
+
+	setting.UI.DiffPagingNum = 2
+
+	session := loginUser(t, "user2")
+
+	// Indirect compare remove-files-b (head) with add-csv (base) branch
+	//
+	//	'link_hi' and 'test.csv' are deleted, 'test.txt' is added
+	req := NewRequest(t, "GET", "/user2/repo20/compare/add-csv...remove-files-b")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// PageSize is set to 2, so only the first 2 changes should be visble initially
+	diffCount := 2
+	diffChanges := []string{"link_hi", "test.csv"}
+
+	inspectCompare(t, htmlDoc, diffCount, diffChanges)
+
+	diffShowMoreFiles := htmlDoc.doc.Find("#diff-show-more-files")
+	assert.Equal(t, 1, diffShowMoreFiles.Length())
+
+	loadMoreFilesHref, exists := diffShowMoreFiles.First().Attr("data-href")
+	assert.True(t, exists)
+
+	req = NewRequest(t, "GET", "/user2/repo20/compare/add-csv...remove-files-b"+loadMoreFilesHref)
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc = NewHTMLParser(t, resp.Body)
+
+	// When triggering the "load more request" we should only receive the missing (1) changed file
+	diffCount = 1
+	diffChanges = []string{"test.txt"}
+
+	inspectCompare(t, htmlDoc, diffCount, diffChanges)
+
+	diffShowMoreFiles = htmlDoc.doc.Find("#diff-show-more-files")
+	assert.Equal(t, 0, diffShowMoreFiles.Length())
 }
 
 func TestCompareWithPRsDisabled(t *testing.T) {

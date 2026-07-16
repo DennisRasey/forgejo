@@ -19,7 +19,6 @@
 	"admin.config.git.mirror_timeout": "미러 업데이트 시간 제한",
 	"admin.config.git.migrate_timeout": "마이그레이션 제한 시간",
 	"admin.config.git.gc_args": "가비지 콜렉션 인수",
-	"admin.config.git.diff.max_files": "변경사항 최대 파일 개 수 (표시 되는",
 	"admin.config.git.diff.max_line_characters": "변경사항 최대 표시 문자 수 (단일 행에 대해",
 	"admin.config.git.diff.max_lines": "변경사항 최대 표시 줄 수 (단일 파일에 대해",
 	"admin.config.git.disable_diff_highlight": "변경 사항 구문 강조 비활성화",

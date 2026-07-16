@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "鏡像更新逾時",
 	"admin.config.git.migrate_timeout": "遷移逾時",
 	"admin.config.git.gc_args": "GC 參數",
-	"admin.config.git.diff.max_files": "差異比較時顯示的最多檔案數",
 	"admin.config.git.diff.max_line_characters": "差異比較時顯示的最多字元數",
 	"admin.config.git.diff.max_lines": "差異比較時顯示的最多行數",
 	"admin.config.git.disable_diff_highlight": "停用比較語法高亮",

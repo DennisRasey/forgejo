@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1610,37 +1611,47 @@ func GetPullRequestFiles(ctx *context.APIContext) {
 
 	maxLines := setting.Git.MaxGitDiffLines
 
-	// FIXME: If there are too many files in the repo, may cause some unpredictable issues.
-	diff, _, err := gitdiff.GetDiffSimple(ctx, baseGitRepo,
-		&gitdiff.DiffOptions{
-			BeforeCommitID:     startCommitID,
-			AfterCommitID:      endCommitID,
-			SkipTo:             ctx.FormString("skip-to"),
-			MaxLines:           maxLines,
-			MaxLineCharacters:  setting.Git.MaxGitDiffLineCharacters,
-			MaxFiles:           -1, // GetDiff() will return all files
-			WhitespaceBehavior: gitdiff.GetWhitespaceFlag(ctx.FormString("whitespace")),
-		})
+	listOptions := utils.GetListOptions(ctx)
+	start, end := listOptions.GetSkipTake()
+	end += start
+
+	diffFileMetadata, err := gitdiff.GetDiffNameStatus(ctx, baseGitRepo, startCommitID, endCommitID, listOptions.PageSize)
 	if err != nil {
-		ctx.ServerError("GetDiff", err)
+		ctx.ServerError("GetDiffNameStatus", err)
 		return
 	}
 
-	listOptions := utils.GetListOptions(ctx)
-
-	totalNumberOfFiles := diff.NumFiles
-	totalNumberOfPages := int(math.Ceil(float64(totalNumberOfFiles) / float64(listOptions.PageSize)))
-
-	start, limit := listOptions.GetSkipTake()
-
-	limit = min(limit, totalNumberOfFiles-start)
-
-	limit = max(limit, 0)
-
-	apiFiles := make([]*api.ChangedFile, 0, limit)
-	for i := start; i < start+limit; i++ {
-		apiFiles = append(apiFiles, convert.ToChangedFile(diff.Files[i], pr.HeadRepo, endCommitID))
+	skipTo := ctx.FormString("skip-to")
+	if skipTo != "" {
+		diffFileMetadata = skipFilesTo(diffFileMetadata, skipTo)
 	}
+
+	if end > len(diffFileMetadata) {
+		end = len(diffFileMetadata)
+	}
+
+	var apiFiles []*api.ChangedFile
+	if start < len(diffFileMetadata) {
+		diff, _, err := gitdiff.GetDiffSimple(ctx, baseGitRepo,
+			&gitdiff.DiffOptions{
+				BeforeCommitID:     startCommitID,
+				AfterCommitID:      endCommitID,
+				MaxLines:           maxLines,
+				MaxLineCharacters:  setting.Git.MaxGitDiffLineCharacters,
+				WhitespaceBehavior: gitdiff.GetWhitespaceFlag(ctx.FormString("whitespace")),
+			}, gitdiff.GetFileNames(diffFileMetadata[start:end])...)
+		if err != nil {
+			ctx.ServerError("GetDiff", err)
+			return
+		}
+		apiFiles = make([]*api.ChangedFile, len(diff.Files))
+		for i, diffFile := range diff.Files {
+			apiFiles[i] = convert.ToChangedFile(diffFile, pr.HeadRepo, endCommitID)
+		}
+	}
+
+	totalNumberOfFiles := len(diffFileMetadata)
+	totalNumberOfPages := int(math.Ceil(float64(totalNumberOfFiles) / float64(listOptions.PageSize)))
 
 	ctx.SetLinkHeader(totalNumberOfFiles, listOptions.PageSize)
 	ctx.SetTotalCountHeader(int64(totalNumberOfFiles))
@@ -1652,4 +1663,14 @@ func GetPullRequestFiles(ctx *context.APIContext) {
 	ctx.AppendAccessControlExposeHeaders("X-Page", "X-PerPage", "X-PageCount", "X-HasMore")
 
 	ctx.JSON(http.StatusOK, &apiFiles)
+}
+
+func skipFilesTo(list []*gitdiff.DiffFileMetadata, target string) []*gitdiff.DiffFileMetadata {
+	i := slices.IndexFunc(list, func(diff *gitdiff.DiffFileMetadata) bool {
+		return diff.Name == target
+	})
+	if i != -1 {
+		return list[i:]
+	}
+	return []*gitdiff.DiffFileMetadata{}
 }

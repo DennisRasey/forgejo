@@ -1,6 +1,7 @@
 <script>
 import {SvgIcon} from '../svg.js';
 import {diffTreeStore} from '../modules/stores.js';
+import {loadMoreFiles} from '../features/repo-diff.js';
 
 export default {
   components: {SvgIcon},
@@ -25,6 +26,16 @@ export default {
       };
       return diffTypes[pType];
     },
+    async loadMoreData() {
+      const params = new URLSearchParams(window.location.search);
+      params.set('file-only', true);
+
+      for (let page = this.store.currentPage + 1; page <= this.item.file.OnPage; page++) {
+        params.set('diff-page', page);
+        await loadMoreFiles(`?${params.toString()}`);
+      }
+      window.location.hash = `#diff-${this.item.file.NameHash}`;
+    },
   },
 };
 </script>
@@ -33,7 +44,7 @@ export default {
   <a
     v-if="item.isFile" class="item-file"
     :class="{'selected': store.selectedItem === '#diff-' + item.file.NameHash, 'viewed': item.file.IsViewed}"
-    :title="item.name" :href="'#diff-' + item.file.NameHash"
+    :title="item.name" @click.prevent="() => loadMoreData()"
   >
     <!-- file -->
     <SvgIcon name="octicon-file"/>

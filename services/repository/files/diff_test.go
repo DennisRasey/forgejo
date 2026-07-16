@@ -110,12 +110,9 @@ func TestGetDiffPreview(t *testing.T) {
 						},
 					},
 				},
-				IsIncomplete: false,
 			},
 		},
-		IsIncomplete: false,
 	}
-	expectedDiff.NumFiles = len(expectedDiff.Files)
 
 	t.Run("with given branch", func(t *testing.T) {
 		diff, err := GetDiffPreview(ctx, ctx.Repo.Repository, branch, treePath, content)

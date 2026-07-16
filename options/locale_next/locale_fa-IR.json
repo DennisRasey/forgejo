@@ -21,7 +21,6 @@
 	"admin.config.git.mirror_timeout": "زمان آستانه در به روز رسانی قرینه",
 	"admin.config.git.migrate_timeout": "آستانه ی زمان مهاجرت",
 	"admin.config.git.gc_args": "آرگومان های GC",
-	"admin.config.git.diff.max_files": "حداکثر فایل های Diff (برای نمایش)",
 	"admin.config.git.diff.max_line_characters": "حداکثر کاراکتر در Diff (برای یک خط)",
 	"admin.config.git.diff.max_lines": "حداکثر خط برای Diff (برای یک فایل)",
 	"admin.config.git.disable_diff_highlight": "غیرفعال کردن برجسته سازی در Diff",

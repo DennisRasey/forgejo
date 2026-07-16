@@ -16,6 +16,7 @@ import (
 	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/setting"
 	"forgejo.org/tests"
 	"forgejo.org/tests/forgery"
 
@@ -26,6 +27,26 @@ import (
 
 func TestPullDiff_CompletePRDiff(t *testing.T) {
 	doTestPRDiff(t, "/user2/commitsonpr/pulls/1/files", []string{"test1.txt", "test10.txt", "test2.txt", "test3.txt", "test4.txt", "test5.txt", "test6.txt", "test7.txt", "test8.txt", "test9.txt"}, true)
+}
+
+func TestPullDiff_PaginatesPRDiff(t *testing.T) {
+	defer func(old int) {
+		setting.UI.DiffPagingNum = old
+	}(setting.UI.DiffPagingNum)
+
+	setting.UI.DiffPagingNum = 5
+
+	doc := doTestPRDiff(t, "/user2/commitsonpr/pulls/1/files", []string{"test1.txt", "test10.txt", "test2.txt", "test3.txt", "test4.txt"}, true)
+
+	diffShowMoreFiles := doc.doc.Find("#diff-show-more-files")
+	assert.Equal(t, 1, diffShowMoreFiles.Length())
+
+	loadMoreFilesHref, exists := diffShowMoreFiles.First().Attr("data-href")
+	assert.True(t, exists)
+
+	doc = doTestPRDiff(t, "/user2/commitsonpr/pulls/1/files"+loadMoreFilesHref, []string{"test5.txt", "test6.txt", "test7.txt", "test8.txt", "test9.txt"}, true)
+	diffShowMoreFiles = doc.doc.Find("#diff-show-more-files")
+	assert.Equal(t, 0, diffShowMoreFiles.Length())
 }
 
 func TestPullDiff_SingleCommitPRDiff(t *testing.T) {
@@ -40,7 +61,7 @@ func TestPullDiff_StartingFromBaseToCommitPRDiff(t *testing.T) {
 	doTestPRDiff(t, "/user2/commitsonpr/pulls/1/files/c5626fc9eff57eb1bb7b796b01d4d0f2f3f792a2", []string{"test1.txt", "test2.txt", "test3.txt"}, true)
 }
 
-func doTestPRDiff(t *testing.T, prDiffURL string, expectedFilenames []string, editable bool) {
+func doTestPRDiff(t *testing.T, prDiffURL string, expectedFilenames []string, editable bool) *HTMLDoc {
 	defer tests.PrepareTestEnv(t)()
 
 	session := loginUser(t, "user2")
@@ -53,8 +74,10 @@ func doTestPRDiff(t *testing.T, prDiffURL string, expectedFilenames []string, ed
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	doc := NewHTMLParser(t, resp.Body)
 
-	// Assert all files are visible.
-	fileContents := doc.doc.Find(".file-content")
+	// Assert all files are visible, only search inside the diff-file-box
+	// otherwise the "load more" btn will be selected aswell
+	fileContents := doc.doc.Find("#diff-file-boxes").Find(".file-content")
+
 	numberOfFiles := fileContents.Length()
 
 	assert.Equal(t, len(expectedFilenames), numberOfFiles)
@@ -64,6 +87,8 @@ func doTestPRDiff(t *testing.T, prDiffURL string, expectedFilenames []string, ed
 		assert.Equal(t, expectedFilenames[i], filename)
 		doc.AssertElement(t, "h4.diff-file-header a.button[href=\"/user2/commitsonpr/_edit/branch1/"+filename+"\"]", editable)
 	})
+
+	return doc
 }
 
 func TestPullDiff_AGitNotEditable(t *testing.T) {

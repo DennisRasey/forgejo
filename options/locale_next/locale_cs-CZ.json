@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Časový limit aktualizace zrcadla",
 	"admin.config.git.migrate_timeout": "Časový limit migrace",
 	"admin.config.git.gc_args": "Argumenty GC",
-	"admin.config.git.diff.max_files": "Maximální počet zobrazených rozdílných souborů",
 	"admin.config.git.diff.max_line_characters": "Maximální počet zobrazených rozdílných znaků",
 	"admin.config.git.diff.max_lines": "Maximální počet rozdílových řádků na soubor",
 	"admin.config.git.disable_diff_highlight": "Zakázat zvýraznění syntaxe v zobrazení rozdílů",

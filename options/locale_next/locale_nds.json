@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Spegel-Vernejens-Tied-Överweggahn",
 	"admin.config.git.migrate_timeout": "Umtreck-Tied-Överweggahn",
 	"admin.config.git.gc_args": "GC-Argumenten",
-	"admin.config.git.diff.max_files": "Hoogste Tahl vun Unnerscheeds-Dateien wiest",
 	"admin.config.git.diff.max_line_characters": "Hoogste Unnerscheeds-Bookstavens pro Rieg",
 	"admin.config.git.diff.max_lines": "Hoogste Unnerscheeds-Riegen pro Datei",
 	"admin.config.git.disable_diff_highlight": "Syntax-Vörheven im Unnerscheed utknipsen",

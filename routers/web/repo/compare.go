@@ -36,6 +36,7 @@ import (
 	"forgejo.org/modules/typesniffer"
 	"forgejo.org/modules/util"
 	"forgejo.org/routers/common"
+	"forgejo.org/routers/utils"
 	"forgejo.org/services/context"
 	"forgejo.org/services/context/upload"
 	"forgejo.org/services/gitdiff"
@@ -584,32 +585,46 @@ func PrepareCompareDiff(
 		beforeCommitID = ci.CompareInfo.BaseCommitID
 	}
 
-	maxLines, maxFiles := setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffFiles
-	files := ctx.FormStrings("files")
-	if len(files) == 2 || len(files) == 1 {
-		maxLines, maxFiles = -1, -1
-	}
-
 	fileOnly := ctx.FormBool("file-only")
+	files := ctx.FormStrings("files")
+	ctx.Data["FileSelection"] = files
+	diffFileMetadata, err := gitdiff.GetDiffNameStatus(ctx, ci.HeadGitRepo, beforeCommitID, headCommitID, setting.UI.DiffPagingNum, files...)
+	if err != nil {
+		ctx.ServerError("GetDiffNameStatus", err)
+		return false
+	}
+	ctx.Data["DiffFileMetadata"] = diffFileMetadata
+
+	pager, pagedFiles := utils.PaginateDiffFiles(ctx, diffFileMetadata)
+
+	diffMetadata, err := gitdiff.GetDiffMetadata(nil, pager.Paginater, len(diffFileMetadata))
+	if err != nil {
+		ctx.ServerError("GetDiffMetadata", err)
+		return false
+	}
+	ctx.Data["DiffMetadata"] = diffMetadata
+
+	maxLines := setting.Git.MaxGitDiffLines
+	if len(diffFileMetadata) == 2 || len(diffFileMetadata) == 1 {
+		maxLines = -1
+	}
 
 	diff, err := gitdiff.GetDiffFull(ctx, ci.HeadGitRepo,
 		&gitdiff.DiffOptions{
 			BeforeCommitID:     beforeCommitID,
 			AfterCommitID:      headCommitID,
-			SkipTo:             ctx.FormString("skip-to"),
 			MaxLines:           maxLines,
 			MaxLineCharacters:  setting.Git.MaxGitDiffLineCharacters,
-			MaxFiles:           maxFiles,
 			WhitespaceBehavior: whitespaceBehavior,
 			DirectComparison:   ci.DirectComparison,
 			FileOnly:           fileOnly,
-		}, ctx.FormStrings("files")...)
+		}, pagedFiles...)
 	if err != nil {
 		ctx.ServerError("GetDiffRangeWithWhitespaceBehavior", err)
 		return false
 	}
 	ctx.Data["Diff"] = diff
-	ctx.Data["DiffNotAvailable"] = diff.NumFiles == 0
+	ctx.Data["DiffNotAvailable"] = len(diff.Files) == 0
 
 	headCommit, err := ci.HeadGitRepo.GetCommit(headCommitID)
 	if err != nil {

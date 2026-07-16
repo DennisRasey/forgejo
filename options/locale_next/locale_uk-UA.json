@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Тайм-аут оновлення дзеркала",
 	"admin.config.git.migrate_timeout": "Тайм-аут перенесення",
 	"admin.config.git.gc_args": "Аргументи збирача сміття",
-	"admin.config.git.diff.max_files": "Максимум файлів для показу при порівнянні",
 	"admin.config.git.diff.max_line_characters": "Максимум символів на рядок при порівнянні",
 	"admin.config.git.diff.max_lines": "Максимум рядків на файл при порівнянні",
 	"admin.config.git.disable_diff_highlight": "Вимкнути підсвітку синтаксису diff",

@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Χρονικό όριο ενημέρωσης ειδώλου",
 	"admin.config.git.migrate_timeout": "Χρονικό όριο μεταφοράς",
 	"admin.config.git.gc_args": "Παράμετροι GC",
-	"admin.config.git.diff.max_files": "Μέγιστος αριθμός εμφανιζόμενων αρχείων ανά diff",
 	"admin.config.git.diff.max_line_characters": "Μέγιστος αριθμός χαρακτήρων diff ανά γραμμή",
 	"admin.config.git.diff.max_lines": "Μέγιστες γραμμές diff ανά αρχείο",
 	"admin.config.git.disable_diff_highlight": "Απενεργοποίηση επισήμανσης σύνταξης diff",

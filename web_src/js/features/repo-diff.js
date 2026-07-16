@@ -198,8 +198,16 @@ export async function loadMoreFiles(url) {
     const $resp = $(resp);
     // the response is a full HTML page, we need to extract the relevant contents:
     // 1. append the newly loaded file list items to the existing list
-    $('#diff-incomplete').replaceWith($resp.find('#diff-file-boxes').children());
-    // 2. re-execute the script to append the newly loaded items to the JS variables to refresh the DiffFileTree
+    $('#diff-file-boxes').append($resp.find('#diff-file-boxes').children());
+
+    // 2. if the response indicates the diff is incomplete show the load more button
+    $('#diff-incomplete').remove();
+    const $diffIncomplete = $resp.find('#diff-incomplete');
+    if ($diffIncomplete.length) {
+      $('#diff-content-container').append($diffIncomplete);
+    }
+
+    // 3. re-execute the script to append the newly loaded items to the JS variables to refresh the DiffFileTree
     $('body').append($resp.find('script#diff-data-script'));
 
     onShowMoreFiles();

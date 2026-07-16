@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Tempo limite para atualização de espelhos",
 	"admin.config.git.migrate_timeout": "Tempo limite de migração",
 	"admin.config.git.gc_args": "Argumentos do GC",
-	"admin.config.git.diff.max_files": "Máximo de arquivos de diff exibidos",
 	"admin.config.git.diff.max_line_characters": "Máximo de caracteres por linha em diffs",
 	"admin.config.git.diff.max_lines": "Máximo de linhas por arquivo em diffs",
 	"admin.config.git.disable_diff_highlight": "Desabilitar realce de sintaxe em diffs",

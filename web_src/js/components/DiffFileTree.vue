@@ -1,6 +1,5 @@
 <script>
 import DiffFileTreeItem from './DiffFileTreeItem.vue';
-import {loadMoreFiles} from '../features/repo-diff.js';
 import {toggleElem} from '../utils/dom.js';
 import {diffTreeStore} from '../modules/stores.js';
 import {setFileFolding} from '../features/file-fold.js';
@@ -81,10 +80,6 @@ export default {
     this.store.fileTreeIsVisible = localStorage.getItem(LOCAL_STORAGE_KEY) !== 'false';
     document.querySelector('.diff-toggle-file-tree-button').addEventListener('click', this.toggleVisibility);
 
-    this.hashChangeListener = () => {
-      this.store.selectedItem = window.location.hash;
-      this.expandSelectedFile();
-    };
     this.hashChangeListener();
     window.addEventListener('hashchange', this.hashChangeListener);
   },
@@ -93,6 +88,10 @@ export default {
     window.removeEventListener('hashchange', this.hashChangeListener);
   },
   methods: {
+    hashChangeListener() {
+      this.store.selectedItem = window.location.hash;
+      this.expandSelectedFile();
+    },
     expandSelectedFile() {
       // expand file if the selected file is folded
       if (this.store.selectedItem) {
@@ -119,9 +118,6 @@ export default {
       toggleElem(toShow, !visible);
       toggleElem(toHide, visible);
     },
-    loadMoreData() {
-      loadMoreFiles(this.store.linkLoadMore);
-    },
   },
 };
 </script>
@@ -129,9 +125,6 @@ export default {
   <div v-if="store.fileTreeIsVisible" class="diff-file-tree-items">
     <!-- only render the tree if we're visible. in many cases this is something that doesn't change very often -->
     <DiffFileTreeItem v-for="item in fileTree" :key="item.name" :item="item"/>
-    <div v-if="store.isIncomplete" class="tw-pt-1">
-      <a :class="['ui', 'basic', 'tiny', 'button', store.isLoadingNewData ? 'disabled' : '']" @click.stop="loadMoreData">{{ store.showMoreMessage }}</a>
-    </div>
   </div>
 </template>
 <style scoped>

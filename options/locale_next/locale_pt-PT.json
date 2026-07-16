@@ -26,7 +26,6 @@
 	"admin.config.git.mirror_timeout": "Prazo para a sincronização da réplica",
 	"admin.config.git.migrate_timeout": "Prazo da migração",
 	"admin.config.git.gc_args": "Argumentos da recolha de lixo",
-	"admin.config.git.diff.max_files": "Número máximo de ficheiros diff a serem apresentados",
 	"admin.config.git.diff.max_line_characters": "Número máximos de caracteres diff por linha",
 	"admin.config.git.diff.max_lines": "Número máximo de linhas diff por ficheiro",
 	"admin.config.git.disable_diff_highlight": "Desabilitar o realce de sintaxe no diff",

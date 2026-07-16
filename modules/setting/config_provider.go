@@ -343,7 +343,7 @@ func deprecatedSetting(rootCfg ConfigProvider, oldSection, oldKey, newSection, n
 	}
 }
 
-func deprecatedSettingWarning(rootCfg ConfigProvider, oldSection, oldKey, newSection, newKey string) { //nolint:unparam
+func deprecatedSettingWarning(rootCfg ConfigProvider, oldSection, oldKey, newSection, newKey string) {
 	if rootCfg.Section(oldSection).HasKey(oldKey) {
 		msg := fmt.Sprintf("Deprecated config option `[%s]` `%s` present. Use `[%s]` `%s` instead.", oldSection, oldKey, newSection, newKey)
 		log.Error("%v", msg)

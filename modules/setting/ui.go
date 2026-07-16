@@ -11,6 +11,7 @@ import (
 
 // UI settings
 var UI = struct {
+	DiffPagingNum         int
 	ExplorePagingNum      int
 	SitemapPagingNum      int
 	IssuePagingNum        int
@@ -75,6 +76,7 @@ var UI = struct {
 	ExplorePagingNum:    20,
 	SitemapPagingNum:    20,
 	IssuePagingNum:      20,
+	DiffPagingNum:       20,
 	RepoSearchPagingNum: 20,
 	MembersPagingNum:    20,
 	FeedMaxCommitNum:    5,

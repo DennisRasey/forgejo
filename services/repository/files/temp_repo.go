@@ -345,7 +345,7 @@ func (t *TemporaryUploadRepository) DiffIndex() (*gitdiff.Diff, error) {
 				_ = stdoutWriter.Close()
 				defer cancel()
 				var diffErr error
-				diff, diffErr = gitdiff.ParsePatch(t.ctx, setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffLineCharacters, setting.Git.MaxGitDiffFiles, stdoutReader, "")
+				diff, diffErr = gitdiff.ParsePatch(t.ctx, setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffLineCharacters, stdoutReader)
 				_ = stdoutReader.Close()
 				if diffErr != nil {
 					// if the diffErr is not nil, it will be returned as the error of "Run()"
@@ -359,7 +359,7 @@ func (t *TemporaryUploadRepository) DiffIndex() (*gitdiff.Diff, error) {
 		return nil, fmt.Errorf("unable to run diff-index pipeline in temporary repo: %w", err)
 	}
 
-	diff.NumFiles, diff.TotalAddition, diff.TotalDeletion, err = git.GetIndexShortStat(t.ctx, t.basePath, "HEAD")
+	_, diff.TotalAddition, diff.TotalDeletion, err = git.GetIndexShortStat(t.ctx, t.basePath, "HEAD")
 	if err != nil {
 		return nil, err
 	}
