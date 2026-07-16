@@ -59,7 +59,7 @@
     "mini-css-extract-plugin": "2.10.0",
     "minimatch": "10.2.5",
     "pdfobject": "2.3.0",
-    "postcss": "8.5.17",
+    "postcss": "8.5.19",
     "postcss-loader": "8.2.1",
     "postcss-nesting": "14.0.0",
     "pretty-ms": "9.0.0",
