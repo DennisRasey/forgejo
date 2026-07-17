@@ -4,9 +4,14 @@
 	<h1>Dropdown</h1>
 	a.k.a. overflow menu, ellipsis menu
 
+	<h2>Options</h2>
+	<p>
+		With explicit textual descriptions. They often come with a triangle icon
+		and are used in search pages for changing sorting and filtering.
+	</p>
 	<div class="button-sequence">
 		<details class="dropdown" id="dropdown-1">
-			<summary class="Options">
+			<summary class="options">
 				Options {{svg "octicon-triangle-down" 14}}
 			</summary>
 			<div class="content">
@@ -25,7 +30,7 @@
 		</details>
 
 		<details class="dropdown" id="dropdown-2">
-			<summary class="Options">
+			<summary class="options">
 				Options {{svg "octicon-triangle-down" 14}}
 			</summary>
 			<div class="content">
@@ -56,13 +61,74 @@
 		</details>
 
 		<details class="dropdown" id="dropdown-3">
-			<summary class="Options">
+			<summary class="options">
 				Options {{svg "octicon-triangle-down" 14}}
 			</summary>
 			<div class="content">
 				<ul>
 					<li>
 						<a id="dd3_g1_i1" href="#noscroll">Only item</a>
+					</li>
+				</ul>
+			</div>
+		</details>
+	</div>
+
+	<h2>More actions</h2>
+	<p>
+		Often used in lists for every item or as overflow menus. Opener usually comes
+		without explicit textual description but with a horizontal kebab icon and a
+		border to look like something clickable and not just random dots.<br> Make
+		sure that it has <code>aria-label</code> via <code>data-tooltip-content</code>
+		so it is accessible to screen readers and has more meaning for regular users.
+	</p>
+	<div class="button-sequence">
+		<details class="dropdown">
+			<summary class="border" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+				{{svg "octicon-kebab-horizontal"}}
+			</summary>
+			<div class="content">
+				<ul>
+					<li>
+						<a href="#noscroll">"Go to" action</a>
+					</li>
+					<li>
+						<button type="button">Button action</button>
+					</li>
+				</ul>
+			</div>
+		</details>
+
+		<details class="dropdown" id="dropdown-5">
+			<summary class="border" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+				{{svg "octicon-kebab-horizontal"}}
+			</summary>
+			<div class="content">
+				<span class="header">
+					With header and hr
+				</span>
+				<hr>
+				<ul>
+					<li>
+						<a id="dd5_g1_i1" href="#noscroll">"Go to" action</a>
+					</li>
+					<li>
+						<button id="dd5_g1_i2" type="button">Button action</button>
+					</li>
+				</ul>
+				<hr>
+				<ul>
+					<li>
+						<button id="dd5_g2_i1" class="orange text">
+							{{svg "octicon-blocked"}}
+							Block
+						</button>
+					</li>
+					<li>
+						<a id="dd5_g2_i2" class="orange text" href="#noscroll">
+							{{svg "octicon-stop"}}
+							Report abuse
+						</a>
 					</li>
 				</ul>
 			</div>

@@ -101,10 +101,10 @@ details.dropdown > .content > ul {
 
   /* Round first item of first list and last item of last list. Each of these
    * selectors should only resolve to one element in any .content */
-  &:first-of-type > li:first-child {
+  &:first-child > li:first-child {
     border-radius: var(--border-radius) var(--border-radius) 0 0;
   }
-  &:last-of-type > li:last-child {
+  &:last-child > li:last-child {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
   }
   &:only-of-type > li:only-child {

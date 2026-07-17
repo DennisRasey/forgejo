@@ -84,6 +84,7 @@ test.describe('Workflow Authenticated user2', () => {
     await expect(disableButton).toBeHidden();
     await expect(enableButton).toBeHidden();
 
+    await expect(menuOpener).toHaveAttribute('aria-label', 'More actions');
     await menuOpener.click();
 
     // The current "Enabled" state is what previous tests left, but this test is built to not care
