@@ -269,3 +269,17 @@ test.describe('workflow list dynamic refresh', () => {
     await expect(page.locator('[aria-expanded="true"]')).toHaveCount(1);
   });
 });
+
+test('check that options dropdown not overflows', async ({page}) => {
+  await page.setViewportSize({
+    width: 500,
+    height: 1440,
+  });
+  await page.goto('/user2/test_workflows/actions');
+
+  await page.locator('.run-list-item-right + details.dropdown').first().click();
+
+  await expect(page.locator('.run-list-item-right + details.dropdown > .content').first()).toBeInViewport({
+    ratio: 1,
+  });
+});
