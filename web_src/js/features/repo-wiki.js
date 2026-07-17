@@ -7,7 +7,7 @@ async function initRepoWikiFormEditor() {
   const editArea = document.querySelector('.repository.wiki .combo-markdown-editor textarea');
   if (!editArea) return;
 
-  const form = document.querySelector('.repository.wiki.new .ui.form');
+  const form = document.querySelector('form:has(.combo-markdown-editor)');
   const editorContainer = form.querySelector('.combo-markdown-editor');
   let editor;
 
