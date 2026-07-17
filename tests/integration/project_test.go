@@ -7,6 +7,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"path"
 	"strconv"
 	"strings"
@@ -14,14 +15,15 @@ import (
 
 	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
-	org_model "forgejo.org/models/organization"
+	"forgejo.org/models/perm"
 	project_model "forgejo.org/models/project"
 	repo_model "forgejo.org/models/repo"
 	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
-	repo_service "forgejo.org/services/repository"
+	"forgejo.org/modules/test"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -169,16 +171,40 @@ func TestChangeStatusProject(t *testing.T) {
 	})
 }
 
-func TestAssignProject(t *testing.T) {
-	defer unittest.OverrideFixtures("tests/integration/fixtures/TestAssignProject/")()
+func TestProjectPermissionsAndConsistency(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	ctx := t.Context()
 
-	newTestIssue := func(t *testing.T, session *TestSession, owner *user_model.User, repo *repo_model.Repository) (*issues_model.Issue, string, string) {
+	newTestIssue := func(t *testing.T, session *TestSession, repo *repo_model.Repository, project *project_model.Project, expectedStatus int) *httptest.ResponseRecorder {
 		t.Helper()
 
-		issueURL := testNewIssue(t, session, owner.Name, repo.Name, "Hello", "World")
+		req := NewRequest(t, "GET", path.Join(repo.FullName(), "issues", "new"))
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		link, exists := htmlDoc.doc.Find("#new-issue").Attr("action")
+		require.True(t, exists, "The template has changed")
+
+		payload := map[string]string{
+			"title":   "Hello",
+			"content": "World",
+		}
+		if project != nil {
+			payload["project_id"] = strconv.FormatInt(project.ID, 10)
+		}
+
+		req = NewRequestWithValues(t, "POST", link, payload)
+		return session.MakeRequest(t, req, expectedStatus)
+	}
+
+	newTestIssueSuccess := func(t *testing.T, session *TestSession, repo *repo_model.Repository, project *project_model.Project) *issues_model.Issue {
+		t.Helper()
+
+		resp := newTestIssue(t, session, repo, project, http.StatusOK)
+
+		issueURL := test.RedirectURL(resp)
+
 		indexStr := issueURL[strings.LastIndexByte(issueURL, '/')+1:]
 		index, err := strconv.Atoi(indexStr)
 		require.NoError(t, err, "Invalid issue href: %s", issueURL)
@@ -186,99 +212,386 @@ func TestAssignProject(t *testing.T) {
 		issue := &issues_model.Issue{RepoID: repo.ID, Index: int64(index)}
 		unittest.AssertExistsAndLoadBean(t, issue)
 
-		issueID := strconv.FormatInt(issue.ID, 10)
-		return issue, indexStr, issueID
+		if project != nil {
+			require.NoError(t, issue.LoadProject(ctx))
+			require.NotNil(t, issue.Project)
+			require.Equal(t, project.ID, issue.Project.ID)
+		}
+
+		return issue
 	}
 
-	updateIssueProject := func(t *testing.T, session *TestSession, projectID, issueID, owner, repo string, expectedStatus int) {
+	updateIssueProject := func(t *testing.T, session *TestSession, repo *repo_model.Repository, project *project_model.Project, issue *issues_model.Issue, expectedStatus int) {
 		t.Helper()
 
-		req := NewRequestWithValues(t, "POST", path.Join(owner, repo, "issues", "projects"), map[string]string{
-			"issue_ids": issueID,
-			"id":        projectID,
+		req := NewRequestWithValues(t, "POST", path.Join(repo.FullName(), "issues", "projects"), map[string]string{
+			"issue_ids": strconv.FormatInt(issue.ID, 10),
+			"id":        strconv.FormatInt(project.ID, 10),
 		})
 		session.MakeRequest(t, req, expectedStatus)
+
+		if expectedStatus == http.StatusOK {
+			issue := &issues_model.Issue{ID: issue.ID}
+			unittest.AssertExistsAndLoadBean(t, issue)
+			issue.LoadProject(ctx)
+			require.Equal(t, project.ID, issue.Project.ID)
+		}
 	}
 
-	// User
-	t.Run("UserProjectOn+RepoProjectOff", func(tt *testing.T) {
-		defer tests.PrintCurrentTest(tt)()
-		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 4})
-		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+	clearIssueProject := func(t *testing.T, session *TestSession, repo *repo_model.Repository, issue *issues_model.Issue) {
+		t.Helper()
 
-		session := loginUser(tt, user.Name)
-		issue, _, issueID := newTestIssue(tt, session, user, repo)
+		req := NewRequestWithValues(t, "POST", path.Join(repo.FullName(), "issues", "projects"), map[string]string{
+			"issue_ids": strconv.FormatInt(issue.ID, 10),
+		})
+		session.MakeRequest(t, req, http.StatusOK)
+	}
 
-		updateIssueProject(tt, session, "1003", issueID, user.Name, repo.Name, http.StatusOK)
-		require.NoError(tt, issue.LoadProject(db.DefaultContext))
-		require.NotNil(tt, issue.Project)
-		require.Equal(tt, int64(1003), issue.Project.ID)
+	t.Run("New issue with project ID in query string", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		unittest.LoadFixtures()
+
+		getNewIssue := func(t *testing.T, session *TestSession, repo *repo_model.Repository, projectID int64, expectedStatus int) *httptest.ResponseRecorder {
+			t.Helper()
+
+			req := NewRequest(t, "GET", fmt.Sprintf("%s?project=%d", path.Join(repo.FullName(), "issues", "new"), projectID))
+			return session.MakeRequest(t, req, expectedStatus)
+		}
+
+		t.Run("does not exist anywhere", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
+
+			repo := forgery.CreateRepository(t, owner, nil)
+			invalidProjectID := int64(4234243)
+			session := loginUser(t, doer.Name)
+			resp := getNewIssue(t, session, repo, invalidProjectID, http.StatusNotFound)
+			assert.Contains(t, resp.Body.String(), "Not found.")
+		})
+
+		t.Run("is a valid repository project", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
+
+			repo := forgery.CreateRepository(t, owner, nil)
+			project := forgery.CreateProject(t, repo, nil)
+			session := loginUser(t, doer.Name)
+			getNewIssue(t, session, repo, project.ID, http.StatusOK)
+		})
+
+		t.Run("is invalid because it is a repository project that belongs to a different repository", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
+
+			repo := forgery.CreateRepository(t, owner, nil)
+			otherRepo := forgery.CreateRepository(t, owner, nil)
+			projectFromOtherRepo := forgery.CreateProject(t, otherRepo, nil)
+			session := loginUser(t, doer.Name)
+			resp := getNewIssue(t, session, repo, projectFromOtherRepo.ID, http.StatusNotFound)
+			assert.Contains(t, resp.Body.String(), "Not found.")
+		})
+
+		t.Run("is a valid owner project", func(t *testing.T) {
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, nil)
+			doer := user
+
+			project := forgery.CreateProject(t, user, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			getNewIssue(t, session, repo, project.ID, http.StatusOK)
+		})
+
+		t.Run("is invalid because it is an owner project that belongs to a different owner", func(t *testing.T) {
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, nil)
+			doer := user
+
+			otherUser := forgery.CreateUser(t, nil)
+			projectFromOtherUser := forgery.CreateProject(t, otherUser, nil)
+			session := loginUser(t, doer.Name)
+			resp := getNewIssue(t, session, repo, projectFromOtherUser.ID, http.StatusNotFound)
+			assert.Contains(t, resp.Body.String(), "Not found.")
+		})
 	})
 
-	// Team 1001 - enabled project unit
-	team := unittest.AssertExistsAndLoadBean(t, &org_model.Team{ID: 1001})
-	require.NoError(t, team.LoadMembers(ctx))
-	require.NoError(t, team.LoadRepositories(ctx))
+	t.Run("Project ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		unittest.LoadFixtures()
 
-	user := team.Members[0]
-	repo := team.Repos[0]
-	org := team.GetOrg(ctx)
+		t.Run("does not exist anywhere", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
 
-	session := loginUser(t, user.Name)
+			repo := forgery.CreateRepository(t, owner, nil)
+			invalidProject := &project_model.Project{ID: 4234243}
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, invalidProject, http.StatusNotFound)
+			issue := newTestIssueSuccess(t, session, repo, nil)
 
-	t.Run("OrgProjectOn+RepoProjectOn", func(tt *testing.T) {
-		defer tests.PrintCurrentTest(tt)()
-		issue, _, issueID := newTestIssue(tt, session, org.AsUser(), repo)
+			updateIssueProject(t, session, repo, invalidProject, issue, http.StatusNotFound)
+		})
 
-		updateIssueProject(tt, session, "1001", issueID, org.Name, repo.Name, http.StatusOK)
+		t.Run("is a valid repository project", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
 
-		require.NoError(tt, issue.LoadProject(db.DefaultContext))
-		require.NotNil(tt, issue.Project)
-		require.Equal(tt, int64(1001), issue.Project.ID)
+			repo := forgery.CreateRepository(t, owner, nil)
+			projectA := forgery.CreateProject(t, repo, nil)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
+
+			projectB := forgery.CreateProject(t, repo, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
+
+		t.Run("is invalid because it is a repository project that belongs to a different repository", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
+
+			repo := forgery.CreateRepository(t, owner, nil)
+			otherRepo := forgery.CreateRepository(t, owner, nil)
+			projectFromOtherRepo := forgery.CreateProject(t, otherRepo, nil)
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, projectFromOtherRepo, http.StatusNotFound)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, projectFromOtherRepo, issue, http.StatusNotFound)
+		})
+
+		t.Run("is a valid owner project", func(t *testing.T) {
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, nil)
+			doer := user
+
+			projectA := forgery.CreateProject(t, user, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
+
+			projectB := forgery.CreateProject(t, user, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
+
+		t.Run("is invalid because it is an owner project that belongs to a different owner", func(t *testing.T) {
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, nil)
+			doer := user
+
+			otherUser := forgery.CreateUser(t, nil)
+			projectFromOtherUser := forgery.CreateProject(t, otherUser, nil)
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, projectFromOtherUser, http.StatusNotFound)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, projectFromOtherUser, issue, http.StatusNotFound)
+		})
 	})
 
-	// Disable repository project unit
-	require.NoError(t, repo_service.UpdateRepositoryUnits(ctx, repo, nil, []unit_model.Type{unit_model.TypeProjects}))
-	t.Run("OrgProjectOn+RepoProjectOff", func(tt *testing.T) {
-		defer tests.PrintCurrentTest(tt)()
-		issue, _, issueID := newTestIssue(tt, session, org.AsUser(), repo)
+	t.Run("Repository project", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		unittest.LoadFixtures()
 
-		updateIssueProject(tt, session, "1001", issueID, org.Name, repo.Name, http.StatusOK)
-		require.NoError(tt, issue.LoadProject(db.DefaultContext))
-		require.NotNil(tt, issue.Project)
-		require.Equal(tt, int64(1001), issue.Project.ID)
+		t.Run("doer is owner", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
+
+			repo := forgery.CreateRepository(t, owner, nil)
+			projectA := forgery.CreateProject(t, repo, nil)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
+
+			projectB := forgery.CreateProject(t, repo, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
+
+		t.Run("doer is owner but the projects unit is disabled", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
+
+			repo := forgery.CreateRepository(t, owner, nil)
+			project := forgery.CreateProject(t, repo, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, project, http.StatusNotFound)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, project, issue, http.StatusNotFound)
+		})
+
+		t.Run("doer is collaborator with write permissions", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+				Collaborators: map[*user_model.User]perm.AccessMode{doer: perm.AccessModeWrite},
+			})
+
+			projectA := forgery.CreateProject(t, repo, nil)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
+
+			projectB := forgery.CreateProject(t, repo, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
+
+		t.Run("doer is collaborator with read permissions", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+				Collaborators: map[*user_model.User]perm.AccessMode{doer: perm.AccessModeRead},
+			})
+
+			project := forgery.CreateProject(t, repo, nil)
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, project, http.StatusForbidden)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, project, issue, http.StatusNotFound)
+		})
 	})
 
-	// Team 1002 - disabled project unit
-	team = unittest.AssertExistsAndLoadBean(t, &org_model.Team{ID: 1002})
-	require.NoError(t, team.LoadMembers(ctx))
-	require.NoError(t, team.LoadRepositories(ctx))
+	t.Run("Organization project", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		unittest.LoadFixtures()
 
-	user = team.Members[0]
-	repo = team.Repos[0]
-	org = team.GetOrg(ctx)
+		t.Run("doer is the organization owner", func(t *testing.T) {
+			owner := forgery.CreateUser(t, nil)
+			doer := owner
+			org := forgery.CreateOrganisation(t, owner)
 
-	session = loginUser(t, user.Name)
+			repo := forgery.CreateRepository(t, org.AsUser(), nil)
+			projectA := forgery.CreateProject(t, org, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
 
-	t.Run("OrgProjectOff+RepoProjectOn", func(tt *testing.T) {
-		defer tests.PrintCurrentTest(tt)()
-		issue, _, issueID := newTestIssue(tt, session, org.AsUser(), repo)
+			projectB := forgery.CreateProject(t, org, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
 
-		updateIssueProject(tt, session, "1002", issueID, org.Name, repo.Name, http.StatusOK)
-		require.NoError(tt, issue.LoadProject(db.DefaultContext))
-		require.NotNil(tt, issue.Project)
-		require.Equal(tt, int64(1002), issue.Project.ID)
+		t.Run("doer in team with write permissions", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			owner := forgery.CreateUser(t, nil)
+			org := forgery.CreateOrganisation(t, owner)
+			forgery.CreateTeam(t, org, &forgery.CreateTeamOptions{
+				Mode:    perm.AccessModeWrite,
+				Members: []*user_model.User{doer},
+			})
+
+			repo := forgery.CreateRepository(t, org.AsUser(), nil)
+			projectA := forgery.CreateProject(t, org, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
+
+			projectB := forgery.CreateProject(t, org, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
+
+		t.Run("doer in a team with read permissions", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			org := forgery.CreateOrganisation(t, nil)
+			forgery.CreateTeam(t, org, &forgery.CreateTeamOptions{
+				Mode:    perm.AccessModeRead,
+				Members: []*user_model.User{doer},
+			})
+
+			repo := forgery.CreateRepository(t, org.AsUser(), nil)
+			project := forgery.CreateProject(t, org, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, project, http.StatusForbidden)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, project, issue, http.StatusNotFound)
+		})
+
+		t.Run("doer not in any team", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			org := forgery.CreateOrganisation(t, nil)
+
+			repo := forgery.CreateRepository(t, org.AsUser(), nil)
+			project := forgery.CreateProject(t, org, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, project, http.StatusForbidden)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, project, issue, http.StatusNotFound)
+		})
 	})
 
-	// Disable repository project unit
-	require.NoError(t, repo_service.UpdateRepositoryUnits(ctx, repo, nil, []unit_model.Type{unit_model.TypeProjects}))
-	t.Run("OrgProjectOff+RepoProjectOff", func(tt *testing.T) {
-		defer tests.PrintCurrentTest(tt)()
-		issue, _, issueID := newTestIssue(tt, session, org.AsUser(), repo)
+	t.Run("User project", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		unittest.LoadFixtures()
 
-		updateIssueProject(tt, session, "1002", issueID, org.Name, repo.Name, http.StatusOK)
-		require.NoError(tt, issue.LoadProject(db.DefaultContext))
-		require.NotNil(tt, issue.Project)
-		require.Equal(tt, int64(1002), issue.Project.ID)
+		t.Run("doer is owner", func(t *testing.T) {
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, nil)
+			doer := user
+
+			projectA := forgery.CreateProject(t, user, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
+
+			projectB := forgery.CreateProject(t, user, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
+
+		t.Run("doer is collaborator with write permissions", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+				Collaborators: map[*user_model.User]perm.AccessMode{doer: perm.AccessModeWrite},
+			})
+
+			projectA := forgery.CreateProject(t, user, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			issue := newTestIssueSuccess(t, session, repo, projectA)
+
+			projectB := forgery.CreateProject(t, user, nil)
+			updateIssueProject(t, session, repo, projectB, issue, http.StatusOK)
+			clearIssueProject(t, session, repo, issue)
+		})
+
+		t.Run("doer is collaborator with read permissions", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+				Collaborators: map[*user_model.User]perm.AccessMode{doer: perm.AccessModeRead},
+			})
+
+			project := forgery.CreateProject(t, user, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, project, http.StatusForbidden)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, project, issue, http.StatusNotFound)
+		})
+
+		t.Run("doer is not a collaborator or owner", func(t *testing.T) {
+			doer := forgery.CreateUser(t, nil)
+			user := forgery.CreateUser(t, nil)
+			repo := forgery.CreateRepository(t, user, nil)
+
+			project := forgery.CreateProject(t, user, nil)
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeProjects)
+			session := loginUser(t, doer.Name)
+			newTestIssue(t, session, repo, project, http.StatusForbidden)
+			issue := newTestIssueSuccess(t, session, repo, nil)
+
+			updateIssueProject(t, session, repo, project, issue, http.StatusNotFound)
+		})
 	})
 }

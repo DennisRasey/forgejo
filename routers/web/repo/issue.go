@@ -995,17 +995,10 @@ func NewIssue(ctx *context.Context) {
 	}
 
 	projectID := ctx.FormInt64("project")
-	if projectID > 0 && (isProjectsEnabled || isOwnerProjectsEnabled) {
-		project, err := project_model.GetProjectByID(ctx, projectID)
-		if err != nil {
-			log.Error("GetProjectByID: %d: %v", projectID, err)
-		} else if !project.CanBeAccessedByOwnerRepo(ctx.Repo.Repository.OwnerID, ctx.Repo.Repository) {
-			log.Error("GetProjectByID: %d: %v", projectID,
-				fmt.Errorf("project[%d] neither in repo[%d] nor has the same owner (project: [%d] ./. repo: [%d])",
-					project.ID, ctx.Repo.Repository.ID, project.OwnerID, ctx.Repo.Repository.OwnerID))
-		} else {
-			ctx.Data["project_id"] = projectID
-			ctx.Data["Project"] = project
+	if projectID > 0 {
+		context.ReqProjectIDAssignableToIssueAndSetData(ctx, projectID)
+		if ctx.Written() {
+			return
 		}
 
 		if len(ctx.Req.URL.Query().Get("project")) > 0 {
@@ -1168,18 +1161,10 @@ func ValidateRepoMetas(ctx *context.Context, form forms.CreateIssueForm, isPull 
 	}
 
 	if form.ProjectID > 0 {
-		p, err := project_model.GetProjectByID(ctx, form.ProjectID)
-		if err != nil {
-			ctx.ServerError("GetProjectByID", err)
+		context.ReqProjectIDAssignableToIssueAndSetData(ctx, form.ProjectID)
+		if ctx.Written() {
 			return nil, nil, 0, 0
 		}
-		if p.RepoID != ctx.Repo.Repository.ID && p.OwnerID != ctx.Repo.Repository.OwnerID {
-			ctx.NotFound("", nil)
-			return nil, nil, 0, 0
-		}
-
-		ctx.Data["Project"] = p
-		ctx.Data["project_id"] = form.ProjectID
 	}
 
 	// Check assignees
@@ -1217,6 +1202,17 @@ func ValidateRepoMetas(ctx *context.Context, form forms.CreateIssueForm, isPull 
 	}
 
 	return labelIDs, assigneeIDs, milestoneID, form.ProjectID
+}
+
+func updateIssueProject(ctx *context.Context, issue *issues_model.Issue, projectID int64) {
+	context.ReqProjectIDAssignableToIssue(ctx, projectID)
+	if ctx.Written() {
+		return
+	}
+	if err := issues_model.IssueAssignOrRemoveProject(ctx, issue, ctx.Doer, projectID, 0); err != nil {
+		ctx.ServerError("IssueAssignOrRemoveProject", err)
+		return
+	}
 }
 
 // NewIssuePost response for creating new issue
@@ -1288,13 +1284,8 @@ func NewIssuePost(ctx *context.Context) {
 	}
 
 	if projectID > 0 {
-		if !ctx.Repo.CanRead(unit.TypeProjects) || (ctx.ContextUser.IsOrganization() && !ctx.Org.CanReadUnit(ctx, unit.TypeProjects)) {
-			// User must also be able to see the project.
-			ctx.Error(http.StatusForbidden, "user doesn't have permissions to read projects")
-			return
-		}
-		if err := issues_model.IssueAssignOrRemoveProject(ctx, issue, ctx.Doer, projectID, 0); err != nil {
-			ctx.ServerError("IssueAssignOrRemoveProject", err)
+		updateIssueProject(ctx, issue, projectID)
+		if ctx.Written() {
 			return
 		}
 	}

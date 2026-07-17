@@ -9,10 +9,12 @@ import (
 	"testing"
 
 	"forgejo.org/models/db"
+	"forgejo.org/models/perm"
 	repo_model "forgejo.org/models/repo"
 	unit_model "forgejo.org/models/unit"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
+	repo_module "forgejo.org/modules/repository"
 	repo_service "forgejo.org/services/repository"
 	wiki_service "forgejo.org/services/wiki"
 
@@ -34,6 +36,8 @@ type CreateRepositoryOptions struct {
 
 	LatestSha   *string // if not nil, the commit sha after initializing the repo with the Files will be written to this ref
 	SkipCleanup bool    // if true the repo will not be deleted at the end of the test (can be useful to debug locally)
+
+	Collaborators map[*user_model.User]perm.AccessMode
 }
 
 // FilesInit specifies the templates to use upon repository initialization.
@@ -106,6 +110,11 @@ func CreateRepository(t testing.TB, owner *user_model.User, opts *CreateReposito
 		require.NoError(t, err)
 	}
 	repo.Owner = owner
+
+	for user, mode := range opts.Collaborators {
+		require.NoError(t, repo_module.AddCollaborator(t.Context(), repo, user))
+		require.NoError(t, repo_model.ChangeCollaborationAccessMode(t.Context(), repo, user.ID, mode))
+	}
 
 	return repo
 }
