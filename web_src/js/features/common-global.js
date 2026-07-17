@@ -210,6 +210,20 @@ export function initGlobalCommon() {
   initSubmitEventPolyfill();
   document.addEventListener('submit', formFetchAction);
   document.addEventListener('click', linkAction);
+
+  // Remove stale loader when navigating back using browser nav
+  window.addEventListener('pageshow', (event) => {
+    // Trigger if page is restored from cache
+    if (event.persisted) {
+      // Find all forms that use the fetch action
+      const fetchForms = document.querySelectorAll('form.form-fetch-action');
+
+      for (const form of fetchForms) {
+        // Remove form-level loading states
+        form.classList.remove('is-loading');
+      }
+    }
+  });
 }
 
 // Sometimes unrelated inputs are stored in forms for convenience, for example,
