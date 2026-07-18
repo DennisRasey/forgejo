@@ -68,6 +68,10 @@ func isURLAllowed(remoteURL string, doer *user_model.User, isPushMirror bool) er
 		return &models.ErrInvalidCloneAddr{Host: u.Host, IsProtocolInvalid: true, IsPermissionDenied: true, IsURLError: true}
 	}
 
+	if (u.Scheme == "http" || u.Scheme == "git") && !setting.Migrations.AllowUnencrypted {
+		return &models.ErrInvalidCloneAddr{Host: remoteURL, Unencrypted: true}
+	}
+
 	hostName, _, err := net.SplitHostPort(u.Host)
 	if err != nil {
 		// u.Host can be "host" or "host:port"

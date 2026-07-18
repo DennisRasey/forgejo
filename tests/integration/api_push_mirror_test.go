@@ -45,6 +45,7 @@ func TestAPIPushMirror(t *testing.T) {
 
 func testAPIPushMirror(t *testing.T, u *url.URL) {
 	defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+	defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
 	defer test.MockVariableValue(&setting.Mirror.Enabled, true)()
 	defer test.MockProtect(&mirror_service.AddPushMirrorRemote)()
 	defer test.MockProtect(&repo_model.DeletePushMirrors)()
@@ -149,6 +150,7 @@ func TestAPIPushMirrorBranchFilter(t *testing.T) {
 
 func testAPIPushMirrorBranchFilter(t *testing.T, u *url.URL) {
 	defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+	defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
 	defer test.MockVariableValue(&setting.Mirror.Enabled, true)()
 	defer test.MockProtect(&mirror_service.AddPushMirrorRemote)()
 	defer test.MockProtect(&repo_model.DeletePushMirrors)()

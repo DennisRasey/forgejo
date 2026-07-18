@@ -23,6 +23,8 @@ import (
 func TestRepoMigrateWithCredentials(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
+
 		require.NoError(t, migrations_allowlist.Init())
 
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})

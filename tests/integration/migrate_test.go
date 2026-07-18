@@ -62,6 +62,7 @@ func TestMigrateLocalPath(t *testing.T) {
 func TestMigrate(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
 		defer test.MockVariableValue(&setting.AppVer, "1.16.0")()
 		require.NoError(t, migrations_allowlist.Init())
 
@@ -117,6 +118,7 @@ func TestMigrate(t *testing.T) {
 func TestMigrateWithIssueComments(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
 		defer test.MockVariableValue(&setting.AppVer, "1.16.0")()
 		maxResponseItems := 10
 		numComments := 21
@@ -193,6 +195,7 @@ func TestMigrateWithIssueComments(t *testing.T) {
 func TestMigrateWithWiki(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
 		defer test.MockVariableValue(&setting.AppVer, "1.16.0")()
 		require.NoError(t, migrations_allowlist.Init())
 
@@ -249,6 +252,7 @@ func TestMigrateWithWiki(t *testing.T) {
 func TestMigrateWithReleases(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		defer test.MockVariableValue(&setting.Migrations.AllowLocalNetworks, true)()
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
 		defer test.MockVariableValue(&setting.AppVer, "1.16.0")()
 		require.NoError(t, migrations_allowlist.Init())
 

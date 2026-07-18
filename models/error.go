@@ -123,6 +123,7 @@ type ErrInvalidCloneAddr struct {
 	IsPermissionDenied bool
 	HasCredentials     bool
 	LocalPath          bool
+	Unencrypted        bool
 }
 
 // IsErrInvalidCloneAddr checks if an error is a ErrInvalidCloneAddr.
@@ -146,6 +147,9 @@ func (err *ErrInvalidCloneAddr) Error() string {
 	}
 	if err.HasCredentials {
 		return fmt.Sprintf("migration/cloning from '%s' is not allowed: the provided url contains credentials", err.Host)
+	}
+	if err.Unencrypted {
+		return fmt.Sprintf("migration/cloning from '%s' is not allowed: unencrypted transfer protocols are disabled because the authenticity of the remote cannot be validated", err.Host)
 	}
 
 	return fmt.Sprintf("migration/cloning from '%s' is not allowed", err.Host)

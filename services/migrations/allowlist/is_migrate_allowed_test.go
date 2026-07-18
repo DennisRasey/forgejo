@@ -12,6 +12,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/test"
 
 	"github.com/stretchr/testify/require"
 )
@@ -74,6 +75,38 @@ func TestMigrateWhiteBlocklist(t *testing.T) {
 	require.NoError(t, err)
 
 	setting.ImportLocalPaths = old
+
+	t.Run("require encrypted", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, false)()
+
+		err = IsMigrateURLAllowed("http://10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.ErrorContains(t, err, "unencrypted transfer protocol")
+
+		err = IsMigrateURLAllowed("git://10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.ErrorContains(t, err, "unencrypted transfer protocol")
+
+		err = IsMigrateURLAllowed("https://10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.NoError(t, err)
+
+		err = IsPushMirrorURLAllowed("ssh://user@10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.NoError(t, err)
+	})
+
+	t.Run("permit unencrypted", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
+
+		err = IsMigrateURLAllowed("http://10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.NoError(t, err)
+
+		err = IsMigrateURLAllowed("git://10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.NoError(t, err)
+
+		err = IsMigrateURLAllowed("https://10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.NoError(t, err)
+
+		err = IsPushMirrorURLAllowed("ssh://user@10.0.0.1/go-gitea/gitea.git", nonAdminUser)
+		require.NoError(t, err)
+	})
 }
 
 func TestAllowBlockList(t *testing.T) {

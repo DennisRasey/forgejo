@@ -46,6 +46,8 @@ import (
 )
 
 func TestMirrorPull(t *testing.T) {
+	defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
+
 	t.Run("Basic", func(t *testing.T) {
 		defer tests.PrepareTestEnv(t)()
 
@@ -342,6 +344,8 @@ func TestMirrorPull(t *testing.T) {
 // Verifies that a pull mirror which was created while the remote address was permitted will fail to sync if the
 // AllowedDomains configuration later changes such that the remote URL is no longer permitted.
 func TestMirrorPullAddressCheck(t *testing.T) {
+	defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
+
 	// Allow localhost as a migration domain so the mirror can initially be created from the local test server. Not
 	// using MockVariableValue due to need to undo `migrations_allowlist.Init()`.
 	prev := setting.Migrations.AllowedDomains
@@ -651,6 +655,8 @@ func TestPullMirrorRedactCredentials(t *testing.T) {
 }
 
 func TestMirrorPullLFS(t *testing.T) {
+	defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
+
 	// Not using MockVariableValue due to need to undo `migrations_allowlist.Init()`
 	prev := setting.Migrations.AllowedDomains
 	setting.Migrations.AllowedDomains = "localhost"

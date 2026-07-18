@@ -11,6 +11,7 @@ var Migrations = struct {
 	BlockedDomains     string
 	AllowLocalNetworks bool
 	SkipTLSVerify      bool
+	AllowUnencrypted   bool
 }{
 	MaxAttempts:  3,
 	RetryBackoff: 3,
@@ -25,4 +26,5 @@ func loadMigrationsFrom(rootCfg ConfigProvider) {
 	Migrations.BlockedDomains = sec.Key("BLOCKED_DOMAINS").MustString("")
 	Migrations.AllowLocalNetworks = sec.Key("ALLOW_LOCALNETWORKS").MustBool(false)
 	Migrations.SkipTLSVerify = sec.Key("SKIP_TLS_VERIFY").MustBool(false)
+	Migrations.AllowUnencrypted = sec.Key("ALLOW_UNENCRYPTED").MustBool(false)
 }

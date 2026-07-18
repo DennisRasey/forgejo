@@ -20,6 +20,7 @@ import (
 	base "forgejo.org/modules/migration"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/structs"
+	"forgejo.org/modules/test"
 	"forgejo.org/services/migrations"
 	migrations_allowlist "forgejo.org/services/migrations/allowlist"
 
@@ -30,6 +31,8 @@ import (
 
 func TestDumpRestore(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		defer test.MockVariableValue(&setting.Migrations.AllowUnencrypted, true)()
+
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.Migrations.AllowLocalNetworks = true
 		AppVer := setting.AppVer
