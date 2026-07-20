@@ -6,15 +6,18 @@ package integration
 import (
 	"archive/zip"
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	git_model "forgejo.org/models/git"
 	repo_model "forgejo.org/models/repo"
+	"forgejo.org/models/unittest"
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/lfs"
 	"forgejo.org/modules/setting"
@@ -42,18 +45,17 @@ func storeObjectInRepo(t *testing.T, repositoryID int64, content *[]byte) string
 	return pointer.Oid
 }
 
-func storeAndGetLfsToken(t *testing.T, content *[]byte, extraHeader *http.Header, expectedStatus int, ts ...auth.AccessTokenScope) *httptest.ResponseRecorder {
+func makeStoreRequest(t *testing.T, content *[]byte, extraHeader *http.Header) *RequestWrapper {
 	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "repo1")
 	require.NoError(t, err)
 	oid := storeObjectInRepo(t, repo.ID, content)
-	defer git_model.RemoveLFSMetaObjectByOid(db.DefaultContext, repo.ID, oid)
-
-	token := getUserToken(t, "user2", ts...)
+	t.Cleanup(func() {
+		git_model.RemoveLFSMetaObjectByOid(db.DefaultContext, repo.ID, oid)
+	})
 
 	// Request OID
 	req := NewRequest(t, "GET", "/user2/repo1.git/info/lfs/objects/"+oid+"/test")
 	req.Header.Set("Accept-Encoding", "gzip")
-	req.SetBasicAuth("user2", token)
 	if extraHeader != nil {
 		for key, values := range *extraHeader {
 			for _, value := range values {
@@ -62,32 +64,70 @@ func storeAndGetLfsToken(t *testing.T, content *[]byte, extraHeader *http.Header
 		}
 	}
 
-	resp := MakeRequest(t, req, expectedStatus)
+	return req
+}
 
+func storeAndGetLfsToken(t *testing.T, content *[]byte, extraHeader *http.Header, expectedStatus int, ts ...auth.AccessTokenScope) *httptest.ResponseRecorder {
+	req := makeStoreRequest(t, content, extraHeader)
+	token := getUserToken(t, "user2", ts...)
+	req.SetBasicAuth("user2", token)
+	resp := MakeRequest(t, req, expectedStatus)
+	return resp
+}
+
+type oauth2AuthMode string
+
+const (
+	oauth2ViaBearer oauth2AuthMode = "bearer"
+	oauth2ViaBasic  oauth2AuthMode = "basic"
+)
+
+func storeAndGetLfsOAuthToken(t *testing.T, content *[]byte, extraHeader *http.Header, authMode oauth2AuthMode, expectedStatus int, ts ...auth.AccessTokenScope) *httptest.ResponseRecorder {
+	// Update the grant to the requested scopes `ts`
+	oauthGrant := unittest.AssertExistsAndLoadBean(t, &auth.OAuth2Grant{ID: 1})
+	scopes := make([]string, len(ts))
+	for i, s := range ts {
+		scopes[i] = string(s)
+	}
+	oauthGrant.Scope = fmt.Sprintf("openid profile %s", strings.Join(scopes, " "))
+	_, err := db.GetEngine(t.Context()).ID(oauthGrant.ID).Update(oauthGrant)
+	require.NoError(t, err)
+
+	accessTokenReq := NewRequestWithValues(t, "POST", "/login/oauth/access_token", map[string]string{
+		"grant_type":    "authorization_code",
+		"client_id":     "da7da3ba-9a13-4167-856f-3899de0b0138",
+		"client_secret": "4MK8Na6R55smdCY0WuCCumZ6hjRPnGY5saWVRHHjJiA=",
+		"redirect_uri":  "a",
+		"code":          "authcode",
+		"code_verifier": "N1Zo9-8Rfwhkt68r1r29ty8YwIraXR8eh_1Qwxg7yQXsonBt",
+	})
+	accessTokenResp := MakeRequest(t, accessTokenReq, http.StatusOK)
+	type response struct {
+		AccessToken  string `json:"access_token"`
+		TokenType    string `json:"token_type"`
+		ExpiresIn    int64  `json:"expires_in"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	parsed := new(response)
+	require.NoError(t, json.Unmarshal(accessTokenResp.Body.Bytes(), parsed))
+
+	req := makeStoreRequest(t, content, extraHeader)
+	switch authMode {
+	case oauth2ViaBearer:
+		req.SetHeader("Authorization", fmt.Sprintf("Bearer %s", parsed.AccessToken))
+	case oauth2ViaBasic:
+		req.SetBasicAuth("user2", parsed.AccessToken)
+	default:
+		t.Fail()
+	}
+	resp := MakeRequest(t, req, expectedStatus)
 	return resp
 }
 
 func storeAndGetLfs(t *testing.T, content *[]byte, extraHeader *http.Header, expectedStatus int) *httptest.ResponseRecorder {
-	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "repo1")
-	require.NoError(t, err)
-	oid := storeObjectInRepo(t, repo.ID, content)
-	defer git_model.RemoveLFSMetaObjectByOid(db.DefaultContext, repo.ID, oid)
-
+	req := makeStoreRequest(t, content, extraHeader)
 	session := loginUser(t, "user2")
-
-	// Request OID
-	req := NewRequest(t, "GET", "/user2/repo1.git/info/lfs/objects/"+oid+"/test")
-	req.Header.Set("Accept-Encoding", "gzip")
-	if extraHeader != nil {
-		for key, values := range *extraHeader {
-			for _, value := range values {
-				req.Header.Add(key, value)
-			}
-		}
-	}
-
 	resp := session.MakeRequest(t, req, expectedStatus)
-
 	return resp
 }
 
@@ -129,6 +169,29 @@ func TestGetLFSSmallTokenFail(t *testing.T) {
 	content := []byte("A very small file\n")
 
 	storeAndGetLfsToken(t, &content, nil, http.StatusForbidden, auth.AccessTokenScopeReadNotification)
+}
+
+func TestGetLFSSmallOAuthToken(t *testing.T) {
+	for _, a := range []oauth2AuthMode{oauth2ViaBasic, oauth2ViaBearer} {
+		t.Run(string(a), func(t *testing.T) {
+			defer tests.PrepareTestEnv(t)()
+			content := []byte("A very small file\n")
+
+			resp := storeAndGetLfsOAuthToken(t, &content, nil, a, http.StatusOK, auth.AccessTokenScopePublicOnly, auth.AccessTokenScopeReadRepository)
+			checkResponseTestContentEncoding(t, &content, resp, false)
+		})
+	}
+}
+
+func TestGetLFSSmallOAuthTokenFail(t *testing.T) {
+	for _, a := range []oauth2AuthMode{oauth2ViaBasic, oauth2ViaBearer} {
+		t.Run(string(a), func(t *testing.T) {
+			defer tests.PrepareTestEnv(t)()
+			content := []byte("A very small file\n")
+
+			storeAndGetLfsOAuthToken(t, &content, nil, a, http.StatusForbidden, auth.AccessTokenScopeReadNotification)
+		})
+	}
 }
 
 func TestGetLFSLarge(t *testing.T) {

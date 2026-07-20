@@ -144,6 +144,7 @@ func buildMixedAuthGroup() *auth_method.Group {
 func buildGitLfsAuthGroup() *auth_method.Group {
 	group := auth_method.NewGroup()
 	group.Add(&auth_method.LFSToken{})
+	group.Add(&auth_method.OAuth2{})
 	group.Add(&auth_method.Basic{})
 	group.Add(&auth_method.AccessToken{
 		PermitBasic: true,
