@@ -74,6 +74,12 @@ func NotifyActivityPubFollowers(ctx context.Context, actions []activities_model.
 			continue
 		}
 
+		act.LoadActUser(ctx)
+		if act.ActUser == nil {
+			log.Error("Failed to load sending user")
+			continue
+		}
+
 		if err := SendUserActivity(ctx, act.ActUser, &act); err != nil {
 			return err
 		}

@@ -6,6 +6,7 @@ package repository
 import (
 	"sync"
 	"testing"
+	"time"
 
 	"forgejo.org/models"
 	activities_model "forgejo.org/models/activities"
@@ -15,6 +16,7 @@ import (
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/queue"
 	"forgejo.org/modules/util"
 	"forgejo.org/services/feed"
 	notify_service "forgejo.org/services/notify"
@@ -35,6 +37,7 @@ func TestTransferOwnership(t *testing.T) {
 	registerNotifier()
 
 	require.NoError(t, unittest.PrepareTestDatabase())
+	require.NoError(t, feed.Init())
 
 	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 3})
@@ -50,6 +53,9 @@ func TestTransferOwnership(t *testing.T) {
 	exist, err = util.IsExist(repo_model.RepoPath("user2", "repo3"))
 	require.NoError(t, err)
 	assert.True(t, exist)
+
+	ctx := t.Context()
+	queue.GetManager().FlushAll(ctx, 1*time.Second)
 	unittest.AssertExistsAndLoadBean(t, &activities_model.Action{
 		OpType:    activities_model.ActionTransferRepo,
 		ActUserID: 2,

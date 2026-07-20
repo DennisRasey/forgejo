@@ -270,7 +270,7 @@ func (a *Action) LoadActUser(ctx context.Context) {
 	}
 }
 
-func (a *Action) loadRepo(ctx context.Context) {
+func (a *Action) LoadRepo(ctx context.Context) {
 	if a.Repo != nil {
 		return
 	}
@@ -320,13 +320,13 @@ func (a *Action) GetActDisplayNameTitle(ctx context.Context) string {
 
 // GetRepo returns the repository of the action.
 func (a *Action) GetRepo(ctx context.Context) *repo_model.Repository {
-	a.loadRepo(ctx)
+	a.LoadRepo(ctx)
 	return a.Repo
 }
 
 // GetRepoUserName returns the name of the action repository owner.
 func (a *Action) GetRepoUserName(ctx context.Context) string {
-	a.loadRepo(ctx)
+	a.LoadRepo(ctx)
 	if a.Repo == nil {
 		return "(non-existing-repo)"
 	}
@@ -341,7 +341,7 @@ func (a *Action) ShortRepoUserName(ctx context.Context) string {
 
 // GetRepoName returns the name of the action repository.
 func (a *Action) GetRepoName(ctx context.Context) string {
-	a.loadRepo(ctx)
+	a.LoadRepo(ctx)
 	if a.Repo == nil {
 		return "(non-existing-repo)"
 	}
@@ -727,7 +727,11 @@ func NotifyWatchers(ctx context.Context, actions ...*Action) ([]Action, error) {
 		out = append(out, *act)
 
 		if repoChanged {
-			act.loadRepo(ctx)
+			act.LoadRepo(ctx)
+			if act.Repo == nil {
+				return nil, repo_model.ErrRepoNotExist{}
+			}
+
 			repo = act.Repo
 
 			// check repo owner exist.
@@ -880,7 +884,7 @@ func (a *Action) IsActionPrivate(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	a.loadRepo(ctx)
+	a.LoadRepo(ctx)
 	if a.Repo == nil {
 		return true, repo_model.ErrRepoNotExist{}
 	}

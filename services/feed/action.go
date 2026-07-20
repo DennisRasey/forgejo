@@ -10,29 +10,156 @@ import (
 	"strings"
 
 	activities_model "forgejo.org/models/activities"
+	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/graceful"
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/optional"
+	"forgejo.org/modules/process"
+	"forgejo.org/modules/queue"
 	"forgejo.org/modules/repository"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 	federation_service "forgejo.org/services/federation"
 	notify_service "forgejo.org/services/notify"
 )
 
+const maxRetries = 3
+
+type QueueableAction struct {
+	ID          int64
+	UserID      int64
+	OpType      activities_model.ActionType
+	ActUserID   int64
+	RepoID      int64
+	CommentID   int64
+	RefName     string
+	IsPrivate   bool
+	Content     string
+	CreatedUnix timeutil.TimeStamp
+}
+
 type actionNotifier struct {
 	notify_service.NullNotifier
 }
 
-var _ notify_service.Notifier = &actionNotifier{}
+type notificationQueueItem struct {
+	Action          QueueableAction
+	LocalCount      uint
+	LocalOut        optional.Option[[]QueueableAction]
+	FederationCount uint
+}
+
+var (
+	_                 notify_service.Notifier = &actionNotifier{}
+	notificationQueue *queue.WorkerPoolQueue[notificationQueueItem]
+)
+
+func (a *QueueableAction) ToAction() activities_model.Action {
+	return activities_model.Action{
+		ID:          a.ID,
+		UserID:      a.UserID,
+		OpType:      a.OpType,
+		ActUserID:   a.ActUserID,
+		RepoID:      a.RepoID,
+		CommentID:   a.CommentID,
+		RefName:     a.RefName,
+		IsPrivate:   a.IsPrivate,
+		Content:     a.Content,
+		CreatedUnix: a.CreatedUnix,
+	}
+}
+
+func FromAction(a activities_model.Action) QueueableAction {
+	return QueueableAction{
+		ID:          a.ID,
+		UserID:      a.UserID,
+		OpType:      a.OpType,
+		ActUserID:   a.UserID,
+		RepoID:      a.RepoID,
+		CommentID:   a.CommentID,
+		RefName:     a.RefName,
+		IsPrivate:   a.IsPrivate,
+		Content:     a.Content,
+		CreatedUnix: a.CreatedUnix,
+	}
+}
+
+func initNotificationQueue() error {
+	notificationQueue = queue.CreateSimpleQueue(graceful.GetManager().ShutdownContext(), "notification_queue", notificationQueueHandler)
+	if notificationQueue == nil {
+		return fmt.Errorf("Failed to create notification_queue")
+	}
+
+	go graceful.GetManager().RunWithCancel(notificationQueue)
+
+	return nil
+}
+
+func notificationQueueHandler(notificationItems ...notificationQueueItem) (unhandled []notificationQueueItem) {
+	for _, notification := range notificationItems {
+		err := deliverNotification(&notification)
+		if err != nil {
+			log.Error("Failed to deliver notification: %e", err)
+
+			if notification.LocalCount > maxRetries || notification.FederationCount > maxRetries {
+				log.Warn("Dropping notification after exceeding retry count (%d)", maxRetries)
+				continue
+			}
+
+			unhandled = append(unhandled, notification)
+		}
+	}
+
+	return unhandled
+}
+
+func deliverNotification(notification *notificationQueueItem) error {
+	hammerCtx := graceful.GetManager().HammerContext()
+	ctx, _, finished := process.GetManager().AddContext(hammerCtx, "Delivering notification")
+	defer finished()
+
+	if !notification.LocalOut.Has() {
+		action := notification.Action.ToAction()
+		out, err := activities_model.NotifyWatchers(ctx, &action)
+		if err != nil {
+			notification.LocalCount++
+			return err
+		}
+
+		// convert database Actions to QueueableActions
+		queueableActionOut := []QueueableAction{}
+		for _, a := range out {
+			queueableActionOut = append(queueableActionOut, FromAction(a))
+		}
+
+		notification.LocalOut = optional.Some(queueableActionOut)
+	}
+
+	_, out := notification.LocalOut.Get()
+	// convert QueueableActions to database Actions
+	actionOut := []activities_model.Action{}
+	for _, a := range out {
+		actionOut = append(actionOut, a.ToAction())
+	}
+
+	err := federation_service.NotifyActivityPubFollowers(ctx, actionOut)
+	if err != nil {
+		notification.FederationCount++
+		return err
+	}
+
+	return nil
+}
 
 func Init() error {
 	notify_service.RegisterNotifier(NewNotifier())
-
-	return nil
+	return initNotificationQueue()
 }
 
 // NewNotifier create a new actionNotifier notifier
@@ -40,12 +167,18 @@ func NewNotifier() notify_service.Notifier {
 	return &actionNotifier{}
 }
 
-func notifyAll(ctx context.Context, action *activities_model.Action) error {
-	out, err := activities_model.NotifyWatchers(ctx, action)
-	if err != nil {
-		return err
-	}
-	return federation_service.NotifyActivityPubFollowers(ctx, out)
+func notifyAll(ctx context.Context, action QueueableAction) {
+	db.AfterTx(ctx, func() {
+		err := notificationQueue.Push(notificationQueueItem{
+			Action:          action,
+			LocalCount:      0,
+			LocalOut:        optional.None[[]QueueableAction](),
+			FederationCount: 0,
+		})
+		if err != nil {
+			log.Error("Failed to enqueue notification for delivery: %s", err.Error())
+		}
+	})
 }
 
 func notifyAllActions(ctx context.Context, acts []*activities_model.Action) error {
@@ -67,30 +200,23 @@ func (a *actionNotifier) NewIssue(ctx context.Context, issue *issues_model.Issue
 	}
 	repo := issue.Repo
 
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: issue.Poster.ID,
-		ActUser:   issue.Poster,
 		OpType:    activities_model.ActionCreateIssue,
 		Content:   encodeContent(fmt.Sprintf("%d", issue.Index), issue.Title),
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 // IssueChangeStatus notifies close or reopen issue to notifiers
 func (a *actionNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, commitID string, issue *issues_model.Issue, actionComment *issues_model.Comment, closeOrReopen bool) {
 	// Compose comment action, could be plain comment, close or reopen issue/pull request.
 	// This object will be used to notify watchers in the end of function.
-	act := &activities_model.Action{
+	act := QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		Content:   encodeContent(fmt.Sprintf("%d", issue.Index), ""),
 		RepoID:    issue.Repo.ID,
-		Repo:      issue.Repo,
-		Comment:   actionComment,
 		CommentID: actionComment.ID,
 		IsPrivate: issue.Repo.IsPrivate,
 	}
@@ -108,21 +234,16 @@ func (a *actionNotifier) IssueChangeStatus(ctx context.Context, doer *user_model
 	}
 
 	// Notify watchers for whatever action comes in, ignore if no action type.
-	if err := notifyAll(ctx, act); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	notifyAll(ctx, act)
 }
 
 // CreateIssueComment notifies comment on an issue to notifiers
 func (a *actionNotifier) CreateIssueComment(ctx context.Context, doer *user_model.User, repo *repo_model.Repository,
 	issue *issues_model.Issue, comment *issues_model.Comment, mentions []*user_model.User,
 ) {
-	act := &activities_model.Action{
+	act := QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		RepoID:    issue.Repo.ID,
-		Repo:      issue.Repo,
-		Comment:   comment,
 		CommentID: comment.ID,
 		IsPrivate: issue.Repo.IsPrivate,
 		Content:   encodeContent(fmt.Sprintf("%d", issue.Index), abbreviatedComment(comment.Content)),
@@ -135,9 +256,7 @@ func (a *actionNotifier) CreateIssueComment(ctx context.Context, doer *user_mode
 	}
 
 	// Notify watchers for whatever action comes in, ignore if no action type.
-	if err := notifyAll(ctx, act); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	notifyAll(ctx, act)
 }
 
 func (a *actionNotifier) NewPullRequest(ctx context.Context, pull *issues_model.PullRequest, mentions []*user_model.User) {
@@ -154,71 +273,51 @@ func (a *actionNotifier) NewPullRequest(ctx context.Context, pull *issues_model.
 		return
 	}
 
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: pull.Issue.Poster.ID,
-		ActUser:   pull.Issue.Poster,
 		OpType:    activities_model.ActionCreatePullRequest,
 		Content:   encodeContent(fmt.Sprintf("%d", pull.Issue.Index), pull.Issue.Title),
 		RepoID:    pull.Issue.Repo.ID,
-		Repo:      pull.Issue.Repo,
 		IsPrivate: pull.Issue.Repo.IsPrivate,
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) RenameRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, oldRepoName string) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    activities_model.ActionRenameRepo,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
 		Content:   oldRepoName,
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) TransferRepository(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, oldOwnerName string) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    activities_model.ActionTransferRepo,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
 		Content:   path.Join(oldOwnerName, repo.Name),
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) CreateRepository(ctx context.Context, doer, u *user_model.User, repo *repo_model.Repository) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    activities_model.ActionCreateRepo,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
-	}); err != nil {
-		log.Error("notify watchers '%d/%d': %v", doer.ID, repo.ID, err)
-	}
+	})
 }
 
 func (a *actionNotifier) ForkRepository(ctx context.Context, doer *user_model.User, oldRepo, repo *repo_model.Repository) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    activities_model.ActionCreateRepo,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
-	}); err != nil {
-		log.Error("notify watchers '%d/%d': %v", doer.ID, repo.ID, err)
-	}
+	})
 }
 
 func (a *actionNotifier) PullRequestReview(ctx context.Context, pr *issues_model.PullRequest, review *issues_model.Review, comment *issues_model.Comment, mentions []*user_model.User) {
@@ -280,31 +379,23 @@ func (a *actionNotifier) PullRequestReview(ctx context.Context, pr *issues_model
 }
 
 func (*actionNotifier) MergePullRequest(ctx context.Context, doer *user_model.User, pr *issues_model.PullRequest) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    activities_model.ActionMergePullRequest,
 		Content:   encodeContent(fmt.Sprintf("%d", pr.Issue.Index), pr.Issue.Title),
 		RepoID:    pr.Issue.Repo.ID,
-		Repo:      pr.Issue.Repo,
 		IsPrivate: pr.Issue.Repo.IsPrivate,
-	}); err != nil {
-		log.Error("NotifyWatchers [%d]: %v", pr.ID, err)
-	}
+	})
 }
 
 func (*actionNotifier) AutoMergePullRequest(ctx context.Context, doer *user_model.User, pr *issues_model.PullRequest) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    activities_model.ActionAutoMergePullRequest,
 		Content:   encodeContent(fmt.Sprintf("%d", pr.Issue.Index), pr.Issue.Title),
 		RepoID:    pr.Issue.Repo.ID,
-		Repo:      pr.Issue.Repo,
 		IsPrivate: pr.Issue.Repo.IsPrivate,
-	}); err != nil {
-		log.Error("NotifyWatchers [%d]: %v", pr.ID, err)
-	}
+	})
 }
 
 func (*actionNotifier) PullReviewDismiss(ctx context.Context, doer *user_model.User, review *issues_model.Review, comment *issues_model.Comment) {
@@ -316,19 +407,14 @@ func (*actionNotifier) PullReviewDismiss(ctx context.Context, doer *user_model.U
 	if len(review.OriginalAuthor) > 0 {
 		reviewerName = review.OriginalAuthor
 	}
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    activities_model.ActionPullReviewDismissed,
 		Content:   encodeContent(fmt.Sprintf("%d", review.Issue.Index), reviewerName, abbreviatedComment(comment.Content)),
 		RepoID:    review.Issue.Repo.ID,
-		Repo:      review.Issue.Repo,
 		IsPrivate: review.Issue.Repo.IsPrivate,
 		CommentID: comment.ID,
-		Comment:   comment,
-	}); err != nil {
-		log.Error("NotifyWatchers [%d]: %v", review.Issue.ID, err)
-	}
+	})
 }
 
 func (a *actionNotifier) PushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
@@ -352,18 +438,14 @@ func (a *actionNotifier) PushCommits(ctx context.Context, pusher *user_model.Use
 		opType = activities_model.ActionDeleteBranch
 	}
 
-	if err = notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: pusher.ID,
-		ActUser:   pusher,
 		OpType:    opType,
 		Content:   string(data),
 		RepoID:    repo.ID,
-		Repo:      repo,
 		RefName:   opts.RefFullName.String(),
 		IsPrivate: repo.IsPrivate,
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) CreateRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName, refID string) {
@@ -372,17 +454,13 @@ func (a *actionNotifier) CreateRef(ctx context.Context, doer *user_model.User, r
 		// has sent same action in `PushCommits`, so skip it.
 		return
 	}
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    opType,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
 		RefName:   refFullName.String(),
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) DeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
@@ -391,17 +469,13 @@ func (a *actionNotifier) DeleteRef(ctx context.Context, doer *user_model.User, r
 		// has sent same action in `PushCommits`, so skip it.
 		return
 	}
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: doer.ID,
-		ActUser:   doer,
 		OpType:    opType,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
 		RefName:   refFullName.String(),
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) SyncPushCommits(ctx context.Context, pusher *user_model.User, repo *repo_model.Repository, opts *repository.PushUpdateOptions, commits *repository.PushCommits) {
@@ -413,46 +487,34 @@ func (a *actionNotifier) SyncPushCommits(ctx context.Context, pusher *user_model
 		return
 	}
 
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: repo.OwnerID,
-		ActUser:   repo.MustOwner(ctx),
 		OpType:    activities_model.ActionMirrorSyncPush,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
 		RefName:   opts.RefFullName.String(),
 		Content:   string(data),
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) SyncCreateRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName, refID string) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: repo.OwnerID,
-		ActUser:   repo.MustOwner(ctx),
 		OpType:    activities_model.ActionMirrorSyncCreate,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
 		RefName:   refFullName.String(),
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) SyncDeleteRef(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, refFullName git.RefName) {
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: repo.OwnerID,
-		ActUser:   repo.MustOwner(ctx),
 		OpType:    activities_model.ActionMirrorSyncDelete,
 		RepoID:    repo.ID,
-		Repo:      repo,
 		IsPrivate: repo.IsPrivate,
 		RefName:   refFullName.String(),
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 func (a *actionNotifier) NewRelease(ctx context.Context, rel *repo_model.Release) {
@@ -460,18 +522,14 @@ func (a *actionNotifier) NewRelease(ctx context.Context, rel *repo_model.Release
 		log.Error("LoadAttributes: %v", err)
 		return
 	}
-	if err := notifyAll(ctx, &activities_model.Action{
+	notifyAll(ctx, QueueableAction{
 		ActUserID: rel.PublisherID,
-		ActUser:   rel.Publisher,
 		OpType:    activities_model.ActionPublishRelease,
 		RepoID:    rel.RepoID,
-		Repo:      rel.Repo,
 		IsPrivate: rel.Repo.IsPrivate,
 		Content:   rel.Title,
 		RefName:   rel.TagName, // FIXME: use a full ref name?
-	}); err != nil {
-		log.Error("NotifyWatchers: %v", err)
-	}
+	})
 }
 
 // ... later decoded in models/activities/action.go:GetIssueInfos
