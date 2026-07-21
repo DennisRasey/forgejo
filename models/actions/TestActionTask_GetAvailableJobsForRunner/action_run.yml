@@ -1,0 +1,23 @@
+- id: 50401
+  title: .forgejo/workflows/test.yaml
+  repo_id: 62 # test_workflows
+  owner_id: 2
+  workflow_id: test.yaml
+  workflow_directory: .forgejo/workflows
+  status: 5 # waiting
+
+- id: 50402
+  title: .forgejo/workflows/test.yaml
+  repo_id: 62 # test_workflows
+  owner_id: 2
+  workflow_id: test.yaml
+  workflow_directory: .forgejo/workflows
+  status: 5 # waiting
+
+- id: 50403
+  title: .forgejo/workflows/test.yaml
+  repo_id: 62 # test_workflows
+  owner_id: 2
+  workflow_id: test.yaml
+  workflow_directory: .forgejo/workflows
+  status: 5 # waiting

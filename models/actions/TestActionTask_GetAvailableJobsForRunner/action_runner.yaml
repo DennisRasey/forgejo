@@ -1,0 +1,17 @@
+- id: 73711
+  uuid: 1ed5b10d-a3f9-4530-b2fa-a590a1c2c8ea
+  name: repository-runner
+  owner_id: 0
+  repo_id: 62
+
+- id: 73712
+  uuid: a0ace03c-f794-4b15-b31b-0a7d52114df9
+  name: user-runner
+  owner_id: 2
+  repo_id: 0
+
+- id: 73713
+  uuid: 8103d9e2-c9fd-46f6-abf5-f9f3b9999ce3
+  name: global-runner
+  owner_id: 0
+  repo_id: 0

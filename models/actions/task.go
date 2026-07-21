@@ -303,9 +303,9 @@ func GetAvailableJobsForRunner(e db.Engine, runner *ActionRunner) ([]*ActionRunJ
 		jobCond = builder.Eq{"repo_id": runner.RepoID}
 	} else if runner.OwnerID != 0 {
 		jobCond = builder.In("repo_id", builder.Select("`repository`.id").From("repository").
-			Join("INNER", "repo_unit", "`repository`.id = `repo_unit`.repo_id").
-			Where(builder.Eq{"`repository`.owner_id": runner.OwnerID, "`repo_unit`.type": unit.TypeActions}))
+			Where(builder.Eq{"`repository`.owner_id": runner.OwnerID}))
 	}
+
 	// Concurrency group checks for queuing one run behind the last run in the concurrency group are more
 	// computationally expensive on the database. To manage the risk that this might have on large-scale deployments
 	// When this feature is initially released, it can be disabled in the ini file by setting
@@ -330,7 +330,13 @@ func GetAvailableJobsForRunner(e db.Engine, runner *ActionRunner) ([]*ActionRunJ
 	}
 
 	var jobs []*ActionRunJob
-	if err := e.Where("task_id=? AND status=?", 0, StatusWaiting).And(jobCond).Asc("updated", "id").Find(&jobs); err != nil {
+
+	if err := e.
+		Join("INNER", "repo_unit", "action_run_job.repo_id = repo_unit.repo_id").
+		Where("task_id=? AND action_run_job.status=? AND `repo_unit`.type=?", 0, StatusWaiting, unit.TypeActions).
+		And(jobCond).
+		Asc("action_run_job.updated", "action_run_job.id").
+		Find(&jobs); err != nil {
 		return nil, err
 	}
 	return jobs, nil
