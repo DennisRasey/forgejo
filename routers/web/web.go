@@ -381,39 +381,43 @@ func Routes() *web.Route {
 		}, gzipMid, context.Contexter())
 	}
 
+	// When the session provider is "memory", the session middleware contains its in-memory storage -- don't create
+	// multiple instances of the middleware for the different routing groups or else they'll have independent session
+	// storage, preventing user sessions from working across them.
+	sessioner := common.Sessioner()
+
 	routes.Group("",
 		func() {
 			registerRoutes(routes)
 		},
-		gzipMid, common.Sessioner(), context.Contexter(), webAuth(buildAuthGroup()),
+		gzipMid, sessioner, context.Contexter(), webAuth(buildAuthGroup()),
 		// TODO: GetNotificationCount & GetActiveStopwatch really seem like things that could be folded into Contexter or as helper functions
 		user.GetNotificationCount, repo.GetActiveStopwatch,
 		goGet)
 	routes.Group("",
 		func() {
 			registerMixedRoutes(routes)
-		},
-		gzipMid, common.Sessioner(), context.Contexter(), webAuth(buildMixedAuthGroup()), goGet)
+		}, gzipMid, sessioner, context.Contexter(), webAuth(buildMixedAuthGroup()), goGet)
 	routes.Group("",
 		func() {
 			registerGitLFSRoutes(routes)
-		}, gzipMid, common.Sessioner(), context.Contexter(), webAuth(buildGitLfsAuthGroup()), goGet)
+		}, gzipMid, sessioner, context.Contexter(), webAuth(buildGitLfsAuthGroup()), goGet)
 	routes.Group("",
 		func() {
 			registerGitRoutes(routes)
-		}, gzipMid, common.Sessioner(), context.Contexter(), webAuth(buildGitAuthGroup()), goGet)
+		}, gzipMid, sessioner, context.Contexter(), webAuth(buildGitAuthGroup()), goGet)
 
 	// The only endpoint which can only be accessed with the OAuth2 authentication method is /userinfo, extracted here
 	// so that other auth methods can't be applied to it
 	routes.Methods(
 		"GET, POST, OPTIONS",
 		"/login/oauth/userinfo",
-		gzipMid, common.Sessioner(), context.Contexter(),
+		gzipMid, sessioner, context.Contexter(),
 		oauth2Enabled, optionsCorsHandler(), ignoreCSRF, webAuth(&auth_method.OAuth2{}),
 		auth.InfoOAuth)
 
 	routes.NotFound(
-		gzipMid, common.Sessioner(), context.Contexter(), webAuth(buildAuthGroup()),
+		gzipMid, sessioner, context.Contexter(), webAuth(buildAuthGroup()),
 		// TODO: GetNotificationCount & GetActiveStopwatch really seem like things that could be folded into Contexter or as helper functions
 		user.GetNotificationCount, repo.GetActiveStopwatch,
 		goGet,
