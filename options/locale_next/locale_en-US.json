@@ -687,6 +687,7 @@
 	"packages.container.labels": "Labels",
 	"packages.container.labels.key": "Key",
 	"packages.container.labels.value": "Value",
+	"packages.container.annotations": "Annotations",
 	"packages.cran.registry": "Setup this registry in your <code>Rprofile.site</code> file:",
 	"packages.debian.registry.info": "Choose $distribution and $component from the list below.",
 	"packages.debian.repository.distributions": "Distributions",

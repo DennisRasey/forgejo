@@ -1166,6 +1166,54 @@ func TestPackageContainer(t *testing.T) {
 			assert.Equal(t, int64(0), p.RepoID)            // ensure not linked
 		})
 	})
+
+	t.Run("ManifestAnnotationsStored", func(t *testing.T) {
+		// Pushes a manifest with OCI annotations and verifies they are stored in the package metadata
+		// and rendered in the web UI.
+		defer tests.PrintCurrentTest(t)()
+
+		annotationImage := "annotations-test"
+		annotationTag := "v1"
+		urlv2 := fmt.Sprintf("%sv2/%s/%s", setting.AppURL, user.Name, annotationImage)
+
+		// same as manifestContent, but with added annotations in the manifest
+		annotationManifestContent := `{"schemaVersion":2,"mediaType":"` + oci.MediaTypeImageManifest + `","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"` + configDigest + `","size":` + configSize + `},"layers":[{"mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip","digest":"` + blobDigest + `","size":32}],"annotations":{"org.opencontainers.image.created":"2022-01-01T00:00:00Z","custom.test.key":"custom-test-value"}}`
+
+		req := NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", urlv2, blobDigest), bytes.NewReader(blobContent)).
+			AddTokenAuth(userToken)
+		MakeRequest(t, req, http.StatusCreated)
+
+		req = NewRequestWithBody(t, "POST", fmt.Sprintf("%s/blobs/uploads?digest=%s", urlv2, configDigest), strings.NewReader(configContent)).
+			AddTokenAuth(userToken)
+		MakeRequest(t, req, http.StatusCreated)
+
+		req = NewRequestWithBody(t, "PUT", fmt.Sprintf("%s/manifests/%s", urlv2, annotationTag), strings.NewReader(annotationManifestContent)).
+			AddTokenAuth(userToken).
+			SetHeader("Content-Type", oci.MediaTypeImageManifest)
+		MakeRequest(t, req, http.StatusCreated)
+
+		pv, err := packages_model.GetVersionByNameAndVersion(db.DefaultContext, user.ID, packages_model.TypeContainer, annotationImage, annotationTag)
+		require.NoError(t, err)
+
+		pd, err := packages_model.GetPackageDescriptor(db.DefaultContext, pv)
+		require.NoError(t, err)
+
+		metadata := pd.Metadata.(*container_module.Metadata)
+		assert.Equal(t, map[string]string{
+			"org.opencontainers.image.created": "2022-01-01T00:00:00Z",
+			"custom.test.key":                  "custom-test-value",
+		}, metadata.Annotations)
+
+		// Verify the template of the web UI renders annotations correctly
+		req = NewRequest(t, "GET", fmt.Sprintf("%s/%s/-/packages/container/%s/%s", setting.AppURL, user.Name, url.QueryEscape(annotationImage), annotationTag))
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		annotations := htmlDoc.Find("#container-annotations").Text()
+		assert.Contains(t, annotations, "org.opencontainers.image.created")
+		assert.Contains(t, annotations, "2022-01-01T00:00:00Z")
+		assert.Contains(t, annotations, "custom.test.key")
+		assert.Contains(t, annotations, "custom-test-value")
+	})
 }
 
 func createTestRepositoryWithPackageRegistry(t *testing.T, user *user_model.User, name string) *repo_model.Repository {

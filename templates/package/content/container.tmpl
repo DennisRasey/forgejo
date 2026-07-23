@@ -89,4 +89,25 @@
 			</table>
 		</div>
 	{{end}}
+	{{if .PackageDescriptor.Metadata.Annotations}}
+		<h4 class="ui top attached header">{{ctx.Locale.Tr "packages.container.annotations"}}</h4>
+		<div id="container-annotations" class="ui attached segment">
+			<table class="ui very basic compact table">
+				<thead>
+					<tr>
+						<th>{{ctx.Locale.Tr "packages.container.labels.key"}}</th>
+						<th>{{ctx.Locale.Tr "packages.container.labels.value"}}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{{range $key, $value := .PackageDescriptor.Metadata.Annotations}}
+						<tr>
+							<td class="top aligned">{{$key}}</td>
+							<td class="tw-break-anywhere">{{$value}}</td>
+						</tr>
+					{{end}}
+				</tbody>
+			</table>
+		</div>
+	{{end}}
 {{end}}
