@@ -10,13 +10,6 @@ import {formatDatetime} from '../utils/time.js';
 import {renderAnsiWithLinks} from '../render/ansi.js';
 import {htmlEscape} from 'escape-goat';
 
-// show/hide the step logs for a group
-window.actionJobStepToggleGroupLogs = function(event) {
-  const line = event.target.parentElement;
-  const list = line.nextSibling;
-  list.classList.toggle('hidden', event.newState !== 'open');
-};
-
 export default {
   name: 'ActionJobStep',
   components: {
@@ -86,6 +79,11 @@ export default {
       // relevant when viewing large collections of logs.  Special care must be taken to ensure that none of the data
       // allows unescaped used-generated content, or else XSS-style vulnerabilities may exist.
       const chunks = [];
+
+      if (group.isHeader) {
+        chunks.push(`<details class="log-msg" style="padding-left: ${group.depth}em"><summary>`);
+      }
+
       chunks.push(
         `<div class="job-log-line" id="jobstep-${this.stepId}-${lineNo}">`,
         `<a class="line-num muted" href="#jobstep-${this.stepId}-${lineNo}">${lineNo}</a>`,
@@ -105,12 +103,7 @@ export default {
         this.lineNumberOffset++;
         return [];
       }
-
-      if (group.isHeader) {
-        chunks.push(`<details class="log-msg" style="padding-left: ${group.depth}em" ontoggle="actionJobStepToggleGroupLogs(event)"><summary><span>${renderedMessage}</span></summary></details>`);
-      } else {
-        chunks.push(`<span class="log-msg" style="padding-left: ${group.depth}em">${renderedMessage}</span>`);
-      }
+      chunks.push(`<span class="log-msg" style="padding-left: ${group.depth}em">${renderedMessage}</span>`);
 
       // for "Show seconds"
       const secondsHidden = this.timeVisibleSeconds ? '' : 'tw-hidden';
@@ -119,6 +112,10 @@ export default {
         `<span class="log-time-seconds ${secondsHidden}">${seconds}s</span>`,
         '</div>',
       );
+
+      if (group.isHeader) {
+        chunks.push('</summary></details>');
+      }
 
       const tmpl = document.createElement('template');
       tmpl.innerHTML = chunks.join('');
@@ -146,14 +143,8 @@ export default {
             },
             startTime, group,
           );
-          logLine.setAttribute('data-group', group.index);
           el.append(logLine);
-
-          const list = document.createElement('div');
-          list.classList.add('job-log-list', 'hidden');
-          list.setAttribute('data-group', group.index);
-          groupStack.push(list);
-          el.append(list);
+          groupStack.push(logLine);
         } else if (line.message.startsWith('##[endgroup]')) {
           groupStack.pop();
         } else {
@@ -282,6 +273,24 @@ export default {
   margin-inline-start: 10px;
   overflow-wrap: anywhere;
   color: var(--color-console-fg);
+}
+
+/* For log grouping, disable the default `::marker` from `<details><summary>...`; it appears in the wrong location to
+  the far left of the log view... */
+details.log-msg summary::marker {
+  content: "";
+}
+/* ... then reinsert expand/contract markers before the log message in the group's summary line.  These markers won't
+  be identical to the browser's default markers but they look very close. */
+details.log-msg[open] summary span.log-msg::before {
+  content: "▼";
+  font-size: 0.9em;
+  padding-inline-end: 0.5em;
+}
+details.log-msg summary span.log-msg::before {
+  content: "▶";
+  font-size: 0.9em;
+  padding-inline-end: 0.5em;
 }
 
 .job-log-line:hover,

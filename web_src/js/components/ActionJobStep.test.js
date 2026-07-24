@@ -267,20 +267,16 @@ describe('ActionJobStep', () => {
     // Check if 3 lines where rendered
     expect(wrapper.findAll('.job-log-line').length).toEqual(3);
 
-    // Check if line 1 contains the group header
-    expect(wrapper.get('.job-log-line:nth-of-type(1) > details.log-msg').text()).toEqual('Test group');
+    // One log line in the <summary> ("Test group")...
+    expect(wrapper.findAll('details.log-msg summary span.log-msg').length).toEqual(1);
+    expect(wrapper.get('details.log-msg summary span.log-msg').text()).toEqual('Test group');
 
-    // Check if right after the header line exists a log list
-    expect(wrapper.find('.job-log-line:nth-of-type(1) + .job-log-list.hidden').exists()).toBe(true);
-
-    // Check if inside the loglist exist exactly one log line
-    expect(wrapper.findAll('.job-log-list > .job-log-line').length).toEqual(1);
-
-    // Check if inside the loglist is an logline with our second logline
-    expect(wrapper.get('.job-log-list > .job-log-line > .log-msg').text()).toEqual('A test line');
+    // Another in the contents of the <details>, not under <summary> ("A test line"):
+    expect(wrapper.findAll('details.log-msg > div.job-log-line > span.log-msg').length).toEqual(1);
+    expect(wrapper.get('details.log-msg > div.job-log-line > span.log-msg').text()).toEqual('A test line');
 
     // Check if after the log list exists another log line
-    expect(wrapper.get('.job-log-list + .job-log-line > .log-msg').text()).toEqual('A line outside the group');
+    expect(wrapper.get('.job-step-logs > .job-log-line > .log-msg').text()).toEqual('A line outside the group');
   });
 
   test('scrollIntoView focuses on a line from the log', () => {
