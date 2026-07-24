@@ -896,7 +896,10 @@ func Routes() *web.Route {
 						m.Delete("/{artifact_id}", reqToken(), reqRepoWriter(unit.TypeActions), repo.DeleteActionArtifact)
 						m.Get("/{artifact_id}/zip", repo.DownloadActionArtifact)
 					})
-					m.Get("/jobs/{job_id}/logs", repo.GetActionJobLogs)
+					m.Group("/jobs/{job_id}", func() {
+						m.Get("", repo.GetActionJob)
+						m.Get("/logs", repo.GetActionJobLogs)
+					})
 					m.Group("/runs", func() {
 						m.Get("", repo.ListActionRuns)
 						m.Get("/{run_id}", repo.GetActionRun)

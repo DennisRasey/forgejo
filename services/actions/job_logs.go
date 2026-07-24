@@ -24,6 +24,7 @@ import (
 var (
 	ErrJobNotExecuted = errors.New("job has not been executed yet")
 	ErrLogsExpired    = errors.New("logs have expired")
+	ErrStepOutOfRange = errors.New("step index out of range")
 )
 
 // OpenJobLogReader returns a reader for an action job's log along with the
@@ -33,12 +34,18 @@ var (
 // GetTaskByJobAttempt). When unset, the latest attempt is used via the
 // job.TaskID pointer maintained by the runner.
 //
+// stepFilter, when set, narrows the returned bytes to the slice covered by
+// that step in the FullSteps numbering: 0 is the "Set up job" head, the
+// last index is the "Complete job" tail, real steps are in between. Range
+// requests still work via http.ServeContent over the bounded window.
+//
 // The caller is responsible for closing the returned reader.
 func OpenJobLogReader(
 	ctx context.Context,
 	repo *repo_model.Repository,
 	jobID int64,
 	attempt optional.Option[int64],
+	stepFilter optional.Option[int],
 ) (io.ReadSeekCloser, string, time.Time, error) {
 	job, err := actions_model.GetRunJobByID(ctx, jobID)
 	if err != nil {
@@ -51,6 +58,7 @@ func OpenJobLogReader(
 	}
 
 	hasAttempt, attemptVal := attempt.Get()
+	hasStep, stepIdx := stepFilter.Get()
 
 	var task *actions_model.ActionTask
 	switch {
@@ -74,18 +82,40 @@ func OpenJobLogReader(
 		return nil, "", time.Time{}, ErrLogsExpired
 	}
 
-	reader, err := actions.OpenLogs(ctx, task.LogInStorage, task.LogFilename)
-	if err != nil {
-		return nil, "", time.Time{}, fmt.Errorf("open logs for task %d: %w", task.ID, err)
-	}
-
 	modtime := task.Stopped.AsTime()
 	if task.Stopped == 0 {
 		modtime = task.Updated.AsTime() // Best-guess modtime while still running.
 	}
 
-	filename := fmt.Sprintf("job-%d-attempt-%d.log", job.ID, task.Attempt)
-	return reader, filename, modtime, nil
+	if !hasStep {
+		reader, err := actions.OpenLogs(ctx, task.LogInStorage, task.LogFilename)
+		if err != nil {
+			return nil, "", time.Time{}, fmt.Errorf("open logs for task %d: %w", task.ID, err)
+		}
+		filename := fmt.Sprintf("job-%d-attempt-%d.log", job.ID, task.Attempt)
+		return reader, filename, modtime, nil
+	}
+
+	// Resolve the step's byte window BEFORE opening the log reader so a
+	// request that's going to 404 doesn't pay for an OpenLogs call. Targeted
+	// step load — task.LoadAttributes would also pull job + run which we
+	// don't need (and which makes unit-test setup heavier).
+	steps, err := actions_model.GetTaskStepsByTaskID(ctx, task.ID)
+	if err != nil {
+		return nil, "", time.Time{}, fmt.Errorf("could not load steps for task %d: %w", task.ID, err)
+	}
+	task.Steps = steps
+	full := actions.FullSteps(task)
+	if stepIdx < 0 || stepIdx >= len(full) {
+		return nil, "", time.Time{}, ErrStepOutOfRange
+	}
+	startByte, endByte := actions.StepByteRange(task, full[stepIdx])
+	reader, err := actions.OpenLogsRange(ctx, task.LogInStorage, task.LogFilename, startByte, endByte-startByte)
+	if err != nil {
+		return nil, "", time.Time{}, fmt.Errorf("open logs for task %d step %d: %w", task.ID, stepIdx, err)
+	}
+	stepFilename := fmt.Sprintf("job-%d-attempt-%d-step-%d.log", job.ID, task.Attempt, stepIdx)
+	return reader, stepFilename, modtime, nil
 }
 
 // WriteRunLogsZip writes a ZIP of the latest per-job logs for the run to w.

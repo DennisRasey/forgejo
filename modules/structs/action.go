@@ -32,6 +32,33 @@ type ActionRunJob struct {
 	TaskID int64 `json:"task_id"`
 	// the action run job status
 	Status string `json:"status"`
+	// the steps that make up this workflow job's execution, including the
+	// "Set up job" entry (number=0) and "Complete job" tail. Only populated by
+	// endpoints that return a single job (e.g. GET /repos/{owner}/{repo}/actions/jobs/{job_id}).
+	Steps []*ActionRunJobStep `json:"steps,omitempty"`
+}
+
+// ActionRunJobStep is a step in a workflow job's execution. The slice on
+// ActionRunJob.Steps always includes a "Set up job" entry at number=0 and a
+// "Complete job" entry as the last element; the entries in between are the
+// workflow's real steps in declaration order. The Number field is the value
+// accepted by the job-logs endpoint's `?step=` filter.
+//
+// swagger:model
+type ActionRunJobStep struct {
+	// position in the job's step list. 0 is the "Set up job" entry; the last
+	// index is the "Complete job" entry; real steps are numbered 1..N in
+	// declaration order.
+	Number int64 `json:"number"`
+	// step name (workflow YAML `name:` for real steps; "Set up job" and
+	// "Complete job" for the head and tail respectively)
+	Name string `json:"name"`
+	// step status (success, failure, running, waiting, skipped, cancelled, ...)
+	Status string `json:"status"`
+	// when the step started
+	Started time.Time `json:"started"`
+	// when the step stopped
+	Stopped time.Time `json:"stopped"`
 }
 
 // ActionRun represents an action run

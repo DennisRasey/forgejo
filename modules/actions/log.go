@@ -224,6 +224,76 @@ func OpenLogs(ctx context.Context, inStorage bool, filename string) (io.ReadSeek
 	return reader, nil
 }
 
+// OpenLogsRange opens the log at filename and returns an io.ReadSeekCloser
+// exposing exactly [offset, offset+size) bytes as if it started at offset 0.
+// Byte-window sibling of ReadLogs: use this when a seekable byte stream is
+// needed (e.g. http.ServeContent Range support) rather than parsed line rows.
+func OpenLogsRange(ctx context.Context, inStorage bool, filename string, offset, size int64) (io.ReadSeekCloser, error) {
+	reader, err := OpenLogs(ctx, inStorage, filename)
+	if err != nil {
+		return nil, err
+	}
+	bounded, err := newBoundedReadSeekCloser(reader, offset, size)
+	if err != nil {
+		reader.Close()
+		return nil, fmt.Errorf("could not position log reader at offset %d: %w", offset, err)
+	}
+	return bounded, nil
+}
+
+// boundedReadSeekCloser exposes a [start, start+size) window of the underlying
+// reader as if it started at offset 0. Backs OpenLogsRange so http.ServeContent
+// can serve Range requests over a step-sized slice without buffering.
+type boundedReadSeekCloser struct {
+	inner io.ReadSeekCloser
+	start int64
+	size  int64
+	pos   int64
+}
+
+func newBoundedReadSeekCloser(inner io.ReadSeekCloser, start, size int64) (*boundedReadSeekCloser, error) {
+	if _, err := inner.Seek(start, io.SeekStart); err != nil {
+		return nil, err
+	}
+	return &boundedReadSeekCloser{inner: inner, start: start, size: size}, nil
+}
+
+func (b *boundedReadSeekCloser) Read(p []byte) (int, error) {
+	if b.pos >= b.size {
+		return 0, io.EOF
+	}
+	if remaining := b.size - b.pos; int64(len(p)) > remaining {
+		p = p[:remaining]
+	}
+	n, err := b.inner.Read(p)
+	b.pos += int64(n)
+	return n, err
+}
+
+func (b *boundedReadSeekCloser) Seek(offset int64, whence int) (int64, error) {
+	var abs int64
+	switch whence {
+	case io.SeekStart:
+		abs = offset
+	case io.SeekCurrent:
+		abs = b.pos + offset
+	case io.SeekEnd:
+		abs = b.size + offset
+	default:
+		return 0, errors.New("boundedReadSeekCloser: invalid whence")
+	}
+	if abs < 0 {
+		return 0, errors.New("boundedReadSeekCloser: negative position")
+	}
+	if _, err := b.inner.Seek(b.start+abs, io.SeekStart); err != nil {
+		return 0, err
+	}
+	b.pos = abs
+	return abs, nil
+}
+
+func (b *boundedReadSeekCloser) Close() error { return b.inner.Close() }
+
 func FormatLog(timestamp time.Time, content string) string {
 	// Content shouldn't contain new line, it will break log indexes, other control chars are safe.
 	content = strings.ReplaceAll(content, "\n", `\n`)

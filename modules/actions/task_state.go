@@ -90,6 +90,26 @@ func FullSteps(task *actions_model.ActionTask) []*actions_model.ActionTaskStep {
 	return ret
 }
 
+// StepByteRange returns the [start, end) byte window in task's log file
+// covered by step, using task.LogIndexes for line->byte translation and
+// falling back to task.LogSize for the tail. Returns (0, 0) when the step
+// has no logs yet (LogLength <= 0 or LogIndex beyond the recorded indexes).
+func StepByteRange(task *actions_model.ActionTask, step *actions_model.ActionTaskStep) (start, end int64) {
+	if step.LogLength <= 0 || step.LogIndex >= int64(len(task.LogIndexes)) {
+		return 0, 0
+	}
+	start = task.LogIndexes[step.LogIndex]
+	endIdx := step.LogIndex + step.LogLength
+	if endIdx < int64(len(task.LogIndexes)) {
+		end = task.LogIndexes[endIdx]
+	} else {
+		// Step's log range extends beyond recorded indexes (step is still
+		// running or task hasn't fully landed yet).
+		end = task.LogSize
+	}
+	return start, end
+}
+
 func fullStepsOfEmptySteps(task *actions_model.ActionTask) []*actions_model.ActionTaskStep {
 	preStep := &actions_model.ActionTaskStep{
 		Name:      preStepName,

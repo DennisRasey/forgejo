@@ -49,6 +49,13 @@ type swaggerRunJobList struct {
 	Body []*api.ActionRunJob `json:"body"`
 }
 
+// ActionRunJob is a single workflow run job
+// swagger:response ActionRunJob
+type swaggerActionRunJob struct {
+	// in:body
+	Body *api.ActionRunJob `json:"body"`
+}
+
 // DispatchWorkflowRun is a Workflow Run after dispatching
 // swagger:response DispatchWorkflowRun
 type swaggerDispatchWorkflowRun struct {

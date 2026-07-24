@@ -33,9 +33,22 @@ func TestAPIGetActionJobLogs(t *testing.T) {
 	outcome := &mockTaskOutcome{
 		result: runnerv1.Result_RESULT_SUCCESS,
 		logRows: []*runnerv1.LogRow{
-			{Time: timestamppb.New(now.Add(1 * time.Second)), Content: "first line"},
-			{Time: timestamppb.New(now.Add(2 * time.Second)), Content: "second line"},
-			{Time: timestamppb.New(now.Add(3 * time.Second)), Content: "third line"},
+			{Time: timestamppb.New(now.Add(1 * time.Second)), Content: "setup banner line"},
+			{Time: timestamppb.New(now.Add(2 * time.Second)), Content: "step error: boom"},
+			{Time: timestamppb.New(now.Add(3 * time.Second)), Content: "complete banner line"},
+		},
+		// Real step (Id=0) covers only the middle log row. Lines [0] and [2]
+		// end up in FullSteps's setup head and complete tail respectively,
+		// giving the ?step= tests something distinguishable for each kind.
+		stepStates: []*runnerv1.StepState{
+			{
+				Id:        0,
+				Result:    runnerv1.Result_RESULT_SUCCESS,
+				LogIndex:  1,
+				LogLength: 1,
+				StartedAt: timestamppb.New(now),
+				StoppedAt: timestamppb.New(now.Add(3 * time.Second)),
+			},
 		},
 	}
 	workflow := `name: api-job-logs
@@ -167,6 +180,59 @@ jobs:
 		t.Run("attempt=999: 404 unknown attempt", func(t *testing.T) {
 			req := NewRequestf(t, "GET",
 				"/api/v1/repos/%s/actions/jobs/%d/logs?attempt=999",
+				repoA.FullName(), jobID,
+			)
+			req.AddTokenAuth(token)
+			MakeRequest(t, req, http.StatusNotFound)
+		})
+
+		// FullSteps numbering: 0 = "Set up job" head, 1 = the one real step,
+		// 2 = "Complete job" tail. With stepStates above, each gets exactly
+		// one log line. step=99 is out of range.
+
+		t.Run("step=0: 200 setup head only", func(t *testing.T) {
+			req := NewRequestf(t, "GET",
+				"/api/v1/repos/%s/actions/jobs/%d/logs?step=0",
+				repoA.FullName(), jobID,
+			)
+			req.AddTokenAuth(token)
+			resp := MakeRequest(t, req, http.StatusOK)
+			body := strings.TrimSpace(resp.Body.String())
+			require.NotEmpty(t, body, "setup head should contain the first log line")
+			assert.Contains(t, body, "setup banner line")
+			assert.NotContains(t, body, "step error: boom")
+			assert.NotContains(t, body, "complete banner line")
+		})
+
+		t.Run("step=1: 200 real step only", func(t *testing.T) {
+			req := NewRequestf(t, "GET",
+				"/api/v1/repos/%s/actions/jobs/%d/logs?step=1",
+				repoA.FullName(), jobID,
+			)
+			req.AddTokenAuth(token)
+			resp := MakeRequest(t, req, http.StatusOK)
+			body := strings.TrimSpace(resp.Body.String())
+			assert.Contains(t, body, "step error: boom")
+			assert.NotContains(t, body, "setup banner line")
+			assert.NotContains(t, body, "complete banner line")
+		})
+
+		t.Run("step=2: 200 complete tail only", func(t *testing.T) {
+			req := NewRequestf(t, "GET",
+				"/api/v1/repos/%s/actions/jobs/%d/logs?step=2",
+				repoA.FullName(), jobID,
+			)
+			req.AddTokenAuth(token)
+			resp := MakeRequest(t, req, http.StatusOK)
+			body := strings.TrimSpace(resp.Body.String())
+			assert.Contains(t, body, "complete banner line")
+			assert.NotContains(t, body, "setup banner line")
+			assert.NotContains(t, body, "step error: boom")
+		})
+
+		t.Run("step=99: 404 out of range", func(t *testing.T) {
+			req := NewRequestf(t, "GET",
+				"/api/v1/repos/%s/actions/jobs/%d/logs?step=99",
 				repoA.FullName(), jobID,
 			)
 			req.AddTokenAuth(token)
