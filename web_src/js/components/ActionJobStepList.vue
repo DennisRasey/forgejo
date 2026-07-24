@@ -62,8 +62,8 @@ export default {
   },
 
   methods: {
-    appendLogs(stepIndex, logLines, startTime) {
-      this.$refs.jobSteps[stepIndex].appendLogs(logLines, startTime);
+    async appendLogs(stepIndex, logLines, startTime) {
+      await this.$refs.jobSteps[stepIndex].appendLogs(logLines, startTime);
     },
     scrollIntoView(stepIndex, lineID) {
       this.$refs.jobSteps[stepIndex].scrollIntoView(lineID);

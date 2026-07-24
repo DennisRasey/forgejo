@@ -7,13 +7,21 @@ const replacements = [
   [/\x1b\]9;\d+.*?(\x07|\x1b\\)/g, ''], // ConEmu, treat them as no-op.
 ];
 
+const ansi_up = new AnsiUp();
+ansi_up.use_classes = true;
+
 // render ANSI to HTML
 export function renderAnsi(line) {
-  // create a fresh ansi_up instance because otherwise previous renders can influence
-  // the output of future renders, because ansi_up is stateful and remembers things like
-  // unclosed opening tags for colors.
-  const ansi_up = new AnsiUp();
-  ansi_up.use_classes = true;
+  // Reset ansi_up's state.  Previous renders can influence the output of future renders, because ansi_up is stateful
+  // and remembers things like unclosed opening tags for colors.  Rather than creating a new AnsiUp, which calls the
+  // expensive setup_palettes method, we reset the stateful members.
+  //
+  // Impacted members have been identified by analyzing the library for the state that is changed during `process_ansi`:
+  // https://github.com/drudru/ansi_up/blob/07a4824757d4dfbb41236a4245a6ce37f21aeb91/ansi_up.ts#L599 and during
+  // `ansi_to_html`: https://github.com/drudru/ansi_up/blob/07a4824757d4dfbb41236a4245a6ce37f21aeb91/ansi_up.ts#L563
+  ansi_up.bold = ansi_up.faint = ansi_up.italic = ansi_up.underline = false;
+  ansi_up.fg = ansi_up.bg = null;
+  ansi_up._buffer = '';
 
   if (line.endsWith('\r\n')) {
     line = line.substring(0, line.length - 2);

@@ -270,8 +270,8 @@ export default {
       window.location.href = url;
     },
 
-    appendLogs(stepIndex, logLines, startTime) {
-      this.$refs.stepList.appendLogs(stepIndex, logLines, startTime);
+    async appendLogs(stepIndex, logLines, startTime) {
+      await this.$refs.stepList.appendLogs(stepIndex, logLines, startTime);
     },
 
     async fetchArtifacts() {
@@ -371,7 +371,7 @@ export default {
           // save the cursor, it will be passed to backend next time
           this.lineNumberOffset[logs.step] = 0;
           this.currentJobStepsStates[logs.step].cursor = logs.cursor;
-          this.appendLogs(logs.step, logs.lines, logs.started);
+          await this.appendLogs(logs.step, logs.lines, logs.started);
         }
 
         if (this.run.done) {
