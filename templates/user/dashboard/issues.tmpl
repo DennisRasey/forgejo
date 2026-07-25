@@ -50,11 +50,13 @@
 						<a class="item" rel="nofollow" href="?type={{$.SortType}}&sort={{$.SortType}}&project=-1&state={{$.State}}&q={{$.Keyword}}">
 							{{ctx.Locale.Tr "repo.issues.filter_project_none"}}
 						</a>
-						<div class="divider"></div>
-						{{range $project := $.Projects}}
-							<a class="{{if eq $.ProjectID $project.ID}}active {{end}}item" rel="nofollow" href="?type={{$.SortType}}&sort={{$.SortType}}&project={{$project.ID}}&state={{$.State}}&q={{$.Keyword}}">
-								{{svg $project.IconName 16 "tw-mr-2 tw-shrink-0"}}{{$project.Title}}
-							</a>
+						{{if $.Projects}}
+							<div class="divider"></div>
+							{{range $project := $.Projects}}
+								<a class="{{if eq $.ProjectID $project.ID}}active {{end}}item" rel="nofollow" href="?type={{$.SortType}}&sort={{$.SortType}}&project={{$project.ID}}&state={{$.State}}&q={{$.Keyword}}">
+									{{svg $project.IconName 16 "tw-mr-2 tw-shrink-0"}}{{$project.Title}}
+								</a>
+							{{end}}
 						{{end}}
 					</div>
 				</div>
