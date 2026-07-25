@@ -16,6 +16,8 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/web/middleware"
+
+	chi_middleware "github.com/go-chi/chi/v5/middleware"
 )
 
 type routerLoggerOptions struct {
@@ -65,9 +67,13 @@ func AccessLogger() func(http.Handler) http.Handler {
 				requestID = parseRequestIDFromRequestHeader(req)
 			}
 
-			reqHost, _, err := net.SplitHostPort(req.RemoteAddr)
-			if err != nil {
-				reqHost = req.RemoteAddr
+			reqHost := chi_middleware.GetClientIP(req.Context())
+			if reqHost == "" {
+				host, _, err := net.SplitHostPort(req.RemoteAddr)
+				if err != nil {
+					host = req.RemoteAddr
+				}
+				reqHost = host
 			}
 
 			next.ServeHTTP(w, req)
@@ -79,7 +85,7 @@ func AccessLogger() func(http.Handler) http.Handler {
 				identity = signedUser.Name
 			}
 			buf := bytes.NewBuffer([]byte{})
-			err = logTemplate.Execute(buf, routerLoggerOptions{
+			err := logTemplate.Execute(buf, routerLoggerOptions{
 				req:            req,
 				Identity:       &identity,
 				Start:          &start,
