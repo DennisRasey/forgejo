@@ -51,7 +51,7 @@ jobs:
           TEST_MINIO_ENDPOINT: minio:9000
           TEST_LDAP: 1
           TEST_REDIS_SERVER: cacher:6379
-      - uses: https://codeberg.org/clouds666/unkai@v0.2.0
+      - uses: https://codeberg.org/clouds666/unkai@aea908dd6080cf6d8f3dee8dbf3b9d4e082242f0 # v0.2.0
         with:
           token: ${{ forgejo.TOKEN }}
       - name: clear the run-coverage label
