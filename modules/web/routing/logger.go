@@ -10,6 +10,8 @@ import (
 
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/web/types"
+
+	chi_middleware "github.com/go-chi/chi/v5/middleware"
 )
 
 // NewLoggerHandler is a handler that will log routing to the router log taking account of
@@ -36,6 +38,11 @@ var (
 
 func logPrinter(logger log.Logger) func(trigger Event, record *requestRecord) {
 	return func(trigger Event, record *requestRecord) {
+		remoteAddr := chi_middleware.GetClientIP(record.request.Context())
+		if remoteAddr == "" {
+			remoteAddr = record.request.RemoteAddr
+		}
+
 		if trigger == StartEvent {
 			if !logger.LevelEnabled(log.TRACE) {
 				// for performance, if the "started" message shouldn't be logged, we just return as early as possible
@@ -44,7 +51,7 @@ func logPrinter(logger log.Logger) func(trigger Event, record *requestRecord) {
 			}
 			// when a request starts, we have no information about the handler function information, we only have the request path
 			req := record.request
-			logger.Trace("router: %s %v %s for %s", startMessage, log.ColoredMethod(req.Method), req.RequestURI, req.RemoteAddr)
+			logger.Trace("router: %s %v %s for %s", startMessage, log.ColoredMethod(req.Method), req.RequestURI, remoteAddr)
 			return
 		}
 
@@ -67,7 +74,7 @@ func logPrinter(logger log.Logger) func(trigger Event, record *requestRecord) {
 			}
 			logf("router: %s %v %s for %s, elapsed %v @ %s",
 				message,
-				log.ColoredMethod(req.Method), req.RequestURI, req.RemoteAddr,
+				log.ColoredMethod(req.Method), req.RequestURI, remoteAddr,
 				log.ColoredTime(time.Since(record.startTime)),
 				handlerFuncInfo,
 			)
@@ -77,7 +84,7 @@ func logPrinter(logger log.Logger) func(trigger Event, record *requestRecord) {
 		if panicErr != nil {
 			logger.Warn("router: %s %v %s for %s, panic in %v @ %s, err=%v",
 				failedMessage,
-				log.ColoredMethod(req.Method), req.RequestURI, req.RemoteAddr,
+				log.ColoredMethod(req.Method), req.RequestURI, remoteAddr,
 				log.ColoredTime(time.Since(record.startTime)),
 				handlerFuncInfo,
 				panicErr,
@@ -101,7 +108,7 @@ func logPrinter(logger log.Logger) func(trigger Event, record *requestRecord) {
 
 		logf("router: %s %v %s for %s, %v %v in %v @ %s",
 			message,
-			log.ColoredMethod(req.Method), req.RequestURI, req.RemoteAddr,
+			log.ColoredMethod(req.Method), req.RequestURI, remoteAddr,
 			log.ColoredStatus(status), log.ColoredStatus(status, http.StatusText(status)), log.ColoredTime(time.Since(record.startTime)),
 			handlerFuncInfo,
 		)
