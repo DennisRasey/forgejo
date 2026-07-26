@@ -5,6 +5,7 @@ package process
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path"
@@ -263,5 +264,44 @@ func TestSetupCancellableCommand(t *testing.T) {
 		require.Len(t, notifyOutput, 1)
 		cmdRun := notifyOutput[0]
 		assert.Contains(t, cmdRun.Path, "bash")
+	})
+}
+
+func TestIsCancellableCommandCancellation(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		assert.False(t, IsErrCancellableCommandCancellation(nil))
+	})
+
+	t.Run("other", func(t *testing.T) {
+		assert.False(t, IsErrCancellableCommandCancellation(errors.New("some other error")))
+	})
+
+	t.Run("SIGTERM", func(t *testing.T) {
+		script := `
+		kill -SIGTERM $$
+		`
+		cmd := exec.Command("bash", "-c", script)
+		err := cmd.Run()
+		assert.True(t, IsErrCancellableCommandCancellation(err))
+	})
+
+	t.Run("SIGKILL", func(t *testing.T) {
+		script := `
+		kill -SIGKILL $$
+		`
+		cmd := exec.Command("bash", "-c", script)
+		err := cmd.Run()
+		assert.True(t, IsErrCancellableCommandCancellation(err))
+	})
+
+	t.Run("ctx cancel", func(t *testing.T) {
+		script := `
+		sleep 30s
+		`
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		cmd := exec.CommandContext(ctx, "bash", "-c", script)
+		err := cmd.Run()
+		assert.True(t, IsErrCancellableCommandCancellation(err))
 	})
 }
