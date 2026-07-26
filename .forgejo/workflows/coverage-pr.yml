@@ -1,13 +1,13 @@
-name: coverage
+name: pull-request
 
 on:
-  pull_request:
+  issue_comment:
     types:
-      - labeled
+      - created
 
 jobs:
-  pull-request:
-    if: ( vars.ROLE == 'forgejo-coding' ) && (forgejo.event.label.name == 'run-coverage')
+  coverage:
+    if: ( vars.ROLE == 'forgejo-coding' ) && (forgejo.event.comment.body == 'run-coverage')
     runs-on: docker
     container:
       image: 'data.forgejo.org/oci/ci:2'
@@ -42,7 +42,7 @@ jobs:
           packages: git
       - uses: ./.forgejo/workflows-composite/build-backend
       - run: |
-          su forgejo -c make coverage-run'
+          su forgejo -c 'make coverage-run'
           su forgejo -c 'make coverage-run-sqlite'
           su forgejo -c 'make coverage-merge coverage-show-percentage'
         timeout-minutes: 60
@@ -54,7 +54,3 @@ jobs:
       - uses: https://codeberg.org/clouds666/unkai@aea908dd6080cf6d8f3dee8dbf3b9d4e082242f0 # v0.2.0
         with:
           token: ${{ forgejo.TOKEN }}
-      - name: clear the run-coverage label
-        if: always()
-        run: |
-          curl --fail -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $FORGEJO_TOKEN" -sS $FORGEJO_SERVER_URL/api/v1/repos/$FORGEJO_REPOSITORY/issues/${{ forgejo.event.pull_request.number }}/labels/${{ forgejo.event.label.id }}
