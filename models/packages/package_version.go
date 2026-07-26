@@ -36,6 +36,7 @@ type PackageVersion struct {
 	IsInternal    bool               `xorm:"INDEX NOT NULL DEFAULT false"`
 	MetadataJSON  string             `xorm:"metadata_json LONGTEXT"`
 	DownloadCount int64              `xorm:"NOT NULL DEFAULT 0"`
+	TotalSize     int64              `xorm:"NOT NULL DEFAULT 0"`
 }
 
 // GetOrInsertVersion inserts a version. If the same version exist already ErrDuplicatePackageVersion is returned
@@ -63,6 +64,23 @@ func GetOrInsertVersion(ctx context.Context, pv *PackageVersion) (*PackageVersio
 // UpdateVersion updates a version
 func UpdateVersion(ctx context.Context, pv *PackageVersion) error {
 	_, err := db.GetEngine(ctx).ID(pv.ID).Update(pv)
+	return err
+}
+
+func (pv *PackageVersion) UpdateTotalSize(ctx context.Context) error {
+	size, err := db.GetEngine(ctx).
+		Table("package_file").
+		Where("package_file.version_id = ?", pv.ID).
+		Cols("blob_id").
+		Join("INNER", "package_blob", "package_file.blob_id = package_blob.id").
+		SumInt(&PackageBlob{}, "package_blob.size")
+	if err != nil {
+		return err
+	}
+
+	pv.TotalSize = size
+	_, err = db.GetEngine(ctx).ID(pv.ID).Cols("total_size").Update(pv)
+
 	return err
 }
 
@@ -192,6 +210,8 @@ const (
 	SortVersionDesc VersionSort = "version_desc"
 	SortCreatedAsc  VersionSort = "created_asc"
 	SortCreatedDesc VersionSort = "created_desc"
+	SortSizeAsc     VersionSort = "size_asc"
+	SortSizeDesc    VersionSort = "size_desc"
 )
 
 // PackageSearchOptions are options for SearchXXX methods
@@ -300,6 +320,10 @@ func (opts *PackageSearchOptions) configureOrderBy(e db.Engine) {
 		e.Asc("package_version.version")
 	case SortCreatedAsc:
 		e.Asc("package_version.created_unix")
+	case SortSizeAsc:
+		e.Asc("package_version.total_size")
+	case SortSizeDesc:
+		e.Desc("package_version.total_size")
 	default:
 		e.Desc("package_version.created_unix")
 	}

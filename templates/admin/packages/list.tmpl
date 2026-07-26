@@ -42,7 +42,10 @@
 						</th>
 						<th>{{ctx.Locale.Tr "admin.packages.creator"}}</th>
 						<th>{{ctx.Locale.Tr "admin.packages.repository"}}</th>
-						<th>{{ctx.Locale.Tr "admin.packages.size"}}</th>
+						<th data-sortt-asc="size_asc" data-sortt-desc="size_desc">
+							{{ctx.Locale.Tr "admin.packages.size"}}
+							{{SortArrow "size_asc" "size_desc" .SortType false}}
+						</th>
 						<th data-sortt-asc="created_asc" data-sortt-desc="created_desc">
 							{{ctx.Locale.Tr "admin.packages.published"}}
 							{{SortArrow "created_asc" "created_desc" .SortType true}}
@@ -69,7 +72,7 @@
 								<a href="{{.Repository.Link}}">{{.Repository.Name}}</a>
 							{{end}}
 							</td>
-							<td>{{ctx.Locale.TrSize .CalculateBlobSize}}</td>
+							<td>{{ctx.Locale.TrSize .Version.TotalSize}}</td>
 							<td>{{DateUtils.AbsoluteShort .Version.CreatedUnix}}</td>
 							<td><a class="delete-button" href="" data-url="{{$.Link}}/delete?page={{$.Page.Paginater.Current}}&sort={{$.SortType}}" data-id="{{.Version.ID}}" data-name="{{.Package.Name}}" data-data-version="{{.Version.Version}}" data-modal-id="delete-package">{{svg "octicon-trash"}}</a></td>
 						</tr>

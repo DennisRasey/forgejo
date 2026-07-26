@@ -1,0 +1,36 @@
+- id: 1
+  owner_id: 1
+  repo_id: 0
+  type: container
+  name: big
+  lower_name: big
+  semver_compatible: false
+  is_internal: false
+
+- id: 2
+  owner_id: 1
+  repo_id: 0
+  type: container
+  name: medium
+  lower_name: medium
+  semver_compatible: false
+  is_internal: false
+
+- id: 3
+  owner_id: 1
+  repo_id: 0
+  type: container
+  name: huge
+  lower_name: huge
+  semver_compatible: false
+  is_internal: false
+
+- id: 4
+  owner_id: 1
+  repo_id: 0
+  type: container
+  name: small
+  lower_name: small
+  semver_compatible: false
+  is_internal: false
+
