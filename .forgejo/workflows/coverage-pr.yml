@@ -35,6 +35,8 @@ jobs:
         options: --tmpfs /data:noatime,uid=1000,gid=1000
     steps:
       - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: "refs/pull/${{ forgejo.event.issue.number }}/head"
       - uses: ./.forgejo/workflows-composite/setup-env
       - name: install git >= 2.42
         uses: ./.forgejo/workflows-composite/apt-install-from
@@ -51,6 +53,6 @@ jobs:
           TEST_MINIO_ENDPOINT: minio:9000
           TEST_LDAP: 1
           TEST_REDIS_SERVER: cacher:6379
-      - uses: https://codeberg.org/clouds666/unkai@aea908dd6080cf6d8f3dee8dbf3b9d4e082242f0 # v0.2.0
+      - uses: https://codeberg.org/clouds666/unkai@v0.2.1
         with:
           token: ${{ forgejo.TOKEN }}
