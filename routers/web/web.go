@@ -162,6 +162,12 @@ func buildGitLfsAuthGroup() *auth_method.Group {
 		// is enabled for Authorized Integrations as well:
 		PermitBasic: true,
 	})
+	if setting.Service.EnableReverseProxyAuth {
+		// reverseproxy should before Session, otherwise the header will be ignored if user has login
+		group.Add(&auth_method.ReverseProxy{
+			CreateSession: true,
+		})
+	}
 	return group
 }
 
@@ -185,6 +191,12 @@ func buildGitAuthGroup() *auth_method.Group {
 		// is enabled for Authorized Integrations as well:
 		PermitBasic: true,
 	})
+	if setting.Service.EnableReverseProxyAuth {
+		// reverseproxy should before Session, otherwise the header will be ignored if user has login
+		group.Add(&auth_method.ReverseProxy{
+			CreateSession: true,
+		})
+	}
 	return group
 }
 
