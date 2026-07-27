@@ -25,6 +25,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const flushTimeout = 10 * time.Second
+
+var queueInit = false
+
+func initQueue(t *testing.T) {
+	if queueInit {
+		return
+	}
+
+	require.NoError(t, initNotificationQueue())
+	queueInit = true
+}
+
 func TestMain(m *testing.M) {
 	unittest.MainTest(m)
 }
@@ -32,10 +45,10 @@ func TestMain(m *testing.M) {
 func TestRenameRepoAction(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
+	initQueue(t)
 	ctx := t.Context()
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: user.ID})
-	require.NoError(t, initNotificationQueue())
 	repo.Owner = user
 
 	oldRepoName := repo.Name
@@ -55,7 +68,7 @@ func TestRenameRepoAction(t *testing.T) {
 	unittest.AssertNotExistsBean(t, actionBean)
 
 	NewNotifier().RenameRepository(db.DefaultContext, user, repo, oldRepoName)
-	queue.GetManager().FlushAll(ctx, 1*time.Second)
+	queue.GetManager().FlushAll(ctx, flushTimeout)
 
 	unittest.AssertExistsAndLoadBean(t, actionBean)
 	unittest.CheckConsistencyFor(t, &activities_model.Action{})
@@ -96,17 +109,17 @@ func pushCommits() *repository.PushCommits {
 func TestSyncPushCommits(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
+	initQueue(t)
 	ctx := t.Context()
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: user.ID})
-	require.NoError(t, initNotificationQueue())
 
 	t.Run("All commits", func(t *testing.T) {
 		defer test.MockVariableValue(&setting.UI.FeedMaxCommitNum, 10)()
 
 		maxID := unittest.GetCount(t, &activities_model.Action{})
 		NewNotifier().SyncPushCommits(db.DefaultContext, user, repo, &repository.PushUpdateOptions{RefFullName: git.RefNameFromBranch("master")}, pushCommits())
-		require.NoError(t, queue.GetManager().FlushAll(ctx, time.Second*1))
+		require.NoError(t, queue.GetManager().FlushAll(ctx, flushTimeout))
 
 		newNotification := unittest.AssertExistsAndLoadBean(t, &activities_model.Action{ActUserID: user.ID, RefName: "refs/heads/master"}, unittest.Cond("id > ?", maxID))
 		assert.JSONEq(t, `{"Commits":[{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},{"Sha1":"27566bd","Message":"good signed commit (with not yet validated email)","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},{"Sha1":"5099b81","Message":"good signed commit","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"}],"HeadCommit":{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"","AuthorName":"","CommitterEmail":"","CommitterName":"","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},"CompareURL":"","Len":0}`, newNotification.Content)
@@ -117,7 +130,7 @@ func TestSyncPushCommits(t *testing.T) {
 
 		maxID := unittest.GetCount(t, &activities_model.Action{})
 		NewNotifier().SyncPushCommits(db.DefaultContext, user, repo, &repository.PushUpdateOptions{RefFullName: git.RefNameFromBranch("main")}, pushCommits())
-		require.NoError(t, queue.GetManager().FlushAll(ctx, time.Second*1))
+		require.NoError(t, queue.GetManager().FlushAll(ctx, flushTimeout))
 
 		newNotification := unittest.AssertExistsAndLoadBean(t, &activities_model.Action{ActUserID: user.ID, RefName: "refs/heads/main"}, unittest.Cond("id > ?", maxID))
 		assert.JSONEq(t, `{"Commits":[{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"}],"HeadCommit":{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"","AuthorName":"","CommitterEmail":"","CommitterName":"","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},"CompareURL":"","Len":0}`, newNotification.Content)
@@ -132,7 +145,7 @@ func TestSyncPushCommits(t *testing.T) {
 		assert.Equal(t, "good signed commit\nlong commit message\nwith lots of details\nabout how cool the implementation is", commits.Commits[2].Message)
 
 		NewNotifier().SyncPushCommits(db.DefaultContext, user, repo, &repository.PushUpdateOptions{RefFullName: git.RefNameFromBranch("master")}, commits)
-		require.NoError(t, queue.GetManager().FlushAll(ctx, time.Second*1))
+		require.NoError(t, queue.GetManager().FlushAll(ctx, flushTimeout))
 
 		// commits passed into SyncPushCommits may be passed into other notifiers, so checking that the struct wasn't
 		// mutated by truncate of messages, or truncation to match FeedMaxCommitNum (Commits[2])...
@@ -153,7 +166,7 @@ func TestPushCommits(t *testing.T) {
 
 		maxID := unittest.GetCount(t, &activities_model.Action{})
 		NewNotifier().PushCommits(db.DefaultContext, user, repo, &repository.PushUpdateOptions{RefFullName: git.RefNameFromBranch("master")}, pushCommits())
-		require.NoError(t, queue.GetManager().FlushAll(ctx, time.Second*1))
+		require.NoError(t, queue.GetManager().FlushAll(ctx, flushTimeout))
 
 		newNotification := unittest.AssertExistsAndLoadBean(t, &activities_model.Action{ActUserID: user.ID, RefName: "refs/heads/master"}, unittest.Cond("id > ?", maxID))
 		assert.JSONEq(t, `{"Commits":[{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},{"Sha1":"27566bd","Message":"good signed commit (with not yet validated email)","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},{"Sha1":"5099b81","Message":"good signed commit","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"}],"HeadCommit":{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"","AuthorName":"","CommitterEmail":"","CommitterName":"","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},"CompareURL":"","Len":0}`, newNotification.Content)
@@ -164,7 +177,7 @@ func TestPushCommits(t *testing.T) {
 
 		maxID := unittest.GetCount(t, &activities_model.Action{})
 		NewNotifier().PushCommits(db.DefaultContext, user, repo, &repository.PushUpdateOptions{RefFullName: git.RefNameFromBranch("main")}, pushCommits())
-		require.NoError(t, queue.GetManager().FlushAll(ctx, time.Second*1))
+		require.NoError(t, queue.GetManager().FlushAll(ctx, flushTimeout))
 
 		newNotification := unittest.AssertExistsAndLoadBean(t, &activities_model.Action{ActUserID: user.ID, RefName: "refs/heads/main"}, unittest.Cond("id > ?", maxID))
 		assert.JSONEq(t, `{"Commits":[{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"user2@example.com","AuthorName":"User2","CommitterEmail":"user2@example.com","CommitterName":"User2","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"}],"HeadCommit":{"Sha1":"69554a6","Message":"not signed commit","AuthorEmail":"","AuthorName":"","CommitterEmail":"","CommitterName":"","Signature":null,"Verification":null,"Timestamp":"0001-01-01T00:00:00Z"},"CompareURL":"","Len":0}`, newNotification.Content)
@@ -179,7 +192,7 @@ func TestPushCommits(t *testing.T) {
 		assert.Equal(t, "good signed commit\nlong commit message\nwith lots of details\nabout how cool the implementation is", commits.Commits[2].Message)
 
 		NewNotifier().PushCommits(db.DefaultContext, user, repo, &repository.PushUpdateOptions{RefFullName: git.RefNameFromBranch("main")}, commits)
-		require.NoError(t, queue.GetManager().FlushAll(ctx, time.Second*1))
+		require.NoError(t, queue.GetManager().FlushAll(ctx, flushTimeout))
 
 		// commits passed into SyncPushCommits may be passed into other notifiers, so checking that the struct wasn't
 		// mutated by truncate of messages, or truncation to match FeedMaxCommitNum (Commits[2])...
