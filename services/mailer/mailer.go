@@ -157,19 +157,20 @@ func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 }
 
 type ntlmAuth struct {
-	username, password, domain string
-	domainNeeded               bool
+	username, password string
 }
 
 // NtlmAuth SMTP AUTH NTLM Auth Handler
 func NtlmAuth(username, password string) smtp.Auth {
-	user, domain, domainNeeded := ntlmssp.GetDomain(username)
-	return &ntlmAuth{user, password, domain, domainNeeded}
+	return &ntlmAuth{username, password}
 }
 
 // Start starts SMTP NTLM Auth
 func (a *ntlmAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
-	negotiateMessage, err := ntlmssp.NewNegotiateMessage(a.domain, "")
+	// NewNegotiateMessage: Note that domain and workstation refer to the client machine, not the user that is
+	// authenticating. It is recommended to leave them empty unless you know which are their correct values.
+	// (https://pkg.go.dev/github.com/Azure/go-ntlmssp#NewNegotiateMessage)
+	negotiateMessage, err := ntlmssp.NewNegotiateMessage("", "")
 	return "NTLM", negotiateMessage, err
 }
 
@@ -179,8 +180,7 @@ func (a *ntlmAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 		if len(fromServer) == 0 {
 			return nil, errors.New("ntlm ChallengeMessage is empty")
 		}
-		authenticateMessage, err := ntlmssp.ProcessChallenge(fromServer, a.username, a.password, a.domainNeeded)
-		return authenticateMessage, err
+		return ntlmssp.NewAuthenticateMessage(fromServer, a.username, a.password, nil)
 	}
 	return nil, nil
 }
