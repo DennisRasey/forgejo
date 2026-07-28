@@ -53,7 +53,8 @@ func TestActionConcurrencyRunnerFiltering(t *testing.T) {
 		},
 	} {
 		t.Run(tc.runnerName, func(t *testing.T) {
-			doTest := func() {
+			doTest := func(t *testing.T) {
+				t.Helper()
 				e := db.GetEngine(t.Context())
 
 				runner := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunner{Name: tc.runnerName})
@@ -68,13 +69,15 @@ func TestActionConcurrencyRunnerFiltering(t *testing.T) {
 			}
 
 			t.Run("ConcurrencyGroupQueueEnabled", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
 				defer test.MockVariableValue(&setting.Actions.ConcurrencyGroupQueueEnabled, true)()
-				doTest()
+				doTest(t)
 			})
 
 			t.Run("ConcurrencyGroupQueueDisabled", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
 				defer test.MockVariableValue(&setting.Actions.ConcurrencyGroupQueueEnabled, false)()
-				doTest()
+				doTest(t)
 			})
 		})
 	}

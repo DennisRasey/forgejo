@@ -313,8 +313,8 @@ func GetAvailableJobsForRunner(e db.Engine, runner *ActionRunner) ([]*ActionRunJ
 	if runner.RepoID != 0 {
 		jobCond = builder.Eq{"repo_id": runner.RepoID}
 	} else if runner.OwnerID != 0 {
-		jobCond = builder.In("repo_id", builder.Select("`repository`.id").From("repository").
-			Where(builder.Eq{"`repository`.owner_id": runner.OwnerID}))
+		jobCond = builder.Exists(builder.Select("`repository`.id").From("repository").
+			Where(builder.Expr("`repository`.owner_id = ? AND repo_id = `repository`.id", runner.OwnerID)))
 	}
 
 	// Concurrency group checks for queuing one run behind the last run in the concurrency group are more
