@@ -15,4 +15,5 @@ type Repository struct {
 	OriginalURL   string `yaml:"original_url"`
 	DefaultBranch string
 	Website       string
+	AvatarURL     string
 }

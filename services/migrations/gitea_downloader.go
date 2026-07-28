@@ -162,6 +162,7 @@ func (g *GiteaDownloader) GetRepoInfo() (*base.Repository, error) {
 		OriginalURL:   repo.HTMLURL,
 		DefaultBranch: repo.DefaultBranch,
 		Website:       repo.Website,
+		AvatarURL:     repo.AvatarURL,
 	}, nil
 }
 

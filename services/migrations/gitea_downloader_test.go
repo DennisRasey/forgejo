@@ -37,7 +37,7 @@ func TestGiteaDownloadRepo(t *testing.T) {
 		gitea_sdk.SetContext(t.Context()),
 		gitea_sdk.SetHTTPClient(allowlist.NewMigrationHTTPClient()),
 	)
-	require.NoError(t, err, "Clould not create Client")
+	require.NoError(t, err, "Could not create Client")
 	downloader, err := NewGiteaDownloader(t.Context(), giteaClient, server.URL, "gitea/test_repo")
 	if downloader == nil {
 		t.Fatal("NewGitlabDownloader is nil")
@@ -55,6 +55,7 @@ func TestGiteaDownloadRepo(t *testing.T) {
 		OriginalURL:   server.URL + "/gitea/test_repo",
 		DefaultBranch: "master",
 		Website:       "https://codeberg.org/forgejo/forgejo/",
+		AvatarURL:     "",
 	}, repo)
 
 	topics, err := downloader.GetTopics()
@@ -460,4 +461,43 @@ func TestBreakConditions(t *testing.T) {
 	assert.True(t, downloader.isLastPage(commentsWithBug, bugResponse))
 	assert.False(t, downloader.isSinglePage(commentsFullList))
 	assert.False(t, downloader.isLastPage(commentsFullList, differentFullListResponse))
+}
+
+func TestGiteaDownloaderAvatarURL(t *testing.T) {
+	defer test.MockVariableValueWithReset(&setting.Migrations.AllowLocalNetworks, true, func() { require.NoError(t, allowlist.Init()) })()
+	GithubLimitRateRemaining = 3 // Wait at 3 remaining since we could have 3 CI in //
+
+	token := os.Getenv("GITEA_READ_TOKEN")
+	liveMode := token != ""
+
+	fixturePath := "./testdata/gitea/avatar"
+	server := unittest.NewMockWebServer(t, "https://code.forgejo.org", fixturePath, liveMode)
+	defer server.Close()
+
+	giteaClient, err := gitea_sdk.NewClient(
+		server.URL,
+		gitea_sdk.SetToken(token),
+		gitea_sdk.SetBasicAuth("", ""),
+		gitea_sdk.SetContext(t.Context()),
+		gitea_sdk.SetHTTPClient(allowlist.NewMigrationHTTPClient()),
+	)
+	require.NoError(t, err, "Could not create Client")
+
+	downloader, err := NewGiteaDownloader(t.Context(), giteaClient, server.URL, "birdgoose/forgejo-12921")
+	require.NoError(t, err, "Could not create Gitea Downloader")
+	require.NotNil(t, downloader, "Could not create Gitea Downloader")
+
+	repo, err := downloader.GetRepoInfo()
+	require.NoError(t, err)
+	require.NotNil(t, repo)
+
+	assertRepositoryEqual(t, &base.Repository{
+		Name:          "forgejo-12921",
+		Owner:         "birdgoose",
+		Description:   "An example repo for testing Forgejo migrations.",
+		CloneURL:      server.URL + "/birdgoose/forgejo-12921.git",
+		OriginalURL:   server.URL + "/birdgoose/forgejo-12921",
+		DefaultBranch: "main",
+		AvatarURL:     server.URL + "/repo-avatars/8b50ec8eccaf97b0a1bed6d9e7bd771173d69b213122e82c98d7d301e3fa60f0",
+	}, repo)
 }

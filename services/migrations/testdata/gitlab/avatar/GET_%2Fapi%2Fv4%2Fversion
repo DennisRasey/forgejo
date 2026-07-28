@@ -1,0 +1,20 @@
+Cache-Control: max-age=0, private, must-revalidate
+Cf-Cache-Status: BYPASS
+Content-Security-Policy: default-src 'none'
+Content-Type: application/json
+Etag: W/"82dbc30a6accb938bba83de7e19f5e13"
+Gitlab-Lb: haproxy-main-27-lb-gprd
+Gitlab-Sv: api-gke-us-east1-d
+Ratelimit-Limit: 2000
+Ratelimit-Name: throttle_authenticated_api
+Ratelimit-Observed: 1
+Ratelimit-Remaining: 1999
+Ratelimit-Reset: 1781238300
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000
+Vary: Origin, Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Runtime: 0.063952
+
+{"version":"19.1.0-pre","revision":"7bc13cae359","kas":{"enabled":true,"externalUrl":"wss://kas.gitlab.com","externalK8sProxyUrl":"https://kas.gitlab.com/k8s-proxy","version":"19.1.0-rc3+082ec0a6f7532d9b17e90ecd115e983ab48523e4"},"enterprise":true}

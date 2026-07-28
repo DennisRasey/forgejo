@@ -10,11 +10,14 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
+	"net/http"
 
 	_ "image/gif"  // for processing gif images
 	_ "image/jpeg" // for processing jpeg images
 
 	"forgejo.org/modules/avatar/identicon"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
 	"golang.org/x/image/draw"
@@ -154,4 +157,71 @@ func BestAvatarCachedSize(size int) int {
 		}
 	}
 	return 0
+}
+
+// FetchExternalImageData As defensively as possible, attempt to load an image from a presumed external and untrusted URL
+func FetchExternalImageData(externalURL string, client *http.Client) (*bytes.Reader, error) {
+	resp, err := client.Get(externalURL)
+	if err != nil {
+		log.Warn("error when fetching external image from %s: %v", externalURL, err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Warn("non-OK error code when fetching external image from %s: %s", externalURL, resp.Status)
+		return nil, errors.New("HTTP status was not 200")
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	// Support content types are in-sync with the allowed custom avatar file types
+	if contentType != "image/png" && contentType != "image/jpeg" && contentType != "image/gif" && contentType != "image/webp" {
+		log.Warn("fetching external image returned unsupported Content-Type which was ignored: %s", contentType)
+		return nil, errors.New("HTTP content type was not an image")
+	}
+
+	body := io.LimitReader(resp.Body, setting.Avatar.MaxFileSize)
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		log.Warn("error when fetching external image from %s: %w", externalURL, err)
+		return nil, err
+	}
+	if int64(len(bodyBytes)) == setting.Avatar.MaxFileSize {
+		log.Warn("while fetching external image response size hit MaxFileSize (%d) and was discarded from url %s", setting.Avatar.MaxFileSize, externalURL)
+		return nil, errors.New("HTTP response size was too large")
+	}
+
+	bodyBuffer := bytes.NewReader(bodyBytes)
+	imgCfg, imgType, err := image.DecodeConfig(bodyBuffer)
+	if err != nil {
+		log.Warn("error when decoding external image from %s: %w", externalURL, err)
+		return nil, err
+	}
+
+	// Verify that we have a match between actual data understood in the image body and the reported Content-Type
+	if (contentType == "image/png" && imgType != "png") ||
+		(contentType == "image/jpeg" && imgType != "jpeg") ||
+		(contentType == "image/gif" && imgType != "gif") ||
+		(contentType == "image/webp" && imgType != "webp") {
+		log.Warn("while fetching external image, mismatched image body (%s) and Content-Type (%s)", imgType, contentType)
+		return nil, errors.New("HTTP content type did not match content")
+	}
+
+	// do not process image which is too large, it would consume too much memory
+	if imgCfg.Width > setting.Avatar.MaxWidth {
+		log.Warn("while fetching external image, width %d exceeds Avatar.MaxWidth %d", imgCfg.Width, setting.Avatar.MaxWidth)
+		return nil, errors.New("image width is too large")
+	}
+	if imgCfg.Height > setting.Avatar.MaxHeight {
+		log.Warn("while fetching external image, height %d exceeds Avatar.MaxHeight %d", imgCfg.Height, setting.Avatar.MaxHeight)
+		return nil, errors.New("image height is too large")
+	}
+
+	_, err = bodyBuffer.Seek(0, io.SeekStart) // reset for actual decode
+	if err != nil {
+		log.Warn("error w/ bodyBuffer.Seek")
+		return nil, err
+	}
+
+	return bodyBuffer, nil
 }

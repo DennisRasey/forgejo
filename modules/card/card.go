@@ -4,11 +4,9 @@
 package card
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"image/color"
-	"io"
 	"math"
 	"net/http"
 	"strings"
@@ -19,6 +17,7 @@ import (
 	_ "image/jpeg" // for processing jpeg images
 	_ "image/png"  // for processing png images
 
+	"forgejo.org/modules/avatar"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/proxy"
 	"forgejo.org/modules/setting"
@@ -243,81 +242,22 @@ func fallbackImage() image.Image {
 	return img
 }
 
-// As defensively as possible, attempt to load an image from a presumed external and untrusted URL
 func (c *Card) fetchExternalImage(url string) (image.Image, bool) {
 	// Use a short timeout; in the event of any failure we'll be logging and returning a placeholder, but we don't want
 	// this rendering process to be slowed down
 	client := &http.Client{
-		Timeout: 1 * time.Second, // 1 second timeout
+		Timeout: 1 * time.Second,
 		Transport: &http.Transport{
 			Proxy: proxy.Proxy(),
 		},
 	}
 
-	// Go expects a absolute URL, so we must change a relative to an absolute one
+	// FetchExternalImageData expects a absolute URL, so we must change a relative to an absolute one
 	if !strings.Contains(url, "://") {
 		url = fmt.Sprintf("%s%s", setting.AppURL, strings.TrimPrefix(url, "/"))
 	}
-
-	resp, err := client.Get(url)
+	bodyBuffer, err := avatar.FetchExternalImageData(url, client)
 	if err != nil {
-		log.Warn("error when fetching external image from %s: %v", url, err)
-		return nil, false
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Warn("non-OK error code when fetching external image from %s: %s", url, resp.Status)
-		return nil, false
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	// Support content types are in-sync with the allowed custom avatar file types
-	if contentType != "image/png" && contentType != "image/jpeg" && contentType != "image/gif" && contentType != "image/webp" {
-		log.Warn("fetching external image returned unsupported Content-Type which was ignored: %s", contentType)
-		return nil, false
-	}
-
-	body := io.LimitReader(resp.Body, setting.Avatar.MaxFileSize)
-	bodyBytes, err := io.ReadAll(body)
-	if err != nil {
-		log.Warn("error when fetching external image from %s: %w", url, err)
-		return nil, false
-	}
-	if int64(len(bodyBytes)) == setting.Avatar.MaxFileSize {
-		log.Warn("while fetching external image response size hit MaxFileSize (%d) and was discarded from url %s", setting.Avatar.MaxFileSize, url)
-		return nil, false
-	}
-
-	bodyBuffer := bytes.NewReader(bodyBytes)
-	imgCfg, imgType, err := image.DecodeConfig(bodyBuffer)
-	if err != nil {
-		log.Warn("error when decoding external image from %s: %w", url, err)
-		return nil, false
-	}
-
-	// Verify that we have a match between actual data understood in the image body and the reported Content-Type
-	if (contentType == "image/png" && imgType != "png") ||
-		(contentType == "image/jpeg" && imgType != "jpeg") ||
-		(contentType == "image/gif" && imgType != "gif") ||
-		(contentType == "image/webp" && imgType != "webp") {
-		log.Warn("while fetching external image, mismatched image body (%s) and Content-Type (%s)", imgType, contentType)
-		return nil, false
-	}
-
-	// do not process image which is too large, it would consume too much memory
-	if imgCfg.Width > setting.Avatar.MaxWidth {
-		log.Warn("while fetching external image, width %d exceeds Avatar.MaxWidth %d", imgCfg.Width, setting.Avatar.MaxWidth)
-		return nil, false
-	}
-	if imgCfg.Height > setting.Avatar.MaxHeight {
-		log.Warn("while fetching external image, height %d exceeds Avatar.MaxHeight %d", imgCfg.Height, setting.Avatar.MaxHeight)
-		return nil, false
-	}
-
-	_, err = bodyBuffer.Seek(0, io.SeekStart) // reset for actual decode
-	if err != nil {
-		log.Warn("error w/ bodyBuffer.Seek")
 		return nil, false
 	}
 	img, _, err := image.Decode(bodyBuffer)

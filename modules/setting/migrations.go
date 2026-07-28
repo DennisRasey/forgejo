@@ -3,6 +3,8 @@
 
 package setting
 
+import "time"
+
 // Migrations settings
 var Migrations = struct {
 	MaxAttempts        int
@@ -12,6 +14,7 @@ var Migrations = struct {
 	AllowLocalNetworks bool
 	SkipTLSVerify      bool
 	AllowUnencrypted   bool
+	AvatarFetchTimeout time.Duration
 }{
 	MaxAttempts:  3,
 	RetryBackoff: 3,
@@ -27,4 +30,5 @@ func loadMigrationsFrom(rootCfg ConfigProvider) {
 	Migrations.AllowLocalNetworks = sec.Key("ALLOW_LOCALNETWORKS").MustBool(false)
 	Migrations.SkipTLSVerify = sec.Key("SKIP_TLS_VERIFY").MustBool(false)
 	Migrations.AllowUnencrypted = sec.Key("ALLOW_UNENCRYPTED").MustBool(false)
+	Migrations.AvatarFetchTimeout = sec.Key("AVATAR_FETCH_TIMEOUT").MustDuration(60 * time.Second)
 }

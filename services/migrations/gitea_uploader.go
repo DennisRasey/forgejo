@@ -19,6 +19,7 @@ import (
 	issues_model "forgejo.org/models/issues"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/avatar"
 	base_module "forgejo.org/modules/base"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/gitrepo"
@@ -142,6 +143,13 @@ func (g *GiteaLocalUploader) CreateRepo(repo *base.Repository, opts base.Migrate
 	g.gitRepo, err = gitrepo.OpenRepository(g.ctx, g.repo)
 	if err != nil {
 		return err
+	}
+
+	// attempt to migrate the repository avatar in a best-effort manner
+	if repo.AvatarURL != "" {
+		if err = g.migrateRepositoryAvatar(repo.AvatarURL); err != nil {
+			log.Warn("Migrating repo avatar failed: %v", err)
+		}
 	}
 
 	// detect object format from git repository and update to database
@@ -1033,4 +1041,20 @@ func (g *GiteaLocalUploader) remapExternalUser(source user_model.ExternalUserMig
 		g.userMap[source.GetExternalID()] = userid
 	}
 	return userid, nil
+}
+
+func (g *GiteaLocalUploader) migrateRepositoryAvatar(avatarURL string) error {
+	client := allowlist.NewMigrationHTTPClient()
+	client.Timeout = setting.Migrations.AvatarFetchTimeout
+	byteBuffer, err := avatar.FetchExternalImageData(avatarURL, client)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := io.ReadAll(byteBuffer)
+	if err != nil {
+		return err
+	}
+
+	return repo_service.UploadAvatar(g.ctx, g.repo, bytes)
 }

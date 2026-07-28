@@ -5,7 +5,13 @@
 package migrations
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
+	"image"
+	"image/png"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -22,8 +28,10 @@ import (
 	"forgejo.org/modules/log"
 	base "forgejo.org/modules/migration"
 	"forgejo.org/modules/optional"
+	"forgejo.org/modules/setting"
 	"forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
+	"forgejo.org/services/migrations/allowlist"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -208,6 +216,7 @@ func TestGiteaUploadRepo(t *testing.T) {
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: user.ID, Name: repoName})
 	assert.True(t, repo.HasWiki())
 	assert.Equal(t, repo_model.RepositoryReady, repo.Status)
+	assert.Empty(t, repo.Avatar)
 
 	milestones, err := db.Find[issues_model.Milestone](db.DefaultContext, issues_model.FindMilestoneOptions{
 		RepoID:   repo.ID,
@@ -655,6 +664,121 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			assert.True(t, logStopped)
 			if len(testCase.logFilter) > 0 {
 				assert.Equal(t, testCase.logFiltered, logFiltered, "for log message filters: %v", testCase.logFilter)
+			}
+		})
+	}
+}
+
+func TestGiteaUploaderWithAvatar(t *testing.T) {
+	defer test.MockVariableValueWithReset(&setting.Migrations.AllowLocalNetworks, true, func() { require.NoError(t, allowlist.Init()) })()
+	unittest.PrepareTestEnv(t)
+	defer test.MockVariableValue(&setting.Migrations.AvatarFetchTimeout, 1*time.Second)()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	fixturePath := "./testdata/github/full_download"
+	server := unittest.NewMockWebServer(t, "https://api.github.com", fixturePath, false)
+	defer server.Close()
+
+	blackPng, err := base64.URLEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var tooWideBuf bytes.Buffer
+	imgTooWide := image.NewGray(image.Rect(0, 0, 16001, 10))
+	err = png.Encode(&tooWideBuf, imgTooWide)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	imgTooWidePng := tooWideBuf.Bytes()
+
+	var tooTallBuf bytes.Buffer
+	imgTooTall := image.NewGray(image.Rect(0, 0, 10, 16002))
+	err = png.Encode(&tooTallBuf, imgTooTall)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	imgTooTallPng := tooTallBuf.Bytes()
+
+	imageServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/timeout":
+			// Simulate a timeout by taking a long time to respond
+			time.Sleep(8 * time.Second)
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(blackPng)
+		case "/not-found":
+			http.NotFound(w, r)
+		case "/image.png":
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(blackPng)
+		case "/weird-content":
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte("<html></html>"))
+		case "/giant-response":
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(make([]byte, 10485760))
+		case "/invalid.png":
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(make([]byte, 100))
+		case "/mismatched.jpg":
+			w.Header().Set("Content-Type", "image/jpeg")
+			w.Write(blackPng) // valid png, but wrong content-type
+		case "/too-wide.png":
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(imgTooWidePng)
+		case "/too-tall.png":
+			w.Header().Set("Content-Type", "image/png")
+			w.Write(imgTooTallPng)
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}))
+	defer imageServer.Close()
+
+	for index, testCase := range []struct {
+		name          string
+		avatarURL     string
+		expectSuccess bool
+	}{
+		{name: "avatar migration should succeed with valid URL", avatarURL: "/image.png", expectSuccess: true},
+		{name: "avatar migration should fail with wrong content", avatarURL: "/weird-content", expectSuccess: false},
+		{name: "avatar migration should fail with too many bytes", avatarURL: "/giant-response", expectSuccess: false},
+		{name: "avatar migration should fail with invalid URL", avatarURL: "/not-found", expectSuccess: false},
+		{name: "avatar migration should fail with invalid image", avatarURL: "/invalid.png", expectSuccess: false},
+		{name: "avatar migration should fail with header and content mismatch", avatarURL: "/mismatched.jpg", expectSuccess: false},
+		{name: "avatar migration should fail with timeout", avatarURL: "/timeout", expectSuccess: false},
+		{name: "avatar migration should fail when too wide", avatarURL: "/too-wide.png", expectSuccess: false},
+		{name: "avatar migration should fail when too tall", avatarURL: "/too-tall.png", expectSuccess: false},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			repoName := "test_repo_" + strconv.Itoa(index)
+			uploader := NewGiteaLocalUploader(t.Context(), user, user.Name, repoName)
+			defer uploader.Close()
+
+			// Mock Data
+			repoMock := &base.Repository{
+				Name:          repoName,
+				Owner:         "forgejo",
+				Description:   "Some mock repo",
+				CloneURL:      server.URL + "/forgejo/test_repo.git",
+				OriginalURL:   server.URL + "/forgejo/test_repo",
+				DefaultBranch: "master",
+				Website:       "https://codeberg.org/forgejo/forgejo/",
+				AvatarURL:     imageServer.URL + testCase.avatarURL,
+			}
+
+			// regardless of whether the avatar migration succeeds, the overall migration should succeed
+			require.NoError(t, uploader.CreateRepo(repoMock, MigrateOptions{}))
+
+			if testCase.expectSuccess {
+				assert.NotEmpty(t, uploader.repo.Avatar)
+			} else {
+				assert.Empty(t, uploader.repo.Avatar)
 			}
 		})
 	}

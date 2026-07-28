@@ -49,6 +49,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 		CloneURL:      server.URL + "/forgejo/test_repo.git",
 		OriginalURL:   server.URL + "/forgejo/test_repo",
 		DefaultBranch: "master",
+		AvatarURL:     "",
 	}, repo)
 
 	topics, err := downloader.GetTopics()
@@ -917,4 +918,33 @@ func TestGitlabConfidential(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, comments)
+}
+
+func TestGitlabDownloaderAvatarURL(t *testing.T) {
+	defer test.MockVariableValueWithReset(&setting.Migrations.AllowLocalNetworks, true, func() { require.NoError(t, allowlist.Init()) })()
+	GithubLimitRateRemaining = 3 // Wait at 3 remaining since we could have 3 CI in //
+
+	token := os.Getenv("GITLAB_READ_TOKEN")
+	liveMode := token != ""
+
+	fixturePath := "./testdata/gitlab/avatar"
+	server := unittest.NewMockWebServer(t, "https://gitlab.com", fixturePath, liveMode)
+	defer server.Close()
+
+	downloader, err := NewGitlabDownloader(t.Context(), server.URL, "forgejo/forgejo-12921", "", "", token)
+	require.NoError(t, err)
+	require.NotNil(t, downloader)
+
+	repo, err := downloader.GetRepoInfo()
+	require.NoError(t, err)
+
+	assertRepositoryEqual(t, &base.Repository{
+		Name:          "forgejo-12921",
+		Description:   "An example repo for testing Forgejo migrations.",
+		CloneURL:      server.URL + "/forgejo/forgejo-12921.git",
+		OriginalURL:   server.URL + "/forgejo/forgejo-12921",
+		DefaultBranch: "master",
+		AvatarURL:     server.URL + "/uploads/-/system/project/avatar/82996997/birb.jpg",
+		IsPrivate:     true,
+	}, repo)
 }

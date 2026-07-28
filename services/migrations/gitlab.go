@@ -210,6 +210,7 @@ func (g *GitlabDownloader) GetRepoInfo() (*base.Repository, error) {
 		OriginalURL:   gr.WebURL,
 		CloneURL:      gr.HTTPURLToRepo,
 		DefaultBranch: gr.DefaultBranch,
+		AvatarURL:     gr.AvatarURL,
 	}, nil
 }
 

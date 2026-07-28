@@ -1,0 +1,10 @@
+Alt-Svc: h3=":443"; ma=86400
+Cf-Cache-Status: DYNAMIC
+Content-Type: application/json; charset=UTF-8
+Server-Timing: cfCacheStatus;desc="DYNAMIC"
+Server-Timing: cfEdge;dur=11,cfOrigin;dur=628
+Strict-Transport-Security: max-age=15552000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+
+{"id":99330,"owner":{"id":126484,"username":"example","login":"example","full_name":"","email":"full.stick1536@foo.nz","avatar_url":"https://secure.gravatar.com/avatar/4468e916c63945b1907c28851dd7a678?d=identicon"},"name":"example-repo","full_name":"example/example-repo","description":"An example repo for Forgejo migration testing.","private":false,"fork":false,"parent":null,"empty":true,"mirror":false,"size":0,"html_url":"https://try.gogs.io/example/example-repo","ssh_url":"git@ssh.try.gogs.io:example/example-repo.git","clone_url":"https://try.gogs.io/example/example-repo.git","website":"","stars_count":0,"forks_count":0,"watchers_count":1,"open_issues_count":0,"default_branch":"main","created_at":"2026-06-02T10:43:34Z","updated_at":"2026-06-02T10:43:34Z","permissions":{"admin":true,"push":true,"pull":true}}

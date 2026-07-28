@@ -9,7 +9,11 @@ import (
 	"testing"
 	"time"
 
+	"forgejo.org/models/unittest"
 	base "forgejo.org/modules/migration"
+	"forgejo.org/modules/setting"
+	"forgejo.org/modules/test"
+	"forgejo.org/services/migrations/allowlist"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,6 +44,7 @@ func TestGogsDownloadRepo(t *testing.T) {
 		CloneURL:      "https://try.gogs.io/lunnytest/TESTREPO.git",
 		OriginalURL:   "https://try.gogs.io/lunnytest/TESTREPO",
 		DefaultBranch: "master",
+		AvatarURL:     "",
 	}, repo)
 
 	milestones, err := downloader.GetMilestones()
@@ -220,4 +225,31 @@ func TestGogsDownloaderFactory_New(t *testing.T) {
 			assert.Equal(t, tt.repoName, got.(*GogsDownloader).repoName)
 		})
 	}
+}
+
+func TestGogsDownloaderAvatarDownload(t *testing.T) {
+	defer test.MockVariableValueWithReset(&setting.Migrations.AllowLocalNetworks, true, func() { require.NoError(t, allowlist.Init()) })()
+	GithubLimitRateRemaining = 3 // Wait at 3 remaining since we could have 3 CI in //
+
+	token := os.Getenv("GOGS_READ_TOKEN")
+	liveMode := token != ""
+
+	fixturePath := "./testdata/gogs/avatar"
+	server := unittest.NewMockWebServer(t, "https://try.gogs.io", fixturePath, liveMode)
+	defer server.Close()
+
+	downloader := NewGogsDownloader(t.Context(), server.URL, "", "", token, "example", "example-repo")
+
+	repo, err := downloader.GetRepoInfo()
+	require.NoError(t, err)
+
+	assertRepositoryEqual(t, &base.Repository{
+		Name:          "example-repo",
+		Owner:         "example",
+		Description:   "An example repo for Forgejo migration testing.",
+		CloneURL:      server.URL + "/example/example-repo.git",
+		OriginalURL:   server.URL + "/example/example-repo",
+		DefaultBranch: "main",
+		AvatarURL:     server.URL + "/repo-avatars/99330",
+	}, repo)
 }
