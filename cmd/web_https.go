@@ -12,12 +12,9 @@ import (
 	"forgejo.org/modules/graceful"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
-
-	"github.com/klauspost/cpuid/v2"
 )
 
 var tlsVersionStringMap = map[string]uint16{
-	"":        tls.VersionTLS12, // Default to tls.VersionTLS12
 	"tlsv1.0": tls.VersionTLS10,
 	"tlsv1.1": tls.VersionTLS11,
 	"tlsv1.2": tls.VersionTLS12,
@@ -34,10 +31,13 @@ func toTLSVersion(version string) uint16 {
 }
 
 var curveStringMap = map[string]tls.CurveID{
-	"x25519": tls.X25519,
-	"p256":   tls.CurveP256,
-	"p384":   tls.CurveP384,
-	"p521":   tls.CurveP521,
+	"x25519":             tls.X25519,
+	"p256":               tls.CurveP256,
+	"p384":               tls.CurveP384,
+	"p521":               tls.CurveP521,
+	"x25519mlkem768":     tls.X25519MLKEM768,
+	"secp256r1mlkem768":  tls.SecP256r1MLKEM768,
+	"secp384r1mlkem1024": tls.SecP384r1MLKEM1024,
 }
 
 func toCurvePreferences(preferences []string) []tls.CurveID {
@@ -99,35 +99,6 @@ func toTLSCiphers(cipherStrings []string) []uint16 {
 	return ciphers
 }
 
-// defaultCiphers uses hardware support to check if AES is specifically
-// supported by the CPU.
-//
-// If AES is supported AES ciphers will be preferred over ChaCha based ciphers
-// (This code is directly inspired by the certmagic code.)
-func defaultCiphers() []uint16 {
-	if cpuid.CPU.Supports(cpuid.AESNI) {
-		return defaultCiphersAESfirst
-	}
-	return defaultCiphersChaChaFirst
-}
-
-var (
-	defaultCiphersAES = []uint16{
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	}
-
-	defaultCiphersChaCha = []uint16{
-		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-	}
-
-	defaultCiphersAESfirst    = append(defaultCiphersAES, defaultCiphersChaCha...)
-	defaultCiphersChaChaFirst = append(defaultCiphersChaCha, defaultCiphersAES...)
-)
-
 // runHTTPS listens on the provided network address and then calls
 // Serve to handle requests on incoming TLS connections.
 //
@@ -148,17 +119,10 @@ func runHTTPS(network, listenAddr, name, certFile, keyFile string, m http.Handle
 		tlsConfig.MaxVersion = version
 	}
 
-	// Set curve preferences
-	tlsConfig.CurvePreferences = []tls.CurveID{
-		tls.X25519,
-		tls.CurveP256,
-	}
 	if curves := toCurvePreferences(setting.SSLCurvePreferences); len(curves) > 0 {
 		tlsConfig.CurvePreferences = curves
 	}
 
-	// Set cipher suites
-	tlsConfig.CipherSuites = defaultCiphers()
 	if ciphers := toTLSCiphers(setting.SSLCipherSuites); len(ciphers) > 0 {
 		tlsConfig.CipherSuites = ciphers
 	}
