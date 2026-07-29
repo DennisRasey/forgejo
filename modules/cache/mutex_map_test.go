@@ -24,6 +24,31 @@ func TestMutexMap_BasicLockUnlock(t *testing.T) {
 	unlock2()
 }
 
+func TestMutexMap_BasicTryLockUnlock(t *testing.T) {
+	mm := &MutexMap{}
+
+	locked, unlock := mm.TryLock("test-key")
+	assert.True(t, locked)
+	unlock()
+
+	// Should be able to lock again
+	locked, unlock2 := mm.TryLock("test-key")
+	assert.True(t, locked)
+	unlock2()
+}
+
+func TestMutexMap_TryLock(t *testing.T) {
+	mm := &MutexMap{}
+
+	locked, unlock1 := mm.TryLock("test-key")
+	defer unlock1()
+	assert.True(t, locked)
+
+	locked, unlock2 := mm.TryLock("test-key")
+	defer unlock2()
+	assert.False(t, locked)
+}
+
 func TestMutexMap_ConcurrentSameKey(t *testing.T) {
 	mm := &MutexMap{}
 	var anotherLockActive atomic.Bool
@@ -85,6 +110,23 @@ func TestMutexMap_SimpleCleanup(t *testing.T) {
 	mm.mu.Unlock()
 
 	unlock1()
+
+	mm.mu.Lock()
+	assert.Empty(t, mm.mutexMap)
+	mm.mu.Unlock()
+}
+
+func TestMutexMap_TryLockCleanup(t *testing.T) {
+	mm := &MutexMap{}
+	_, unlock1 := mm.TryLock("test-key-1")
+	_, unlock2 := mm.TryLock("test-key-1")
+
+	mm.mu.Lock()
+	assert.Len(t, mm.mutexMap, 1)
+	mm.mu.Unlock()
+
+	unlock1()
+	unlock2()
 
 	mm.mu.Lock()
 	assert.Empty(t, mm.mutexMap)

@@ -141,6 +141,18 @@ func (r *mockRunner) registerAsEphemeralRepoRunner(t *testing.T, ownerName, repo
 	r.doRegisterEphemeral(t, runnerName, registrationToken.Token, labels)
 }
 
+func (r *mockRunner) fetchTaskOrError(t *testing.T, taskCapacity int64) (*runnerv1.Task, []*runnerv1.Task, error) {
+	resp, err := r.client.runnerServiceClient.FetchTask(t.Context(), connect.NewRequest(&runnerv1.FetchTaskRequest{
+		TasksVersion: r.lastTasksVersion,
+		TaskCapacity: &taskCapacity,
+	}))
+	if err != nil {
+		return nil, nil, err
+	}
+	r.lastTasksVersion = resp.Msg.TasksVersion
+	return resp.Msg.Task, resp.Msg.AdditionalTasks, nil
+}
+
 func (r *mockRunner) maybeFetchTask(t *testing.T) *runnerv1.Task {
 	resp, err := r.client.runnerServiceClient.FetchTask(t.Context(), connect.NewRequest(&runnerv1.FetchTaskRequest{
 		TasksVersion: r.lastTasksVersion,
