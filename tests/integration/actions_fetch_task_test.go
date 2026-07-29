@@ -6,17 +6,20 @@ package integration
 import (
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 
 	actions_model "forgejo.org/models/actions"
 	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/container"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
 
+	runnerv1 "code.forgejo.org/forgejo/actions-proto/runner/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -189,6 +192,101 @@ jobs:
 		task2 := runner.fetchTask(t)
 		require.NotNil(t, task2)
 		assert.NotEqual(t, task1.Id, task2.Id)
+	})
+}
+
+func TestActionFetchTask_IdempotentConcurrent(t *testing.T) {
+	if !setting.Database.Type.IsSQLite3() {
+		// mock repo runner only supported on SQLite testing
+		t.Skip()
+	}
+
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+		// create the repo
+		repo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-many-tasks",
+			[]unit_model.Type{unit_model.TypeActions}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation: "create",
+					TreePath:  ".forgejo/workflows/matrix.yml",
+					ContentReader: strings.NewReader(`
+on:
+  push:
+jobs:
+  job1:
+    strategy:
+      matrix:
+        d1: [a, b, c, d, e]
+        d2: [a, b, c, d, e]
+    runs-on: ubuntu-latest
+    steps:
+      - run: sleep 2
+`),
+				},
+			},
+		)
+		defer f()
+
+		runner := newMockRunner()
+		runner.registerAsRepoRunner(t, user2.Name, repo.Name, "mock-runner", []string{"ubuntu-latest"})
+
+		runner.setRequestKey("c6dacc80-dace-4cea-9aad-f0e266355d8e")
+
+		// If we make two simultaneous requests with the same runner request key, we should get either the error
+		// "request key is currently locked; retry soon", or, the same tasks from both requests.
+		concurrentCount := 15
+		type fetchResult struct {
+			index     int
+			task      *runnerv1.Task
+			addtTasks []*runnerv1.Task
+			err       error
+		}
+		fetchResults := make(chan fetchResult, concurrentCount)
+
+		var wg sync.WaitGroup
+		for i := range concurrentCount {
+			wg.Go(func() {
+				// Larger task capacity is used to make the successful call take longer, cause higher chance of problems if
+				// concurrency isn't handled correctly
+				task, addtTasks, err := runner.fetchTaskOrError(t, 10)
+				fetchResults <- fetchResult{index: i, task: task, addtTasks: addtTasks, err: err}
+			})
+		}
+
+		wg.Wait()
+		close(fetchResults)
+
+		var firstResponseTaskIDs container.Set[int64]
+		for res := range fetchResults {
+			t.Logf("res = %#v", res)
+			if res.task != nil {
+				// This response had tasks, so let's ensure they're always the same for every response.
+				taskIDs := container.Set[int64]{}
+				taskIDs.Add(res.task.GetId())
+				for _, extraTask := range res.addtTasks {
+					assert.True(t, taskIDs.Add(extraTask.GetId()))
+				}
+				if firstResponseTaskIDs == nil {
+					// first response with tasks -- record the IDs
+					firstResponseTaskIDs = taskIDs
+					assert.Len(t, taskIDs, 10)
+				} else {
+					// we've already found one response with tasks, so assert that they're all the same
+					d1 := firstResponseTaskIDs.Difference(taskIDs)
+					assert.Empty(t, d1, "first response taskIDs minus current response taskIDs should be empty")
+					d2 := taskIDs.Difference(firstResponseTaskIDs)
+					assert.Empty(t, d2, "current response taskIDs minus first response taskIDs should be empty")
+				}
+			} else if res.err != nil {
+				require.ErrorContains(t, res.err, "request key is currently locked")
+			} else {
+				assert.Fail(t, "unexpected condition - res.task = nil, res.err = nil")
+			}
+		}
+
+		assert.NotNil(t, firstResponseTaskIDs, "at least one response should return tasks")
 	})
 }
 
