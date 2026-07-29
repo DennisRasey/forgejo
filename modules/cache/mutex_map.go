@@ -22,8 +22,27 @@ type refcountMutex struct {
 	sync.Mutex
 }
 
-// Locks the given key, and returns a function that must be invoked to unlock the key.
+// Locks the given key, and returns a function that must be invoked to unlock the key and cleanup the mutex.
 func (m *MutexMap) Lock(key string) func() {
+	mutex := m.getOrCreateMutex(key)
+	mutex.Lock()
+	return m.makeUnlock(mutex, key)
+}
+
+// Attempts to lock the given key, and returns whether the key was locked, and a function that must be invoked to unlock
+// the key and cleanup the mutex.  The returned function must be invoked even if the lock acqusition result was false.
+func (m *MutexMap) TryLock(key string) (bool, func()) {
+	mutex := m.getOrCreateMutex(key)
+	lockAcquired := mutex.TryLock()
+	if !lockAcquired {
+		return false, func() {
+			m.releaseMutex(mutex, key)
+		}
+	}
+	return true, m.makeUnlock(mutex, key)
+}
+
+func (m *MutexMap) getOrCreateMutex(key string) *refcountMutex {
 	m.mu.Lock()
 	if m.mutexMap == nil {
 		m.mutexMap = make(map[string]*refcountMutex)
@@ -36,8 +55,10 @@ func (m *MutexMap) Lock(key string) func() {
 	mutex.refCount++
 	m.mu.Unlock()
 
-	mutex.Lock()
+	return mutex
+}
 
+func (m *MutexMap) makeUnlock(mutex *refcountMutex, key string) func() {
 	unlockPending := true
 
 	return func() {
@@ -46,15 +67,18 @@ func (m *MutexMap) Lock(key string) func() {
 			// to detect and panic so that this programming error can be found closest to the source.
 			panic("MutexMap unlock invoked twice")
 		}
-
 		unlockPending = false
 		mutex.Unlock()
 
-		m.mu.Lock()
-		mutex.refCount--
-		if mutex.refCount == 0 {
-			delete(m.mutexMap, key)
-		}
-		m.mu.Unlock()
+		m.releaseMutex(mutex, key)
 	}
+}
+
+func (m *MutexMap) releaseMutex(mutex *refcountMutex, key string) {
+	m.mu.Lock()
+	mutex.refCount--
+	if mutex.refCount == 0 {
+		delete(m.mutexMap, key)
+	}
+	m.mu.Unlock()
 }
