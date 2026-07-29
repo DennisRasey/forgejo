@@ -1381,7 +1381,7 @@ func handleOAuth2SignIn(ctx *context.Context, source *auth.Source, u *user_model
 		ctx.ServerError("UnmarshalDynGroupMappings", err)
 		return
 	}
-	dynGroupMaps := source_service.NewDynGroupMaps(dynGroupMappings)
+	dynGroupMaps := source_service.GetDynGroupMaps(source.ID, dynGroupMappings)
 
 	groups := getClaimedGroups(oauth2Source, &gothUser)
 	quotaGroups := getClaimedQuotaGroups(oauth2Source, &gothUser)

@@ -124,8 +124,17 @@ func NewDynGroupMaps(list []string) *DynGroupMaps {
 	for _, s := range list {
 		// replace placeholders with regex
 		s = strings.ToLower(s)
-		s = strings.Replace(s, "{org}", `(?<org>[\w-.]+)`, 1)
-		s = strings.Replace(s, "{team}", `(?<team>[\w-.]+)`, 1)
+		if strings.Count(s, "{org}") != 1 {
+			log.Error("group sync: invalid number of {org} placeholders in %s", s)
+			continue
+		}
+		if strings.Count(s, "{team}") != 1 {
+			log.Error("group sync: invalid number of {team} placeholders in %s", s)
+			continue
+		}
+		s = regexp.QuoteMeta(s)
+		s = strings.Replace(s, "\\{org\\}", `(?<org>[\w-.]+)`, 1)
+		s = strings.Replace(s, "\\{team\\}", `(?<team>[\w-.]+)`, 1)
 		s = fmt.Sprintf("^%s$", s)
 
 		// skip duplicates
@@ -210,6 +219,14 @@ func getMembershipsToRemoveNotAdded(
 	for _, org := range orgs {
 		for _, team := range teams {
 			if team.OrgID != org.ID {
+				continue
+			}
+			if team.IsOwnerTeam() && team.NumMembers == 1 {
+				// skip team if user is last member of owner
+				// team to avoid errors when actually removing
+				// team memberships later
+				log.Warn("group sync: skipping removal of user %s from owner team in org %s: user is last member",
+					user.Name, org.Name)
 				continue
 			}
 			// remove membership if it's not added via group team mapping
