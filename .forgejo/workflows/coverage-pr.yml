@@ -53,6 +53,6 @@ jobs:
           TEST_MINIO_ENDPOINT: minio:9000
           TEST_LDAP: 1
           TEST_REDIS_SERVER: cacher:6379
-      - uses: https://codeberg.org/clouds666/unkai@cd71541ba5a86dcf65d7e6727a577af6dfa51db1 # v0.2.3
+      - uses: https://codeberg.org/clouds666/unkai@cfa8307e76873400492ae96ce58f546e5f02310e # v0.2.4
         with:
           token: ${{ forgejo.TOKEN }}
