@@ -205,7 +205,7 @@ func (t *TemporaryUploadRepository) AddObjectToIndex(mode, objectHash, objectPat
 
 // WriteTree writes the current index as a tree to the object db and returns its hash
 func (t *TemporaryUploadRepository) WriteTree() (string, error) {
-	stdout, _, err := git.NewCommand(t.ctx, "write-tree").RunStdString(&git.RunOpts{Dir: t.basePath})
+	stdout, _, err := git.NewCommand(t.ctx, "-c", "core.hooksPath=/dev/null", "write-tree").RunStdString(&git.RunOpts{Dir: t.basePath})
 	if err != nil {
 		log.Error("Unable to write tree in temporary repo: %s(%s): Error: %v", t.repo.FullName(), t.basePath, err)
 		return "", fmt.Errorf("Unable to write-tree in temporary repo for: %s Error: %w", t.repo.FullName(), err)
@@ -235,7 +235,7 @@ func (t *TemporaryUploadRepository) CommitTreeWithDate(parent string, author, co
 	_, _ = messageBytes.WriteString(message)
 	_, _ = messageBytes.WriteString("\n")
 
-	cmdCommitTree := git.NewCommand(t.ctx, "commit-tree").AddDynamicArguments(treeHash)
+	cmdCommitTree := git.NewCommand(t.ctx, "-c", "core.hooksPath=/dev/null", "commit-tree").AddDynamicArguments(treeHash)
 	if parent != "" {
 		cmdCommitTree.AddOptionValues("-p", parent)
 	}
@@ -302,9 +302,10 @@ func (t *TemporaryUploadRepository) Push(doer *user_model.User, commitHash, bran
 	// Because calls hooks we need to pass in the environment
 	env := repo_module.PushingEnvironment(doer, t.repo)
 	if err := git.Push(t.ctx, t.basePath, git.PushOptions{
-		Remote: t.repo.RepoPath(),
-		Branch: strings.TrimSpace(commitHash) + ":" + git.BranchPrefix + strings.TrimSpace(branch),
-		Env:    env,
+		Remote:       t.repo.RepoPath(),
+		Branch:       strings.TrimSpace(commitHash) + ":" + git.BranchPrefix + strings.TrimSpace(branch),
+		Env:          env,
+		DisableHooks: true,
 	}); err != nil {
 		if git.IsErrPushOutOfDate(err) {
 			return err

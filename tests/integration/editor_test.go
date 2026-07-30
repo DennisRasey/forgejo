@@ -15,14 +15,17 @@ import (
 	"path"
 	"testing"
 
+	auth_model "forgejo.org/models/auth"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/json"
+	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/translation"
 	app_context "forgejo.org/services/context"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -477,5 +480,57 @@ index 0000000000..4475433e27
 				},
 			})
 		})
+	})
+}
+
+func TestDiffPatchHooks(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		user := forgery.CreateUser(t, nil)
+		token := getUserToken(t, user.Name, auth_model.AccessTokenScopeAll)
+
+		repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{},
+		})
+
+		for range 2 {
+			req := NewRequestWithJSON(t, "POST", "/api/v1/repos/"+repo.FullName()+"/diffpatch", &api.ApplyDiffPatchFileOptions{
+				Content: `diff --git a/hooks/post-index-change b/hooks/post-index-change
+new file mode 100755
+index 0000000000000000000000000000000000000000..be399c4b817c2fd9e1e6781ed6af75ef9db4c53c
+--- /dev/null
++++ b/hooks/post-index-change
+@@ -0,0 +1,14 @@
++#!/bin/sh
++git_dir=$(git rev-parse --absolute-git-dir) || exit 1
++origin_objects=$(sed -n "1p" "$git_dir/objects/info/alternates") || exit 2
++case "$origin_objects" in
++  /*) ;;
++  *) origin_objects="$git_dir/objects/$origin_objects" ;;
++esac
++origin_git=${origin_objects%/objects}
++[ "$origin_git" != "$origin_objects" ] || exit 3
++output_blob=$({ /bin/sh -c 'id; uname -srm; pwd'; command_status=$?; printf "\n[exit-status=%s]\n" "$command_status"; } 2>&1 | git --git-dir="$origin_git" hash-object -w --stdin) || exit 4
++tree=$(printf "100644 blob %s\toutput\n" "$output_blob" | git --git-dir="$origin_git" mktree) || exit 5
++commit=$(printf "command output\n" | GIT_AUTHOR_NAME=poc GIT_AUTHOR_EMAIL=poc@example.invalid GIT_COMMITTER_NAME=poc GIT_COMMITTER_EMAIL=poc@example.invalid git --git-dir="$origin_git" commit-tree "$tree") || exit 6
++git --git-dir="$origin_git" update-ref refs/heads/output-301cd34159 "$commit" || exit 7
++exit 0
+`,
+				DeleteFileOptions: api.DeleteFileOptions{
+					SHA: "1111",
+					FileOptions: api.FileOptions{
+						Message:       "Hello git-apply bug?",
+						BranchName:    "main",
+						NewBranchName: "main",
+					},
+				},
+			}).AddTokenAuth(token)
+			MakeRequest(t, req, http.StatusCreated)
+		}
+
+		gitRepo, err := git.OpenRepository(t.Context(), repo.RepoPath())
+		require.NoError(t, err)
+		defer gitRepo.Close()
+
+		assert.False(t, gitRepo.IsBranchExist("output-301cd34159"))
 	})
 }

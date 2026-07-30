@@ -147,7 +147,7 @@ func ApplyDiffPatch(ctx context.Context, repo *repo_model.Repository, doer *user
 	stdout := &strings.Builder{}
 	stderr := &strings.Builder{}
 
-	cmdApply := git.NewCommand(ctx, "apply", "--index", "--recount", "--cached", "--ignore-whitespace", "--whitespace=fix", "--binary", "-3")
+	cmdApply := git.NewCommand(ctx, "-c", "core.hooksPath=/dev/null", "apply", "--index", "--recount", "--cached", "--ignore-whitespace", "--whitespace=fix", "--binary", "-3")
 	if err := cmdApply.Run(&git.RunOpts{
 		Dir:    t.basePath,
 		Stdout: stdout,
