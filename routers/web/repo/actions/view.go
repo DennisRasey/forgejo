@@ -169,21 +169,21 @@ type ViewState struct {
 }
 
 type ViewRunInfo struct {
-	Link                 string        `json:"link"`
-	Title                string        `json:"title"`
-	TitleHTML            template.HTML `json:"titleHTML"`
-	Status               string        `json:"status"`
-	Description          string        `json:"description"`
-	CanCancel            bool          `json:"canCancel"`
-	CanApprove           bool          `json:"canApprove"` // the run needs an approval and the doer has permission to approve
-	CanRerun             bool          `json:"canRerun"`
-	CanDeleteArtifact    bool          `json:"canDeleteArtifact"`
-	CanDelete            bool          `json:"canDelete"`
-	Done                 bool          `json:"done"`
-	Jobs                 []*ViewJob    `json:"jobs"`
-	Commit               ViewCommit    `json:"commit"`
-	PreExecutionError    string        `json:"preExecutionError"`
-	PreExecutionWarnings []string      `json:"preExecutionWarnings"`
+	Link                 string          `json:"link"`
+	Title                string          `json:"title"`
+	TitleHTML            template.HTML   `json:"titleHTML"`
+	Status               string          `json:"status"`
+	Description          string          `json:"description"`
+	CanCancel            bool            `json:"canCancel"`
+	CanApprove           bool            `json:"canApprove"` // the run needs an approval and the doer has permission to approve
+	CanRerun             bool            `json:"canRerun"`
+	CanDeleteArtifact    bool            `json:"canDeleteArtifact"`
+	CanDelete            bool            `json:"canDelete"`
+	Done                 bool            `json:"done"`
+	Jobs                 []*ViewJob      `json:"jobs"`
+	Commit               ViewCommit      `json:"commit"`
+	PreExecutionError    template.HTML   `json:"preExecutionError"`
+	PreExecutionWarnings []template.HTML `json:"preExecutionWarnings"`
 }
 
 type ViewCurrentJob struct {
