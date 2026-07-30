@@ -4,6 +4,7 @@
 package actions
 
 import (
+	"html/template"
 	"testing"
 
 	"forgejo.org/modules/translation"
@@ -18,7 +19,7 @@ func TestTranslatePreExecutionError(t *testing.T) {
 	tests := []struct {
 		name     string
 		run      *ActionRun
-		expected string
+		expected template.HTML
 	}{
 		{
 			name:     "legacy",
@@ -29,6 +30,14 @@ func TestTranslatePreExecutionError(t *testing.T) {
 			name:     "no error",
 			run:      &ActionRun{},
 			expected: "",
+		},
+		{
+			name: "unexpected error",
+			run: &ActionRun{
+				PreExecutionErrorCode:    PreExecutionError(-10000),
+				PreExecutionErrorDetails: []any{"<img src=x onerror=alert(document.domain)>"},
+			},
+			expected: "unsupported error: code=-10000 details=[]interface {}{&#34;&lt;img src=x onerror=alert(document.domain)&gt;&#34;}",
 		},
 		{
 			name: "ErrorCodeEventDetectionError",
@@ -53,6 +62,15 @@ func TestTranslatePreExecutionError(t *testing.T) {
 				PreExecutionErrorDetails: []any{"blocked_job", "needs-1, needs-2"},
 			},
 			expected: "Unable to evaluate `strategy.matrix` of job blocked_job due to a `needs` expression that was invalid. It may reference a job that is not in it's 'needs' list (needs-1, needs-2), or an output that doesn't exist on one of those jobs.",
+		},
+		{
+			name: "ErrorCodePersistentIncompleteMatrixEncoding",
+			run: &ActionRun{
+				PreExecutionErrorCode: ErrorCodePersistentIncompleteMatrix,
+				// job IDs are arbitrary YAML strings, even though we don't often treat them this way:
+				PreExecutionErrorDetails: []any{"<img src=x onerror=alert(document.domain)>", "needs-1, needs-2"},
+			},
+			expected: "Unable to evaluate `strategy.matrix` of job &lt;img src=x onerror=alert(document.domain)&gt; due to a `needs` expression that was invalid. It may reference a job that is not in it's 'needs' list (needs-1, needs-2), or an output that doesn't exist on one of those jobs.",
 		},
 		{
 			name: "ErrorCodeIncompleteMatrixMissingOutput",

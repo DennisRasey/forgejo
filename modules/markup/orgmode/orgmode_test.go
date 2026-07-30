@@ -1,15 +1,20 @@
-// Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2017 The Gitea Authors. All rights
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package markup
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/markup"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/test"
 	"forgejo.org/modules/util"
 
 	"github.com/stretchr/testify/assert"
@@ -157,4 +162,27 @@ func HelloWorld() {
 </span><span class="w">	</span><span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="s">&#34;Hello World&#34;</span><span class="p">)</span><span class="w">
 </span><span class="p">}</span></code></pre>
 </div>`)
+}
+
+func TestRender_Includes(t *testing.T) {
+	defer test.MockVariableValue(&setting.AppURL, AppURL)()
+	defer test.MockVariableValue(&setting.AppSubURL, AppSubURL)()
+
+	fileName := filepath.Join(t.TempDir(), "includes.org")
+	require.NoError(t, os.WriteFile(fileName, []byte(`#+begin_src go
+// HelloWorld prints "Hello World"
+func HelloWorld() {
+	fmt.Println("Hello World")
+}
+#+end_src`), 0o644))
+
+	output, err := RenderString(&markup.RenderContext{
+		Ctx: t.Context(),
+	}, fmt.Sprintf(`#+INCLUDE: "%s" src org`, fileName))
+	require.NoError(t, err)
+	assert.Equal(t, `<div class="src src-org">
+<pre><code class="chroma language-org"></code></pre>
+</div>
+`,
+		output)
 }
