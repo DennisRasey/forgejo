@@ -189,3 +189,18 @@ func TestDbfsSeekWrite(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "111333", string(buf))
 }
+
+func TestDbfsAccessingNonExistentFileCausesError(t *testing.T) {
+	defer changeDefaultFileBlockSize(4)()
+
+	filename := "test.log"
+
+	f, err := OpenFile(db.DefaultContext, filename, os.O_RDWR|os.O_CREATE)
+	require.NoError(t, err)
+	defer f.Close()
+
+	require.NoError(t, Remove(db.DefaultContext, filename))
+
+	_, err = io.ReadAll(f)
+	assert.ErrorContains(t, err, "file does not exist")
+}

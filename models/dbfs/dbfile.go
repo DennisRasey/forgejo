@@ -332,6 +332,7 @@ func (f *file) size() (int64, error) {
 	return fileMeta.FileSize, nil
 }
 
+// findFileMetaByID returns DbfsMeta of the file with the given ID. Returns os.ErrNotExist if it does not exist.
 func findFileMetaByID(ctx context.Context, metaID int64) (*DbfsMeta, error) {
 	var fileMeta DbfsMeta
 	if ok, err := db.GetEngine(ctx).Where("id = ?", metaID).Get(&fileMeta); err != nil {
@@ -339,7 +340,7 @@ func findFileMetaByID(ctx context.Context, metaID int64) (*DbfsMeta, error) {
 	} else if ok {
 		return &fileMeta, nil
 	}
-	return nil, nil
+	return nil, os.ErrNotExist
 }
 
 func buildPath(path string) string {
