@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -1372,5 +1373,74 @@ jobs:
 				assert.Equal(t, runName, tc.fn(t, owner, repo).Title)
 			})
 		}
+	})
+}
+
+func TestActionsWorkflowsAreTriggeredForOriginalCommit(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		workflow := `
+on:
+  push:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo OK
+`
+
+		oldNotify := actions_service.Notify
+		defer func() {
+			actions_service.Notify = oldNotify
+		}()
+
+		// Test that workflow runs are triggered for the original commit. That means that if commit A is pushed,
+		// immediately followed by commit B while triggers for A are still running, that one run is triggered for A and
+		// one for B, not two for either A or B. That is simulated by collecting all notifications and dispatching them
+		// all at once after A and B have been pushed.
+		receivedInput := make([]*actions_service.NotifyInput, 0)
+		actions_service.Notify = func(ctx context.Context, input *actions_service.NotifyInput) error {
+			receivedInput = append(receivedInput, input)
+			return nil
+		}
+
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Files: forgery.MapFS{
+				".forgejo/workflows/workflow.yaml": forgery.MapFile(workflow),
+			},
+		})
+
+		opts := files_service.ChangeRepoFilesOptions{
+			Files: []*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      "README.md",
+					ContentReader: strings.NewReader("Hello world!"),
+				},
+			},
+			Message: "add workflow",
+		}
+		_, err := files_service.ChangeRepoFiles(t.Context(), repo, user2, &opts)
+		require.NoError(t, err)
+
+		// Verify that the expected notifications have been generated and queued.
+		assert.Len(t, receivedInput, 3)
+		assert.Equal(t, webhook_module.HookEventType("create"), receivedInput[0].Event)
+		assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[0].Ref)
+		assert.Empty(t, receivedInput[0].Commit)
+		assert.Equal(t, webhook_module.HookEventType("push"), receivedInput[1].Event)
+		assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[1].Ref)
+		assert.NotEmpty(t, receivedInput[1].Commit)
+		assert.Equal(t, webhook_module.HookEventType("push"), receivedInput[2].Event)
+		assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[2].Ref)
+		assert.NotEmpty(t, receivedInput[2].Commit)
+
+		// Dispatch the buffered inputs.
+		for _, input := range receivedInput {
+			require.NoError(t, oldNotify(t.Context(), input))
+		}
+
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{CommitSHA: receivedInput[1].Commit})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{CommitSHA: receivedInput[2].Commit})
 	})
 }
