@@ -1538,6 +1538,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 			content := tester.fileContent
 			content = strings.Replace(content, "Line 50\n", "", 1)
 			commit1 := tester.changeFile("file1.md", content)
+			t.Logf("pushed commit1, ID = %q", commit1)
 			tester.createPR()
 
 			comment := tester.commentOnPreviousFromFilesChanged("file1.md", 50)
@@ -1556,6 +1557,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 			// Add a second commit to the PR which removes "Line 1" - "Line 10".
 			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
 			commit2 := tester.changeFile("file1.md", content)
+			t.Logf("pushed commit2, ID = %q", commit2)
 
 			diff2 := []diffTableRow{
 				{rowType: RowDelCode, code: "Line 9"},
@@ -1654,6 +1656,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 			content := tester.fileContent
 			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
 			commit1 := tester.changeFile("file1.md", content)
+			t.Logf("pushed commit1, ID = %q", commit1)
 			tester.createPR()
 
 			// Place a comment on "Line 50" (removed side)
@@ -1673,7 +1676,8 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 
 			// Add a second commit to the PR which removes  "Line 1" - "Line 10".
 			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
-			tester.changeFile("file1.md", content)
+			commit2 := tester.changeFile("file1.md", content)
+			t.Logf("pushed commit2, ID = %q", commit2)
 
 			// Now amend commit2v1 with an additional change, causing a force push of the branch
 			tester.withBranchCheckout(func(repoPath string) {
@@ -2538,6 +2542,17 @@ func checkDiffTableRow(t *testing.T, tableRow *html.Node, rowAssertion diffTable
 func assertDiffTable(t *testing.T, doc *HTMLDoc, rowAssertions []diffTableRow, note string) {
 	require.NotEmpty(t, rowAssertions)
 
+	logCommitID := func() {
+		// Investigation for https://codeberg.org/forgejo/forgejo/issues/13275
+		//
+		// If we couldn't find the diff that we expected, find the hidden <input name="commit_id"> on the page (if
+		// possible) and log the commit ID that we're currently viewing, so that we can see if it is the correct commit
+		// ID.
+		commitIDInput := doc.Find("input[name=commit_id]")
+		uiCommitID, exists := commitIDInput.Attr("value")
+		t.Logf("input name=commit_id exists? %v, value = %q", exists, uiCommitID)
+	}
+
 	diffTable := doc.Find("table.chroma")
 	require.Equal(t, 1, diffTable.Length())
 
@@ -2562,7 +2577,8 @@ func assertDiffTable(t *testing.T, doc *HTMLDoc, rowAssertions []diffTableRow, n
 		for _, mm := range firstRowMismatches {
 			t.Logf("\t%s", mm)
 		}
-		require.Failf(t, "unable to find first row", "test %s: failed to find first row assertion", note)
+		logCommitID()
+		require.Failf(t, "unable to find first row", "test %s: failed to find first row assertion", note) // assert place
 	}
 
 	for idx, assertion := range rowAssertions {
@@ -2572,12 +2588,14 @@ func assertDiffTable(t *testing.T, doc *HTMLDoc, rowAssertions []diffTableRow, n
 
 		tableIdx := tableFirstRowIndex + idx
 		if tableIdx >= rows.Length() {
+			logCommitID()
 			require.Failf(t, "ran out of table rows", "test %s: row assertion at index %d couldn't be satisfied", note, idx)
 		}
 
 		tableRow := rows.Get(tableIdx)
 		check := checkDiffTableRow(t, tableRow, assertion)
 		if check != "" {
+			logCommitID()
 			assert.Failf(t, check, "test %s: row assertion at index %d couldn't be satisfied", note, idx)
 		}
 	}
