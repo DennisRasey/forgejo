@@ -83,7 +83,7 @@ func TestActionsNotifier_IssueCommentOnForkPullRequestEvent(t *testing.T) {
 			},
 		},
 	}
-	input := &notifyInput{
+	input := &NotifyInput{
 		Repo:        repo,
 		Doer:        doer,
 		Event:       webhook_module.HookEventIssueComment,
@@ -128,7 +128,7 @@ func testActionsNotifierPullRequestWithDoer(t *testing.T, repo *repo_model.Repos
 		Name: "pull_request",
 	}
 	detectedWorkflows := []*actions_module.DetectedWorkflow{dw}
-	input := &notifyInput{
+	input := &NotifyInput{
 		Repo:        repo,
 		Doer:        doer,
 		Event:       event,
