@@ -35,6 +35,7 @@ func (b *Group) Add(method auth.Method) {
 
 func (b *Group) Verify(req *http.Request, w http.ResponseWriter, sess auth.SessionStore) auth.MethodOutput {
 	var incorrectCredentials []error
+	var interactiveReauthenticationPossible bool
 
 	for _, m := range b.methods {
 		output := m.Verify(req, w, sess)
@@ -45,6 +46,7 @@ func (b *Group) Verify(req *http.Request, w http.ResponseWriter, sess auth.Sessi
 
 		case *auth.AuthenticationNotAttempted:
 			// Move on to the next supported authentication method.
+			interactiveReauthenticationPossible = interactiveReauthenticationPossible || v.InteractiveReauthenticationPossible
 			continue
 
 		case *auth.AuthenticationAttemptedIncorrectCredential:
@@ -62,5 +64,5 @@ func (b *Group) Verify(req *http.Request, w http.ResponseWriter, sess auth.Sessi
 		return &auth.AuthenticationAttemptedIncorrectCredential{Error: errors.Join(incorrectCredentials...)}
 	}
 
-	return &auth.AuthenticationNotAttempted{}
+	return &auth.AuthenticationNotAttempted{InteractiveReauthenticationPossible: interactiveReauthenticationPossible}
 }
