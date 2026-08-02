@@ -47,7 +47,13 @@ type AuthenticationSuccess struct {
 // Authentication method was not found to be applicable for the given request. For example, if a request did not contain
 // `Authorization: Basic ...`, then a basic authentication method would return AuthenticationNotAttempted to indicate
 // that this method didn't apply to the incoming request.
-type AuthenticationNotAttempted struct{}
+type AuthenticationNotAttempted struct {
+	// If true, indicates that although authentication was not attempted for this request, the request may be redirected
+	// to "/user/login" rather than "401 Unauthorized" in order to refresh a user's session.  This is typically only
+	// enabled when session-based authentication was used on a request, indicating an interactive session (not an API
+	// access).
+	InteractiveReauthenticationPossible bool
+}
 
 // Authentication method was attempted against the request and positively identified to be an incorrect credential. For
 // example, if a request contained `Authorization: Basic ...`, and the username and password that were provided were

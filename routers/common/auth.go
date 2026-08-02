@@ -12,12 +12,14 @@ import (
 func AuthShared(ctx *context.Base, sessionStore auth_service.SessionStore, authMethod auth_service.Method) auth_service.MethodOutput {
 	output := authMethod.Verify(ctx.Req, ctx.Resp, sessionStore)
 
+	var interactiveReauthenticationPossible bool
 	var ar auth_service.AuthenticationResult
 	switch v := output.(type) {
 	case *auth_service.AuthenticationSuccess:
 		ar = v.Result
 	case *auth_service.AuthenticationNotAttempted:
 		ar = &auth_service.UnauthenticatedResult{}
+		interactiveReauthenticationPossible = v.InteractiveReauthenticationPossible
 	}
 	if ar != nil {
 		doer := ar.User()
@@ -32,6 +34,7 @@ func AuthShared(ctx *context.Base, sessionStore auth_service.SessionStore, authM
 		} else {
 			ctx.Data["IsSigned"] = false
 			ctx.Data["SignedUserID"] = int64(0)
+			ctx.InteractiveReauthenticationPossible = interactiveReauthenticationPossible
 		}
 	}
 	return output

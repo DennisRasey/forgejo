@@ -26,19 +26,19 @@ type Session struct{}
 // Returns nil if there is no user uid stored in the session.
 func (s *Session) Verify(req *http.Request, w http.ResponseWriter, sess auth.SessionStore) auth.MethodOutput {
 	if sess == nil {
-		return &auth.AuthenticationNotAttempted{}
+		return &auth.AuthenticationNotAttempted{InteractiveReauthenticationPossible: true}
 	}
 
 	// Get user ID
 	uid := sess.Get("uid")
 	if uid == nil {
-		return &auth.AuthenticationNotAttempted{}
+		return &auth.AuthenticationNotAttempted{InteractiveReauthenticationPossible: true}
 	}
 	log.Trace("Session Authorization: Found user[%d]", uid)
 
 	id, ok := uid.(int64)
 	if !ok {
-		return &auth.AuthenticationNotAttempted{}
+		return &auth.AuthenticationNotAttempted{InteractiveReauthenticationPossible: true}
 	}
 
 	// Get user object
