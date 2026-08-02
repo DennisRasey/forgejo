@@ -6,6 +6,7 @@ package foreachref
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -61,6 +62,8 @@ func NewParser(r io.Reader, format Format) *Parser {
 	}
 }
 
+var ErrReachedEOF = errors.New("eof reached")
+
 // Next returns the next reference as a collection of key-value pairs. nil
 // denotes EOF but is also returned on errors. The Err method should always be
 // consulted after Next returning nil.
@@ -74,7 +77,9 @@ func (p *Parser) Next() map[string]string {
 	}
 	fields, err := p.parseRef(p.scanner.Text())
 	if err != nil {
-		p.err = err
+		if !errors.Is(err, ErrReachedEOF) {
+			p.err = err
+		}
 		return nil
 	}
 	return fields
@@ -91,7 +96,7 @@ func (p *Parser) Err() error {
 func (p *Parser) parseRef(refBlock string) (map[string]string, error) {
 	if refBlock == "" {
 		// must be at EOF
-		return nil, nil
+		return nil, ErrReachedEOF
 	}
 
 	fieldValues := make(map[string]string)

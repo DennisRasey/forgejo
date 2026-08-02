@@ -254,9 +254,6 @@ linters:
       - path: models/user/email_address.go
         linters:
           - nilnil
-      - path: models/user/list.go
-        linters:
-          - nilnil
       - path: models/user/user.go
         linters:
           - nilnil
@@ -264,9 +261,6 @@ linters:
         linters:
           - nilnil
       - path: modules/git/commit.go
-        linters:
-          - nilnil
-      - path: modules/git/foreachref/parser.go
         linters:
           - nilnil
       - path: modules/git/last_commit_cache.go
