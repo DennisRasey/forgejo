@@ -16,7 +16,6 @@ import (
 	auth_model "forgejo.org/models/auth"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
-	"forgejo.org/services/context"
 	"forgejo.org/tests"
 
 	"github.com/ProtonMail/go-crypto/openpgp"
@@ -448,7 +447,7 @@ dXUkxvcJioIZFa4JwemaMOHOtlhbaw7RaDdFwIwuNirLn4DU
 		}).AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusNotFound)
 
-		var apiError context.APIError
+		var apiError api.APIError
 		DecodeJSON(t, resp, &apiError)
 
 		var ok bool

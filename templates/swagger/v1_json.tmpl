@@ -23908,8 +23908,8 @@
           "x-go-name": "BlockOnRejectedReviews"
         },
         "branch_name": {
-          "description": "Deprecated: true",
           "type": "string",
+          "x-deprecated": true,
           "x-go-name": "BranchName"
         },
         "created_at": {
@@ -24627,8 +24627,8 @@
           "x-go-name": "BlockOnRejectedReviews"
         },
         "branch_name": {
-          "description": "Deprecated: true",
           "type": "string",
+          "x-deprecated": true,
           "x-go-name": "BranchName"
         },
         "dismiss_stale_approvals": {
@@ -24736,9 +24736,10 @@
           "x-go-name": "BranchName"
         },
         "old_branch_name": {
-          "description": "Deprecated: true\nName of the old branch to create from",
+          "description": "Name of the old branch to create from",
           "type": "string",
           "uniqueItems": true,
+          "x-deprecated": true,
           "x-go-name": "OldBranchName"
         },
         "old_ref_name": {
@@ -25580,10 +25581,12 @@
           "x-go-name": "Permission"
         },
         "units": {
+          "description": "\nDeprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.",
           "type": "array",
           "items": {
             "type": "string"
           },
+          "x-deprecated": true,
           "x-go-name": "Units",
           "example": [
             "repo.actions",
@@ -25624,8 +25627,7 @@
       "description": "CreateUserOption create user options",
       "type": "object",
       "required": [
-        "username",
-        "email"
+        "username"
       ],
       "properties": {
         "created_at": {
@@ -26084,9 +26086,6 @@
     "EditDeadlineOption": {
       "description": "EditDeadlineOption options for creating a deadline",
       "type": "object",
-      "required": [
-        "due_date"
-      ],
       "properties": {
         "due_date": {
           "type": "string",
@@ -26667,10 +26666,12 @@
           "x-go-name": "Permission"
         },
         "units": {
+          "description": "\nDeprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.",
           "type": "array",
           "items": {
             "type": "string"
           },
+          "x-deprecated": true,
           "x-go-name": "Units",
           "example": [
             "repo.code",
@@ -27426,6 +27427,7 @@
           "additionalProperties": {
             "type": "string"
           },
+          "x-deprecated": true,
           "x-go-name": "Config"
         },
         "content_type": {
@@ -30472,10 +30474,12 @@
           "x-go-name": "Permission"
         },
         "units": {
+          "description": "\nDeprecated: This variable should be replaced by UnitsMap and will be dropped in later versions.",
           "type": "array",
           "items": {
             "type": "string"
           },
+          "x-deprecated": true,
           "x-go-name": "Units",
           "example": [
             "repo.code",
@@ -31275,8 +31279,35 @@
   "responses": {
     "AccessToken": {
       "description": "AccessToken represents an API access token.",
-      "schema": {
-        "$ref": "#/definitions/AccessToken"
+      "headers": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repositories": {
+          "type": "array",
+          "items": {},
+          "description": "Indicates that an access token only has access to the specified repositories.  Will be null if the access token\nis not limited to a set of specified repositories."
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sha1": {
+          "type": "string"
+        },
+        "token_last_eight": {
+          "type": "string"
+        }
       }
     },
     "AccessTokenList": {
@@ -32003,24 +32034,42 @@
       }
     },
     "OAuth2Application": {
-      "description": "OAuth2Application",
-      "schema": {
-        "$ref": "#/definitions/OAuth2Application"
+      "description": "OAuth2Application represents an OAuth2 application.",
+      "headers": {
+        "client_id": {
+          "type": "string"
+        },
+        "client_secret": {
+          "type": "string"
+        },
+        "confidential_client": {
+          "type": "boolean"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "redirect_uris": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "OAuth2ApplicationList": {
-      "description": "OAuth2ApplicationList",
+      "description": "OAuth2ApplicationList represents a list of OAuth2 applications.",
       "schema": {
         "type": "array",
         "items": {
           "$ref": "#/definitions/OAuth2Application"
-        }
-      },
-      "headers": {
-        "X-Total-Count": {
-          "type": "integer",
-          "format": "int64",
-          "description": "The total number of OAuth2 applications"
         }
       }
     },
@@ -32686,7 +32735,10 @@
       }
     },
     "boolean": {
-      "description": "Boolean"
+      "description": "Boolean",
+      "schema": {
+        "type": "boolean"
+      }
     },
     "conflict": {
       "description": "APIConflict is a conflict empty response"

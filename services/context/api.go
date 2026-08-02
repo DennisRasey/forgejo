@@ -27,6 +27,7 @@ import (
 	"forgejo.org/modules/httpcache"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
+	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/web"
 	web_types "forgejo.org/modules/web/types"
 	apiv1_permissions "forgejo.org/routers/api/v1/permissions"
@@ -71,16 +72,11 @@ func init() {
 //            if we need to indicate some errors, we should introduce some new fields like ErrorCode or ErrorType
 // * url:     the swagger document URL
 
-type APIError struct {
-	Message string `json:"message"`
-	URL     string `json:"url"`
-}
-
 // APIError is error format response
 // swagger:response error
 type swaggerAPIError struct {
 	// in:body
-	Body APIError `json:"body"`
+	Body api.APIError `json:"body"`
 }
 
 type APIValidationError struct {
@@ -112,7 +108,7 @@ type swaggerAPIInvalidTopicsError struct {
 type APIEmpty struct{}
 
 type APIUnauthorizedError struct {
-	APIError
+	api.APIError
 }
 
 // APIUnauthorizedError is a unauthorized error response
@@ -123,7 +119,7 @@ type swaggerAPUnauthorizedError struct {
 }
 
 type APIForbiddenError struct {
-	APIError
+	api.APIError
 }
 
 // APIForbiddenError is a forbidden error response
@@ -159,7 +155,7 @@ type APIRedirect struct{}
 type APIString string
 
 type APIRepoArchivedError struct {
-	APIError
+	api.APIError
 }
 
 // APIRepoArchivedError is an error that is raised when an archived repo should be modified
@@ -170,7 +166,7 @@ type swaggerAPIRepoArchivedError struct {
 }
 
 type APIInternalServerError struct {
-	APIError
+	api.APIError
 }
 
 // APIInternalServerError is an error that is raised when an internal server error occurs
@@ -337,7 +333,7 @@ func (ctx *APIContext) Error(status int, title string, obj any) {
 		}
 	}
 
-	ctx.JSON(status, APIError{
+	ctx.JSON(status, api.APIError{
 		Message: message,
 		URL:     setting.API.SwaggerURL,
 	})
@@ -353,7 +349,7 @@ func (ctx *APIContext) InternalServerError(err error) {
 		message = err.Error()
 	}
 
-	ctx.JSON(http.StatusInternalServerError, APIError{
+	ctx.JSON(http.StatusInternalServerError, api.APIError{
 		Message: message,
 		URL:     setting.API.SwaggerURL,
 	})

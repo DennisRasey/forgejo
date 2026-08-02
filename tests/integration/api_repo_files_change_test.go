@@ -17,7 +17,6 @@ import (
 	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
-	"forgejo.org/services/context"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -215,11 +214,11 @@ func TestAPIChangeFiles(t *testing.T) {
 		req = NewRequestWithJSON(t, "POST", url, &changeFilesOptions).
 			AddTokenAuth(token2)
 		resp = MakeRequest(t, req, http.StatusConflict)
-		expectedAPIError := context.APIError{
+		expectedAPIError := api.APIError{
 			Message: "sha does not match [given: " + changeFilesOptions.Files[0].SHA + ", expected: " + correctSHA + "]",
 			URL:     setting.API.SwaggerURL,
 		}
-		var apiError context.APIError
+		var apiError api.APIError
 		DecodeJSON(t, resp, &apiError)
 		assert.Equal(t, expectedAPIError, apiError)
 
