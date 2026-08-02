@@ -64,7 +64,7 @@ func getMethod(ctx context.Context) string {
 	return "notify"
 }
 
-type notifyInput struct {
+type NotifyInput struct {
 	// required
 	Repo  *repo_model.Repository
 	Doer  *user_model.User
@@ -72,45 +72,51 @@ type notifyInput struct {
 
 	// optional
 	Ref         git.RefName
+	Commit      string
 	Payload     api.Payloader
 	PullRequest *issues_model.PullRequest
 }
 
-func newNotifyInput(repo *repo_model.Repository, doer *user_model.User, event webhook_module.HookEventType) *notifyInput {
-	return &notifyInput{
+func NewNotifyInput(repo *repo_model.Repository, doer *user_model.User, event webhook_module.HookEventType) *NotifyInput {
+	return &NotifyInput{
 		Repo:  repo,
 		Doer:  doer,
 		Event: event,
 	}
 }
 
-func newNotifyInputForSchedules(repo *repo_model.Repository) *notifyInput {
+func NewNotifyInputForSchedules(repo *repo_model.Repository) *NotifyInput {
 	// the doer here will be ignored as we force using action user when handling schedules
-	return newNotifyInput(repo, user_model.NewActionsUser(), webhook_module.HookEventSchedule)
+	return NewNotifyInput(repo, user_model.NewActionsUser(), webhook_module.HookEventSchedule)
 }
 
-func (input *notifyInput) WithDoer(doer *user_model.User) *notifyInput {
+func (input *NotifyInput) WithDoer(doer *user_model.User) *NotifyInput {
 	input.Doer = doer
 	return input
 }
 
-func (input *notifyInput) WithRef(ref string) *notifyInput {
+func (input *NotifyInput) WithRef(ref string) *NotifyInput {
 	input.Ref = git.RefName(ref)
 	return input
 }
 
-func (input *notifyInput) WithPayload(payload api.Payloader) *notifyInput {
+func (input *NotifyInput) WithCommit(commitID string) *NotifyInput {
+	input.Commit = commitID
+	return input
+}
+
+func (input *NotifyInput) WithPayload(payload api.Payloader) *NotifyInput {
 	input.Payload = payload
 	return input
 }
 
 // for cases like issue comments on PRs, which have the PR data, but don't run on its ref
-func (input *notifyInput) WithPullRequestData(pr *issues_model.PullRequest) *notifyInput {
+func (input *NotifyInput) WithPullRequestData(pr *issues_model.PullRequest) *NotifyInput {
 	input.PullRequest = pr
 	return input
 }
 
-func (input *notifyInput) WithPullRequest(pr *issues_model.PullRequest) *notifyInput {
+func (input *NotifyInput) WithPullRequest(pr *issues_model.PullRequest) *NotifyInput {
 	input.PullRequest = pr
 	if input.Ref == "" {
 		input.Ref = git.RefName(pr.GetGitRefName())
@@ -118,15 +124,15 @@ func (input *notifyInput) WithPullRequest(pr *issues_model.PullRequest) *notifyI
 	return input
 }
 
-func (input *notifyInput) Notify(ctx context.Context) {
+func (input *NotifyInput) Notify(ctx context.Context) {
 	log.Trace("execute %v for event %v whose doer is %v", getMethod(ctx), input.Event, input.Doer.Name)
 
-	if err := notify(ctx, input); err != nil {
+	if err := Notify(ctx, input); err != nil {
 		log.Error("an error occurred while executing the %s actions method: %v", getMethod(ctx), err)
 	}
 }
 
-func notify(ctx context.Context, input *notifyInput) error {
+var Notify = func(ctx context.Context, input *NotifyInput) error {
 	shouldDetectSchedules := input.Event == webhook_module.HookEventPush && input.Ref.BranchName() == input.Repo.DefaultBranch
 	if input.Doer.IsActions() {
 		// avoiding triggering cyclically, for example:
@@ -166,6 +172,9 @@ func notify(ctx context.Context, input *notifyInput) error {
 	}
 	defer gitRepo.Close()
 
+	logger.Debug("Triggering workflow detection and workflows for commit %q (input Git ref: %q)",
+		commit.ID, input.Ref)
+
 	if skipWorkflows(input, commit) {
 		return nil
 	}
@@ -189,7 +198,7 @@ func notify(ctx context.Context, input *notifyInput) error {
 	return handleWorkflows(ctx, detectedWorkflows, commit, input, ref.String())
 }
 
-func getGitRepoAndCommit(ctx context.Context, input *notifyInput) (*git.Repository, *git.Commit, git.RefName, error) {
+func getGitRepoAndCommit(ctx context.Context, input *NotifyInput) (*git.Repository, *git.Commit, git.RefName, error) {
 	gitRepo, err := gitrepo.OpenRepository(ctx, input.Repo)
 	if err != nil {
 		return nil, nil, "", fmt.Errorf("git.OpenRepository: %w", err)
@@ -208,10 +217,12 @@ func getGitRepoAndCommit(ctx context.Context, input *notifyInput) (*git.Reposito
 		ref = git.RefNameFromBranch(input.Repo.DefaultBranch)
 	}
 
-	commitID, err := gitRepo.GetRefCommitID(ref.String())
-	if err != nil {
-		gitRepo.Close()
-		return nil, nil, "", fmt.Errorf("gitRepo.GetRefCommitID: %w", err)
+	commitID := input.Commit
+	if commitID == "" {
+		if commitID, err = gitRepo.GetRefCommitID(ref.String()); err != nil {
+			gitRepo.Close()
+			return nil, nil, "", fmt.Errorf("gitRepo.GetRefCommitID: %w", err)
+		}
 	}
 
 	// Get the commit object for the ref
@@ -223,7 +234,7 @@ func getGitRepoAndCommit(ctx context.Context, input *notifyInput) (*git.Reposito
 	return gitRepo, commit, ref, nil
 }
 
-func detectWorkflows(ctx context.Context, input *notifyInput, gitRepo *git.Repository, commit *git.Commit, shouldDetectSchedules bool) ([]*actions_module.DetectedWorkflow, []*actions_module.DetectedWorkflow, error) {
+func detectWorkflows(ctx context.Context, input *NotifyInput, gitRepo *git.Repository, commit *git.Commit, shouldDetectSchedules bool) ([]*actions_module.DetectedWorkflow, []*actions_module.DetectedWorkflow, error) {
 	var detectedWorkflows []*actions_module.DetectedWorkflow
 	actionsConfig := input.Repo.MustGetUnit(ctx, unit_model.TypeActions).ActionsConfig()
 	workflows, schedules, err := actions_module.DetectWorkflows(gitRepo, commit,
@@ -316,7 +327,7 @@ func SkipPullRequestEvent(ctx context.Context, event webhook_module.HookEventTyp
 	return exist
 }
 
-func skipWorkflows(input *notifyInput, commit *git.Commit) bool {
+func skipWorkflows(input *NotifyInput, commit *git.Commit) bool {
 	// skip workflow runs with a configured skip-ci string in commit message or pr title if the event is push or pull_request(_sync)
 	// https://docs.github.com/en/actions/managing-workflow-runs/skipping-workflow-runs
 	skipWorkflowEvents := []webhook_module.HookEventType{
@@ -343,7 +354,7 @@ func handleWorkflows(
 	ctx context.Context,
 	detectedWorkflows []*actions_module.DetectedWorkflow,
 	commit *git.Commit,
-	input *notifyInput,
+	input *NotifyInput,
 	ref string,
 ) error {
 	if len(detectedWorkflows) == 0 {
@@ -480,8 +491,8 @@ func handleWorkflows(
 	return nil
 }
 
-func newNotifyInputFromIssue(issue *issues_model.Issue, event webhook_module.HookEventType) *notifyInput {
-	return newNotifyInput(issue.Repo, issue.Poster, event)
+func newNotifyInputFromIssue(issue *issues_model.Issue, event webhook_module.HookEventType) *NotifyInput {
+	return NewNotifyInput(issue.Repo, issue.Poster, event)
 }
 
 func notifyRelease(ctx context.Context, doer *user_model.User, rel *repo_model.Release, action api.HookReleaseAction) {
@@ -492,7 +503,7 @@ func notifyRelease(ctx context.Context, doer *user_model.User, rel *repo_model.R
 
 	permission, _ := access_model.GetUserRepoPermission(ctx, rel.Repo, doer)
 
-	newNotifyInput(rel.Repo, doer, webhook_module.HookEventRelease).
+	NewNotifyInput(rel.Repo, doer, webhook_module.HookEventRelease).
 		WithRef(git.RefNameFromTag(rel.TagName).String()).
 		WithPayload(&api.ReleasePayload{
 			Action:     action,
@@ -517,7 +528,7 @@ func notifyPackage(ctx context.Context, sender *user_model.User, pd *packages_mo
 		return
 	}
 
-	newNotifyInput(pd.Repository, sender, webhook_module.HookEventPackage).
+	NewNotifyInput(pd.Repository, sender, webhook_module.HookEventPackage).
 		WithPayload(&api.PackagePayload{
 			Action:  action,
 			Package: apiPackage,
@@ -530,7 +541,7 @@ func handleSchedules(
 	ctx context.Context,
 	detectedWorkflows []*actions_module.DetectedWorkflow,
 	commit *git.Commit,
-	input *notifyInput,
+	input *NotifyInput,
 ) error {
 	if input.Ref.BranchName() != input.Repo.DefaultBranch {
 		log.Trace("commit branch is not default branch in repo")
@@ -637,7 +648,7 @@ func DetectAndHandleSchedules(ctx context.Context, repo *repo_model.Repository) 
 	// We need a notifyInput to call handleSchedules
 	// if repo is a mirror, commit author maybe an external user,
 	// so we use action user as the Doer of the notifyInput
-	notifyInput := newNotifyInputForSchedules(repo).
+	notifyInput := NewNotifyInputForSchedules(repo).
 		WithRef(git.RefNameFromBranch(repo.DefaultBranch).String())
 
 	return handleSchedules(ctx, scheduleWorkflows, commit, notifyInput)
