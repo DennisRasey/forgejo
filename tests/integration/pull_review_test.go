@@ -1127,7 +1127,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(commitSHA, diff)
 			tester.assertCommitDiff(commitSHA, diff)
 		})
 
@@ -1165,7 +1165,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 26"},
 			}
-			tester.assertFilesChangedDiff(diff25)
+			tester.assertFilesChangedDiff(commit2, diff25)
 			tester.assertCommitDiff(commit1, diff25)
 
 			diff75 := []diffTableRow{
@@ -1174,7 +1174,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowAddCode, code: "Line 75--modified"},
 				{rowType: RowHasCode, code: "Line 76"},
 			}
-			tester.assertFilesChangedDiff(diff75)
+			tester.assertFilesChangedDiff(commit2, diff75)
 			tester.assertCommitDiff(commit2, diff75)
 		})
 
@@ -1209,7 +1209,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowAddCode, code: "Line 50--modified"},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(commitSHA, diff)
 			tester.assertCommitDiff(commitSHA, diff)
 		})
 
@@ -1246,7 +1246,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowDelCode, code: "Line 10"},
 				{rowType: RowHasCode, code: "Line 11"},
 			}
-			tester.assertFilesChangedDiff(diff2, "checking commit2 contents in full PR diff")
+			tester.assertFilesChangedDiff(commit2, diff2, "checking commit2 contents in full PR diff")
 			tester.assertCommitDiff(commit2, diff2, "checking commit2 contents in single-commit diff")
 
 			diff1 := []diffTableRow{
@@ -1256,7 +1256,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertFilesChangedDiff(commit2, diff1, "checking commit1 contents in full PR diff")
 			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
 		})
 
@@ -1302,7 +1302,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowDelCode, code: "Line 11"},
 				{rowType: RowHasCode, code: "Line 12"},
 			}
-			tester.assertFilesChangedDiff(diff2, "checking commit2 (force push) contents in full PR diff")
+			tester.assertFilesChangedDiff("", diff2, "checking commit2 (force push) contents in full PR diff")
 
 			diff1 := []diffTableRow{
 				{rowType: RowHasCode, code: "Line 49"},
@@ -1311,7 +1311,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertFilesChangedDiff("", diff1, "checking commit1 contents in full PR diff")
 			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
 
 			// This comment can still be located in the diff, so it should not be marked as Invalidated/Outdated --
@@ -1388,7 +1388,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowDelCode, code: "Line 10"},
 				{rowType: RowHasCode, code: "Line 11"},
 			}
-			tester.assertFilesChangedDiff(diff2, "checking commit2 (force push) contents in full PR diff")
+			tester.assertFilesChangedDiff("", diff2, "checking commit2 (force push) contents in full PR diff")
 
 			diff1 := []diffTableRow{
 				{rowType: RowHasCode, code: "Line 49"},
@@ -1397,7 +1397,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				// no comment visible anymore; force push has lost its place at this time
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertFilesChangedDiff("", diff1, "checking commit1 contents in full PR diff")
 
 			// After the force push, the comment we originally left should be marked as invalidated since it can no
 			// longer be resolved to a code location in the PR head. The above tests validate that it no longer appears
@@ -1447,7 +1447,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowAddCode, code: "Line 51--modified"},
 				{rowType: RowHasCode, code: "Line 52"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(commitSHA, diff)
 			tester.assertCommitDiff(commitSHA, diff)
 		})
 
@@ -1485,7 +1485,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff50)
+			tester.assertFilesChangedDiff(commit2, diff50)
 			tester.assertCommitDiff(commit1, diff50)
 
 			diff10 := []diffTableRow{
@@ -1493,7 +1493,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowDelCode, code: "Line 10"},
 				{rowType: RowHasCode, code: "Line 11"},
 			}
-			tester.assertFilesChangedDiff(diff10)
+			tester.assertFilesChangedDiff(commit2, diff10)
 			tester.assertCommitDiff(commit2, diff10)
 		})
 
@@ -1526,7 +1526,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff50)
+			tester.assertFilesChangedDiff(commit, diff50)
 			tester.assertCommitDiff(commit, diff50)
 		})
 
@@ -1564,7 +1564,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowDelCode, code: "Line 10"},
 				{rowType: RowHasCode, code: "Line 11"},
 			}
-			tester.assertFilesChangedDiff(diff2, "checking commit2 contents in full PR diff")
+			tester.assertFilesChangedDiff(commit2, diff2, "checking commit2 contents in full PR diff")
 			tester.assertCommitDiff(commit2, diff2, "checking commit2 contents in single-commit diff")
 
 			diff1 := []diffTableRow{
@@ -1573,7 +1573,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertFilesChangedDiff(commit2, diff1, "checking commit1 contents in full PR diff")
 			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
 
 			// This comment can still be located in the diff, so it should not be marked as Invalidated/Outdated --
@@ -1591,7 +1591,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
 			commit1 := tester.changeFile("file1.md", content)
 			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
-			tester.changeFile("file1.md", content)
+			commit2 := tester.changeFile("file1.md", content)
 			tester.createPR()
 
 			// While viewing the PR, the reviewer made a comment on the previous side on a line of code that wasn't
@@ -1615,7 +1615,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowAddCode, code: "Line 50--modified"},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff, "checking commit1 contents in full PR diff")
+			tester.assertFilesChangedDiff(commit2, diff, "checking commit1 contents in full PR diff")
 			tester.assertCommitDiff(commit1, diff, "checking commit1 contents in single-commit diff")
 		})
 
@@ -1644,7 +1644,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 2"},
 			}
-			tester.assertFilesChangedDiff(diff, "checking commit1 contents in full PR diff")
+			tester.assertFilesChangedDiff(commit1, diff, "checking commit1 contents in full PR diff")
 			tester.assertCommitDiff(commit1, diff, "checking commit1 contents in single-commit diff")
 		})
 
@@ -1692,7 +1692,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowDelCode, code: "Line 11"},
 				{rowType: RowHasCode, code: "Line 12"},
 			}
-			tester.assertFilesChangedDiff(diff2, "checking commit2 (force push) contents in full PR diff")
+			tester.assertFilesChangedDiff("", diff2, "checking commit2 (force push) contents in full PR diff")
 
 			diff1 := []diffTableRow{
 				{rowType: RowHasCode, code: "Line 49"},
@@ -1701,7 +1701,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowAddCode, code: "Line 50--modified"},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertFilesChangedDiff("", diff1, "checking commit1 contents in full PR diff")
 			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
 
 			// This comment can still be located in the diff, so it should not be marked as Invalidated/Outdated --
@@ -1751,7 +1751,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowDelCode, code: "Line 52"},
 				{rowType: RowHasCode, code: "Line 53"},
 			}
-			tester.assertFilesChangedDiff(diff, "checking commit2 (force push) contents in full PR diff")
+			tester.assertFilesChangedDiff("", diff, "checking commit2 (force push) contents in full PR diff")
 
 			// The comment on "Line 50" can't be valid anymore since that's not in the diff:
 			assert.EventuallyWithT(t, func(t *assert.CollectT) {
@@ -1818,7 +1818,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff3, "checking overall contents in full PR diff")
+			tester.assertFilesChangedDiff(commit3, diff3, "checking overall contents in full PR diff")
 		})
 
 		t.Run("multi-line comment stores ExtraLinesCount correctly", func(t *testing.T) {
@@ -1912,7 +1912,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 50"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(commit, diff)
 			tester.assertCommitDiff(commit, diff)
 		})
 
@@ -1945,7 +1945,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowAddCode, code: "Line 50--modified"},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(commit, diff)
 			tester.assertCommitDiff(commit, diff)
 		})
 
@@ -1972,7 +1972,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 50"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(commit, diff)
 			tester.assertCommitDiff(commit, diff)
 		})
 
@@ -2000,7 +2000,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowAddCode, code: "Line 49--modified"},
 				{rowType: RowHasCode, code: "Line 50"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(commit, diff)
 			tester.assertCommitDiff(commit, diff)
 		})
 
@@ -2125,7 +2125,7 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				{rowType: RowComment, commentID: comment.ID},
 				{rowType: RowHasCode, code: "Line 51"},
 			}
-			tester.assertFilesChangedDiff(diff)
+			tester.assertFilesChangedDiff(newSHA, diff)
 		})
 
 		// Helper: comment on lines 48-50 (anchor 48, middle 49, last 50, all modified by the PR), then a
@@ -2424,11 +2424,38 @@ func (tester *PullRequestCommentPlacementTester) withBranchCheckout(action func(
 	action(dstPath)
 }
 
-func (tester *PullRequestCommentPlacementTester) assertFilesChangedDiff(rowAssertions []diffTableRow, note ...string) {
+func (tester *PullRequestCommentPlacementTester) assertFilesChangedDiff(expectedCommitID string, rowAssertions []diffTableRow, note ...string) {
 	req := NewRequest(tester.t, "GET",
 		fmt.Sprintf("/%s/%s/pulls/%d/files", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
 	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
 	doc := NewHTMLParser(tester.t, resp.Body)
+
+	if expectedCommitID != "" {
+		commitIDInput := doc.Find("input[name=commit_id]")
+		if uiCommitID, exists := commitIDInput.Attr("value"); exists {
+			if uiCommitID != expectedCommitID {
+				// In attempting to understand the intermittent test failure in
+				// https://codeberg.org/forgejo/forgejo/issues/13275, it has been identified that the wrong commit can be
+				// fetched from `/%s/%s/pulls/%d/files` after a change is made to the PR.  Because the test failure is
+				// intermittent, perhaps it is a race condition of some kind?  When this situation is discovered here, retry
+				// fetching the page and see if the commit ID changes in order to validate that it is a race condition.
+				tester.t.Logf("expected commit ID on the files changed page to be %q, but it was actually %q", expectedCommitID, uiCommitID)
+
+				for i := range 10 {
+					time.Sleep(time.Second)
+					req := NewRequest(tester.t, "GET",
+						fmt.Sprintf("/%s/%s/pulls/%d/files", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
+					resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+					doc := NewHTMLParser(tester.t, resp.Body)
+					commitIDInput := doc.Find("input[name=commit_id]")
+					uiCommitID, exists := commitIDInput.Attr("value")
+					tester.t.Logf("after %d seconds, page is reloaded and commit ID is now %q (%v)", i, uiCommitID, exists)
+				}
+				tester.t.FailNow()
+			}
+		}
+	}
+
 	var testNote string
 	if len(note) == 0 {
 		testNote = "contents in single-commit diff"
