@@ -376,7 +376,7 @@ func (a *Action) GetRepoAbsoluteLink(ctx context.Context) string {
 	return setting.AppURL + url.PathEscape(a.GetRepoUserName(ctx)) + "/" + url.PathEscape(a.GetRepoName(ctx))
 }
 
-func (a *Action) loadComment(ctx context.Context) (err error) {
+func (a *Action) LoadComment(ctx context.Context) (err error) {
 	if a.CommentID == 0 || a.Comment != nil {
 		return nil
 	}
@@ -389,7 +389,7 @@ func (a *Action) GetCommentHTMLURL(ctx context.Context) string {
 	if a == nil {
 		return "#"
 	}
-	_ = a.loadComment(ctx)
+	_ = a.LoadComment(ctx)
 	if a.Comment != nil {
 		return a.Comment.HTMLURL(ctx)
 	}
@@ -409,7 +409,7 @@ func (a *Action) GetCommentLink(ctx context.Context) string {
 	if a == nil {
 		return "#"
 	}
-	_ = a.loadComment(ctx)
+	_ = a.LoadComment(ctx)
 	if a.Comment != nil {
 		return a.Comment.Link(ctx)
 	}

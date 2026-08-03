@@ -113,6 +113,9 @@ func ActionToForgeUserActivity(ctx context.Context, action *activities_model.Act
 	case activities_model.ActionPushTag:
 		return makeUserActivity("pushed %s at %s", renderTag(), renderRepo())
 	case activities_model.ActionCommentIssue:
+		if err := action.LoadComment(ctx); err != nil {
+			return fm.ForgeUserActivity{}, err
+		}
 		renderedComment, err := markdown.RenderString(&markup.RenderContext{
 			Ctx: ctx,
 		}, action.Comment.Content)
