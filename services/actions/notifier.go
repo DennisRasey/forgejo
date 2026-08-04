@@ -27,7 +27,7 @@ import (
 	"forgejo.org/services/convert"
 	notify_service "forgejo.org/services/notify"
 
-	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
+	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
 	"xorm.io/builder"
 )
 

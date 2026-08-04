@@ -16,7 +16,7 @@ import (
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/setting"
 
-	"code.forgejo.org/forgejo/runner/v12/act/model"
+	"code.forgejo.org/forgejo/runner/v13/act/model"
 )
 
 func generateGiteaContextForRun(run *actions_model.ActionRun) *model.GithubContext {

@@ -11,7 +11,7 @@ import (
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/timeutil"
 
-	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
+	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

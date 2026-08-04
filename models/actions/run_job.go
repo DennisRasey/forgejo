@@ -14,7 +14,7 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
-	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
+	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
 	gouuid "github.com/google/uuid"
 	"go.yaml.in/yaml/v3"
 	"xorm.io/builder"

@@ -19,7 +19,7 @@ import (
 	"forgejo.org/modules/queue"
 	"forgejo.org/modules/structs"
 
-	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
+	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
 	"xorm.io/builder"
 )
 

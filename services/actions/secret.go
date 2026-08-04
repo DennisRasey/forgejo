@@ -12,7 +12,7 @@ import (
 	secret_model "forgejo.org/models/secret"
 	actions_module "forgejo.org/modules/actions"
 
-	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
+	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
 )
 
 func getSecretsOfTask(ctx context.Context, task *actions_model.ActionTask) (map[string]string, error) {

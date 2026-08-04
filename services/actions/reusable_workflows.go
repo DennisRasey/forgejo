@@ -13,8 +13,8 @@ import (
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/gitrepo"
 
-	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
-	"code.forgejo.org/forgejo/runner/v12/act/model"
+	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
+	"code.forgejo.org/forgejo/runner/v13/act/model"
 )
 
 type CleanupFunc func()

@@ -18,7 +18,7 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
-	"code.forgejo.org/forgejo/runner/v12/act/jobparser"
+	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
 	"code.forgejo.org/xorm/xorm"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"xorm.io/builder"
