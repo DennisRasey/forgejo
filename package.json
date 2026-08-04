@@ -79,7 +79,7 @@
     "vue-loader": "17.4.2",
     "vue3-calendar-heatmap": "2.0.5",
     "webpack": "5.109.2",
-    "webpack-cli": "7.2.1",
+    "webpack-cli": "7.2.2",
     "wrap-ansi": "10.0.0"
   },
   "devDependencies": {
