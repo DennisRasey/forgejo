@@ -27,6 +27,7 @@
 }
 
 .sha.label .signature {
+  height: 100%;
   color: var(--color-text);
   background: var(--color-light);
   padding: 0.15rem 0.33rem;
@@ -37,6 +38,8 @@
 
 .sha.label .signature-author {
   display: flex;
+  height: 100%;
+  align-items: center;
   gap: 0.25rem;
 }
 
