@@ -2213,6 +2213,72 @@ func TestPullRequestCommentPlacement(t *testing.T) {
 				return strings.Replace(content, "Line 48--modified\n", "", 1)
 			}, true)
 		})
+
+		t.Run("reply to review on added change", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Place a comment on "Line 50--modified"
+			comment := tester.commentFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -48,3 +48,3 @@
+ Line 48
+ Line 49
+-Line 50
++Line 50--modified`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 50, comment.Line)
+			assert.Equal(t, commit1, comment.CommitSHA)
+			assert.False(t, comment.Invalidated)
+
+			// Reply to the comment on "Line 50--modified"
+			reply := tester.replyToComment()
+			assert.NotEqual(t, comment.ID, reply.ID)
+			assert.Equal(t, comment.DiffSide(), reply.DiffSide())
+			assert.Equal(t, comment.Line, reply.Line)
+			assert.Equal(t, comment.CommitSHA, reply.CommitSHA)
+		})
+
+		t.Run("reply to review on removed change", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Place a comment on removed "Line 50"
+			comment := tester.commentOnPreviousFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,7 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50`, comment.PatchQuoted)
+			assert.Equal(t, "previous", comment.DiffSide())
+			assert.EqualValues(t, -50, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA)
+			assert.False(t, comment.Invalidated)
+
+			// Reply to the comment on "-Line 50"
+			reply := tester.replyToComment()
+			assert.NotEqual(t, comment.ID, reply.ID)
+			assert.Equal(t, comment.DiffSide(), reply.DiffSide())
+			assert.Equal(t, comment.Line, reply.Line)
+			assert.Equal(t, comment.CommitSHA, reply.CommitSHA)
+		})
 	})
 }
 
@@ -2343,6 +2409,42 @@ func (tester *PullRequestCommentPlacementTester) multiLineCommentOnPreviousFromF
 		fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/new_comment", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
 	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
 	return tester.commentFromNewCommentFormWithExtraLinesCount(resp, filename, line, extraLinesCount, "previous")
+}
+
+func (tester *PullRequestCommentPlacementTester) replyToComment() *issues_model.Comment {
+	// Posts a reply to a comment from the "Conversation" tab of a pull request.  Requires that there is only one
+	// comment on the pull request currently, as it pulls values out of the "Reply" <form> without any support for
+	// having zero or 1+ forms rendered in the page.
+
+	req := NewRequest(tester.t, "GET",
+		fmt.Sprintf("/%s/%s/pulls/%d", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
+	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+	doc := NewHTMLParser(tester.t, resp.Body)
+
+	// Mostly the same as commentFromNewCommentFormWithExtraLinesCount, except almost all values come from the hidden
+	// form inputs on the PR page, and it's a reply rather than a single_review comment.
+	commentContent := uuid.New().String()
+	req = NewRequestWithValues(tester.t, "POST",
+		fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/comments", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index),
+		map[string]string{
+			"origin":            doc.GetInputValueByName("origin"),
+			"before_commit_id":  doc.GetInputValueByName("before_commit_id"),
+			"latest_commit_id":  doc.GetInputValueByName("latest_commit_id"),
+			"side":              doc.GetInputValueByName("side"),
+			"line":              doc.GetInputValueByName("line"),
+			"extra_lines_count": doc.GetInputValueByName("extra_lines_count"),
+			"path":              doc.GetInputValueByName("path"),
+			"diff_start_cid":    doc.GetInputValueByName("diff_start_cid"),
+			"diff_end_cid":      doc.GetInputValueByName("diff_end_cid"),
+			"diff_base_cid":     doc.GetInputValueByName("diff_base_cid"),
+			"reply":             doc.GetInputValueByName("reply"), // comment ID we're replying to
+			"content":           commentContent,
+			"single_review":     "true",
+		})
+	tester.session.MakeRequest(tester.t, req, http.StatusOK)
+
+	comment := unittest.AssertExistsAndLoadBean(tester.t, &issues_model.Comment{Content: commentContent})
+	return comment
 }
 
 func (tester *PullRequestCommentPlacementTester) getCommitParent(commitID string) string {
