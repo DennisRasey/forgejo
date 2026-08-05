@@ -833,3 +833,29 @@
   type: 5
   config: "{}"
   created_unix: 1764879302
+
+# This is for user2's 'lfs' repository, which we turned private to public
+# for 'TestViewRepoSize', which in turn made it "in-scope" for 'TestLinksLogin'.
+-
+  id: 121
+  repo_id: 54
+  type: 2
+  created_unix: 946684811
+
+-
+  id: 122
+  repo_id: 54
+  type: 3
+  created_unix: 946684812
+
+-
+  id: 123
+  repo_id: 54
+  type: 4
+  created_unix: 946684813
+
+-
+  id: 124
+  repo_id: 54
+  type: 5
+  created_unix: 946684814

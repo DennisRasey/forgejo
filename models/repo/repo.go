@@ -256,6 +256,11 @@ func (repo *Repository) SizeDetails() []SizeDetail {
 // SizeDetailsString returns a concatenation of all repository size details as a string
 func (repo *Repository) SizeDetailsString(locale translation.Locale) string {
 	sizeDetails := repo.SizeDetails()
+
+	if !setting.LFS.StartServer && sizeDetails[1].Size == 0 {
+		return locale.TrString("repo.size_format.no_lfs", sizeDetails[0].Name, locale.TrSize(sizeDetails[0].Size))
+	}
+
 	return locale.TrString("repo.size_format", sizeDetails[0].Name, locale.TrSize(sizeDetails[0].Size), sizeDetails[1].Name, locale.TrSize(sizeDetails[1].Size))
 }
 

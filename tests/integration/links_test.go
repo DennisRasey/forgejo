@@ -78,6 +78,19 @@ func TestNoLoginNotExist(t *testing.T) {
 	}
 }
 
+// For a given user account:
+//   - iterate over a set of hardcoded links that should be accessible to all.
+//   - iterate over the user's own public repositories, test whether a hardcoded
+//     set of pages ('repoLinks') is accessible for each of those repositories.
+//
+// Note: If a repository fixture that belongs to the given user
+// is turned 'public', it will be "included" and tested against in this test.
+// The links shown above will only not 404 if certain repository units are
+// present (e.g., TypeIssues, TypePullRequests, TypeReleases, TypeWiki,
+// see: models/unit/unit.go). In other words, this test won't inherently work
+// for every user as-is without some extra work.
+//
+// Those units must be enabled under models/fixtures/repo_unit.yml
 func testLinksAsUser(userName string, t *testing.T) {
 	links := []string{
 		"/explore/repos",

@@ -1387,3 +1387,52 @@ git remote add origin http://localhost/user2/%s.git
 git push -u origin main`, init, repo.Name), portMatcher.ReplaceAllString(htmlDoc.Find(".empty-repo-guide code").First().Text(), "localhost"))
 	})
 }
+
+func TestViewRepoSize(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	checkSizeSpanOfRepo := func(repo string, t *testing.T) string {
+		req := NewRequest(t, "GET", repo)
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		sizeSpan := htmlDoc.doc.Find("span[data-test-name='repo-size']")
+		require.NotNil(t, sizeSpan)
+
+		attr, exists := sizeSpan.Attr("data-tooltip-content")
+		assert.True(t, exists)
+		return attr
+	}
+
+	t.Run("LFS enabled", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.LFS.StartServer, true)()
+
+		t.Run("LFS-less repo", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			attr := checkSizeSpanOfRepo("/user2/repo1", t)
+			assert.Equal(t, "git: 6.3 KiB, lfs: 0 B", attr)
+		})
+
+		t.Run("LFS repo", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			attr := checkSizeSpanOfRepo("/user2/lfs", t)
+			assert.Equal(t, "git: 10 B, lfs: 1 B", attr)
+		})
+	})
+
+	t.Run("LFS disabled", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.LFS.StartServer, false)()
+
+		t.Run("LFS-less repo", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			attr := checkSizeSpanOfRepo("/user2/repo1", t)
+			assert.Equal(t, "git: 6.3 KiB", attr)
+		})
+
+		t.Run("LFS repo", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			attr := checkSizeSpanOfRepo("/user2/lfs", t)
+			assert.Equal(t, "git: 10 B, lfs: 1 B", attr)
+		})
+	})
+}

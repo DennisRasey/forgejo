@@ -23,6 +23,7 @@
   is_template: false
   template_id: 0
   size: 6422
+  git_size: 6422
   is_fsck_enabled: true
   close_issues_via_commit_in_any_branch: false
   created_unix: 1731254961
@@ -1478,8 +1479,11 @@
   default_branch: master
   is_empty: false
   is_archived: false
-  is_private: true
+  is_private: false
   status: 0
+  size: 11
+  git_size: 10
+  lfs_size: 1 # discreet way of not having to touch the e2e storage quota tests
   topics: '[]'
 
 -

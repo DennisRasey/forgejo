@@ -978,6 +978,7 @@
 	"editor.toggle_case": "Toggle case sensitivity",
 	"editor.toggle_regex": "Toggle using regular expressions",
 	"editor.toggle_whole_word": "Toggle matching whole words",
+	"repo.size_format.no_lfs": "%[1]s: %[2]s",
 	"repo.watching": "Watching",
 	"repo.watch.issues": "Issues",
 	"repo.watch.pull_requests": "Pull requests",
