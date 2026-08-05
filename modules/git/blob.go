@@ -25,7 +25,7 @@ type Blob struct {
 	repo    *Repository
 }
 
-func (b *Blob) newReader() (*bufio.Reader, int64, func(), error) {
+func (b *Blob) newReader() (*bufio.Reader, int64, func(error), error) {
 	wr, rd, cancel, err := b.repo.CatFileBatch(b.repo.Ctx)
 	if err != nil {
 		return nil, 0, nil, err
@@ -33,12 +33,12 @@ func (b *Blob) newReader() (*bufio.Reader, int64, func(), error) {
 
 	_, err = wr.Write([]byte(b.ID.String() + "\n"))
 	if err != nil {
-		cancel()
+		cancel(err)
 		return nil, 0, nil, err
 	}
 	_, _, size, err := ReadBatchLine(rd)
 	if err != nil {
-		cancel()
+		cancel(err)
 		return nil, 0, nil, err
 	}
 	b.gotSize = true
@@ -52,25 +52,22 @@ func (b *Blob) Size() int64 {
 		return b.size
 	}
 
-	wr, rd, cancel, err := b.repo.CatFileBatchCheck(b.repo.Ctx)
-	if err != nil {
-		log.Debug("error whilst reading size for %s in %s. Error: %v", b.ID.String(), b.repo.Path, err)
-		return 0
-	}
-	defer cancel()
-	_, err = wr.Write([]byte(b.ID.String() + "\n"))
-	if err != nil {
-		log.Debug("error whilst reading size for %s in %s. Error: %v", b.ID.String(), b.repo.Path, err)
-		return 0
-	}
-	_, _, b.size, err = ReadBatchLine(rd)
-	if err != nil {
+	if err := b.repo.WithCatFileBatchCheck(b.repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		_, err := wr.Write([]byte(b.ID.String() + "\n"))
+		if err != nil {
+			return nil
+		}
+		_, _, b.size, err = ReadBatchLine(rd)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		log.Debug("error whilst reading size for %s in %s. Error: %v", b.ID.String(), b.repo.Path, err)
 		return 0
 	}
 
 	b.gotSize = true
-
 	return b.size
 }
 
@@ -85,7 +82,7 @@ func (b *Blob) DataAsync() (io.ReadCloser, error) {
 	if size < 4096 {
 		buf := make([]byte, size)
 		_, err := io.ReadFull(rd, buf)
-		defer cancel()
+		defer func() { cancel(err) }()
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +101,7 @@ type blobReader struct {
 	rd                *bufio.Reader
 	n                 int64 // number of bytes to read
 	additionalDiscard int64 // additional number of bytes to discard
-	cancel            func()
+	cancel            func(error)
 }
 
 func (b *blobReader) Read(p []byte) (n int, err error) {
@@ -125,13 +122,13 @@ func (b *blobReader) Close() error {
 		return nil
 	}
 
-	defer b.cancel()
-
 	// discard the unread bytes, the truncated bytes and the trailing newline
 	if err := DiscardFull(b.rd, b.n+b.additionalDiscard+1); err != nil {
+		b.cancel(err)
 		return err
 	}
 
+	b.cancel(nil)
 	b.rd = nil
 
 	return nil

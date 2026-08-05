@@ -4,6 +4,7 @@
 package git
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -125,49 +126,49 @@ func GetLastCommitForPaths(ctx context.Context, commit *Commit, treePath string,
 		return nil, err
 	}
 
-	batchStdinWriter, batchReader, cancel, err := commit.repo.CatFileBatch(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-
-	commitsMap := map[string]*Commit{}
-	commitsMap[commit.ID.String()] = commit
-
 	commitCommits := map[string]*Commit{}
-	for path, commitID := range revs {
-		c, ok := commitsMap[commitID]
-		if ok {
-			commitCommits[path] = c
-			continue
-		}
+	if err := commit.repo.WithCatFileBatch(ctx, func(batchStdinWriter WriteCloserError, batchReader *bufio.Reader) error {
+		commitsMap := map[string]*Commit{}
+		commitsMap[commit.ID.String()] = commit
 
-		if len(commitID) == 0 {
-			continue
-		}
-
-		_, err := batchStdinWriter.Write([]byte(commitID + "\n"))
-		if err != nil {
-			return nil, err
-		}
-		_, typ, size, err := ReadBatchLine(batchReader)
-		if err != nil {
-			return nil, err
-		}
-		if typ != "commit" {
-			if err := DiscardFull(batchReader, size+1); err != nil {
-				return nil, err
+		for path, commitID := range revs {
+			c, ok := commitsMap[commitID]
+			if ok {
+				commitCommits[path] = c
+				continue
 			}
-			return nil, fmt.Errorf("unexpected type: %s for commit id: %s", typ, commitID)
+
+			if len(commitID) == 0 {
+				continue
+			}
+
+			_, err = batchStdinWriter.Write([]byte(commitID + "\n"))
+			if err != nil {
+				return err
+			}
+			_, typ, size, err := ReadBatchLine(batchReader)
+			if err != nil {
+				return err
+			}
+			if typ != "commit" {
+				if err := DiscardFull(batchReader, size+1); err != nil {
+					return err
+				}
+				err := fmt.Errorf("unexpected type: %s for commit id: %s", typ, commitID)
+				return err
+			}
+			c, err = CommitFromReader(commit.repo, MustIDFromString(commitID), io.LimitReader(batchReader, size))
+			if err != nil {
+				return err
+			}
+			if _, err := batchReader.Discard(1); err != nil {
+				return err
+			}
+			commitCommits[path] = c
 		}
-		c, err = CommitFromReader(commit.repo, MustIDFromString(commitID), io.LimitReader(batchReader, size))
-		if err != nil {
-			return nil, err
-		}
-		if _, err := batchReader.Discard(1); err != nil {
-			return nil, err
-		}
-		commitCommits[path] = c
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return commitCommits, nil

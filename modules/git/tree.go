@@ -5,6 +5,7 @@
 package git
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"strings"
@@ -41,40 +42,46 @@ func (t *Tree) ListEntries() (Entries, error) {
 	}
 
 	if t.repo != nil {
-		wr, rd, cancel, err := t.repo.CatFileBatch(t.repo.Ctx)
-		if err != nil {
-			return nil, err
-		}
-		defer cancel()
-
-		_, _ = wr.Write([]byte(t.ID.String() + "\n"))
-		_, typ, sz, err := ReadBatchLine(rd)
-		if err != nil {
-			return nil, err
-		}
-		if typ == "commit" {
-			treeID, err := ReadTreeID(rd, sz)
-			if err != nil && err != io.EOF {
-				return nil, err
+		var entries Entries
+		if err := t.repo.WithCatFileBatch(t.repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+			if _, err := wr.Write([]byte(t.ID.String() + "\n")); err != nil {
+				return err
 			}
-			_, _ = wr.Write([]byte(treeID + "\n"))
-			_, typ, sz, err = ReadBatchLine(rd)
+			_, typ, sz, err := ReadBatchLine(rd)
 			if err != nil {
-				return nil, err
+				return err
 			}
-		}
-		if typ == "tree" {
-			t.entries, err = catBatchParseTreeEntries(t.ID.Type(), t, rd, sz)
-			if err != nil {
-				return nil, err
+			if typ == "commit" {
+				treeID, err := ReadTreeID(rd, sz)
+				if err != nil && err != io.EOF {
+					return err
+				}
+				if _, err := wr.Write([]byte(treeID + "\n")); err != nil {
+					return err
+				}
+				_, typ, sz, err = ReadBatchLine(rd)
+				if err != nil {
+					return err
+				}
 			}
-			t.entriesParsed = true
-			return t.entries, nil
+			if typ == "tree" {
+				t.entries, err = catBatchParseTreeEntries(t.ID.Type(), t, rd, sz)
+				if err != nil {
+					return err
+				}
+				t.entriesParsed = true
+				entries = t.entries
+				return nil
+			}
+
+			// Not a tree just use ls-tree instead
+			return DiscardFull(rd, sz+1)
+		}); err != nil {
+			return nil, err
 		}
 
-		// Not a tree just use ls-tree instead
-		if err := DiscardFull(rd, sz+1); err != nil {
-			return nil, err
+		if t.entriesParsed {
+			return entries, nil
 		}
 	}
 

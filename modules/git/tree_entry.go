@@ -5,6 +5,7 @@
 package git
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"sort"
@@ -44,19 +45,14 @@ func (te *TreeEntry) Size() int64 {
 		return te.size
 	}
 
-	wr, rd, cancel, err := te.ptree.repo.CatFileBatchCheck(te.ptree.repo.Ctx)
-	if err != nil {
-		log.Debug("error whilst reading size for %s in %s. Error: %v", te.ID.String(), te.ptree.repo.Path, err)
-		return 0
-	}
-	defer cancel()
-	_, err = wr.Write([]byte(te.ID.String() + "\n"))
-	if err != nil {
-		log.Debug("error whilst reading size for %s in %s. Error: %v", te.ID.String(), te.ptree.repo.Path, err)
-		return 0
-	}
-	_, _, te.size, err = ReadBatchLine(rd)
-	if err != nil {
+	if err := te.ptree.repo.WithCatFileBatchCheck(te.ptree.repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		_, err := wr.Write([]byte(te.ID.String() + "\n"))
+		if err != nil {
+			return err
+		}
+		_, _, te.size, err = ReadBatchLine(rd)
+		return err
+	}); err != nil {
 		log.Debug("error whilst reading size for %s in %s. Error: %v", te.ID.String(), te.ptree.repo.Path, err)
 		return 0
 	}

@@ -5,6 +5,7 @@
 package git
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"os"
@@ -68,68 +69,72 @@ func (repo *Repository) CommitTree(author, committer *Signature, tree *Tree, opt
 }
 
 func (repo *Repository) getTree(id ObjectID) (*Tree, error) {
-	wr, rd, cancel, err := repo.CatFileBatch(repo.Ctx)
-	if err != nil {
+	var tree *Tree
+	if err := repo.WithCatFileBatch(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		if _, err := wr.Write([]byte(id.String() + "\n")); err != nil {
+			return err
+		}
+
+		// ignore the SHA
+		_, typ, size, err := ReadBatchLine(rd)
+		if err != nil {
+			return err
+		}
+
+		switch typ {
+		case "tag":
+			resolvedID := id
+			data, err := io.ReadAll(io.LimitReader(rd, size))
+			if err != nil {
+				return err
+			}
+			tag, err := parseTagData(id.Type(), data)
+			if err != nil {
+				return err
+			}
+			commit, err := tag.Commit(repo)
+			if err != nil {
+				return err
+			}
+			commit.ResolvedID = resolvedID
+			tree = &commit.Tree
+			return nil
+		case "commit":
+			commit, err := CommitFromReader(repo, id, io.LimitReader(rd, size))
+			if err != nil {
+				return err
+			}
+			if _, err := rd.Discard(1); err != nil {
+				return err
+			}
+			commit.ResolvedID = commit.ID
+			tree = &commit.Tree
+			return nil
+		case "tree":
+			tree = NewTree(repo, id)
+			tree.ResolvedID = id
+			objectFormat, err := repo.GetObjectFormat()
+			if err != nil {
+				return err
+			}
+			tree.entries, err = catBatchParseTreeEntries(objectFormat, tree, rd, size)
+			if err != nil {
+				return err
+			}
+			tree.entriesParsed = true
+			return nil
+		default:
+			if err := DiscardFull(rd, size+1); err != nil {
+				return err
+			}
+			return ErrNotExist{
+				ID: id.String(),
+			}
+		}
+	}); err != nil {
 		return nil, err
 	}
-	defer cancel()
-
-	_, _ = wr.Write([]byte(id.String() + "\n"))
-
-	// ignore the SHA
-	_, typ, size, err := ReadBatchLine(rd)
-	if err != nil {
-		return nil, err
-	}
-
-	switch typ {
-	case "tag":
-		resolvedID := id
-		data, err := io.ReadAll(io.LimitReader(rd, size))
-		if err != nil {
-			return nil, err
-		}
-		tag, err := parseTagData(id.Type(), data)
-		if err != nil {
-			return nil, err
-		}
-		commit, err := tag.Commit(repo)
-		if err != nil {
-			return nil, err
-		}
-		commit.ResolvedID = resolvedID
-		return &commit.Tree, nil
-	case "commit":
-		commit, err := CommitFromReader(repo, id, io.LimitReader(rd, size))
-		if err != nil {
-			return nil, err
-		}
-		if _, err := rd.Discard(1); err != nil {
-			return nil, err
-		}
-		commit.ResolvedID = commit.ID
-		return &commit.Tree, nil
-	case "tree":
-		tree := NewTree(repo, id)
-		tree.ResolvedID = id
-		objectFormat, err := repo.GetObjectFormat()
-		if err != nil {
-			return nil, err
-		}
-		tree.entries, err = catBatchParseTreeEntries(objectFormat, tree, rd, size)
-		if err != nil {
-			return nil, err
-		}
-		tree.entriesParsed = true
-		return tree, nil
-	default:
-		if err := DiscardFull(rd, size+1); err != nil {
-			return nil, err
-		}
-		return nil, ErrNotExist{
-			ID: id.String(),
-		}
-	}
+	return tree, nil
 }
 
 // GetTree find the tree object in the repository.

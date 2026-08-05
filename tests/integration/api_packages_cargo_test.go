@@ -91,6 +91,7 @@ func testPackageCargo(t *testing.T, _ *neturl.URL) {
 
 		rc, _, err := blob.NewTruncatedReader(1024)
 		require.NoError(t, err)
+		defer rc.Close()
 
 		content, err := io.ReadAll(rc)
 		require.NoError(t, err)

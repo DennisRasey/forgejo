@@ -67,122 +67,118 @@ func FindLFSFile(repo *git.Repository, objectID git.ObjectID) ([]*LFSResult, err
 
 	// Next feed the commits in order into cat-file --batch, followed by their trees and sub trees as necessary.
 	// so let's create a batch stdin and stdout
-	batchStdinWriter, batchReader, cancel, err := repo.CatFileBatch(repo.Ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
+	if err := repo.WithCatFileBatch(repo.Ctx, func(batchStdinWriter git.WriteCloserError, batchReader *bufio.Reader) error {
+		// We'll use a scanner for the revList because it's simpler than a bufio.Reader
+		scan := bufio.NewScanner(revListReader)
+		trees := [][]byte{}
+		paths := []string{}
 
-	// We'll use a scanner for the revList because it's simpler than a bufio.Reader
-	scan := bufio.NewScanner(revListReader)
-	trees := [][]byte{}
-	paths := []string{}
+		fnameBuf := make([]byte, 4096)
+		modeBuf := make([]byte, 40)
+		workingShaBuf := make([]byte, objectID.Type().FullLength()/2)
 
-	fnameBuf := make([]byte, 4096)
-	modeBuf := make([]byte, 40)
-	workingShaBuf := make([]byte, objectID.Type().FullLength()/2)
+		for scan.Scan() {
+			// Get the next commit ID
+			commitID := scan.Bytes()
 
-	for scan.Scan() {
-		// Get the next commit ID
-		commitID := scan.Bytes()
-
-		// push the commit to the cat-file --batch process
-		_, err := batchStdinWriter.Write(commitID)
-		if err != nil {
-			return nil, err
-		}
-		_, err = batchStdinWriter.Write([]byte{'\n'})
-		if err != nil {
-			return nil, err
-		}
-
-		var curCommit *git.Commit
-		curPath := ""
-
-	commitReadingLoop:
-		for {
-			_, typ, size, err := git.ReadBatchLine(batchReader)
+			// push the commit to the cat-file --batch process
+			_, err := batchStdinWriter.Write(commitID)
 			if err != nil {
-				return nil, err
+				return err
+			}
+			_, err = batchStdinWriter.Write([]byte{'\n'})
+			if err != nil {
+				return err
 			}
 
-			switch typ {
-			case "tag":
-				// This shouldn't happen but if it does well just get the commit and try again
-				id, err := git.ReadTagObjectID(batchReader, size)
+			var curCommit *git.Commit
+			curPath := ""
+
+		commitReadingLoop:
+			for {
+				_, typ, size, err := git.ReadBatchLine(batchReader)
 				if err != nil {
-					return nil, err
-				}
-				_, err = batchStdinWriter.Write([]byte(id + "\n"))
-				if err != nil {
-					return nil, err
-				}
-				continue
-			case "commit":
-				// Read in the commit to get its tree and in case this is one of the last used commits
-				curCommit, err = git.CommitFromReader(repo, git.MustIDFromString(string(commitID)), io.LimitReader(batchReader, size))
-				if err != nil {
-					return nil, err
-				}
-				if _, err := batchReader.Discard(1); err != nil {
-					return nil, err
+					return err
 				}
 
-				if _, err := batchStdinWriter.Write([]byte(curCommit.Tree.ID.String() + "\n")); err != nil {
-					return nil, err
-				}
-				curPath = ""
-			case "tree":
-				var n int64
-				for n < size {
-					mode, fname, binObjectID, count, err := git.ParseTreeLine(objectID.Type(), batchReader, modeBuf, fnameBuf, workingShaBuf)
+				switch typ {
+				case "tag":
+					// This shouldn't happen but if it does well just get the commit and try again
+					id, err := git.ReadTagObjectID(batchReader, size)
 					if err != nil {
-						return nil, err
+						return err
 					}
-					n += int64(count)
-					if bytes.Equal(binObjectID, objectID.RawValue()) {
-						result := LFSResult{
-							Name:         curPath + string(fname),
-							SHA:          curCommit.ID.String(),
-							Summary:      strings.Split(strings.TrimSpace(curCommit.CommitMessage), "\n")[0],
-							When:         curCommit.Author.When,
-							ParentHashes: curCommit.Parents,
+					_, err = batchStdinWriter.Write([]byte(id + "\n"))
+					if err != nil {
+						return err
+					}
+					continue
+				case "commit":
+					// Read in the commit to get its tree and in case this is one of the last used commits
+					curCommit, err = git.CommitFromReader(repo, git.MustIDFromString(string(commitID)), io.LimitReader(batchReader, size))
+					if err != nil {
+						return err
+					}
+					if _, err := batchReader.Discard(1); err != nil {
+						return err
+					}
+
+					if _, err := batchStdinWriter.Write([]byte(curCommit.Tree.ID.String() + "\n")); err != nil {
+						return err
+					}
+					curPath = ""
+				case "tree":
+					var n int64
+					for n < size {
+						mode, fname, binObjectID, count, err := git.ParseTreeLine(objectID.Type(), batchReader, modeBuf, fnameBuf, workingShaBuf)
+						if err != nil {
+							return err
 						}
-						resultsMap[curCommit.ID.String()+":"+curPath+string(fname)] = &result
-					} else if string(mode) == git.EntryModeTree.String() {
-						hexObjectID := make([]byte, objectID.Type().FullLength())
-						git.BinToHex(objectID.Type(), binObjectID, hexObjectID)
-						trees = append(trees, hexObjectID)
-						paths = append(paths, curPath+string(fname)+"/")
+						n += int64(count)
+						if bytes.Equal(binObjectID, objectID.RawValue()) {
+							result := LFSResult{
+								Name:         curPath + string(fname),
+								SHA:          curCommit.ID.String(),
+								Summary:      strings.Split(strings.TrimSpace(curCommit.CommitMessage), "\n")[0],
+								When:         curCommit.Author.When,
+								ParentHashes: curCommit.Parents,
+							}
+							resultsMap[curCommit.ID.String()+":"+curPath+string(fname)] = &result
+						} else if string(mode) == git.EntryModeTree.String() {
+							hexObjectID := make([]byte, objectID.Type().FullLength())
+							git.BinToHex(objectID.Type(), binObjectID, hexObjectID)
+							trees = append(trees, hexObjectID)
+							paths = append(paths, curPath+string(fname)+"/")
+						}
 					}
-				}
-				if _, err := batchReader.Discard(1); err != nil {
-					return nil, err
-				}
-				if len(trees) > 0 {
-					_, err := batchStdinWriter.Write(trees[len(trees)-1])
-					if err != nil {
-						return nil, err
+					if _, err := batchReader.Discard(1); err != nil {
+						return err
 					}
-					_, err = batchStdinWriter.Write([]byte("\n"))
-					if err != nil {
-						return nil, err
+					if len(trees) > 0 {
+						_, err := batchStdinWriter.Write(trees[len(trees)-1])
+						if err != nil {
+							return err
+						}
+						_, err = batchStdinWriter.Write([]byte("\n"))
+						if err != nil {
+							return err
+						}
+						curPath = paths[len(paths)-1]
+						trees = trees[:len(trees)-1]
+						paths = paths[:len(paths)-1]
+					} else {
+						break commitReadingLoop
 					}
-					curPath = paths[len(paths)-1]
-					trees = trees[:len(trees)-1]
-					paths = paths[:len(paths)-1]
-				} else {
-					break commitReadingLoop
-				}
-			default:
-				if err := git.DiscardFull(batchReader, size+1); err != nil {
-					return nil, err
+				default:
+					if err := git.DiscardFull(batchReader, size+1); err != nil {
+						return err
+					}
 				}
 			}
 		}
-	}
 
-	if err := scan.Err(); err != nil {
+		return scan.Err()
+	}); err != nil {
 		return nil, err
 	}
 

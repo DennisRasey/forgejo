@@ -292,12 +292,14 @@ func cancelProcesses(t testing.TB, delay time.Duration) {
 	processes, _ = processManager.Processes(true, true)
 	for len(processes) > 0 {
 		if time.Since(start) > delay {
-			t.Errorf("ERROR PrepareTestEnv: could not cancel all processes within %s", delay)
+			// `println` is used for output here -- exitf doesn't return control to the testing process and so test logs
+			// are not output to the console
+			fmt.Printf("ERROR PrepareTestEnv: could not cancel all processes within %s", delay)
 			for _, p := range processes {
 				t.Logf("PrepareTestEnv:Remaining Process: %q", p.Description)
 			}
 			stacks := allGoroutineStacks()
-			t.Errorf("All goroutine stacks during process cancellation failure:\n%s", string(stacks))
+			fmt.Printf("All goroutine stacks during process cancellation failure:\n%s", string(stacks))
 			// exit so that we don't spin in a loop executing `delay` wait over and over again when we won't be able to
 			// complete tests correctly due to the environmental issue present.
 			exitf("terminating test run due to unrecoverable failure")

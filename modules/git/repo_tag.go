@@ -5,6 +5,7 @@
 package git
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -254,18 +255,19 @@ func (repo *Repository) GetTags(skip, limit int) (tags []string, err error) {
 
 // GetTagType gets the type of the tag, either commit (simple) or tag (annotated)
 func (repo *Repository) GetTagType(id ObjectID) (string, error) {
-	wr, rd, cancel, err := repo.CatFileBatchCheck(repo.Ctx)
-	if err != nil {
+	var typ string
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		_, err := wr.Write([]byte(id.String() + "\n"))
+		if err != nil {
+			return err
+		}
+		_, typ, _, err = ReadBatchLine(rd)
+		if IsErrNotExist(err) {
+			return ErrNotExist{ID: id.String()}
+		}
+		return err
+	}); err != nil {
 		return "", err
-	}
-	defer cancel()
-	_, err = wr.Write([]byte(id.String() + "\n"))
-	if err != nil {
-		return "", err
-	}
-	_, typ, _, err := ReadBatchLine(rd)
-	if IsErrNotExist(err) {
-		return "", ErrNotExist{ID: id.String()}
 	}
 	return typ, nil
 }
@@ -314,38 +316,38 @@ func (repo *Repository) getTag(tagID ObjectID, name string) (*Tag, error) {
 		return tag, nil
 	}
 
-	// The tag is an annotated tag with a message.
-	wr, rd, cancel, err := repo.CatFileBatch(repo.Ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-
-	if _, err := wr.Write([]byte(tagID.String() + "\n")); err != nil {
-		return nil, err
-	}
-	_, typ, size, err := ReadBatchLine(rd)
-	if err != nil {
-		if errors.Is(err, io.EOF) || IsErrNotExist(err) {
-			return nil, ErrNotExist{ID: tagID.String()}
+	var data []byte
+	if err := repo.WithCatFileBatch(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		// The tag is an annotated tag with a message.
+		if _, err := wr.Write([]byte(tagID.String() + "\n")); err != nil {
+			return err
 		}
-		return nil, err
-	}
-	if typ != "tag" {
-		if err := DiscardFull(rd, size+1); err != nil {
-			return nil, err
+		_, typ, size, err := ReadBatchLine(rd)
+		if err != nil {
+			if errors.Is(err, io.EOF) || IsErrNotExist(err) {
+				return ErrNotExist{ID: tagID.String()}
+			}
+			return err
 		}
-		return nil, ErrNotExist{ID: tagID.String()}
-	}
+		if typ != "tag" {
+			if err := DiscardFull(rd, size+1); err != nil {
+				return err
+			}
+			return ErrNotExist{ID: tagID.String()}
+		}
 
-	// then we need to parse the tag
-	// and load the commit
-	data, err := io.ReadAll(io.LimitReader(rd, size))
-	if err != nil {
-		return nil, err
-	}
-	_, err = rd.Discard(1)
-	if err != nil {
+		// then we need to parse the tag
+		// and load the commit
+		data, err = io.ReadAll(io.LimitReader(rd, size))
+		if err != nil {
+			return err
+		}
+		_, err = rd.Discard(1)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
@@ -359,5 +361,6 @@ func (repo *Repository) getTag(tagID ObjectID, name string) (*Tag, error) {
 	tag.Type = tp
 
 	repo.tagCache.Set(tagID.String(), tag)
+
 	return tag, nil
 }

@@ -8,9 +8,13 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
+	"runtime"
+	"sync"
 
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/setting"
 )
 
 // Repository represents a Git repository.
@@ -21,11 +25,15 @@ type Repository struct {
 
 	gpgSettings *GPGSettings
 
-	batchInUse bool
-	batch      *Batch
+	batchLock      sync.Mutex
+	batchLockStack string
+	batch          *Batch
 
-	checkInUse bool
-	check      *Batch
+	checkLock      sync.Mutex
+	checkLockStack string
+	check          *Batch
+
+	closeOnce sync.Once
 
 	Ctx             context.Context
 	LastCommitCache *LastCommitCache
@@ -54,71 +62,149 @@ func OpenRepository(ctx context.Context, repoPath string) (*Repository, error) {
 	}, nil
 }
 
-// CatFileBatch obtains a CatFileBatch for this repository
-func (repo *Repository) CatFileBatch(ctx context.Context) (WriteCloserError, *bufio.Reader, func(), error) {
-	if repo.batch == nil {
-		var err error
-		repo.batch, err = repo.NewBatch(ctx)
-		if err != nil {
-			return nil, nil, nil, err
+func (repo *Repository) internalCatFile(lock *sync.Mutex, lockStack *string, batch **Batch, makeBatch func() (*Batch, error)) (WriteCloserError, *bufio.Reader, func(error), error) {
+	if lock.TryLock() {
+		// Capturing stack traces is a bit expensive for recording this diagnostic information, so only do it in
+		// dev/test.
+		if !setting.IsProd {
+			stack := make([]byte, 8192)
+			n := runtime.Stack(stack, false)
+			*lockStack = string(stack[:n])
 		}
-	}
 
-	if !repo.batchInUse {
-		repo.batchInUse = true
-		return repo.batch.Writer, repo.batch.Reader, func() {
-			repo.batchInUse = false
+		if *batch == nil {
+			newBatch, err := makeBatch()
+			if err != nil {
+				lock.Unlock()
+				return nil, nil, nil, err
+			}
+			*batch = newBatch
+		}
+
+		// Close func wouldn't be safe to call twice without sync.Once. As it may be used in `defer cancel()` and then
+		// stored, or, called in a specific code path, making it safe to call twice makes it easier to use correctly't
+		// safe to call twice.
+		var closeOnce sync.Once
+		return (*batch).Writer, (*batch).Reader, func(err error) {
+			closeOnce.Do(func() {
+				if err != nil {
+					// error occurred; the `git cat-file --batch` cmd can't be reused because the pipe states are
+					// unknown after the error
+					(*batch).Close()
+					*batch = nil
+				}
+				*lockStack = ""
+				lock.Unlock()
+			})
 		}, nil
 	}
 
 	log.Debug("Opening temporary cat file batch for: %s", repo.Path)
-	tempBatch, err := repo.NewBatch(ctx)
+	tempBatch, err := makeBatch()
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	return tempBatch.Writer, tempBatch.Reader, tempBatch.Close, nil
+	return tempBatch.Writer, tempBatch.Reader, func(err error) { tempBatch.Close() }, nil
 }
 
-// CatFileBatchCheck obtains a CatFileBatchCheck for this repository
-func (repo *Repository) CatFileBatchCheck(ctx context.Context) (WriteCloserError, *bufio.Reader, func(), error) {
-	if repo.check == nil {
-		var err error
-		repo.check, err = repo.NewBatchCheck(ctx)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-	}
+// CatFileBatch begins a `git cat-file --batch` subprocess and returns pipes to the writer and reader for the process. A
+// function is returned which must be invoked when using the writer and reader is complete.
+//
+// The subprocess will be reused between different calls to CatFileBatch, until the repository is closed.  To manage
+// this subprocess safely, usage must:
+//
+// - ensure that the entire response from a request sent to the writer is read from the reader, leaving no leftover
+// content in the pipe that the next usage might encounter
+//
+// - call the close method with an error if any error occurred while processing, signaling that the pipes to the
+// subprocess may be in an unexpected state and cannot be reused anymore
+func (repo *Repository) CatFileBatch(ctx context.Context) (WriteCloserError, *bufio.Reader, func(error), error) {
+	return repo.internalCatFile(&repo.batchLock, &repo.batchLockStack, &repo.batch,
+		func() (*Batch, error) { return repo.NewBatch(ctx) })
+}
 
-	if !repo.checkInUse {
-		repo.checkInUse = true
-		return repo.check.Writer, repo.check.Reader, func() {
-			repo.checkInUse = false
-		}, nil
-	}
-
-	log.Debug("Opening temporary cat file batch-check for: %s", repo.Path)
-	tempBatchCheck, err := repo.NewBatchCheck(ctx)
+// WithCatFileBatch performs the same work as CatFileBatch, but with a closure-based API which makes error handling a
+// little easier.  It is still necessary to ensure that the entire response from any request sent to the writer is read
+// from the reader, leaving no leftover content in the pipe that the next musage might encounter.
+func (repo *Repository) WithCatFileBatch(ctx context.Context, closure func(WriteCloserError, *bufio.Reader) error) error {
+	wr, rd, close, err := repo.CatFileBatch(ctx)
 	if err != nil {
-		return nil, nil, nil, err
+		return err
 	}
-	return tempBatchCheck.Writer, tempBatchCheck.Reader, tempBatchCheck.Close, nil
+	err = closure(wr, rd)
+	close(err)
+	return err
+}
+
+// CatFileBatch begins a `git cat-file --batch-check` subprocess and returns pipes to the writer and reader for the
+// process. A function is returned which must be invoked when using the writer and reader is complete.
+//
+// The subprocess will be reused between different calls to CatFileBatch, until the repository is closed.  To manage
+// this subprocess safely, usage must:
+//
+// - ensure that the entire response from a request sent to the writer is read from the reader, leaving no leftover
+// content in the pipe that the next usage might encounter
+//
+// - call the close method with an error if any error occurred while processing, signaling that the pipes to the
+// subprocess may be in an unexpected state and cannot be reused anymore
+func (repo *Repository) CatFileBatchCheck(ctx context.Context) (WriteCloserError, *bufio.Reader, func(error), error) {
+	return repo.internalCatFile(&repo.checkLock, &repo.checkLockStack, &repo.check,
+		func() (*Batch, error) { return repo.NewBatchCheck(ctx) })
+}
+
+// WithCatFileBatch performs the same work as CatFileBatchCheck, but with a closure-based API which makes error handling
+// a little easier.  It is still necessary to ensure that the entire response from any request sent to the writer is
+// read from the reader, leaving no leftover content in the pipe that the next musage might encounter.
+func (repo *Repository) WithCatFileBatchCheck(ctx context.Context, closure func(WriteCloserError, *bufio.Reader) error) error {
+	wr, rd, close, err := repo.CatFileBatchCheck(ctx)
+	if err != nil {
+		return err
+	}
+	err = closure(wr, rd)
+	close(err)
+	return err
 }
 
 func (repo *Repository) Close() error {
 	if repo == nil {
 		return nil
 	}
-	if repo.batch != nil {
-		repo.batch.Close()
-		repo.batch = nil
-		repo.batchInUse = false
-	}
-	if repo.check != nil {
-		repo.check.Close()
-		repo.check = nil
-		repo.checkInUse = false
-	}
-	repo.LastCommitCache = nil
-	repo.tagCache = nil
+
+	// Some code paths will execute `defer repo.Close()` and then `repo.Close()` later, causing double closure.  Holding
+	// batchLock/checkLock indefinitely causes double closure to panic, so we prevent that by using a sync.Once.
+	repo.closeOnce.Do(func() {
+		// Intentionally leave repo.batchLock locked; never unlock it.  This repository is closed, but some codepaths
+		// will still call `CatFileBatch` on the closed repository, particularly where references to `*git.Blob`, which
+		// hold a pointer to a Repository, outlive the repository being closed.  By leaving the lock held, we'll force
+		// new usages on the closed repository to go to the "temporary cat-file" code path, where the subprocess will be
+		// closed immediately after one operation.
+		if !repo.batchLock.TryLock() {
+			msg := "attempting to close repository while `CatFileBatch` is in-progress"
+			if repo.batchLockStack != "" {
+				msg = fmt.Sprintf("%s -- CatFileBatch was started at stack trace %q", msg, repo.batchLockStack)
+			}
+			panic(msg)
+		}
+		if repo.batch != nil {
+			repo.batch.Close()
+			repo.batch = nil
+		}
+		// Lock also never released -- same as batchLock.
+		if !repo.checkLock.TryLock() {
+			msg := "attempting to close repository while `CatFileBatchCheck` is in-progress"
+			if repo.checkLockStack != "" {
+				msg = fmt.Sprintf("%s -- CatFileBatchCheck was started at stack trace %q", msg, repo.checkLockStack)
+			}
+			panic(msg)
+		}
+		if repo.check != nil {
+			repo.check.Close()
+			repo.check = nil
+		}
+
+		repo.LastCommitCache = nil
+		repo.tagCache = nil
+	})
+
 	return nil
 }

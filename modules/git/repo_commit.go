@@ -537,20 +537,22 @@ func (repo *Repository) ResolveReference(name string) (string, error) {
 
 // GetRefCommitID returns the last commit ID string of given reference (branch or tag).
 func (repo *Repository) GetRefCommitID(name string) (string, error) {
-	wr, rd, cancel, err := repo.CatFileBatchCheck(repo.Ctx)
-	if err != nil {
-		return "", err
+	var shaBs []byte
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		_, err := wr.Write([]byte(name + "\n"))
+		if err != nil {
+			return err
+		}
+		shaBs, _, _, err = ReadBatchLine(rd)
+		if IsErrNotExist(err) {
+			return ErrNotExist{name, ""}
+		}
+		return err
+	}); err != nil {
+		if IsErrNotExist(err) {
+			return "", ErrNotExist{name, ""}
+		}
 	}
-	defer cancel()
-	_, err = wr.Write([]byte(name + "\n"))
-	if err != nil {
-		return "", err
-	}
-	shaBs, _, _, err := ReadBatchLine(rd)
-	if IsErrNotExist(err) {
-		return "", ErrNotExist{name, ""}
-	}
-
 	return string(shaBs), nil
 }
 
@@ -577,15 +579,21 @@ func (repo *Repository) IsCommitExist(name string) bool {
 }
 
 func (repo *Repository) getCommit(id ObjectID) (*Commit, error) {
-	wr, rd, cancel, err := repo.CatFileBatch(repo.Ctx)
-	if err != nil {
+	var err error
+	var commit *Commit
+	if err = repo.WithCatFileBatch(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		if _, err = wr.Write([]byte(id.String() + "\n")); err != nil {
+			return err
+		}
+		commit, err = repo.getCommitFromBatchReader(rd, id)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
-	defer cancel()
-
-	_, _ = wr.Write([]byte(id.String() + "\n"))
-
-	return repo.getCommitFromBatchReader(rd, id)
+	return commit, nil
 }
 
 func (repo *Repository) getCommitFromBatchReader(rd *bufio.Reader, id ObjectID) (*Commit, error) {
@@ -647,23 +655,20 @@ func (repo *Repository) getCommitFromBatchReader(rd *bufio.Reader, id ObjectID) 
 // ConvertToGitID returns a ObjectID object from a potential ID string
 // The resulting ObjectID is guaranteed to exist.
 func (repo *Repository) ConvertToGitID(commitID string) (ObjectID, error) {
-	wr, rd, cancel, err := repo.CatFileBatchCheck(repo.Ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-	_, err = wr.Write([]byte(commitID + "\n"))
-	if err != nil {
-		return nil, err
-	}
-	sha, _, _, err := ReadBatchLine(rd)
-	if err != nil {
-		if IsErrNotExist(err) {
-			return nil, ErrNotExist{commitID, ""}
+	var sha []byte
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		_, err := wr.Write([]byte(commitID + "\n"))
+		if err != nil {
+			return err
 		}
+		sha, _, _, err = ReadBatchLine(rd)
+		if err != nil && IsErrNotExist(err) {
+			return ErrNotExist{commitID, ""}
+		}
+		return err
+	}); err != nil {
 		return nil, err
 	}
-
 	return MustIDFromString(string(sha)), nil
 }
 

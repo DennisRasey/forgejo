@@ -163,19 +163,19 @@ func (repo *Repository) IsObjectExist(name string) bool {
 		return false
 	}
 
-	wr, rd, cancel, err := repo.CatFileBatchCheck(repo.Ctx)
-	if err != nil {
-		log.Debug("Error writing to CatFileBatchCheck %v", err)
+	var sha []byte
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		_, err := wr.Write([]byte(name + "\n"))
+		if err != nil {
+			return err
+		}
+		sha, _, _, err = ReadBatchLine(rd)
+		return err
+	}); err != nil {
+		log.Debug("Error accessing CatFileBatchCheck %v", err)
 		return false
 	}
-	defer cancel()
-	_, err = wr.Write([]byte(name + "\n"))
-	if err != nil {
-		log.Debug("Error writing to CatFileBatchCheck %v", err)
-		return false
-	}
-	sha, _, _, err := ReadBatchLine(rd)
-	return err == nil && bytes.HasPrefix(sha, []byte(strings.TrimSpace(name)))
+	return bytes.HasPrefix(sha, []byte(strings.TrimSpace(name)))
 }
 
 // IsReferenceExist returns true if given reference exists in the repository.
@@ -184,19 +184,21 @@ func (repo *Repository) IsReferenceExist(name string) bool {
 		return false
 	}
 
-	wr, rd, cancel, err := repo.CatFileBatchCheck(repo.Ctx)
-	if err != nil {
-		log.Debug("Error writing to CatFileBatchCheck %v", err)
+	var exist bool
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		_, err := wr.Write([]byte(name + "\n"))
+		if err != nil {
+			log.Debug("Error accessing CatFileBatchCheck %v", err)
+			return err
+		}
+		_, _, _, err = ReadBatchLine(rd)
+		exist = err == nil
+		return err
+	}); err != nil {
+		log.Debug("Error accessing CatFileBatchCheck %v", err)
 		return false
 	}
-	defer cancel()
-	_, err = wr.Write([]byte(name + "\n"))
-	if err != nil {
-		log.Debug("Error writing to CatFileBatchCheck %v", err)
-		return false
-	}
-	_, _, _, err = ReadBatchLine(rd)
-	return err == nil
+	return exist
 }
 
 // IsBranchExist returns true if given branch exists in current repository.
