@@ -7,7 +7,10 @@ import (
 	"context"
 
 	"forgejo.org/models/db"
+	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/git"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/markup"
 	"forgejo.org/modules/markup/markdown"
 
@@ -23,33 +26,62 @@ type CodeConversationsAtLine map[int64][]CodeConversation
 // CodeConversationsAtLineAndTreePath contains the conversations for a given TreePath and line
 type CodeConversationsAtLineAndTreePath map[string]CodeConversationsAtLine
 
-func newCodeConversationsAtLineAndTreePath(comments []*Comment) CodeConversationsAtLineAndTreePath {
+func newCodeConversationsAtLineAndTreePath(ctx context.Context, comments []*Comment, repo *repo_model.Repository, headCommitID string) (CodeConversationsAtLineAndTreePath, error) {
 	tree := make(CodeConversationsAtLineAndTreePath)
 	for _, comment := range comments {
-		tree.insertComment(comment)
+		blame, err := comment.ResolveCurrentLine(ctx, repo, headCommitID)
+		if err != nil {
+			// ResolveCurrentLine can fail in at least one known situation -- where a comment is left on a line in a
+			// file that is being deleted. The blame would be for the commit that deleted the file, and a reverse git
+			// blame won't work because the file is missing in the target sha.
+			log.Warn("ResolveCurrentLine failed: %s", err.Error())
+			// handle gracefully -- insertComment will use the original values which may be usable
+			blame = nil
+		} else if blame.CommitID != headCommitID {
+			// Commit was made on a line that can't be reverse-blamed to the currently viewing head. This can happen
+			// because:
+			//  - line of code was removed between the commit it was tagged on, and the head commit
+			//  - force push on the repo caused there to be no git relationship between blame.CommitID->headCommitID
+			// We won't insert this comment into the comment tree because we don't know where to place it; it may appear
+			// when the user views a different commit in the PR, and it will always appear on the "Conversations" tab.
+			continue
+		}
+		tree.insertComment(comment, blame)
 	}
-	return tree
+	return tree, nil
 }
 
-func (tree CodeConversationsAtLineAndTreePath) insertComment(comment *Comment) {
+func (tree CodeConversationsAtLineAndTreePath) insertComment(comment *Comment, blame *git.ReverseLineBlame) {
+	treePath := comment.TreePath
+	line := comment.Line
+	if blame != nil {
+		treePath = blame.FilePath
+		line = int64(blame.LineNumber)
+		if comment.Line < 0 {
+			line *= -1
+		}
+	}
+
 	// attempt to append comment to existing conversations (i.e. list of comments belonging to the same review)
-	for i, conversation := range tree[comment.TreePath][comment.Line] {
+	for i, conversation := range tree[treePath][line] {
 		if conversation[0].ReviewID == comment.ReviewID {
-			tree[comment.TreePath][comment.Line][i] = append(conversation, comment)
+			tree[treePath][line][i] = append(conversation, comment)
 			return
 		}
 	}
 
 	// no previous conversation was found at this line, create it
-	if tree[comment.TreePath] == nil {
-		tree[comment.TreePath] = make(map[int64][]CodeConversation)
+	if tree[treePath] == nil {
+		tree[treePath] = make(map[int64][]CodeConversation)
 	}
 
-	tree[comment.TreePath][comment.Line] = append(tree[comment.TreePath][comment.Line], CodeConversation{comment})
+	tree[treePath][line] = append(tree[treePath][line], CodeConversation{comment})
 }
 
-// FetchCodeConversations will return a 2d-map: ["Path"]["Line"] = List of CodeConversation (one per review) for this line
-func FetchCodeConversations(ctx context.Context, issue *Issue, doer *user_model.User, showOutdatedComments bool) (CodeConversationsAtLineAndTreePath, error) {
+// FetchCodeConversations will return a 2d-map: ["Path"]["Line"] = List of CodeConversation (one per review) for this
+// line. headCommitID will be used to reverse-blame the comment into the correct path & line for the current context
+// that is being viewed.
+func FetchCodeConversations(ctx context.Context, issue *Issue, doer *user_model.User, showOutdatedComments bool, headCommitID string) (CodeConversationsAtLineAndTreePath, error) {
 	opts := FindCommentsOptions{
 		Type:    CommentTypeCode,
 		IssueID: issue.ID,
@@ -59,7 +91,7 @@ func FetchCodeConversations(ctx context.Context, issue *Issue, doer *user_model.
 		return nil, err
 	}
 
-	return newCodeConversationsAtLineAndTreePath(comments), nil
+	return newCodeConversationsAtLineAndTreePath(ctx, comments, issue.Repo, headCommitID)
 }
 
 // CodeComments represents comments on code by using this structure: FILENAME -> LINE (+ == proposed; - == previous) -> COMMENTS

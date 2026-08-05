@@ -63,7 +63,7 @@ func TestFetchCodeConversations(t *testing.T) {
 		unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 4}),
 		user, true))
 
-	res, err := issues_model.FetchCodeConversations(db.DefaultContext, issue, user, false)
+	res, err := issues_model.FetchCodeConversations(db.DefaultContext, issue, user, false, "")
 	require.NoError(t, err)
 	require.Contains(t, res, "README.md")
 	require.Contains(t, res["README.md"], int64(4))
@@ -77,7 +77,7 @@ func TestFetchCodeConversations(t *testing.T) {
 	assert.NotNil(t, r.User)
 
 	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	res, err = issues_model.FetchCodeConversations(db.DefaultContext, issue, user2, false)
+	res, err = issues_model.FetchCodeConversations(db.DefaultContext, issue, user2, false, "")
 	require.NoError(t, err)
 	assert.Len(t, res, 1)
 }

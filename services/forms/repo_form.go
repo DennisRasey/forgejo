@@ -472,6 +472,7 @@ type CodeCommentForm struct {
 	TreePath       string `form:"path" binding:"Required"`
 	SingleReview   bool   `form:"single_review"`
 	Reply          int64  `form:"reply"`
+	BeforeCommitID string
 	LatestCommitID string
 	Files          []string
 }

@@ -11,6 +11,7 @@ import (
 	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
 	"forgejo.org/models/unittest"
+	"forgejo.org/modules/git"
 	"forgejo.org/modules/templates"
 	"forgejo.org/services/context"
 	"forgejo.org/services/contexttest"
@@ -28,6 +29,13 @@ func TestRenderConversation(t *testing.T) {
 	_ = pr.Issue.LoadPoster(db.DefaultContext)
 	_ = pr.Issue.LoadRepo(db.DefaultContext)
 
+	require.NoError(t, pr.LoadHeadRepo(t.Context()))
+	repo, err := git.OpenRepository(t.Context(), pr.HeadRepo.RepoPath())
+	defer repo.Close()
+	require.NoError(t, err)
+	prHeadCommitID, err := repo.GetBranchCommitID(pr.HeadBranch)
+	require.NoError(t, err)
+
 	run := func(name string, cb func(t *testing.T, ctx *context.Context, resp *httptest.ResponseRecorder)) {
 		t.Run(name, func(t *testing.T) {
 			ctx, resp := contexttest.MockContext(t, "/")
@@ -42,7 +50,9 @@ func TestRenderConversation(t *testing.T) {
 
 	var preparedComment *issues_model.Comment
 	run("prepare", func(t *testing.T, ctx *context.Context, resp *httptest.ResponseRecorder) {
-		comment, err := pull.CreateCodeComment(ctx, pr.Issue.Poster, ctx.Repo.GitRepo, pr.Issue, 1, "content", "", false, 0, pr.HeadCommitID, nil)
+		comment, err := pull.CreateCodeComment(ctx, pr.Issue.Poster, ctx.Repo.GitRepo, pr.Issue,
+			1, "content", "", false, 0, pr.MergeBase,
+			prHeadCommitID, nil)
 		require.NoError(t, err)
 
 		comment.Invalidated = true

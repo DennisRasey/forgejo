@@ -6,11 +6,14 @@
 package issues
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"slices"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"forgejo.org/models/db"
@@ -19,7 +22,9 @@ import (
 	project_model "forgejo.org/models/project"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/cache"
 	"forgejo.org/modules/container"
+	"forgejo.org/modules/git"
 	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/log"
@@ -320,6 +325,8 @@ type Comment struct {
 	NewCommit   string                              `xorm:"-"`
 	CommitsNum  int64                               `xorm:"-"`
 	IsForcePush bool                                `xorm:"-"`
+
+	reverseLineBlame *git.ReverseLineBlame `xorm:"-"`
 
 	// If you add new fields that might be used to store abusive content (mainly string fields),
 	// please also add them in the CommentData struct and the corresponding constructor.
@@ -742,6 +749,89 @@ func (c *Comment) UnsignedLine() uint64 {
 		return uint64(c.Line * -1)
 	}
 	return uint64(c.Line)
+}
+
+func (c *Comment) ResolveCurrentLine(ctx context.Context, repo *repo_model.Repository, currentHead string) (*git.ReverseLineBlame, error) {
+	if c.reverseLineBlame != nil {
+		return c.reverseLineBlame, nil
+	}
+
+	// When a PR is viewed, the requirement to perform `git blame --reverse...` on every comment is a bit of a
+	// performance risk. To minimize this risk, cache the results relative to the requested head, so it only needs to be
+	// recalculated when head changes (or on cache eviction).
+	//
+	// Some performance testing was done which showed that a hot cache is much faster than the blame reverse
+	// operation -- 500-1000x runtime difference:
+	//
+	// - cache miss (Forgejo repo)      took 7,690,574 ns
+	// - cache miss (~1000 commit repo) took 1,671,223 ns
+	// - cache hit (in-memory adapter)  took     3,710 ns
+	// - cache hit (redis adapter)      took    77,311 ns
+	resolveJSON, err := cache.GetString(fmt.Sprintf("comment.Resolve;ID=%d;HEAD=%s", c.ID, currentHead), func() (string, error) {
+		gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, repo)
+		if err != nil {
+			return "", fmt.Errorf("failed to open repo: %w", err)
+		}
+		defer closer.Close()
+
+		var reverseBlame *git.ReverseLineBlame
+		if c.Line > 0 {
+			var err error
+			reverseBlame, err = gitRepo.ReverseLineBlame(c.CommitSHA, c.TreePath, c.UnsignedLine(), currentHead)
+			if err != nil {
+				return "", fmt.Errorf("failed to perform `git blame --reverse` to resolve current line for comment (id=%d): %w", c.ID, err)
+			}
+		} else {
+			// For comments on removed lines, perform a `git diff` between the last commit that the line of code was
+			// known to exist (which is recorded as CommitSHA) and the requested head. Then inspect the diff to verify
+			// that the removed line of code is present in the diff.
+			buffer := bytes.Buffer{}
+			err := git.GetRepoRawDiffForFile(gitRepo, c.CommitSHA, currentHead, git.RawDiffNormal, c.TreePath, &buffer)
+			if err != nil {
+				return "", fmt.Errorf("failed to get diff: %w", err)
+			}
+
+			diff := buffer.String()
+			adjustedLine, err := git.FindAdjustedLineNumber(c.Patch, int64(c.UnsignedLine()), strings.NewReader(diff))
+			if err != nil && errors.Is(err, git.ErrLineNotFound) {
+				// Line not found in the diff. Don't treat this as an error, because that would break the caching --
+				// instead, return a blame where CommitID != headCommitID, which will be an indicator to callers (for
+				// both resolution methods) that the line of code is outdated in the diff.
+				reverseBlame = &git.ReverseLineBlame{
+					CommitID:   "", // not currentHead
+					LineNumber: c.UnsignedLine(),
+					FilePath:   c.TreePath,
+				}
+			} else if err != nil {
+				return "", fmt.Errorf("failed in finding adjusted line number: %w", err)
+			} else {
+				reverseBlame = &git.ReverseLineBlame{
+					CommitID:   currentHead,
+					LineNumber: uint64(adjustedLine.Left),
+					FilePath:   c.TreePath,
+				}
+			}
+		}
+
+		data, err := json.Marshal(reverseBlame)
+		if err != nil {
+			return "", err
+		}
+
+		return string(data), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var reverseBlame *git.ReverseLineBlame
+	err = json.Unmarshal([]byte(resolveJSON), &reverseBlame)
+	if err != nil {
+		return nil, err
+	}
+
+	c.reverseLineBlame = reverseBlame
+	return c.reverseLineBlame, nil
 }
 
 // CodeCommentLink returns the url to a comment in code

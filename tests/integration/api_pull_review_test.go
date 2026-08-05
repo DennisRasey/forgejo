@@ -112,8 +112,10 @@ func TestAPIPullReviewCreateDeleteComment(t *testing.T) {
 				DecodeJSON(t, resp, &reviewComment)
 				assert.Equal(t, review.ID, reviewComment.ReviewID)
 				assert.Equal(t, newCommentBody, reviewComment.Body)
-				assert.EqualValues(t, reviewLine, reviewComment.OldLineNum)
-				assert.EqualValues(t, 0, reviewComment.LineNum)
+				// we sent OldLineNum: 1, but that line of code isn't modified in this PR, triggering the PR's logic
+				// which standardizes comments on non-modified lines of code to be on the right-hand-side of the diff:
+				assert.EqualValues(t, 0, reviewComment.OldLineNum)
+				assert.EqualValues(t, reviewLine, reviewComment.LineNum)
 				assert.Equal(t, path, reviewComment.Path)
 			}
 

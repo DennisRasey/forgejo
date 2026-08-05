@@ -167,3 +167,215 @@ func TestParseDiffHunkString(t *testing.T) {
 	assert.Equal(t, 19, rightLine)
 	assert.Equal(t, 5, rightHunk)
 }
+
+func TestFindAdjustedLineNumber(t *testing.T) {
+	commentCutDiff := `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50`
+
+	t.Run("no additional changes", func(t *testing.T) {
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..b21df3f 100644
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50
+ Line 51
+ Line 52
+ Line 53`
+		lineNumber, err := FindAdjustedLineNumber(commentCutDiff, 50, strings.NewReader(diff))
+		require.NoError(t, err)
+		assert.Equal(t, LinePlacement{Left: 50, Right: 50}, lineNumber)
+	})
+
+	t.Run("removed lines before location", func(t *testing.T) {
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..c85b903 100644
+--- a/file1.md
++++ b/file1.md
+@@ -1,13 +1,3 @@
+-Line 1
+-Line 2
+-Line 3
+-Line 4
+-Line 5
+-Line 6
+-Line 7
+-Line 8
+-Line 9
+-Line 10
+ Line 11
+ Line 12
+ Line 13
+@@ -47,7 +37,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50
+ Line 51
+ Line 52
+ Line 53`
+		lineNumber, err := FindAdjustedLineNumber(commentCutDiff, 50, strings.NewReader(diff))
+		require.NoError(t, err)
+		assert.Equal(t, LinePlacement{Left: 50, Right: 40}, lineNumber)
+	})
+
+	t.Run("added lines before location", func(t *testing.T) {
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..24b1aa6 100644
+--- a/file1.md
++++ b/file1.md
+@@ -8,6 +8,11 @@ Line 7
+ Line 8
+ Line 9
+ Line 10
++Line 10.1
++Line 10.2
++Line 10.3
++Line 10.4
++Line 10.5
+ Line 11
+ Line 12
+ Line 13
+@@ -47,7 +52,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50
+ Line 51
+ Line 52
+ Line 53`
+		lineNumber, err := FindAdjustedLineNumber(commentCutDiff, 50, strings.NewReader(diff))
+		require.NoError(t, err)
+		assert.Equal(t, LinePlacement{Left: 50, Right: 55}, lineNumber)
+	})
+
+	t.Run("added and removed in lines before location", func(t *testing.T) {
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..d0cb63f 100644
+--- a/file1.md
++++ b/file1.md
+@@ -5,9 +5,11 @@ Line 4
+ Line 5
+ Line 6
+ Line 7
+-Line 8
+-Line 9
+-Line 10
++Line 10.1
++Line 10.2
++Line 10.3
++Line 10.4
++Line 10.5
+ Line 11
+ Line 12
+ Line 13
+@@ -47,7 +49,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50
+ Line 51
+ Line 52
+ Line 53`
+		lineNumber, err := FindAdjustedLineNumber(commentCutDiff, 50, strings.NewReader(diff))
+		require.NoError(t, err)
+		assert.Equal(t, LinePlacement{Left: 50, Right: 52}, lineNumber)
+	})
+
+	t.Run("changes above in the same hunk", func(t *testing.T) {
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..f35a466 100644
+--- a/file1.md
++++ b/file1.md
+@@ -42,12 +42,6 @@ Line 41
+ Line 42
+ Line 43
+ Line 44
+-Line 45
+-Line 46
+-Line 47
+-Line 48
+-Line 49
+-Line 50
+ Line 51
+ Line 52
+ Line 53`
+		lineNumber, err := FindAdjustedLineNumber(commentCutDiff, 50, strings.NewReader(diff))
+		require.NoError(t, err)
+		assert.Equal(t, LinePlacement{Left: 50, Right: 45}, lineNumber)
+	})
+
+	t.Run("first line in diff", func(t *testing.T) {
+		commentCutDiff := `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -1,4 +1,3 @@
+-Line 1`
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..a490028 100644
+--- a/file1.md
++++ b/file1.md
+@@ -1,4 +1,3 @@
+-Line 1
+ Line 2
+ Line 3
+ Line 4`
+		lineNumber, err := FindAdjustedLineNumber(commentCutDiff, 1, strings.NewReader(diff))
+		require.NoError(t, err)
+		assert.Equal(t, LinePlacement{Left: 1, Right: 1}, lineNumber)
+	})
+
+	t.Run("adjusted line not found", func(t *testing.T) {
+		// "Line 50" is present here but it's no longer "-Line 50", so it should not be identified as present
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..09dd95a 100644
+--- a/file1.md
++++ b/file1.md
+@@ -42,10 +42,6 @@ Line 41
+ Line 42
+ Line 43
+ Line 44
+-Line 45
+-Line 46
+-Line 47
+-Line 48
+ Line 49
+ Line 50
+ Line 51`
+		_, err := FindAdjustedLineNumber(commentCutDiff, 50, strings.NewReader(diff))
+		require.ErrorIs(t, err, ErrLineNotFound)
+	})
+
+	t.Run("adjusted line hunk not present - not changed anymore", func(t *testing.T) {
+		diff := `diff --git a/file1.md b/file1.md
+index 2d203fb..d0cb63f 100644
+--- a/file1.md
++++ b/file1.md
+@@ -5,9 +5,11 @@ Line 4
+ Line 5
+ Line 6
+ Line 7
+-Line 8
+-Line 9
+-Line 10
++Line 10.1
++Line 10.2
++Line 10.3
++Line 10.4
++Line 10.5
+ Line 11
+ Line 12
+ Line 13`
+		_, err := FindAdjustedLineNumber(commentCutDiff, 50, strings.NewReader(diff))
+		require.ErrorIs(t, err, ErrLineNotFound)
+	})
+}

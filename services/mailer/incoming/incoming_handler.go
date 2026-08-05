@@ -12,6 +12,7 @@ import (
 	access_model "forgejo.org/models/perm/access"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/gitrepo"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
@@ -124,7 +125,24 @@ func (h *ReplyHandler) Handle(ctx context.Context, content *MailContent, doer *u
 				return fmt.Errorf("CreateIssueComment failed: %w", err)
 			}
 		case issues_model.CommentTypeCode:
-			_, err := pull_service.CreateCodeComment(
+			err := issue.LoadRepo(ctx)
+			if err != nil {
+				return fmt.Errorf("LoadRepo failed: %w", err)
+			}
+			err = issue.LoadPullRequest(ctx)
+			if err != nil {
+				return fmt.Errorf("LoadPullRequest failed: %w", err)
+			}
+			repo, err := gitrepo.OpenRepository(ctx, issue.Repo)
+			defer repo.Close()
+			if err != nil {
+				return fmt.Errorf("OpenRepository failed: %w", err)
+			}
+			afterCommitID, err := repo.GetRefCommitID(issue.PullRequest.GetGitRefName())
+			if err != nil {
+				return fmt.Errorf("GetRefCommitID failed: %w", err)
+			}
+			_, err = pull_service.CreateCodeComment(
 				ctx,
 				doer,
 				nil,
@@ -134,7 +152,8 @@ func (h *ReplyHandler) Handle(ctx context.Context, content *MailContent, doer *u
 				comment.TreePath,
 				false, // not pending review but a single review
 				comment.ReviewID,
-				"",
+				issue.PullRequest.MergeBase,
+				afterCommitID,
 				attachmentIDs,
 			)
 			if err != nil {

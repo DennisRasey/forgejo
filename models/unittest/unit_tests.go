@@ -67,7 +67,7 @@ func BeanExists(t testing.TB, bean any, conditions ...any) bool {
 }
 
 // AssertExistsAndLoadBean assert that a bean exists and load it from the test database
-func AssertExistsAndLoadBean[T any](t testing.TB, bean T, conditions ...any) T {
+func AssertExistsAndLoadBean[T any](t require.TestingT, bean T, conditions ...any) T {
 	exists, err := LoadBeanIfExists(bean, conditions...)
 	require.NoError(t, err)
 	assert.True(t, exists,

@@ -42,17 +42,11 @@ func (err ErrDismissRequestOnClosedPR) Unwrap() error {
 
 // checkInvalidation checks if the line of code comment got changed by another commit.
 // If the line got changed the comment is going to be invalidated.
-func checkInvalidation(ctx context.Context, c *issues_model.Comment, repo *git.Repository, branch string) error {
-	// FIXME differentiate between previous and proposed line
-	commit, _, err := repo.LineBlame(branch, c.TreePath, c.UnsignedLine())
-	if err != nil && (errors.Is(err, git.ErrBlameFileDoesNotExist) || errors.Is(err, git.ErrBlameFileNotEnoughLines)) {
-		c.Invalidated = true
-		return issues_model.UpdateCommentInvalidate(ctx, c)
-	}
+func checkInvalidation(ctx context.Context, c *issues_model.Comment, repo *repo_model.Repository, newCommitID string) error {
+	reverseBlame, err := c.ResolveCurrentLine(ctx, repo, newCommitID)
 	if err != nil {
-		return err
-	}
-	if c.CommitSHA != "" && c.CommitSHA != commit.ID.String() {
+		log.Warn("ResolveCurrentLine failed: %s", err.Error())
+	} else if reverseBlame.CommitID != newCommitID {
 		c.Invalidated = true
 		return issues_model.UpdateCommentInvalidate(ctx, c)
 	}
@@ -60,7 +54,7 @@ func checkInvalidation(ctx context.Context, c *issues_model.Comment, repo *git.R
 }
 
 // InvalidateCodeComments will lookup the prs for code comments which got invalidated by change
-func InvalidateCodeComments(ctx context.Context, prs issues_model.PullRequestList, doer *user_model.User, repo *git.Repository, branch string) error {
+func InvalidateCodeComments(ctx context.Context, prs issues_model.PullRequestList, doer *user_model.User, repo *repo_model.Repository, newCommitID string) error {
 	if len(prs) == 0 {
 		return nil
 	}
@@ -76,7 +70,7 @@ func InvalidateCodeComments(ctx context.Context, prs issues_model.PullRequestLis
 		return fmt.Errorf("find code comments: %v", err)
 	}
 	for _, comment := range codeComments {
-		if err := checkInvalidation(ctx, comment, repo, branch); err != nil {
+		if err := checkInvalidation(ctx, comment, repo, newCommitID); err != nil {
 			return err
 		}
 	}
@@ -84,7 +78,10 @@ func InvalidateCodeComments(ctx context.Context, prs issues_model.PullRequestLis
 }
 
 // CreateCodeComment creates a comment on the code line
-func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.Repository, issue *issues_model.Issue, line int64, content, treePath string, pendingReview bool, replyReviewID int64, latestCommitID string, attachments []string) (*issues_model.Comment, error) {
+func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.Repository,
+	issue *issues_model.Issue, line int64, content, treePath string, pendingReview bool,
+	replyReviewID int64, beforeCommitID, latestCommitID string, attachments []string,
+) (*issues_model.Comment, error) {
 	var (
 		existsReview bool
 		err          error
@@ -115,6 +112,8 @@ func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.
 			issue,
 			content,
 			treePath,
+			beforeCommitID,
+			latestCommitID,
 			line,
 			replyReviewID,
 			attachments,
@@ -156,6 +155,8 @@ func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.
 		issue,
 		content,
 		treePath,
+		beforeCommitID,
+		latestCommitID,
 		line,
 		review.ID,
 		attachments,
@@ -177,7 +178,10 @@ func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.
 }
 
 // CreateCodeCommentKnownReviewID creates a plain code comment at the specified line / path
-func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, issue *issues_model.Issue, content, treePath string, line, reviewID int64, attachments []string) (*issues_model.Comment, error) {
+func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, repo *repo_model.Repository,
+	issue *issues_model.Issue, content, treePath, beforeCommitID, afterCommitID string,
+	line, reviewID int64, attachments []string,
+) (*issues_model.Comment, error) {
 	var commitID, blamedCommitID, patch string
 	blamedLine := line
 	if err := issue.LoadPullRequest(ctx); err != nil {
@@ -227,7 +231,7 @@ func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, 
 			// FIXME validate treePath
 			// Get latest commit referencing the commented line
 			// No need for get commit for base branch changes
-			commit, lineres, err := gitRepo.LineBlame(head, treePath, uint64(line))
+			commit, lineres, err := gitRepo.LineBlame(afterCommitID, treePath, uint64(line))
 			if err == nil {
 				blamedCommitID = commit.ID.String()
 				blamedLine = int64(lineres)
@@ -236,6 +240,31 @@ func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, 
 			}
 		} else {
 			blamedCommitID = commitID
+		}
+	} else {
+		// Commenting on a line that was removed. In this case, what we want to track in the comment is which line of
+		// code was this, in the last commit that the line of code actually existed in. We'll use a reverse git blame to
+		// identify this, from the PR base -> commit being viewed.
+		blame, err := gitRepo.ReverseLineBlame(beforeCommitID, treePath, uint64(-1*line), afterCommitID)
+		if err != nil {
+			return nil, fmt.Errorf("ReverseLineBlame[%s, %s, %d, %s]: %w", beforeCommitID, treePath, -1*line, afterCommitID, err)
+		} else if blame.CommitID == afterCommitID {
+			// Although this is a comment on the "previous" side of the diff, the reverse blame indicates that the line
+			// of code still exists in the commit being viewed (eg. it was a comment on a white line in the left-side of
+			// the diff, not a red removed line). In order to record the right information for where to place this
+			// commit, we'll convert this into a right-hand comment -- using the present line number that the reverse
+			// blame gave us:
+			commit, lineres, err := gitRepo.LineBlame(afterCommitID, treePath, blame.LineNumber)
+			if err == nil {
+				blamedCommitID = commit.ID.String()
+				blamedLine = int64(lineres)
+			} else if !errors.Is(err, git.ErrBlameFileDoesNotExist) && !errors.Is(err, git.ErrBlameFileNotEnoughLines) {
+				return nil, fmt.Errorf("LineBlame[%s, %s, %s, %d]: %w", pr.GetGitRefName(), gitRepo.Path, treePath, line, err)
+			}
+		} else {
+			blamedCommitID = blame.CommitID
+			// retain negative line numbering to identify we're commenting on the "previous" side of the diff
+			blamedLine = -1 * int64(blame.LineNumber)
 		}
 	}
 
@@ -256,8 +285,8 @@ func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, 
 			_ = writer.Close()
 		}()
 		go func() {
-			if err := git.GetRepoRawDiffForFile(gitRepo, pr.MergeBase, commitID, git.RawDiffNormal, treePath, writer); err != nil {
-				_ = writer.CloseWithError(fmt.Errorf("GetRawDiffForLine[%s, %s, %s, %s]: %w", gitRepo.Path, pr.MergeBase, commitID, treePath, err))
+			if err := git.GetRepoRawDiffForFile(gitRepo, beforeCommitID, afterCommitID, git.RawDiffNormal, treePath, writer); err != nil {
+				_ = writer.CloseWithError(fmt.Errorf("GetRawDiffForLine[%s, %s, %s, %s]: %w", gitRepo.Path, pr.MergeBase, afterCommitID, treePath, err))
 				return
 			}
 			_ = writer.Close()

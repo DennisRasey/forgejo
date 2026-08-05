@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
@@ -188,16 +189,23 @@ func testEasyLeavePRComment(t *testing.T, session *TestSession, user, repo, id, 
 // testEasyLeavePRReviewComment is used to add review comments to specific lines of changed files in the diff of the PR.
 func testEasyLeavePRReviewComment(t *testing.T, session *TestSession, user, repo, id, file, line, message, replyID string) {
 	t.Helper()
+	req := NewRequestf(t, "GET", "/%s/%s/pulls/%s/files/reviews/new_comment", user, repo, id)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	doc := NewHTMLParser(t, resp.Body)
 	values := map[string]string{
-		"origin":        "diff",
-		"side":          "proposed",
-		"line":          line,
-		"path":          file,
-		"content":       message,
-		"single_review": "true",
+		"origin":           doc.GetInputValueByName("origin"),
+		"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+		"side":             "proposed",
+		"line":             line,
+		"path":             file,
+		"diff_start_cid":   doc.GetInputValueByName("diff_start_cid"),
+		"diff_end_cid":     doc.GetInputValueByName("diff_end_cid"),
+		"diff_base_cid":    doc.GetInputValueByName("diff_base_cid"),
+		"content":          message,
+		"single_review":    "true",
 	}
 	if len(replyID) > 0 {
 		values["reply"] = replyID
 	}
-	session.MakeRequest(t, NewRequestWithValues(t, "POST", path.Join(user, repo, "pulls", id, "files/reviews/comments"), values), http.StatusOK)
+	session.MakeRequest(t, NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/pulls/%s/files/reviews/comments", user, repo, id), values), http.StatusOK)
 }

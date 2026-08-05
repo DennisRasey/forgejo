@@ -6,6 +6,7 @@ package integration
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,11 +14,13 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
 	repo_model "forgejo.org/models/repo"
@@ -26,7 +29,9 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/gitrepo"
+	"forgejo.org/modules/optional"
 	repo_module "forgejo.org/modules/repository"
+	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
 	issue_service "forgejo.org/services/issue"
 	"forgejo.org/services/mailer"
@@ -36,8 +41,10 @@ import (
 	"forgejo.org/tests/forgery"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/html"
 )
 
 func TestPullView_ReviewerMissed(t *testing.T) {
@@ -206,27 +213,27 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 		req := NewRequest(t, "GET", "/user2/repo1/pulls/3/files/reviews/new_comment")
 		resp := session.MakeRequest(t, req, http.StatusOK)
-		doc := NewHTMLParser(t, resp.Body)
+		newCommentForm := NewHTMLParser(t, resp.Body)
 
 		var firstReviewID int64
 		{
 			// first (outdated) review
 			req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/3/files/reviews/comments", map[string]string{
-				"origin":           doc.GetInputValueByName("origin"),
-				"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+				"origin":           newCommentForm.GetInputValueByName("origin"),
+				"latest_commit_id": newCommentForm.GetInputValueByName("latest_commit_id"),
 				"side":             "proposed",
 				"line":             "2",
 				"path":             "iso-8859-1.txt",
-				"diff_start_cid":   doc.GetInputValueByName("diff_start_cid"),
-				"diff_end_cid":     doc.GetInputValueByName("diff_end_cid"),
-				"diff_base_cid":    doc.GetInputValueByName("diff_base_cid"),
+				"diff_start_cid":   newCommentForm.GetInputValueByName("diff_start_cid"),
+				"diff_end_cid":     newCommentForm.GetInputValueByName("diff_end_cid"),
+				"diff_base_cid":    newCommentForm.GetInputValueByName("diff_base_cid"),
 				"content":          "nitpicking comment",
 				"pending_review":   "",
 			})
 			session.MakeRequest(t, req, http.StatusOK)
 
 			req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/3/files/reviews/submit", map[string]string{
-				"commit_id": doc.GetInputValueByName("latest_commit_id"),
+				"commit_id": newCommentForm.GetInputValueByName("latest_commit_id"),
 				"content":   "looks good",
 				"type":      "comment",
 			})
@@ -235,7 +242,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 			// retrieve comment_id by reloading the comment page
 			req = NewRequest(t, "GET", "/user2/repo1/pulls/3")
 			resp = session.MakeRequest(t, req, http.StatusOK)
-			doc = NewHTMLParser(t, resp.Body)
+			doc := NewHTMLParser(t, resp.Body)
 			commentID, ok := doc.Find(`[data-action="Resolve"]`).Attr("data-comment-id")
 			assert.True(t, ok)
 
@@ -258,21 +265,21 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 			// second (up-to-date) review on the same line
 			// make a second review
 			req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/3/files/reviews/comments", map[string]string{
-				"origin":           doc.GetInputValueByName("origin"),
-				"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+				"origin":           newCommentForm.GetInputValueByName("origin"),
+				"latest_commit_id": newCommentForm.GetInputValueByName("latest_commit_id"),
 				"side":             "proposed",
 				"line":             "2",
 				"path":             "iso-8859-1.txt",
-				"diff_start_cid":   doc.GetInputValueByName("diff_start_cid"),
-				"diff_end_cid":     doc.GetInputValueByName("diff_end_cid"),
-				"diff_base_cid":    doc.GetInputValueByName("diff_base_cid"),
+				"diff_start_cid":   newCommentForm.GetInputValueByName("diff_start_cid"),
+				"diff_end_cid":     newCommentForm.GetInputValueByName("diff_end_cid"),
+				"diff_base_cid":    newCommentForm.GetInputValueByName("diff_base_cid"),
 				"content":          "nitpicking comment",
 				"pending_review":   "",
 			})
 			session.MakeRequest(t, req, http.StatusOK)
 
 			req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/3/files/reviews/submit", map[string]string{
-				"commit_id": doc.GetInputValueByName("latest_commit_id"),
+				"commit_id": newCommentForm.GetInputValueByName("latest_commit_id"),
 				"content":   "looks better",
 				"type":      "comment",
 			})
@@ -281,7 +288,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 			// retrieve comment_id by reloading the comment page
 			req = NewRequest(t, "GET", "/user2/repo1/pulls/3")
 			resp = session.MakeRequest(t, req, http.StatusOK)
-			doc = NewHTMLParser(t, resp.Body)
+			doc := NewHTMLParser(t, resp.Body)
 
 			commentIDs := doc.Find(`[data-action="Resolve"]`).Map(func(i int, elt *goquery.Selection) string {
 				v, _ := elt.Attr("data-comment-id")
@@ -310,7 +317,7 @@ func TestPullView_ResolveInvalidatedReviewComment(t *testing.T) {
 
 		// even on template error, the page returns HTTP 200
 		// count the comments to ensure success.
-		doc = NewHTMLParser(t, resp.Body)
+		doc := NewHTMLParser(t, resp.Body)
 		comments := doc.Find(`.comment-code-cloud > .comment`)
 		assert.Len(t, comments.Nodes, 1) // the outdated comment belongs to another review and should not be shown
 	})
@@ -664,13 +671,17 @@ func TestPullRequestReplyMail(t *testing.T) {
 
 		review := unittest.AssertExistsAndLoadBean(t, &issues_model.Review{ID: 1002}, "type = 0")
 
-		req := NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
-			"origin":  "diff",
-			"content": "Just a comment!",
-			"side":    "proposed",
-			"line":    "4",
-			"path":    "README.md",
-			"reply":   strconv.FormatInt(review.ID, 10),
+		req := NewRequest(t, "GET", "/user2/repo1/pulls/2/files/reviews/new_comment")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		doc := NewHTMLParser(t, resp.Body)
+		req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
+			"origin":           "diff",
+			"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+			"content":          "Just a comment!",
+			"side":             "proposed",
+			"line":             "4",
+			"path":             "README.md",
+			"reply":            strconv.FormatInt(review.ID, 10),
 		})
 		session.MakeRequest(t, req, http.StatusOK)
 
@@ -686,12 +697,16 @@ func TestPullRequestReplyMail(t *testing.T) {
 			called = true
 		})()
 
-		req := NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
-			"origin":  "diff",
-			"content": "Notification time 2!",
-			"side":    "proposed",
-			"line":    "2",
-			"path":    "README.md",
+		req := NewRequest(t, "GET", "/user2/repo1/pulls/2/files/reviews/new_comment")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		doc := NewHTMLParser(t, resp.Body)
+		req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
+			"origin":           "diff",
+			"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+			"content":          "Notification time 2!",
+			"side":             "proposed",
+			"line":             "2",
+			"path":             "README.md",
 		})
 		session.MakeRequest(t, req, http.StatusOK)
 
@@ -715,13 +730,17 @@ func TestPullRequestReplyMail(t *testing.T) {
 
 			review := unittest.AssertExistsAndLoadBean(t, &issues_model.Review{ID: 1001, Type: issues_model.ReviewTypeComment})
 
-			req := NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
-				"origin":  "diff",
-				"content": "Notification time!",
-				"side":    "proposed",
-				"line":    "3",
-				"path":    "README.md",
-				"reply":   strconv.FormatInt(review.ID, 10),
+			req := NewRequest(t, "GET", "/user2/repo1/pulls/2/files/reviews/new_comment")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			doc := NewHTMLParser(t, resp.Body)
+			req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
+				"origin":           "diff",
+				"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+				"content":          "Notification time!",
+				"side":             "proposed",
+				"line":             "3",
+				"path":             "README.md",
+				"reply":            strconv.FormatInt(review.ID, 10),
 			})
 			session.MakeRequest(t, req, http.StatusOK)
 
@@ -741,13 +760,17 @@ func TestPullRequestReplyMail(t *testing.T) {
 				called = true
 			})()
 
-			req := NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
-				"origin":        "diff",
-				"content":       "Notification time 2!",
-				"side":          "proposed",
-				"line":          "5",
-				"path":          "README.md",
-				"single_review": "true",
+			req := NewRequest(t, "GET", "/user2/repo1/pulls/2/files/reviews/new_comment")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			doc := NewHTMLParser(t, resp.Body)
+			req = NewRequestWithValues(t, "POST", "/user2/repo1/pulls/2/files/reviews/comments", map[string]string{
+				"origin":           "diff",
+				"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+				"content":          "Notification time 2!",
+				"side":             "proposed",
+				"line":             "5",
+				"path":             "README.md",
+				"single_review":    "true",
 			})
 			session.MakeRequest(t, req, http.StatusOK)
 
@@ -1039,4 +1062,1078 @@ func TestPullRequestStaleReview(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestPullRequestCommentPlacement(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		t.Run("comment directly on change in PR", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			commitSHA := tester.changeFile("file1.md",
+				strings.Replace(tester.fileContent, "Line 50\n", "Line 50--modified\n", 1))
+			tester.createPR()
+
+			comment := tester.commentFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -48,3 +48,3 @@
+ Line 48
+ Line 49
+-Line 50
++Line 50--modified`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 50, comment.Line)
+			assert.Equal(t, commitSHA, comment.CommitSHA)
+
+			diff := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff)
+			tester.assertCommitDiff(commitSHA, diff)
+		})
+
+		t.Run("comment lands on blame from commit within PR", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify an earlier part of the file in one commit, and a later part of the file in a second commit.
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 25\n", "Line 25--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			content = strings.Replace(content, "Line 75\n", "Line 75--modified\n", 1)
+			commit2 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Comment on the earlier change, from the "Files changed" view; this should "git blame" and be asociated
+			// with the first commit where that change was made, therefore appearing on the commit-specific diff later:
+			comment := tester.commentFromFilesChanged("file1.md", 25)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -23,3 +23,3 @@
+ Line 23
+ Line 24
+-Line 25
++Line 25--modified`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 25, comment.Line)
+			assert.Equal(t, commit1, comment.CommitSHA)
+
+			diff25 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 24"},
+				{rowType: RowDelCode, code: "Line 25"},
+				{rowType: RowAddCode, code: "Line 25--modified"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 26"},
+			}
+			tester.assertFilesChangedDiff(diff25)
+			tester.assertCommitDiff(commit1, diff25)
+
+			diff75 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 74"},
+				{rowType: RowDelCode, code: "Line 75"},
+				{rowType: RowAddCode, code: "Line 75--modified"},
+				{rowType: RowHasCode, code: "Line 76"},
+			}
+			tester.assertFilesChangedDiff(diff75)
+			tester.assertCommitDiff(commit2, diff75)
+		})
+
+		t.Run("comment lands on blame commit from before PR", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50...
+			commitSHA := tester.changeFile("file1.md",
+				strings.Replace(tester.fileContent, "Line 50\n", "Line 50--modified\n", 1))
+			tester.createPR()
+
+			// But while viewing line 50's diff, place a comment on line 49.  This will "git blame" to a commit outside
+			// of this PR, but that's fine...
+			comment := tester.commentFromFilesChanged("file1.md", 49)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,7 @@ Line 46
+ Line 47
+ Line 48
+ Line 49`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 49, comment.Line)
+			assert.NotEqual(t, commitSHA, comment.CommitSHA)
+
+			diff := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 48"},
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff)
+			tester.assertCommitDiff(commitSHA, diff)
+		})
+
+		t.Run("comment on line moves due to a following commit", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Place a comment on "Line 50--modified"
+			comment := tester.commentFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -48,3 +48,3 @@
+ Line 48
+ Line 49
+-Line 50
++Line 50--modified`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 50, comment.Line)
+			assert.Equal(t, commit1, comment.CommitSHA)
+
+			// Add a second commit to the PR which removes  "Line 1" - "Line 10".
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			commit2 := tester.changeFile("file1.md", content)
+
+			diff2 := []diffTableRow{
+				{rowType: RowDelCode, code: "Line 9"},
+				{rowType: RowDelCode, code: "Line 10"},
+				{rowType: RowHasCode, code: "Line 11"},
+			}
+			tester.assertFilesChangedDiff(diff2, "checking commit2 contents in full PR diff")
+			tester.assertCommitDiff(commit2, diff2, "checking commit2 contents in single-commit diff")
+
+			diff1 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
+		})
+
+		t.Run("comment on line moves due to a following commit, following commit is rewritten and force-push'd", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Place a comment on "Line 50--modified"
+			comment := tester.commentFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -48,3 +48,3 @@
+ Line 48
+ Line 49
+-Line 50
++Line 50--modified`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 50, comment.Line)
+			assert.Equal(t, commit1, comment.CommitSHA)
+			assert.False(t, comment.Invalidated)
+
+			// Add a second commit to the PR which removes  "Line 1" - "Line 10".
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			tester.changeFile("file1.md", content)
+
+			// Now amend commit2v1 with an additional change, causing a force push of the branch
+			tester.withBranchCheckout(func(repoPath string) {
+				content = strings.Replace(content, "Line 11\n", "", 1) // Remove Line 11 as well
+				require.NoError(t, os.WriteFile(path.Join(repoPath, "file1.md"), []byte(content), 0o644))
+				require.NoError(t, git.NewCommand(t.Context(), "commit", "-a", "--amend", "--no-edit").Run(&git.RunOpts{Dir: repoPath}))
+				require.NoError(t, git.NewCommand(t.Context(), "push", "--force").Run(&git.RunOpts{Dir: repoPath}))
+			})
+
+			diff2 := []diffTableRow{
+				{rowType: RowDelCode, code: "Line 10"},
+				{rowType: RowDelCode, code: "Line 11"},
+				{rowType: RowHasCode, code: "Line 12"},
+			}
+			tester.assertFilesChangedDiff(diff2, "checking commit2 (force push) contents in full PR diff")
+
+			diff1 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
+
+			// This comment can still be located in the diff, so it should not be marked as Invalidated/Outdated --
+			// which is kinda guaranteed by it being loaded in the diff, but for test sanity assert specifically.
+			commentReloaded := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID})
+			assert.False(t, commentReloaded.Invalidated)
+		})
+
+		t.Run("comment on line commit is rewritten and force-push'd", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Place a comment on "Line 50--modified"
+			comment := tester.commentFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -48,3 +48,3 @@
+ Line 48
+ Line 49
+-Line 50
++Line 50--modified`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 50, comment.Line)
+			assert.Equal(t, commit1, comment.CommitSHA)
+			assert.False(t, comment.Invalidated)
+
+			// Add a second commit to the PR which removes  "Line 1" - "Line 10".
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			commit2 := tester.changeFile("file1.md", content)
+
+			// Now, reorganize these commits, so that it's main->commit2->commit1 on the branch, rather than
+			// main->commit1->commit2. Then force push the branch.
+			tester.withBranchCheckout(func(repoPath string) {
+				// move commit2 onto main, off commit1
+				require.NoError(t,
+					git.NewCommand(t.Context(), "rebase").
+						AddArguments("--onto").AddDynamicArguments(tester.initialSHA).
+						AddDynamicArguments(commit1).
+						AddDynamicArguments(commit2).
+						Run(&git.RunOpts{Dir: repoPath}))
+				// move commit1 onto HEAD, off main
+				require.NoError(t,
+					git.NewCommand(t.Context(), "rebase").
+						AddArguments("--onto").AddDynamicArguments("HEAD").
+						AddDynamicArguments(tester.initialSHA).
+						AddDynamicArguments(commit1).
+						Run(&git.RunOpts{Dir: repoPath}))
+
+				// delete branch for the PR
+				has, branch := tester.branch.Get()
+				require.True(t, has)
+				require.NoError(t,
+					git.NewCommand(t.Context(), "branch").
+						AddArguments("-D").AddDynamicArguments(branch).
+						Run(&git.RunOpts{Dir: repoPath}))
+				// call HEAD as the branch
+				require.NoError(t,
+					git.NewCommand(t.Context(), "branch").
+						AddDynamicArguments(branch).
+						Run(&git.RunOpts{Dir: repoPath}))
+
+				// force push the rebuilt branch
+				require.NoError(t, git.NewCommand(t.Context(), "push", "--force", "origin").AddDynamicArguments(branch).Run(&git.RunOpts{Dir: repoPath}))
+			})
+
+			diff2 := []diffTableRow{
+				{rowType: RowDelCode, code: "Line 10"},
+				{rowType: RowHasCode, code: "Line 11"},
+			}
+			tester.assertFilesChangedDiff(diff2, "checking commit2 (force push) contents in full PR diff")
+
+			diff1 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				// no comment visible anymore; force push has lost its place at this time
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+
+			// After the force push, the comment we originally left should be marked as invalidated since it can no
+			// longer be resolved to a code location in the PR head. The above tests validate that it no longer appears
+			// in the diff, but this will also happen because of the diff-side check for the correct location -- so
+			// let's check that it's invalidated as well, indicating that it will be shown in the UI as "Outdated". This
+			// usually passes on the first check but is wrapped in Eventually because the async goroutine used in the
+			// pull request testing when the branch is pushed may not be immediately complete.
+			assert.EventuallyWithT(t, func(t *assert.CollectT) {
+				commentReloaded := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID})
+				assert.True(t, commentReloaded.Invalidated)
+			}, 1*time.Second, 50*time.Millisecond)
+		})
+
+		t.Run("comment lands on blame with original line number varying from current", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Remove "Line 1" - "Line 10", on the base branch. If you "git blame" Line 50 at that point, it will have
+			// an original line number 50, but actually be appearing at line number index 40, causing wrong outputs.
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			tester.changeFileOnBase("file1.md", content)
+
+			// Now modify "Line 51" in a PR:
+			commitSHA := tester.changeFile("file1.md", strings.Replace(content, "Line 51\n", "Line 51--modified\n", 1))
+			tester.createPR()
+
+			// Place a comment on "Line 50", which would "git blame" to the original commit and line number 50, even
+			// though it's now actually at line number 40.
+			comment := tester.commentFromFilesChanged("file1.md", lineNumber(content, "Line 50"))
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -38,7 +38,7 @@ Line 47
+ Line 48
+ Line 49
+ Line 50`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 50, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA)
+
+			diff := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowHasCode, code: "Line 50"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowDelCode, code: "Line 51"},
+				{rowType: RowAddCode, code: "Line 51--modified"},
+				{rowType: RowHasCode, code: "Line 52"},
+			}
+			tester.assertFilesChangedDiff(diff)
+			tester.assertCommitDiff(commitSHA, diff)
+		})
+
+		t.Run("comment on specific commit adjusts correctly to later changes in the PR", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify an earlier part of the file in one commit, and then change line numbers in a second commit by
+			// removing some content from the file earlier than the first commit
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			commit2 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Create a comment on commit1's "Line 50" change, from the commit-specific view:
+			comment := tester.commentFromSpecificCommit(commit1, "file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -48,3 +48,3 @@
+ Line 48
+ Line 49
+-Line 50
++Line 50--modified`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide())
+			assert.EqualValues(t, 50, comment.Line)
+			assert.Equal(t, commit1, comment.CommitSHA)
+
+			diff50 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff50)
+			tester.assertCommitDiff(commit1, diff50)
+
+			diff10 := []diffTableRow{
+				{rowType: RowDelCode, code: "Line 9"},
+				{rowType: RowDelCode, code: "Line 10"},
+				{rowType: RowHasCode, code: "Line 11"},
+			}
+			tester.assertFilesChangedDiff(diff10)
+			tester.assertCommitDiff(commit2, diff10)
+		})
+
+		t.Run("comment on removed line", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Remove line 50, place a comment on the removed line.
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "", 1)
+			commit := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			comment := tester.commentOnPreviousFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50`, comment.PatchQuoted)
+			assert.Equal(t, "previous", comment.DiffSide())
+			assert.EqualValues(t, -50, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA) // tracked back to the previous commit where it was line num 50
+
+			diff50 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff50)
+			tester.assertCommitDiff(commit, diff50)
+		})
+
+		t.Run("comment on removed line moves due to a following commit", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Remove line 50, place a comment on the removed line.
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			comment := tester.commentOnPreviousFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50`, comment.PatchQuoted)
+			assert.Equal(t, "previous", comment.DiffSide())
+			assert.EqualValues(t, -50, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA) // tracked back to the previous commit where it was line num 50
+
+			// Add a second commit to the PR which removes "Line 1" - "Line 10".
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			commit2 := tester.changeFile("file1.md", content)
+
+			diff2 := []diffTableRow{
+				{rowType: RowDelCode, code: "Line 9"},
+				{rowType: RowDelCode, code: "Line 10"},
+				{rowType: RowHasCode, code: "Line 11"},
+			}
+			tester.assertFilesChangedDiff(diff2, "checking commit2 contents in full PR diff")
+			tester.assertCommitDiff(commit2, diff2, "checking commit2 contents in single-commit diff")
+
+			diff1 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
+
+			// This comment can still be located in the diff, so it should not be marked as Invalidated/Outdated --
+			// which is kinda guaranteed by it being loaded in the diff, but for test sanity assert specifically.
+			commentReloaded := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID})
+			assert.False(t, commentReloaded.Invalidated)
+		})
+
+		t.Run("comment on previous side line unchanged by PR appears", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Change line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// While viewing the PR, the reviewer made a comment on the previous side on a line of code that wasn't
+			// actually changed in the PR:
+			comment := tester.commentOnPreviousFromFilesChanged("file1.md", 49)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +37,7 @@ Line 46
+ Line 47
+ Line 48
+ Line 49`, comment.PatchQuoted)
+			assert.Equal(t, "proposed", comment.DiffSide()) // will be moved from previous(LHS)->proposed(RHS) because it wasn't a comment on a change in the PR
+			assert.EqualValues(t, 49, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA)
+
+			diff := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff, "checking commit1 contents in full PR diff")
+			tester.assertCommitDiff(commit1, diff, "checking commit1 contents in single-commit diff")
+		})
+
+		t.Run("comment on first line of file removed", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Remove the first line of the file which will then be commented on, as an edge-case
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 1\n", "", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			comment := tester.commentOnPreviousFromSpecificCommit(commit1, "file1.md", 1)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -1,4 +1,3 @@
+-Line 1`, comment.PatchQuoted)
+			assert.Equal(t, "previous", comment.DiffSide())
+			assert.EqualValues(t, -1, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA)
+
+			diff := []diffTableRow{
+				{rowType: RowDelCode, code: "Line 1"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 2"},
+			}
+			tester.assertFilesChangedDiff(diff, "checking commit1 contents in full PR diff")
+			tester.assertCommitDiff(commit1, diff, "checking commit1 contents in single-commit diff")
+		})
+
+		t.Run("comment on removed line moves due to a following commit, following commit is rewritten and force-push'd", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Place a comment on "Line 50" (removed side)
+			comment := tester.commentOnPreviousFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,7 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50`, comment.PatchQuoted)
+			assert.Equal(t, "previous", comment.DiffSide())
+			assert.EqualValues(t, -50, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA)
+			assert.False(t, comment.Invalidated)
+
+			// Add a second commit to the PR which removes  "Line 1" - "Line 10".
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			tester.changeFile("file1.md", content)
+
+			// Now amend commit2v1 with an additional change, causing a force push of the branch
+			tester.withBranchCheckout(func(repoPath string) {
+				content = strings.Replace(content, "Line 11\n", "", 1) // Remove Line 11 as well
+				require.NoError(t, os.WriteFile(path.Join(repoPath, "file1.md"), []byte(content), 0o644))
+				require.NoError(t, git.NewCommand(t.Context(), "commit", "-a", "--amend", "--no-edit").Run(&git.RunOpts{Dir: repoPath}))
+				require.NoError(t, git.NewCommand(t.Context(), "push", "--force").Run(&git.RunOpts{Dir: repoPath}))
+			})
+
+			diff2 := []diffTableRow{
+				{rowType: RowDelCode, code: "Line 10"},
+				{rowType: RowDelCode, code: "Line 11"},
+				{rowType: RowHasCode, code: "Line 12"},
+			}
+			tester.assertFilesChangedDiff(diff2, "checking commit2 (force push) contents in full PR diff")
+
+			diff1 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff1, "checking commit1 contents in full PR diff")
+			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
+
+			// This comment can still be located in the diff, so it should not be marked as Invalidated/Outdated --
+			// which is kinda guaranteed by it being loaded in the diff, but for test sanity assert specifically.
+			commentReloaded := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID})
+			assert.False(t, commentReloaded.Invalidated)
+		})
+
+		t.Run("comment on removed line invalidated due to force push", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// Modify line 50
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "", 1)
+			tester.changeFile("file1.md", content)
+			tester.createPR()
+
+			// Place a comment on "Line 50" (removed side)
+			comment := tester.commentOnPreviousFromFilesChanged("file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50`, comment.PatchQuoted)
+			assert.Equal(t, "previous", comment.DiffSide())
+			assert.EqualValues(t, -50, comment.Line)
+			assert.Equal(t, tester.initialSHA, comment.CommitSHA)
+			assert.False(t, comment.Invalidated)
+
+			// Now amend commit1 with an additional change that undoes the earlier change, changes something else instead
+			tester.withBranchCheckout(func(repoPath string) {
+				content = strings.Replace(content, "Line 49\n", "Line 49\nLine 50\n", 1)
+				content = strings.Replace(content, "Line 52\n", "", 1)
+				require.NoError(t, os.WriteFile(path.Join(repoPath, "file1.md"), []byte(content), 0o644))
+				require.NoError(t, git.NewCommand(t.Context(), "commit", "-a", "--amend", "--no-edit").Run(&git.RunOpts{Dir: repoPath}))
+				require.NoError(t, git.NewCommand(t.Context(), "push", "--force").Run(&git.RunOpts{Dir: repoPath}))
+			})
+
+			diff := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowHasCode, code: "Line 50"},
+				{rowType: RowHasCode, code: "Line 51"},
+				{rowType: RowDelCode, code: "Line 52"},
+				{rowType: RowHasCode, code: "Line 53"},
+			}
+			tester.assertFilesChangedDiff(diff, "checking commit2 (force push) contents in full PR diff")
+
+			// The comment on "Line 50" can't be valid anymore since that's not in the diff:
+			assert.EventuallyWithT(t, func(t *assert.CollectT) {
+				commentReloaded := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID})
+				assert.True(t, commentReloaded.Invalidated)
+			}, 1*time.Second, 50*time.Millisecond)
+		})
+
+		t.Run("comment on removed line in specific commit adjusts to correct location", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newPullRequestCommentPlacementTester(t)
+
+			// 3 commits: modify line 50, remove line 50, remove some earlier lines
+			content := tester.fileContent
+			content = strings.Replace(content, "Line 50\n", "Line 50--modified\n", 1)
+			commit1 := tester.changeFile("file1.md", content)
+			t.Logf("commit1 = %q", commit1)
+			content = strings.Replace(content, "Line 50--modified\n", "", 1)
+			commit2 := tester.changeFile("file1.md", content)
+			t.Logf("commit2 = %q", commit2)
+			content = strings.Replace(content, "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\nLine 8\nLine 9\nLine 10\n", "", 1)
+			commit3 := tester.changeFile("file1.md", content)
+			t.Logf("commit3 = %q", commit3)
+			tester.createPR()
+
+			comment := tester.commentOnPreviousFromSpecificCommit(commit2, "file1.md", 50)
+			assert.Equal(t, `diff --git a/file1.md b/file1.md
+--- a/file1.md
++++ b/file1.md
+@@ -47,7 +47,6 @@ Line 46
+ Line 47
+ Line 48
+ Line 49
+-Line 50--modified`, comment.PatchQuoted)
+			assert.Equal(t, "previous", comment.DiffSide())
+			assert.EqualValues(t, -50, comment.Line)
+			assert.Equal(t, commit1, comment.CommitSHA)
+
+			diff1 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				{rowType: RowAddCode, code: "Line 50--modified"},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertCommitDiff(commit1, diff1, "checking commit1 contents in single-commit diff")
+
+			diff2 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50--modified"},
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertCommitDiff(commit2, diff2, "checking commit2 contents in single-commit diff")
+
+			diff3 := []diffTableRow{
+				{rowType: RowHasCode, code: "Line 49"},
+				{rowType: RowDelCode, code: "Line 50"},
+				// This is a small bug -- the comment was placed on the code "Line 50--modified" in commit1, which was
+				// later amended by commit2. This comment should be marked out-of-date and not appear here. But the
+				// comment's `ResolveCurrentLine` doesn't quite detect this case correctly -- as the comment's CommitSHA
+				// is commit1, it performs a diff commit1..PR-HEAD, not mergebase..PR-HEAD, and it believes that this
+				// line of code still exists because it exists in that diff range. It's a rare edge case that is defered
+				// for future repair.
+				{rowType: RowComment, commentID: comment.ID},
+				{rowType: RowHasCode, code: "Line 51"},
+			}
+			tester.assertFilesChangedDiff(diff3, "checking overall contents in full PR diff")
+		})
+	})
+}
+
+type PullRequestCommentPlacementTester struct {
+	t           *testing.T
+	user        *user_model.User
+	session     *TestSession
+	apiToken    string
+	fileContent string
+	repo        *repo_model.Repository
+	initialSHA  string
+	branch      optional.Option[string]
+	pr          *api.PullRequest
+}
+
+func newPullRequestCommentPlacementTester(t *testing.T) *PullRequestCommentPlacementTester {
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	token := getUserToken(t, "user2", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteIssue)
+	session := loginUser(t, user2.Name)
+
+	var content strings.Builder
+	for i := range 100 {
+		content.WriteString(fmt.Sprintf("Line %d\n", i+1)) // +1 -> make "Line N" appear on the Nth line and avoid off-by-one confusions
+	}
+
+	var initialSHA string
+	repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+		Files: forgery.MapFS{
+			"file1.md": forgery.MapFile(content.String()),
+			"file2.md": forgery.MapFile(content.String()),
+		},
+		LatestSha: &initialSHA,
+	})
+
+	return &PullRequestCommentPlacementTester{
+		t:           t,
+		user:        user2,
+		session:     session,
+		apiToken:    token,
+		fileContent: content.String(),
+		repo:        repo,
+		initialSHA:  initialSHA,
+	}
+}
+
+func (tester *PullRequestCommentPlacementTester) changeFileOnBranch(sourceBranch, targetBranch string, targetBranchIsNew bool, filename, newContent string) string {
+	req := NewRequest(tester.t,
+		"GET",
+		fmt.Sprintf("/api/v1/repos/%s/%s/contents/%s?ref=%s", tester.repo.OwnerName, tester.repo.Name, filename, sourceBranch)).
+		AddTokenAuth(tester.apiToken)
+	resp := MakeRequest(tester.t, req, http.StatusOK)
+	var existingFile api.ContentsResponse
+	DecodeJSON(tester.t, resp, &existingFile)
+
+	opts := api.UpdateFileOptions{
+		DeleteFileOptions: api.DeleteFileOptions{
+			SHA: existingFile.SHA,
+		},
+		ContentBase64: base64.StdEncoding.EncodeToString([]byte(newContent)),
+	}
+	if targetBranchIsNew {
+		opts.DeleteFileOptions.FileOptions.NewBranchName = targetBranch
+	} else {
+		opts.DeleteFileOptions.FileOptions.BranchName = targetBranch
+	}
+	req = NewRequestWithJSON(tester.t,
+		"PUT",
+		fmt.Sprintf("/api/v1/repos/%s/%s/contents/%s", tester.repo.OwnerName, tester.repo.Name, filename),
+		opts).AddTokenAuth(tester.apiToken)
+	resp = MakeRequest(tester.t, req, http.StatusOK)
+	var updateFileResponse api.FileResponse
+	DecodeJSON(tester.t, resp, &updateFileResponse)
+
+	return updateFileResponse.Commit.SHA
+}
+
+func (tester *PullRequestCommentPlacementTester) changeFileOnBase(filename, newContent string) string {
+	return tester.changeFileOnBranch(tester.repo.DefaultBranch, tester.repo.DefaultBranch, false, filename, newContent)
+}
+
+func (tester *PullRequestCommentPlacementTester) changeFile(filename, newContent string) string {
+	var sourceBranch string // where to get the file's last SHA from
+	branchExists, branch := tester.branch.Get()
+	if !branchExists {
+		branch = fmt.Sprintf("branch-%s", uuid.New().String())
+		tester.branch = optional.Some(branch)
+		sourceBranch = tester.repo.DefaultBranch
+	} else {
+		sourceBranch = branch
+	}
+	return tester.changeFileOnBranch(sourceBranch, branch, !branchExists, filename, newContent)
+}
+
+func (tester *PullRequestCommentPlacementTester) createPR() {
+	branchExists, branch := tester.branch.Get()
+	require.True(tester.t, branchExists)
+	req := NewRequestWithJSON(tester.t, "POST",
+		fmt.Sprintf("/api/v1/repos/%s/%s/pulls", tester.repo.OwnerName, tester.repo.Name),
+		&api.CreatePullRequestOption{
+			Head:  branch,
+			Base:  tester.repo.DefaultBranch,
+			Title: fmt.Sprintf("PR from branch %s", tester.branch),
+		}).AddTokenAuth(tester.apiToken)
+	resp := MakeRequest(tester.t, req, http.StatusCreated)
+	var pr api.PullRequest
+	DecodeJSON(tester.t, resp, &pr)
+	tester.pr = &pr
+}
+
+func (tester *PullRequestCommentPlacementTester) commentFromFilesChanged(filename string, line int) *issues_model.Comment {
+	req := NewRequest(tester.t, "GET",
+		// omit after_commit_id -- new_comment form defaults to fetching the PR head
+		fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/new_comment", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
+	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+	return tester.commentFromNewCommentForm(resp, filename, line, "proposed")
+}
+
+func (tester *PullRequestCommentPlacementTester) commentOnPreviousFromFilesChanged(filename string, line int) *issues_model.Comment {
+	req := NewRequest(tester.t, "GET",
+		// omit after_commit_id -- new_comment form defaults to fetching the PR head
+		fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/new_comment", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
+	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+	return tester.commentFromNewCommentForm(resp, filename, line, "previous")
+}
+
+func (tester *PullRequestCommentPlacementTester) getCommitParent(commitID string) string {
+	repo, err := gitrepo.OpenRepository(tester.t.Context(), tester.repo)
+	require.NoError(tester.t, err)
+	defer repo.Close()
+	commit, err := repo.GetCommit(commitID)
+	require.NoError(tester.t, err)
+	require.Len(tester.t, commit.Parents, 1)
+	return commit.Parents[0].String()
+}
+
+func (tester *PullRequestCommentPlacementTester) commentFromSpecificCommit(commitID, filename string, line int) *issues_model.Comment {
+	beforeCommitID := tester.getCommitParent(commitID)
+	req := NewRequest(tester.t, "GET",
+		fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/new_comment?before_commit_id=%s&after_commit_id=%s", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index, beforeCommitID, commitID))
+	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+	return tester.commentFromNewCommentForm(resp, filename, line, "proposed")
+}
+
+func (tester *PullRequestCommentPlacementTester) commentOnPreviousFromSpecificCommit(commitID, filename string, line int) *issues_model.Comment {
+	beforeCommitID := tester.getCommitParent(commitID)
+	tester.t.Logf("beforeCommitID(%q) = %q", commitID, beforeCommitID)
+	req := NewRequest(tester.t, "GET",
+		fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/new_comment?before_commit_id=%s&after_commit_id=%s", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index, beforeCommitID, commitID))
+	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+	return tester.commentFromNewCommentForm(resp, filename, line, "previous")
+}
+
+func (tester *PullRequestCommentPlacementTester) commentFromNewCommentForm(resp *httptest.ResponseRecorder, filename string, line int, side string) *issues_model.Comment {
+	commentContent := uuid.New().String()
+	doc := NewHTMLParser(tester.t, resp.Body)
+	tester.t.Logf("doc.before = %q", doc.GetInputValueByName("before_commit_id"))
+	tester.t.Logf("doc.latest = %q", doc.GetInputValueByName("latest_commit_id"))
+	req := NewRequestWithValues(tester.t, "POST",
+		fmt.Sprintf("/%s/%s/pulls/%d/files/reviews/comments", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index),
+		map[string]string{
+			"origin":           doc.GetInputValueByName("origin"),
+			"before_commit_id": doc.GetInputValueByName("before_commit_id"),
+			"latest_commit_id": doc.GetInputValueByName("latest_commit_id"),
+			"side":             side, // "proposed" (RHS) or "previous" (LHS)
+			"line":             strconv.Itoa(line),
+			"path":             filename,
+			"diff_start_cid":   doc.GetInputValueByName("diff_start_cid"),
+			"diff_end_cid":     doc.GetInputValueByName("diff_end_cid"),
+			"diff_base_cid":    doc.GetInputValueByName("diff_base_cid"),
+			"content":          commentContent,
+			"single_review":    "true",
+		})
+	tester.session.MakeRequest(tester.t, req, http.StatusOK)
+
+	comment := unittest.AssertExistsAndLoadBean(tester.t, &issues_model.Comment{Content: commentContent})
+	return comment
+}
+
+func (tester *PullRequestCommentPlacementTester) withBranchCheckout(action func(string)) {
+	dstPath := tester.t.TempDir()
+	cloneURL, _ := url.Parse(tester.repo.CloneLink().HTTPS)
+	cloneURL.User = url.UserPassword(tester.user.LoginName, userPassword)
+	require.NoError(tester.t, git.CloneWithArgs(tester.t.Context(), nil, cloneURL.String(), dstPath, git.CloneRepoOptions{}))
+	doGitSetRemoteURL(dstPath, "origin", cloneURL)(tester.t)
+
+	branchExists, branch := tester.branch.Get()
+	require.True(tester.t, branchExists)
+	require.NoError(tester.t, git.NewCommand(tester.t.Context(), "checkout").AddDynamicArguments(branch).Run(&git.RunOpts{Dir: dstPath}))
+
+	action(dstPath)
+}
+
+func (tester *PullRequestCommentPlacementTester) assertFilesChangedDiff(rowAssertions []diffTableRow, note ...string) {
+	req := NewRequest(tester.t, "GET",
+		fmt.Sprintf("/%s/%s/pulls/%d/files", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
+	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+	doc := NewHTMLParser(tester.t, resp.Body)
+	var testNote string
+	if len(note) == 0 {
+		testNote = "contents in single-commit diff"
+	} else {
+		testNote = note[0]
+	}
+	assertDiffTable(tester.t, doc, rowAssertions, testNote)
+}
+
+func (tester *PullRequestCommentPlacementTester) assertCommitDiff(commitSHA string, rowAssertions []diffTableRow, note ...string) {
+	req := NewRequest(tester.t, "GET",
+		fmt.Sprintf("/%s/%s/pulls/%d/commits/%s", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index, commitSHA))
+	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+	doc := NewHTMLParser(tester.t, resp.Body)
+	var testNote string
+	if len(note) == 0 {
+		testNote = "contents in full PR diff"
+	} else {
+		testNote = note[0]
+	}
+	assertDiffTable(tester.t, doc, rowAssertions, testNote)
+}
+
+func lineNumber(content, line string) int {
+	return slices.Index(strings.Split(content, "\n"), line) + 1
+}
+
+type diffTableRowType int
+
+const (
+	RowHasCode diffTableRowType = iota
+	RowAddCode
+	RowDelCode
+	RowComment
+)
+
+type diffTableRow struct {
+	rowType diffTableRowType
+	// RowHasCode, RowAddCode, RowDelCode
+	code string
+	// RowComment
+	commentID int64
+}
+
+func nodeText(node *html.Node) string {
+	if node.Type == html.TextNode {
+		return node.Data
+	}
+	var builder strings.Builder
+	for child := range node.ChildNodes() {
+		childText := strings.TrimSpace(nodeText(child))
+		builder.WriteString(childText)
+	}
+	return builder.String()
+}
+
+func nodeAttr(node *html.Node, key string) string {
+	for _, attr := range node.Attr {
+		if attr.Key == key {
+			return attr.Val
+		}
+	}
+	return ""
+}
+
+func checkDiffTableRow(t *testing.T, tableRow *html.Node, rowAssertion diffTableRow) string {
+	switch rowAssertion.rowType {
+	case RowHasCode:
+		text := nodeText(tableRow)
+		if text != rowAssertion.code {
+			return fmt.Sprintf("wanted diff %q, but found diff %q", rowAssertion.code, text)
+		}
+	case RowDelCode:
+		dataLineType := nodeAttr(tableRow, "data-line-type")
+		if dataLineType != "del" {
+			return fmt.Sprintf("wanted delete code in diff, but found data-line-type=%q", dataLineType)
+		}
+		text := nodeText(tableRow)
+		if text != rowAssertion.code {
+			return fmt.Sprintf("wanted delete code with line %q, but found diff %q", rowAssertion.code, text)
+		}
+	case RowAddCode:
+		dataLineType := nodeAttr(tableRow, "data-line-type")
+		if dataLineType != "add" {
+			return fmt.Sprintf("wanted add code in diff, but found data-line-type=%q", dataLineType)
+		}
+		text := nodeText(tableRow)
+		if text != rowAssertion.code {
+			return fmt.Sprintf("wanted add code with line %q, but found diff %q", rowAssertion.code, text)
+		}
+	case RowComment:
+		class := nodeAttr(tableRow, "class")
+		if class != "add-comment" {
+			return fmt.Sprintf("wanted comment in diff, but found class=%q", class)
+		}
+		found := false
+		for desc := range tableRow.Descendants() {
+			descID := nodeAttr(desc, "id")
+			if descID == fmt.Sprintf("code-comments-%d", rowAssertion.commentID) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Sprintf("wanted comment with ID %d, but could not be identified", rowAssertion.commentID)
+		}
+	}
+	return ""
+}
+
+func assertDiffTable(t *testing.T, doc *HTMLDoc, rowAssertions []diffTableRow, note string) {
+	require.NotEmpty(t, rowAssertions)
+
+	diffTable := doc.Find("table.chroma")
+	require.Equal(t, 1, diffTable.Length())
+
+	rows := diffTable.Find("tbody > tr[data-line-type]") // [data-line-type] is used to avoid matching tables within comment boxes
+
+	// Find the first row to match rowAssertions[0], and then we'll iterate from there matching each row exactly.
+	tableFirstRowIndex := 0
+	foundFirst := false
+	firstRowMismatches := []string{}
+	for ; tableFirstRowIndex < rows.Length(); tableFirstRowIndex++ {
+		mismatch := checkDiffTableRow(t, rows.Get(tableFirstRowIndex), rowAssertions[0])
+		if mismatch == "" {
+			foundFirst = true
+			break
+		}
+		firstRowMismatches = append(firstRowMismatches, mismatch)
+	}
+	if !foundFirst {
+		// We're going to fail because we couldn't find the first row in rowAssertions -- this can be tricky to debug so
+		// help out by outputting all the rows we looked at that didn't match:
+		t.Log("first row mismatches:")
+		for _, mm := range firstRowMismatches {
+			t.Logf("\t%s", mm)
+		}
+		require.Failf(t, "unable to find first row", "test %s: failed to find first row assertion", note)
+	}
+
+	for idx, assertion := range rowAssertions {
+		if idx == 0 { // skip first row assertion, already checked to find tableFirstRowIndex
+			continue
+		}
+
+		tableIdx := tableFirstRowIndex + idx
+		if tableIdx >= rows.Length() {
+			require.Failf(t, "ran out of table rows", "test %s: row assertion at index %d couldn't be satisfied", note, idx)
+		}
+
+		tableRow := rows.Get(tableIdx)
+		check := checkDiffTableRow(t, tableRow, assertion)
+		if check != "" {
+			assert.Failf(t, check, "test %s: row assertion at index %d couldn't be satisfied", note, idx)
+		}
+	}
 }

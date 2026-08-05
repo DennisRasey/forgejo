@@ -337,6 +337,8 @@ func CreatePullReviewComment(ctx *context.APIContext) {
 		pr.Issue,
 		opts.Body,
 		opts.Path,
+		pr.MergeBase,
+		review.CommitID,
 		line,
 		review.ID,
 		nil,
@@ -508,6 +510,7 @@ func CreatePullReview(ctx *context.APIContext) {
 			c.Path,
 			true, // pending review
 			0,    // no reply
+			pr.MergeBase,
 			opts.CommitID,
 			nil,
 		); err != nil {

@@ -600,7 +600,7 @@ func TestDiff_LoadCommentsNoOutdated(t *testing.T) {
 	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 2})
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	diff := setupDefaultDiff()
-	require.NoError(t, diff.LoadComments(db.DefaultContext, issue, user, false))
+	require.NoError(t, diff.LoadComments(db.DefaultContext, issue, user, false, ""))
 	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations, 2)
 }
 
@@ -610,7 +610,7 @@ func TestDiff_LoadCommentsWithOutdated(t *testing.T) {
 	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 2})
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	diff := setupDefaultDiff()
-	require.NoError(t, diff.LoadComments(db.DefaultContext, issue, user, true))
+	require.NoError(t, diff.LoadComments(db.DefaultContext, issue, user, true, ""))
 	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations, 2)
 	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations[0], 2)
 	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations[1], 1)

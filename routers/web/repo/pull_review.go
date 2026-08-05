@@ -44,12 +44,24 @@ func RenderNewCodeCommentForm(ctx *context.Context) {
 	ctx.Data["PageIsPullFiles"] = true
 	ctx.Data["Issue"] = issue
 	ctx.Data["CurrentReview"] = currentReview
-	pullHeadCommitID, err := ctx.Repo.GitRepo.GetRefCommitID(issue.PullRequest.GetGitRefName())
-	if err != nil {
-		ctx.ServerError("GetRefCommitID", err)
-		return
+	afterCommitID := ctx.FormString("after_commit_id")
+	if afterCommitID == "" {
+		afterCommitID, err = ctx.Repo.GitRepo.GetRefCommitID(issue.PullRequest.GetGitRefName())
+		if err != nil {
+			ctx.ServerError("GetRefCommitID", err)
+			return
+		}
 	}
-	ctx.Data["AfterCommitID"] = pullHeadCommitID
+	ctx.Data["AfterCommitID"] = afterCommitID
+	beforeCommitID := ctx.FormString("before_commit_id")
+	if beforeCommitID == "" {
+		if err := issue.LoadPullRequest(ctx); err != nil {
+			ctx.ServerError("LoadPullRequest", err)
+			return
+		}
+		beforeCommitID = issue.PullRequest.MergeBase
+	}
+	ctx.Data["BeforeCommitID"] = beforeCommitID
 	ctx.Data["IsAttachmentEnabled"] = setting.Attachment.Enabled
 	upload.AddUploadContext(ctx, "comment")
 	ctx.HTML(http.StatusOK, tplNewComment)
@@ -109,6 +121,7 @@ func CreateCodeComment(ctx *context.Context) {
 		form.TreePath,
 		pendingReview,
 		form.Reply,
+		form.BeforeCommitID,
 		form.LatestCommitID,
 		attachments,
 	)

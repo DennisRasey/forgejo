@@ -89,11 +89,23 @@ func TestLineBlame(t *testing.T) {
 			assert.Equal(t, firstCommit, commit.ID.String())
 			assert.EqualValues(t, 1, lineno)
 
+			rev, err := gitRepo.ReverseLineBlame(commit.ID.String(), "ANSWER", lineno, secondCommit)
+			require.NoError(t, err)
+			assert.Equal(t, secondCommit, rev.CommitID)
+			assert.Equal(t, "ANSWER", rev.FilePath)
+			assert.EqualValues(t, 10, rev.LineNumber)
+
 			for i := range uint64(9) {
 				commit, lineno, err = gitRepo.LineBlame("HEAD", "ANSWER", i+1)
 				require.NoError(t, err)
 				assert.Equal(t, secondCommit, commit.ID.String())
 				assert.Equal(t, i+1, lineno)
+
+				rev, err := gitRepo.ReverseLineBlame(commit.ID.String(), "ANSWER", lineno, secondCommit)
+				require.NoError(t, err)
+				assert.Equal(t, secondCommit, rev.CommitID)
+				assert.Equal(t, "ANSWER", rev.FilePath)
+				assert.Equal(t, i+1, rev.LineNumber)
 			}
 		}
 
@@ -106,5 +118,68 @@ func TestLineBlame(t *testing.T) {
 
 			test(t, Sha256ObjectFormat.Name())
 		})
+	})
+}
+
+func TestReverseLineBlame(t *testing.T) {
+	t.Run("single commit", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		require.NoError(t, InitRepository(t.Context(), tmpDir, false, Sha1ObjectFormat.Name()))
+
+		gitRepo, err := OpenRepository(t.Context(), tmpDir)
+		require.NoError(t, err)
+		defer gitRepo.Close()
+
+		require.NoError(t, os.WriteFile(path.Join(tmpDir, "file1.md"), []byte("abba\n"), 0o666))
+		require.NoError(t, AddChanges(tmpDir, true))
+		require.NoError(t, CommitChanges(tmpDir, CommitChangesOptions{Message: "abba spelt backwards"}))
+
+		commit, err := gitRepo.GetRefCommitID("HEAD")
+		require.NoError(t, err)
+
+		blameCommit, lineno, err := gitRepo.LineBlame("HEAD", "file1.md", 1)
+		require.NoError(t, err)
+		assert.Equal(t, commit, blameCommit.ID.String())
+		assert.EqualValues(t, 1, lineno)
+
+		rev, err := gitRepo.ReverseLineBlame(commit, "file1.md", lineno, commit)
+		require.NoError(t, err)
+		assert.Equal(t, commit, rev.CommitID)
+		assert.Equal(t, "file1.md", rev.FilePath)
+		assert.EqualValues(t, 1, rev.LineNumber)
+	})
+
+	t.Run("move file", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		require.NoError(t, InitRepository(t.Context(), tmpDir, false, Sha1ObjectFormat.Name()))
+
+		gitRepo, err := OpenRepository(t.Context(), tmpDir)
+		require.NoError(t, err)
+		defer gitRepo.Close()
+
+		require.NoError(t, os.WriteFile(path.Join(tmpDir, "file1.md"), []byte("abba\n"), 0o666))
+		require.NoError(t, AddChanges(tmpDir, true))
+		require.NoError(t, CommitChanges(tmpDir, CommitChangesOptions{Message: "abba spelt backwards"}))
+
+		firstCommit, err := gitRepo.GetRefCommitID("HEAD")
+		require.NoError(t, err)
+
+		require.NoError(t, os.Rename(path.Join(tmpDir, "file1.md"), path.Join(tmpDir, "file2.md")))
+		require.NoError(t, AddChanges(tmpDir, true))
+		require.NoError(t, CommitChanges(tmpDir, CommitChangesOptions{Message: "move file"}))
+
+		secondCommit, err := gitRepo.GetRefCommitID("HEAD")
+		require.NoError(t, err)
+
+		blameCommit, lineno, err := gitRepo.LineBlame("HEAD", "file2.md", 1)
+		require.NoError(t, err)
+		assert.Equal(t, firstCommit, blameCommit.ID.String())
+		assert.EqualValues(t, 1, lineno)
+
+		rev, err := gitRepo.ReverseLineBlame(firstCommit, "file1.md", lineno, secondCommit)
+		require.NoError(t, err)
+		assert.Equal(t, secondCommit, rev.CommitID)
+		assert.Equal(t, "file2.md", rev.FilePath)
+		assert.EqualValues(t, 1, rev.LineNumber)
 	})
 }

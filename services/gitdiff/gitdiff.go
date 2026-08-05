@@ -487,8 +487,8 @@ type Diff struct {
 }
 
 // LoadComments loads comments into each line
-func (diff *Diff) LoadComments(ctx context.Context, issue *issues_model.Issue, currentUser *user_model.User, showOutdatedComments bool) error {
-	allConversations, err := issues_model.FetchCodeConversations(ctx, issue, currentUser, showOutdatedComments)
+func (diff *Diff) LoadComments(ctx context.Context, issue *issues_model.Issue, currentUser *user_model.User, showOutdatedComments bool, headCommitID string) error {
+	allConversations, err := issues_model.FetchCodeConversations(ctx, issue, currentUser, showOutdatedComments, headCommitID)
 	if err != nil {
 		return err
 	}
