@@ -158,7 +158,8 @@ func (job *ActionRunJob) CanBeRerun(ctx context.Context) (bool, error) {
 func (job *ActionRunJob) GetAllAttempts(ctx context.Context) ([]*ActionTask, error) {
 	var attempts []*ActionTask
 	err := db.GetEngine(ctx).
-		Cols("id", "attempt", "status", "started").
+		Cols("id", "job_id", "attempt", "runner_id", "status", "started", "stopped", "repo_id", "owner_id",
+			"commit_sha", "is_fork_pull_request", "created", "updated").
 		Where("job_id=?", job.ID).
 		Desc("attempt").
 		Find(&attempts)

@@ -26,7 +26,6 @@ import (
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/templates"
-	"forgejo.org/modules/translation"
 	"forgejo.org/modules/util"
 	"forgejo.org/modules/web"
 	actions_service "forgejo.org/services/actions"
@@ -187,10 +186,9 @@ type ViewRunInfo struct {
 }
 
 type ViewCurrentJob struct {
-	Title       string          `json:"title"`
-	Details     []template.HTML `json:"details"`
-	Steps       []*ViewJobStep  `json:"steps"`
-	AllAttempts []*TaskAttempt  `json:"allAttempts"`
+	Title       string         `json:"title"`
+	Steps       []*ViewJobStep `json:"steps"`
+	AllAttempts []*TaskAttempt `json:"allAttempts"`
 }
 
 type ViewLogs struct {
@@ -375,7 +373,7 @@ func getViewResponse(ctx *app_context.Context, req *ViewRequest, runIndex, jobIn
 			Number:            current.Attempt,
 			Status:            current.Status.String(),
 			Started:           template.HTML(ctx.Locale.TrString("actions.jobs.not_started")),
-			StatusDiagnostics: statusDiagnostics(current.Status, current, ctx.Locale),
+			StatusDiagnostics: statusDiagnostics(ctx, current.Status, nil, current),
 		}
 		allAttempts = append(allAttempts, taskAttempt)
 	}
@@ -384,13 +382,12 @@ func getViewResponse(ctx *app_context.Context, req *ViewRequest, runIndex, jobIn
 			Number:            actionTask.Attempt,
 			Started:           templates.TimeSince(actionTask.Started),
 			Status:            actionTask.Status.String(),
-			StatusDiagnostics: statusDiagnostics(actionTask.Status, current, ctx.Locale),
+			StatusDiagnostics: statusDiagnostics(ctx, actionTask.Status, actionTask, current),
 		}
 		allAttempts = append(allAttempts, taskAttempt)
 	}
 
 	resp.State.CurrentJob.Title = current.Name
-	resp.State.CurrentJob.Details = statusDiagnostics(current.Status, current, ctx.Locale)
 	resp.State.CurrentJob.Steps = make([]*ViewJobStep, 0) // marshal to '[]' instead of 'null' in json
 	resp.State.CurrentJob.AllAttempts = allAttempts
 
@@ -891,21 +888,72 @@ func disableOrEnableWorkflowFile(ctx *app_context.Context, isEnable bool) {
 }
 
 // statusDiagnostics returns optional diagnostic information to display to the user. It should help the user understand
-// what the current Status means and whether an action needs to be performed, for example, approving a job.
-func statusDiagnostics(status actions_model.Status, job *actions_model.ActionRunJob, lang translation.Locale) []template.HTML {
+// what the current status means and whether an action needs to be performed, for example, approving a job.
+func statusDiagnostics(ctx *app_context.Context, status actions_model.Status, task *actions_model.ActionTask, job *actions_model.ActionRunJob) []template.HTML {
 	// Initialize as empty container for it to be serialized to an empty JSON array, not `null`.
 	diagnostics := []template.HTML{}
 
 	switch status {
+	case actions_model.StatusBlocked:
+		diagnostics = append(diagnostics,
+			ctx.Locale.Tr("actions.status.info.blocked", templates.TimeDuration(job.Updated)))
+	case actions_model.StatusCancelled:
+		// Only the task has accurate information because multiple tasks share a single job.
+		if task != nil {
+			diagnostics = append(diagnostics,
+				ctx.Locale.Tr("actions.status.info.cancelled", templates.TimeSince(task.Stopped), task.Duration()))
+		} else {
+			diagnostics = append(diagnostics, template.HTML(status.LocaleString(ctx.Locale)))
+		}
+	case actions_model.StatusFailure:
+		// Only the task has accurate information because multiple tasks share a single job.
+		if task != nil {
+			diagnostics = append(diagnostics,
+				ctx.Locale.Tr("actions.status.info.failure", templates.TimeSince(task.Stopped), task.Duration()))
+		} else {
+			diagnostics = append(diagnostics, template.HTML(status.LocaleString(ctx.Locale)))
+		}
+	case actions_model.StatusRunning:
+		// Only the task has accurate information because multiple tasks share a single job.
+		if task != nil {
+			diagnostics = append(diagnostics,
+				ctx.Locale.Tr("actions.status.info.running", templates.TimeDuration(task.Started)))
+		} else {
+			diagnostics = append(diagnostics, template.HTML(status.LocaleString(ctx.Locale)))
+		}
+	case actions_model.StatusSuccess:
+		// Only the task has accurate information because multiple tasks share a single job.
+		if task != nil {
+			diagnostics = append(diagnostics,
+				ctx.Locale.Tr("actions.status.info.success", templates.TimeSince(task.Stopped), task.Duration()))
+		} else {
+			diagnostics = append(diagnostics, template.HTML(status.LocaleString(ctx.Locale)))
+		}
 	case actions_model.StatusWaiting:
 		joinedLabels := strings.Join(job.RunsOn, ", ")
-		diagnostics = append(diagnostics, lang.TrPluralString(len(job.RunsOn), "actions.status.diagnostics.waiting", joinedLabels))
+
+		diagnostics = append(diagnostics,
+			ctx.Locale.TrPluralString(len(job.RunsOn), "actions.status.info.waiting", templates.TimeDuration(job.Updated), joinedLabels))
 	default:
-		diagnostics = append(diagnostics, template.HTML(status.LocaleString(lang)))
+		diagnostics = append(diagnostics, template.HTML(status.LocaleString(ctx.Locale)))
 	}
 
 	if job.Run.NeedApproval {
-		diagnostics = append(diagnostics, template.HTML(lang.TrString("actions.need_approval_desc")))
+		diagnostics = append(diagnostics, template.HTML(ctx.Locale.TrString("actions.need_approval_desc")))
+	}
+
+	if task != nil && task.RunnerID != 0 {
+		if runner, err := actions_model.GetRunnerByID(ctx, task.RunnerID); err == nil {
+			if ctx.IsUserRepoAdmin() {
+				runnerLink := fmt.Sprintf("%s/settings/actions/runners/%d", ctx.Repo.RepoLink, task.RunnerID)
+
+				diagnostics = append(diagnostics,
+					ctx.Locale.Tr("actions.status.info.assigned_runner_link", runnerLink, runner.Name, runner.UUID))
+			} else {
+				diagnostics = append(diagnostics,
+					ctx.Locale.Tr("actions.status.info.assigned_runner_no_link", runner.Name, runner.UUID))
+			}
+		}
 	}
 
 	return diagnostics

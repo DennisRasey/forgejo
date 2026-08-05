@@ -156,3 +156,16 @@ func timeSinceTo(then any, now time.Time) template.HTML {
 func TimeSince(then any) template.HTML {
 	return timeSinceTo(then, time.Now())
 }
+
+// TimeDuration renders the duration between the argument start and now as `<relative-time>` element. It renders only
+// the duration, for example, `5 minutes, 2 seconds`, whereas TimeSince would output `5 minutes, 2 seconds ago`.
+func TimeDuration(start any) template.HTML {
+	startTime, isZero := anyToTime(start)
+	if isZero {
+		return "-"
+	}
+
+	markup := fmt.Sprintf(`<relative-time datetime="%[1]s" format="duration" prefix="" data-tooltip-content data-tooltip-interactive="true">%[2]s</relative-time>`,
+		startTime.Format(time.RFC3339), timeutil.TimeStampNow().AsTime().Sub(startTime).Truncate(time.Second))
+	return template.HTML(markup)
+}

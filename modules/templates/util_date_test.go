@@ -80,3 +80,26 @@ func TestTimeSince(t *testing.T) {
 	actual = timeSinceLegacy(timeutil.TimeStampNano(refTime.UnixNano()), nil)
 	assert.EqualValues(t, `<relative-time prefix="" tense="past" datetime="2017-12-31T19:00:00-05:00" data-tooltip-content data-tooltip-interactive="true">2017-12-31 19:00:00 -05:00</relative-time>`, actual)
 }
+
+func TestTimeDuration(t *testing.T) {
+	parisTZ, err := time.LoadLocation("Europe/Paris")
+	require.NoError(t, err)
+
+	timeutil.MockSet(time.Date(2024, 5, 19, 7, 40, 32, 0, parisTZ))
+	defer timeutil.MockUnset()
+
+	t.Run("Display TZ UTC", func(t *testing.T) {
+		result := TimeDuration(timeutil.TimeStampNow().Add(-67))
+		assert.EqualValues(t, `<relative-time datetime="2024-05-19T05:39:25Z" format="duration" prefix="" data-tooltip-content data-tooltip-interactive="true">1m7s</relative-time>`, result)
+	})
+
+	t.Run("Display TZ London", func(t *testing.T) {
+		londonTZ, err := time.LoadLocation("Europe/London")
+		require.NoError(t, err)
+
+		defer test.MockVariableValue(&setting.DefaultUILocation, londonTZ)()
+
+		result := TimeDuration(timeutil.TimeStampNow().Add(-68))
+		assert.EqualValues(t, `<relative-time datetime="2024-05-19T06:39:24+01:00" format="duration" prefix="" data-tooltip-content data-tooltip-interactive="true">1m8s</relative-time>`, result)
+	})
+}

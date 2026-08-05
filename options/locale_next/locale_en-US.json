@@ -772,10 +772,17 @@
 	"access_token.error.specified_repos_none": "Access tokens with specified repositories must have at least one repository.",
 	"access_token.error.specified_repos_and_public_only": "Access tokens with specified repositories cannot be combined with the public-only scope.",
 	"access_token.error.specified_repos_and_invalid_scope": "Access tokens with specified repositories can only be used with the read:issue, write:issue, read:repository, and write:repository scopes.",
-	"actions.status.diagnostics.waiting": {
-		"one": "Waiting for a runner with the following label: %s",
-		"other": "Waiting for a runner with the following labels: %s"
+	"actions.status.info.blocked": "Blocked for %[1]s",
+	"actions.status.info.cancelled": "Cancelled %[1]s after %[2]s",
+	"actions.status.info.failure": "Failed %[1]s after %[2]s",
+	"actions.status.info.running": "Running for %[1]s",
+	"actions.status.info.success": "Succeeded %[1]s in %[2]s",
+	"actions.status.info.waiting": {
+		"one": "Waiting for %[1]s for a runner with the following label: %[2]s",
+		"other": "Waiting for %[1]s for a runner with the following labels: %[2]s"
 	},
+	"actions.status.info.assigned_runner_link": "Assigned to runner <a href=\"%[1]s\">%[2]s</a> (%[3]s)",
+	"actions.status.info.assigned_runner_no_link": "Assigned to runner %[1]s (%[2]s)",
 	"actions.status.unknown": "Unknown",
 	"actions.status.waiting": "Waiting",
 	"actions.status.running": "Running",

@@ -37,6 +37,8 @@
   log_length: 707
   log_size: 90179
   log_expired: false
+  created: 1683636521
+  updated: 1683636635
 -
   id: 48
   job_id: 193

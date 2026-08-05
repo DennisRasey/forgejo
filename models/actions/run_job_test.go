@@ -517,7 +517,17 @@ func TestActionTask_GetAllAttempts(t *testing.T) {
 	assert.EqualValues(t, 52, allAttempts[2].ID, "ordered by attempt, 3")
 
 	// GetAllAttempts doesn't populate all fields; so check expected fields from one of the records
+	assert.EqualValues(t, 47, allAttempts[0].ID)
+	assert.EqualValues(t, 192, allAttempts[0].JobID)
 	assert.EqualValues(t, 3, allAttempts[0].Attempt, "read Attempt field")
+	assert.EqualValues(t, 1, allAttempts[0].RunnerID)
 	assert.Equal(t, StatusRunning, allAttempts[0].Status, "read Status field")
 	assert.Equal(t, timeutil.TimeStamp(1683636528), allAttempts[0].Started, "read Started field")
+	assert.Equal(t, timeutil.TimeStamp(1683636626), allAttempts[0].Stopped)
+	assert.EqualValues(t, 4, allAttempts[0].RepoID)
+	assert.EqualValues(t, 1, allAttempts[0].OwnerID)
+	assert.Equal(t, "c2d72f548424103f01ee1dc02889c1e2bff816b0", allAttempts[0].CommitSHA)
+	assert.False(t, allAttempts[0].IsForkPullRequest)
+	assert.Equal(t, timeutil.TimeStamp(1683636521), allAttempts[0].Created)
+	assert.Equal(t, timeutil.TimeStamp(1683636635), allAttempts[0].Updated)
 }

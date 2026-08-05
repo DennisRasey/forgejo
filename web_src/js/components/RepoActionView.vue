@@ -194,14 +194,14 @@ export default {
 
     statusDiagnostics() {
       if (!this.currentJob.allAttempts) {
-        return this.currentJob.details;
+        return [];
       }
 
       const useAttempt = this.currentJob.allAttempts.some((attempt) => attempt.number === this.viewingAttemptNumber);
       if (useAttempt) {
         return this.viewingAttempt.status_diagnostics;
       }
-      return this.currentJob.details;
+      return [];
     },
 
     hasWarnings() {
@@ -578,9 +578,8 @@ export default {
               {{ currentJob.title }}
             </h3>
             <ul class="job-info-header-detail">
-              <li v-for="detail in statusDiagnostics" :key="detail">
-                {{ detail }}
-              </li>
+              <!-- eslint-disable-next-line vue/no-v-html -->
+              <li v-for="detail in statusDiagnostics" :key="detail" v-html="detail"/>
             </ul>
           </div>
           <div class="job-info-header-right job-attempt-dropdown tw-mr-8" v-if="shouldShowAttemptDropdown" v-cloak>
@@ -878,10 +877,9 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 12px;
+  padding: 12px;
   position: sticky;
   top: 0;
-  height: 60px;
   z-index: 1; /* above .job-step-container */
   background: var(--color-console-bg);
   border-radius: 3px;
