@@ -61,6 +61,9 @@ func NewMockWebServer(t *testing.T, liveServerBaseURL, testDataDir string, liveM
 				}
 			}
 
+			// hopefully gets around some intrusion detectors; we just wanna run some tests sometimes 🥺
+			request.Header.Set("User-Agent", "forgejo-test-client/1.0 (+https://codeberg.org/forgejo/forgejo)")
+
 			response, err := http.DefaultClient.Do(request)
 			require.NoError(t, err, "HTTP request to %s failed: %s", liveURL)
 			assert.Less(t, response.StatusCode, 400, "unexpected status code for %s", liveURL)
