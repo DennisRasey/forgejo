@@ -15,3 +15,39 @@
   created_unix: 1730330775
   updated_unix: 1730330775
   expired_unix: 1738106775
+
+-
+  id: 1002
+  run_id: 792
+  runner_id: 1
+  repo_id: 4
+  owner_id: 1
+  commit_sha: c2d72f548424103f01ee1dc02889c1e2bff816b0
+  storage_path: "27/5/1730330776000000000.chunk"
+  file_size: 693147180559
+  file_compressed_size: 693147180559
+  content_encoding: "application/zip"
+  artifact_path: "big-file-two.zip"
+  artifact_name: "big-file-two"
+  status: 5
+  created_unix: 1730330776
+  updated_unix: 1730330776
+  expired_unix: 1738106776
+
+-
+  id: 1003
+  run_id: 792
+  runner_id: 1
+  repo_id: 4
+  owner_id: 1
+  commit_sha: c2d72f548424103f01ee1dc02889c1e2bff816b0
+  storage_path: "27/5/1730330777000000000.chunk"
+  file_size: 693147180559
+  file_compressed_size: 693147180559
+  content_encoding: "application/zip"
+  artifact_path: "big-file-three.zip"
+  artifact_name: "big-file-three"
+  status: 6
+  created_unix: 1730330777
+  updated_unix: 1730330777
+  expired_unix: 1738106777
