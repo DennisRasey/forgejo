@@ -132,7 +132,8 @@ func createQueryFor(ctx context.Context, userID int64, q string) db.Engine {
 		session = session.
 			Table("action_artifact").
 			Join("INNER", "`repository`", "`action_artifact`.repo_id = `repository`.id").
-			Where("`action_artifact`.status != ?", actions_model.ArtifactStatusExpired)
+			Where(builder.NotIn("`action_artifact`.status", actions_model.ArtifactStatusExpired,
+				actions_model.ArtifactStatusPendingDeletion, actions_model.ArtifactStatusDeleted))
 	case "packages":
 		session = session.
 			Table("package_version").
