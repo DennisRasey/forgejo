@@ -166,6 +166,8 @@
 	"search.fuzzy_tooltip": "Include results is an approximate match to the search term",
 	"search.match_inside_quotes": "Include only results that match the term in quotes",
 	"search.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">See the documentation</a> for further details on search, operators, and filters.",
+	"repo.settings.lfs.size": "Size",
+	"repo.settings.lfs.last_update": "Last update",
 	"repo.settings.push_mirror.branch_filter.label": "Branch filter (optional)",
 	"repo.settings.push_mirror.branch_filter.description": "Branches to be mirrored. Leave blank to mirror all branches. See <a href=\"%[1]s\">%[2]s documentation</a> for syntax. Examples: <code>main, release/*</code>",
 	"repo.settings.units.more_units_disable_hint": "The \"Enable more\" hint can be disabled in <a href=\"%s\">User settings > Appearance</a>.",
