@@ -12,6 +12,6 @@ Please report all security related issues by sending an [encrypted](https://keyo
 
 #### Before Submitting Changes as a PR
 
-Please first read the relevant sections of the [Forgejo Contributor Guide](https://forgejo.org/docs/latest/contributor/) and the [AI Agreement](https://codeberg.org/forgejo/governance/src/branch/main/AIAgreement.md) before submitting a pull request.
+Please first read the relevant sections of the [Forgejo Contributor Guide](https://forgejo.org/docs/next/contributor/) and the [AI Agreement](https://codeberg.org/forgejo/governance/src/branch/main/AIAgreement.md) before submitting a pull request.
 
 Translations are made [using Weblate](https://translate.codeberg.org/projects/forgejo/), not via pull requests. See [translation guidelines](https://forgejo.org/docs/next/contributor/localization/).

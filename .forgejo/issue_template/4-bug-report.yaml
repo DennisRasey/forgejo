@@ -57,7 +57,7 @@ body:
     label: Logs
     description: |
       It's really important to provide pertinent logs. You must give us `DEBUG` level logs.
-      Please read https://forgejo.org/docs/latest/admin/logging-documentation/.
+      Please read https://forgejo.org/docs/latest/admin/troubleshooting/logging/.
       In addition, if your problem relates to git commands set `RUN_MODE=dev` at the top of `app.ini`.
 
       Please copy and paste your logs here, with any sensitive information (e.g. API keys) removed/hidden.

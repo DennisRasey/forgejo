@@ -42,7 +42,7 @@
 					<label {{if .Err_Biography}}class="field error"{{end}}>
 						{{ctx.Locale.Tr "user.user_bio"}}
 						<textarea name="biography" rows="2" placeholder="{{ctx.Locale.Tr "settings.biography_placeholder"}}" maxlength="255">{{.SignedUser.Description}}</textarea>
-						<span class="help">{{ctx.Locale.Tr "settings.profile.dotprofile.hint" ".profile" "https://forgejo.org/docs/latest/user/profile/"}}</span>
+						<span class="help">{{ctx.Locale.Tr "settings.profile.dotprofile.hint" ".profile" "https://forgejo.org/docs/latest/user/collaboration/profile/"}}</span>
 					</label>
 
 					<label {{if .Err_Website}}class="field error"{{end}}>

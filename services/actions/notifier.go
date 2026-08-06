@@ -857,7 +857,7 @@ func calculateWarnings(run *actions_model.ActionRun, swfs []*jobparser.SingleWor
 		// harm in handling it here. (https://code.forgejo.org/forgejo/runner/issues/1579)
 		if j != nil && swf.HasPermissions() {
 			warnings = append(warnings, actions_model.WarningCodePermissions)
-			warningDetails = append(warningDetails, []any{id, "https://forgejo.org/docs/latest/user/authorized-integrations/"})
+			warningDetails = append(warningDetails, []any{id, "https://forgejo.org/docs/latest/user/api/authorized-integrations/"})
 		}
 	}
 	run.PreExecutionWarningCodes = warnings

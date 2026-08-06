@@ -78,7 +78,7 @@ func GetVariable(ctx context.Context, opts actions_model.FindVariablesOpts) (*ac
 // reference to:
 // https://docs.github.com/en/actions/learn-github-actions/variables#naming-conventions-for-configuration-variables
 // https://docs.github.com/en/actions/security-guides/encrypted-secrets#naming-your-secrets
-// https://forgejo.org/docs/next/user/actions/basic-concepts/#name-constraints
+// https://forgejo.org/docs/latest/user/actions/basic-concepts/#name-constraints
 var (
 	forbiddenEnvNameCIRx = regexp.MustCompile("(?i)^CI$")
 )

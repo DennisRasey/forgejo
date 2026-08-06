@@ -1,4 +1,4 @@
-<p>{{ctx.Locale.Tr "repo.settings.add_web_hook_desc" "https://forgejo.org/docs/latest/user/webhooks/" (ctx.Locale.Tr "repo.settings.web_hook_name_gitea")}}</p>
+<p>{{ctx.Locale.Tr "repo.settings.add_web_hook_desc" "https://forgejo.org/docs/latest/user/repository/webhooks/" (ctx.Locale.Tr "repo.settings.web_hook_name_gitea")}}</p>
 <form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "gitea/new"}}" method="post">
 	{{template "base/disable_form_autofill"}}
 	<div class="required field {{if .Err_PayloadURL}}error{{end}}">

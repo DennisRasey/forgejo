@@ -59,7 +59,7 @@ func StaticRedirect(target string) func(w http.ResponseWriter, req *http.Request
 }
 
 var defaultRobotsTxt = []byte(`# The default Forgejo robots.txt
-# For more information: https://forgejo.org/docs/latest/admin/search-engines-indexation/
+# For more information: https://forgejo.org/docs/latest/admin/advanced/search-engines/
 
 User-agent: *
 Disallow: /api/

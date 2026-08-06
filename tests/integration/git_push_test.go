@@ -275,7 +275,7 @@ func testOptionsGitPush(t *testing.T, u *url.URL) {
 			assert.Contains(t, stderr, `remote: If you instead wanted to create a pull request to the branch 'branch3', please use:`)
 			assert.Contains(t, stderr, `remote: git push origin HEAD:refs/for/branch3/choose-a-descriptor`)
 			assert.Contains(t, stderr, `remote: You might want to replace 'origin' with the name of your Git remote if it is different from origin. You can freely choose the descriptor to set it to a topic.`)
-			assert.Contains(t, stderr, `remote: You can learn about creating pull requests with AGit in the docs: https://forgejo.org/docs/latest/user/agit-support/`)
+			assert.Contains(t, stderr, `remote: You can learn about creating pull requests with AGit in the docs: https://forgejo.org/docs/latest/user/git-cli/agit-support/`)
 		})
 
 		// give write access to the collaborator

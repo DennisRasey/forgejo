@@ -71,7 +71,7 @@ func (ctx *preReceiveContext) assertCanWriteCodeToBranch(branchName string) bool
 			fmt.Fprintf(&sb, "\nIf you instead wanted to create a pull request to the branch '%s', please use:", branchName)
 			fmt.Fprintf(&sb, "\ngit push origin HEAD:refs/for/%s/choose-a-descriptor", branchName)
 			sb.WriteString("\nYou might want to replace 'origin' with the name of your Git remote if it is different from origin. You can freely choose the descriptor to set it to a topic.")
-			sb.WriteString("\nYou can learn about creating pull requests with AGit in the docs: https://forgejo.org/docs/latest/user/agit-support/")
+			sb.WriteString("\nYou can learn about creating pull requests with AGit in the docs: https://forgejo.org/docs/latest/user/git-cli/agit-support/")
 		}
 		ctx.JSON(http.StatusForbidden, private.Response{
 			UserMsg: sb.String(),

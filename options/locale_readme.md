@@ -14,7 +14,7 @@ Here are some tips:
 * when new strings are added, it's preferred that they're added to `locale_en-US.json`
 * when strings are modified in `locale_en-US.ini`, it's preferred that they stay here because moving them around is complicated
 * make sure to remove strings if your change renders them unused
-* consult https://forgejo.org/docs/next/contributor/localization-english/
+* consult https://forgejo.org/docs/next/contributor/localization/english/
 
 ### JSON translations
 
