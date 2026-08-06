@@ -160,7 +160,7 @@ func (wpf webhookPayloadFormatter) getIssuesPayloadInfo(p *api.IssuePayload) (te
 
 func (wpf webhookPayloadFormatter) getPullRequestPayloadInfo(p *api.PullRequestPayload) (text, issueTitle, attachmentText string, color int) {
 	issueTitle = fmt.Sprintf("#%d %s", p.Index, p.PullRequest.Title)
-	titleLink := wpf.linkFormatter(p.PullRequest.URL, issueTitle)
+	titleLink := wpf.linkFormatter(p.PullRequest.HTMLURL, issueTitle)
 	color = yellowColor
 
 	switch p.Action {

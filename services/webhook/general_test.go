@@ -310,7 +310,7 @@ func pullRequestTestPayload() *api.PullRequestPayload {
 		PullRequest: &api.PullRequest{
 			ID:        12,
 			Index:     12,
-			URL:       "http://localhost:3000/test/repo/pulls/12",
+			URL:       "http://localhost:3000/api/v1/repos/test/repo/pulls/12",
 			HTMLURL:   "http://localhost:3000/test/repo/pulls/12",
 			Title:     "Fix bug",
 			Body:      "fixes bug #2",
