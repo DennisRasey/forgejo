@@ -2527,35 +2527,32 @@ func (tester *PullRequestCommentPlacementTester) withBranchCheckout(action func(
 }
 
 func (tester *PullRequestCommentPlacementTester) assertFilesChangedDiff(expectedCommitID string, rowAssertions []diffTableRow, note ...string) {
-	req := NewRequest(tester.t, "GET",
-		fmt.Sprintf("/%s/%s/pulls/%d/files", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
-	resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
-	doc := NewHTMLParser(tester.t, resp.Body)
+	fetchPage := func() *HTMLDoc {
+		req := NewRequest(tester.t, "GET",
+			fmt.Sprintf("/%s/%s/pulls/%d/files", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
+		resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
+		return NewHTMLParser(tester.t, resp.Body)
+	}
 
+	var doc *HTMLDoc
 	if expectedCommitID != "" {
-		commitIDInput := doc.Find("input[name=commit_id]")
-		if uiCommitID, exists := commitIDInput.Attr("value"); exists {
-			if uiCommitID != expectedCommitID {
-				// In attempting to understand the intermittent test failure in
-				// https://codeberg.org/forgejo/forgejo/issues/13275, it has been identified that the wrong commit can be
-				// fetched from `/%s/%s/pulls/%d/files` after a change is made to the PR.  Because the test failure is
-				// intermittent, perhaps it is a race condition of some kind?  When this situation is discovered here, retry
-				// fetching the page and see if the commit ID changes in order to validate that it is a race condition.
-				tester.t.Logf("expected commit ID on the files changed page to be %q, but it was actually %q", expectedCommitID, uiCommitID)
-
-				for i := range 10 {
-					time.Sleep(time.Second)
-					req := NewRequest(tester.t, "GET",
-						fmt.Sprintf("/%s/%s/pulls/%d/files", tester.repo.OwnerName, tester.repo.Name, tester.pr.Index))
-					resp := tester.session.MakeRequest(tester.t, req, http.StatusOK)
-					doc := NewHTMLParser(tester.t, resp.Body)
-					commitIDInput := doc.Find("input[name=commit_id]")
-					uiCommitID, exists := commitIDInput.Attr("value")
-					tester.t.Logf("after %d seconds, page is reloaded and commit ID is now %q (%v)", i, uiCommitID, exists)
-				}
-				tester.t.FailNow()
-			}
-		}
+		// In services/pull/pull.go, `TestPullRequest` (which is, to be clear, not a test) will spawn a concurrent
+		// goroutine during the post-receive hook.  This goroutine is responsible for updating the refs/pull/%d/head
+		// reference in the repo, which is what the UI uses in order to render the pull request diff page.  Because this
+		// routine is concurrent, occasionally the test will reach this point and it won't yet be completed.
+		// Experimental testing shows that it completes very fast (under a 1 second retry) on CI, so here we give it 10
+		// seconds to reach the expected commit ID, reloading the page each time.
+		require.EventuallyWithT(tester.t, func(collect *assert.CollectT) {
+			doc = fetchPage()
+			commitIDInput := doc.Find("input[name=commit_id]")
+			uiCommitID, exists := commitIDInput.Attr("value")
+			require.True(collect, exists)
+			assert.Equal(collect, expectedCommitID, uiCommitID)
+		}, 10*time.Second, time.Second, "expected to find PR diff page with commit ID %s", expectedCommitID)
+	} else {
+		// For some tests we don't know the expected commit ID for rendering the page, typically when a force push is
+		// used and we're not using Forgejo's API which provides the commit ID.  No retry loop here.
+		doc = fetchPage()
 	}
 
 	var testNote string
@@ -2671,17 +2668,6 @@ func checkDiffTableRow(t *testing.T, tableRow *html.Node, rowAssertion diffTable
 func assertDiffTable(t *testing.T, doc *HTMLDoc, rowAssertions []diffTableRow, note string) {
 	require.NotEmpty(t, rowAssertions)
 
-	logCommitID := func() {
-		// Investigation for https://codeberg.org/forgejo/forgejo/issues/13275
-		//
-		// If we couldn't find the diff that we expected, find the hidden <input name="commit_id"> on the page (if
-		// possible) and log the commit ID that we're currently viewing, so that we can see if it is the correct commit
-		// ID.
-		commitIDInput := doc.Find("input[name=commit_id]")
-		uiCommitID, exists := commitIDInput.Attr("value")
-		t.Logf("input name=commit_id exists? %v, value = %q", exists, uiCommitID)
-	}
-
 	diffTable := doc.Find("table.chroma")
 	require.Equal(t, 1, diffTable.Length())
 
@@ -2706,7 +2692,6 @@ func assertDiffTable(t *testing.T, doc *HTMLDoc, rowAssertions []diffTableRow, n
 		for _, mm := range firstRowMismatches {
 			t.Logf("\t%s", mm)
 		}
-		logCommitID()
 		require.Failf(t, "unable to find first row", "test %s: failed to find first row assertion", note) // assert place
 	}
 
@@ -2717,14 +2702,12 @@ func assertDiffTable(t *testing.T, doc *HTMLDoc, rowAssertions []diffTableRow, n
 
 		tableIdx := tableFirstRowIndex + idx
 		if tableIdx >= rows.Length() {
-			logCommitID()
 			require.Failf(t, "ran out of table rows", "test %s: row assertion at index %d couldn't be satisfied", note, idx)
 		}
 
 		tableRow := rows.Get(tableIdx)
 		check := checkDiffTableRow(t, tableRow, assertion)
 		if check != "" {
-			logCommitID()
 			assert.Failf(t, check, "test %s: row assertion at index %d couldn't be satisfied", note, idx)
 		}
 	}
