@@ -381,7 +381,11 @@ func (n *actionsNotifier) NewPullRequest(ctx context.Context, pull *issues_model
 
 	permission, _ := access_model.GetUserRepoPermission(ctx, pull.Issue.Repo, pull.Issue.Poster)
 
+	// HeadCommitID is transient and needs to be set before invoking PullRequestSynchronized. Otherwise,
+	// notifier_helper.go will rediscover the head commit when it's running. Because that happens sometime in the
+	// future, it might discover a newer commit.
 	newNotifyInputFromIssue(pull.Issue, webhook_module.HookEventPullRequest).
+		WithCommit(pull.HeadCommitID).
 		WithPayload(&api.PullRequestPayload{
 			Action:      api.HookIssueOpened,
 			Index:       pull.Issue.Index,
@@ -718,7 +722,11 @@ func (n *actionsNotifier) PullRequestSynchronized(ctx context.Context, doer *use
 		return
 	}
 
+	// HeadCommitID is transient and needs to be set before invoking PullRequestSynchronized. Otherwise,
+	// notifier_helper.go will rediscover the head commit when it's running. Because that happens sometime in the
+	// future, it might discover a newer commit.
 	NewNotifyInput(pr.Issue.Repo, doer, webhook_module.HookEventPullRequestSync).
+		WithCommit(pr.HeadCommitID).
 		WithPayload(&api.PullRequestPayload{
 			Action:      api.HookIssueSynchronized,
 			Index:       pr.Issue.Index,
