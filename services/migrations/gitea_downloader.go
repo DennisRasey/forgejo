@@ -503,7 +503,8 @@ func (g *GiteaDownloader) getIssueComments(foreignIndex int64, page int) ([]*git
 				PageSize: g.maxPerPage,
 				Page:     page,
 			},
-		})
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error while listing comments for issue #%d. Error: %w", foreignIndex, err)
 	}
@@ -559,7 +560,7 @@ func (g *GiteaDownloader) isSinglePage(forgejoComments []*base.Comment) bool {
 func (g *GiteaDownloader) isLastPage(forgejoComments []*base.Comment, giteaComments []*gitea_sdk.Comment) bool {
 	if len(giteaComments) < g.maxPerPage {
 		return true
-	} else if g.identicalComment((forgejoComments)[0], (giteaComments)[0]) && g.identicalComment((forgejoComments)[len(forgejoComments)-1], (giteaComments)[len(giteaComments)-1]) {
+	} else if g.identicalComment(forgejoComments[0], giteaComments[0]) && g.identicalComment(forgejoComments[len(forgejoComments)-1], giteaComments[len(giteaComments)-1]) {
 		return true
 	}
 	return false
@@ -694,7 +695,6 @@ func (g *GiteaDownloader) GetPullRequests(page, perPage int) ([]*base.PullReques
 			MergedTime:     pr.Merged,
 			MergeCommitSHA: mergeCommitSHA,
 			IsLocked:       pr.IsLocked,
-			PatchURL:       pr.PatchURL,
 			Flow:           pr.Flow,
 			Head: base.PullRequestBranch{
 				Ref:       headRef,

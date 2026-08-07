@@ -794,7 +794,6 @@ func (g *GithubDownloaderV3) GetPullRequests(page, perPage int) ([]*base.PullReq
 				RepoName:  pr.GetBase().GetRepo().GetName(),
 				OwnerName: pr.GetBase().GetUser().GetLogin(),
 			},
-			PatchURL:     pr.GetPatchURL(), // see below for SECURITY related issues here
 			Reactions:    reactions,
 			ForeignIndex: int64(*pr.Number),
 			IsDraft:      pr.GetDraft(),

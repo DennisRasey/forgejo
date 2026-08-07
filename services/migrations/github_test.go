@@ -51,7 +51,8 @@ func TestGithubDownloaderFilterComments(t *testing.T) {
 	iHTMLURL := "https://github.com/forgejo/test_repo/issues/1#issuecomment-3164032267"
 	iIssueURL := "https://api.github.com/repos/forgejo/test_repo/issues/1"
 
-	githubComments = append(githubComments,
+	githubComments = append(
+		githubComments,
 		&github.IssueComment{
 			ID:                &issueID,
 			NodeID:            &iNodeID,
@@ -111,7 +112,7 @@ func ratelimitInjectHandler(handler http.Handler, urlpattern *regexp.Regexp, eve
 	// because we also count the rate limit response
 	every++
 
-	return (http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		match := urlpattern.MatchString(r.URL.Path)
 		if match {
 			requestCount++
@@ -126,7 +127,7 @@ func ratelimitInjectHandler(handler http.Handler, urlpattern *regexp.Regexp, eve
 		} else {
 			handler.ServeHTTP(w, r)
 		}
-	}))
+	})
 }
 
 func TestGitHubDownloadRepo(t *testing.T) {
@@ -360,7 +361,6 @@ func TestGitHubDownloadRepo(t *testing.T) {
 					Description: "New feature or request",
 				},
 			},
-			PatchURL: server.URL + "/forgejo/test_repo/pull/3.patch",
 			Head: base.PullRequestBranch{
 				Ref:      "some-feature",
 				CloneURL: server.URL + "/forgejo/test_repo.git",
@@ -396,7 +396,6 @@ func TestGitHubDownloadRepo(t *testing.T) {
 					Description: "Something isn't working",
 				},
 			},
-			PatchURL: server.URL + "/forgejo/test_repo/pull/7.patch",
 			Head: base.PullRequestBranch{
 				Ref:       "another-feature",
 				SHA:       "5638cb8f3278e467fc1eefcac14d3c0d5d91601f",

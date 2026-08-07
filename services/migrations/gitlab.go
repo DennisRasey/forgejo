@@ -746,7 +746,6 @@ func (g *GitlabDownloader) GetPullRequests(page, perPage int) ([]*base.PullReque
 				RepoName:  g.repoName,
 				OwnerName: pr.Author.Username,
 			},
-			PatchURL:     pr.WebURL + ".patch",
 			ForeignIndex: int64(pr.IID),
 			Context:      gitlabIssueContext{IsMergeRequest: true},
 			IsDraft:      pr.Draft,

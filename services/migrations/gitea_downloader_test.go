@@ -269,7 +269,6 @@ func TestGiteaDownloadRepo(t *testing.T) {
 		Merged:         true,
 		MergedTime:     new(time.Unix(1598982934, 0)),
 		MergeCommitSHA: "827aa28a907853e5ddfa40c8f9bc52471a2685fd",
-		PatchURL:       server.URL + "/gitea/test_repo/pulls/12.patch",
 	}, prs[1])
 
 	reviews, err := downloader.GetReviews(&base.Issue{Number: 7, ForeignIndex: 7})
@@ -371,8 +370,7 @@ func TestForgejoDownloadRepo(t *testing.T) {
 			RepoName:  "agit-test",
 			OwnerName: "Gusted",
 		},
-		PatchURL: server.URL + "/Gusted/agit-test/pulls/1.patch",
-		Flow:     1,
+		Flow: 1,
 	}, prs[0])
 }
 

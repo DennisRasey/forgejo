@@ -477,9 +477,8 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			name: "fork, good Head.SHA",
 			head: fmt.Sprintf("%s/%s", forkRepo.OwnerName, forkHeadRef),
 			pr: base.PullRequest{
-				PatchURL: "",
-				Number:   1,
-				State:    "open",
+				Number: 1,
+				State:  "open",
 				Base: base.PullRequestBranch{
 					CloneURL:  fromRepo.RepoPath(),
 					Ref:       baseRef,
@@ -500,9 +499,8 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			name: "fork, invalid Head.Ref",
 			head: "unknown repository",
 			pr: base.PullRequest{
-				PatchURL: "",
-				Number:   1,
-				State:    "open",
+				Number: 1,
+				State:  "open",
 				Base: base.PullRequestBranch{
 					CloneURL:  fromRepo.RepoPath(),
 					Ref:       baseRef,
@@ -525,9 +523,8 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			name: "invalid fork CloneURL",
 			head: "unknown repository",
 			pr: base.PullRequest{
-				PatchURL: "",
-				Number:   1,
-				State:    "open",
+				Number: 1,
+				State:  "open",
 				Base: base.PullRequestBranch{
 					CloneURL:  fromRepo.RepoPath(),
 					Ref:       baseRef,
@@ -550,9 +547,8 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			name: "no fork, good Head.SHA",
 			head: headRef,
 			pr: base.PullRequest{
-				PatchURL: "",
-				Number:   1,
-				State:    "open",
+				Number: 1,
+				State:  "open",
 				Base: base.PullRequestBranch{
 					CloneURL:  fromRepo.RepoPath(),
 					Ref:       baseRef,
@@ -573,9 +569,8 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			name: "no fork, empty Head.SHA",
 			head: headRef,
 			pr: base.PullRequest{
-				PatchURL: "",
-				Number:   1,
-				State:    "open",
+				Number: 1,
+				State:  "open",
 				Base: base.PullRequestBranch{
 					CloneURL:  fromRepo.RepoPath(),
 					Ref:       baseRef,
@@ -598,9 +593,8 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			name: "no fork, invalid Head.SHA",
 			head: headRef,
 			pr: base.PullRequest{
-				PatchURL: "",
-				Number:   1,
-				State:    "open",
+				Number: 1,
+				State:  "open",
 				Base: base.PullRequestBranch{
 					CloneURL:  fromRepo.RepoPath(),
 					Ref:       baseRef,
@@ -623,9 +617,8 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 			name: "no fork, not found Head.SHA",
 			head: headRef,
 			pr: base.PullRequest{
-				PatchURL: "",
-				Number:   1,
-				State:    "open",
+				Number: 1,
+				State:  "open",
 				Base: base.PullRequestBranch{
 					CloneURL:  fromRepo.RepoPath(),
 					Ref:       baseRef,

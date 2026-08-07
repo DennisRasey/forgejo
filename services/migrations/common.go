@@ -31,14 +31,6 @@ func hasBaseURL(toCheck, baseURL string) bool {
 // CheckAndEnsureSafePR will check that a given PR is safe to download
 func CheckAndEnsureSafePR(pr *base.PullRequest, commonCloneBaseURL string, g base.Downloader) bool {
 	valid := true
-	// SECURITY: the patchURL must be checked to have the same baseURL as the current to prevent open redirect
-	if pr.PatchURL != "" && !hasBaseURL(pr.PatchURL, commonCloneBaseURL) {
-		// TODO: Should we check that this url has the expected format for a patch url?
-		WarnAndNotice("PR #%d in %s has invalid PatchURL: %s baseURL: %s", pr.Number, g, pr.PatchURL, commonCloneBaseURL)
-		pr.PatchURL = ""
-		valid = false
-	}
-
 	// SECURITY: the headCloneURL must be checked to have the same baseURL as the current to prevent open redirect
 	if pr.Head.CloneURL != "" && !hasBaseURL(pr.Head.CloneURL, commonCloneBaseURL) {
 		// TODO: Should we check that this url has the expected format for a patch url?

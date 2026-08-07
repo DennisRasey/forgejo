@@ -237,7 +237,6 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Closed:     new(time.Date(2025, time.May, 19, 6, 17, 11, 0, time.UTC)),
 			MergedTime: new(time.Date(2025, time.May, 19, 6, 17, 11, 0, time.UTC)),
 			Merged:     true,
-			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/10.patch",
 			Labels: []*base.Label{
 				{
 					Name: "ffff",
@@ -267,7 +266,6 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Closed:     new(time.Date(2025, time.May, 19, 6, 14, 3, 0, time.UTC)),
 			MergedTime: new(time.Date(2025, time.May, 19, 6, 14, 3, 0, time.UTC)),
 			Merged:     true,
-			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/9.patch",
 			Labels: []*base.Label{
 				{
 					Name: "eeee",
@@ -297,7 +295,6 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Closed:     new(time.Date(2025, time.May, 5, 6, 54, 13, 0, time.UTC)),
 			MergedTime: new(time.Date(2025, time.May, 5, 6, 54, 13, 0, time.UTC)), // THIS IS WRONG
 			Merged:     false,
-			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/8.patch",
 			Labels: []*base.Label{
 				{
 					Name: "dddd",
@@ -327,7 +324,6 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Closed:     new(time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC)), // IT is CLOSED, Not MERGED so SHOULD NOT BE NIL
 			MergedTime: new(time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC)), // THIS IS WRONG
 			Merged:     false,
-			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/7.patch",
 			Labels: []*base.Label{
 				{
 					Name: "cccc",
@@ -357,7 +353,6 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Closed:     new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			MergedTime: new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			Merged:     false,
-			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/6.patch",
 			Labels: []*base.Label{
 				{
 					Name: "bbbb",
@@ -387,7 +382,6 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Closed:     new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			MergedTime: new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			Merged:     false,
-			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/5.patch",
 			Labels: []*base.Label{
 				{
 					Name: "aaaa",

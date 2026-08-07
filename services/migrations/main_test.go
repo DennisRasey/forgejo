@@ -126,7 +126,6 @@ func assertPullRequestEqual(t *testing.T, expected, actual *base.PullRequest) {
 	assertTimeEqual(t, expected.Updated, actual.Updated)
 	assertTimePtrEqual(t, expected.Closed, actual.Closed)
 	assertLabelsEqual(t, expected.Labels, actual.Labels)
-	assert.Equal(t, expected.PatchURL, actual.PatchURL)
 	assert.Equal(t, expected.Merged, actual.Merged)
 	assertTimePtrEqual(t, expected.MergedTime, actual.MergedTime)
 	assert.Equal(t, expected.MergeCommitSHA, actual.MergeCommitSHA)

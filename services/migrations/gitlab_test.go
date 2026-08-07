@@ -406,7 +406,6 @@ func TestGitlabDownloadRepo(t *testing.T) {
 			Created:    time.Date(2025, time.November, 25, 9, 48, 20, 259000000, time.UTC),
 			Labels:     []*base.Label{},
 			Reactions:  []*base.Reaction{},
-			PatchURL:   server.URL + "/forgejo/test_repo/-/merge_requests/2.patch",
 			Head: base.PullRequestBranch{
 				Ref:       "test/parsing",
 				CloneURL:  server.URL + "/forgejo/test_repo/-/merge_requests/2",
@@ -453,7 +452,6 @@ func TestGitlabDownloadRepo(t *testing.T) {
 				UserName: "mkobel",
 				Content:  "tada",
 			}},
-			PatchURL: server.URL + "/forgejo/test_repo/-/merge_requests/1.patch",
 			Head: base.PullRequestBranch{
 				Ref:       "feat/test",
 				CloneURL:  server.URL + "/forgejo/test_repo/-/merge_requests/1",

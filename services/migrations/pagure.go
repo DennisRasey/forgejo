@@ -595,7 +595,6 @@ func (d *PagureDownloader) GetPullRequests(page, perPage int) ([]*base.PullReque
 				RepoName: d.repoName,
 			},
 			ForeignIndex: int64(pr.ID),
-			PatchURL:     pr.FullURL + ".patch",
 			Context:      PagureIssueContext{IsPullRequest: true},
 		})
 

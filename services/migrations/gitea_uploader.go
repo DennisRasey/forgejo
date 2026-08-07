@@ -8,8 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -576,41 +574,6 @@ func (g *GiteaLocalUploader) updateGitForPullRequest(pr *base.PullRequest) (head
 	if !pr.EnsuredSafe {
 		log.Error("PR #%d in %s/%s has not been checked for safety.", pr.Number, g.repoOwner, g.repoName)
 		return "", fmt.Errorf("pull request[index=%d] was not checked for safety", pr.Number)
-	}
-
-	// Anonymous function to download the patch file (allows us to use defer)
-	err = func() error {
-		// if the patchURL is empty there is nothing to download
-		if pr.PatchURL == "" {
-			return nil
-		}
-
-		// SECURITY: We will assume that the pr.PatchURL has been checked
-		// pr.PatchURL maybe a local file - but note EnsureSafe should be asserting that this safe
-		ret, err := uri.Open(pr.PatchURL) // TODO: This probably needs to use the downloader as there may be rate limiting issues here
-		if err != nil {
-			return err
-		}
-		defer ret.Close()
-
-		pullDir := filepath.Join(g.repo.RepoPath(), "pulls")
-		if err = os.MkdirAll(pullDir, os.ModePerm); err != nil {
-			return err
-		}
-
-		f, err := os.Create(filepath.Join(pullDir, fmt.Sprintf("%d.patch", pr.Number)))
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		// TODO: Should there be limits on the size of this file?
-		_, err = io.Copy(f, ret)
-
-		return err
-	}()
-	if err != nil {
-		return "", err
 	}
 
 	head = "unknown repository"

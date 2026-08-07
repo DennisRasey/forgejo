@@ -25,7 +25,6 @@ type PullRequest struct {
 	Updated        time.Time
 	Closed         *time.Time
 	Labels         []*Label
-	PatchURL       string `yaml:"patch_url"` // SECURITY: This must be safe to download directly from
 	Merged         bool
 	MergedTime     *time.Time `yaml:"merged_time"`
 	MergeCommitSHA string     `yaml:"merge_commit_sha"`
