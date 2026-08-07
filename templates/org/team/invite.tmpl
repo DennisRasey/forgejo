@@ -11,6 +11,12 @@
 			<p>{{ctx.Locale.Tr "org.teams.invite.by" .Inviter.Name}}</p>
 
 			<form class="ui form" action="" method="post">
+				<div class="inline field">
+					<div class="ui checkbox">
+						<input type="checkbox" name="hide_membership" id="hide_membership" {{if .HiddenMembership}}checked{{end}} />
+						<label for="hide_membership">{{ctx.Locale.Tr "org.teams.hide_membership_to_org" .Organization.Name}}</label>
+					</div>
+				</div>
 				<button class="ui primary button">{{ctx.Locale.Tr "org.teams.join"}}</button>
 			</form>
 		</div>

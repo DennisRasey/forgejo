@@ -87,6 +87,16 @@ func IsPublicMembership(ctx context.Context, orgID, uid int64) (bool, error) {
 		Exist()
 }
 
+// IsPrivateMembership returns true if the given user is a member of the org and that membership is private.
+func IsPrivateMembership(ctx context.Context, orgID, uid int64) (bool, error) {
+	return db.GetEngine(ctx).
+		Where("uid=?", uid).
+		And("org_id=?", orgID).
+		And("is_public=?", false).
+		Table("org_user").
+		Exist()
+}
+
 // CanCreateOrgRepo returns true if user can create repo in organization
 func CanCreateOrgRepo(ctx context.Context, orgID, uid int64) (bool, error) {
 	return db.GetEngine(ctx).

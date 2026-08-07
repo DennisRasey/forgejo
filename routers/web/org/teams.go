@@ -596,11 +596,18 @@ func TeamInvite(ctx *context.Context) {
 		return
 	}
 
+	hiddenMembership, err := org_model.IsPrivateMembership(ctx, org.ID, ctx.Doer.ID)
+	if err != nil {
+		ctx.ServerError("IsPrivateMembership", err)
+		return
+	}
+
 	ctx.Data["Title"] = ctx.Tr("org.teams.invite_team_member", team.Name)
 	ctx.Data["Invite"] = invite
 	ctx.Data["Organization"] = org
 	ctx.Data["Team"] = team
 	ctx.Data["Inviter"] = inviter
+	ctx.Data["HiddenMembership"] = hiddenMembership
 
 	ctx.HTML(http.StatusOK, tplTeamInvite)
 }
@@ -625,6 +632,13 @@ func TeamInvitePost(ctx *context.Context) {
 
 	if err := models.AddTeamMember(ctx, team, ctx.Doer.ID); err != nil {
 		ctx.ServerError("AddTeamMember", err)
+		return
+	}
+
+	hideMembership := ctx.FormBool("hide_membership")
+	err = org_model.ChangeOrgUserStatus(ctx, org.ID, ctx.Doer.ID, !hideMembership)
+	if err != nil {
+		ctx.ServerError("ChangeOrgUserStatus", err)
 		return
 	}
 

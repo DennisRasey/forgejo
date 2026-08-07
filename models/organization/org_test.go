@@ -175,6 +175,21 @@ func TestIsPublicMembership(t *testing.T) {
 	test(unittest.NonexistentID, unittest.NonexistentID, false)
 }
 
+func TestIsPrivateMembership(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	test := func(orgID, userID int64, expected bool) {
+		isMember, err := organization.IsPrivateMembership(db.DefaultContext, orgID, userID)
+		require.NoError(t, err)
+		assert.Equal(t, expected, isMember)
+	}
+	test(3, 2, false)
+	test(3, 3, false)
+	test(3, 4, true)
+	test(6, 5, false)
+	test(6, 4, false)
+	test(unittest.NonexistentID, unittest.NonexistentID, false)
+}
+
 func TestGetOrgUsersByOrgID(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 

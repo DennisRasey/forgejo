@@ -76,6 +76,60 @@ func TestOrgTeamEmailInvite(t *testing.T) {
 	isMember, err = organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, user.ID)
 	require.NoError(t, err)
 	assert.True(t, isMember)
+	publicMembership, err := organization.IsPublicMembership(db.DefaultContext, team.OrgID, user.ID)
+	require.NoError(t, err)
+	// we didn't check the hide_membership checkbox, so the membership is public
+	assert.True(t, publicMembership)
+}
+
+func TestOrgTeamEmailInviteWithHiddenMembership(t *testing.T) {
+	if setting.MailService == nil {
+		t.Skip()
+		return
+	}
+
+	defer tests.PrepareTestEnv(t)()
+
+	team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 2})
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+	inviter := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	isMember, err := organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, user.ID)
+	require.NoError(t, err)
+	assert.False(t, isMember)
+
+	// create the invite
+	invite, err := organization.CreateTeamInviteForUser(db.DefaultContext, inviter, user, team)
+	require.NoError(t, err)
+
+	session := loginUser(t, user.Name)
+
+	// get the invite page
+	inviteURL := fmt.Sprintf("/org/invite/%s", invite.Token)
+	req := NewRequest(t, "GET", inviteURL)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	doc := NewHTMLParser(t, resp.Body)
+
+	// check the button exists
+	submitButton := doc.Find(`button:contains('Join')`).Length()
+	assert.Equal(t, 1, submitButton)
+	// check that the hide_membership checkbox exists
+	hideMembershipCheckbox := doc.Find(`#hide_membership`).Length()
+	assert.Equal(t, 1, hideMembershipCheckbox)
+
+	// join the team
+	req = NewRequestWithValues(t, "POST", inviteURL, map[string]string{"hide_membership": "on"})
+	resp = session.MakeRequest(t, req, http.StatusSeeOther)
+	req = NewRequest(t, "GET", test.RedirectURL(resp))
+	session.MakeRequest(t, req, http.StatusOK)
+
+	isMember, err = organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, user.ID)
+	require.NoError(t, err)
+	assert.True(t, isMember)
+	publicMembership, err := organization.IsPublicMembership(db.DefaultContext, team.OrgID, user.ID)
+	require.NoError(t, err)
+	// we checked the hide_membership checkbox, so the membership is private
+	assert.False(t, publicMembership)
 }
 
 // Check that users are redirected to accept the invitation correctly after login
