@@ -28,7 +28,7 @@ var (
 	archPkgOrSig = regexp.MustCompile(`^.*\.pkg\.tar\.\w+(\.sig)*$`)
 	archDBOrSig  = regexp.MustCompile(`^.*.(db|files)(\.tar\.gz)*(\.sig)*$`)
 
-	locker = sync.NewExclusivePool()
+	locker = sync.MutexMap{}
 )
 
 func apiError(ctx *context.Context, status int, obj any) {
@@ -39,10 +39,7 @@ func apiError(ctx *context.Context, status int, obj any) {
 
 func refreshLocker(ctx *context.Context, group string) func() {
 	key := fmt.Sprintf("pkg_%d_arch_pkg_%s", ctx.Package.Owner.ID, group)
-	locker.CheckIn(key)
-	return func() {
-		locker.CheckOut(key)
-	}
+	return locker.Lock(key)
 }
 
 func GetRepositoryKey(ctx *context.Context) {

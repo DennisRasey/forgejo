@@ -26,8 +26,7 @@ func Update(ctx context.Context, pr *issues_model.PullRequest, doer *user_model.
 		return errors.New("update of agit flow pull request's head branch is unsupported")
 	}
 
-	pullWorkingPool.CheckIn(fmt.Sprint(pr.ID))
-	defer pullWorkingPool.CheckOut(fmt.Sprint(pr.ID))
+	defer pullWorkingPool.Lock(fmt.Sprint(pr.ID))()
 
 	diffCount, err := GetDiverging(ctx, pr)
 	if err != nil {

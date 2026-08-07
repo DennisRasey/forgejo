@@ -25,7 +25,7 @@ import (
 )
 
 // TODO: use clustered lock (unique queue? or *abuse* cache)
-var wikiWorkingPool = sync.NewExclusivePool()
+var wikiWorkingPool = sync.MutexMap{}
 
 const (
 	DefaultRemote = "origin"
@@ -135,8 +135,7 @@ func updateWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 	if err = validateWebPath(newWikiName); err != nil {
 		return err
 	}
-	wikiWorkingPool.CheckIn(fmt.Sprint(repo.ID))
-	defer wikiWorkingPool.CheckOut(fmt.Sprint(repo.ID))
+	defer wikiWorkingPool.Lock(fmt.Sprint(repo.ID))()
 
 	if err = InitWiki(ctx, repo); err != nil {
 		return fmt.Errorf("InitWiki: %w", err)
@@ -296,8 +295,7 @@ func DeleteWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 		return err
 	}
 
-	wikiWorkingPool.CheckIn(fmt.Sprint(repo.ID))
-	defer wikiWorkingPool.CheckOut(fmt.Sprint(repo.ID))
+	defer wikiWorkingPool.Lock(fmt.Sprint(repo.ID))()
 
 	if err = InitWiki(ctx, repo); err != nil {
 		return fmt.Errorf("InitWiki: %w", err)

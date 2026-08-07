@@ -21,8 +21,7 @@ import (
 
 // MergedManually mark pr as merged manually
 func MergedManually(ctx context.Context, pr *issues_model.PullRequest, doer *user_model.User, baseGitRepo *git.Repository, commitID string) error {
-	pullWorkingPool.CheckIn(fmt.Sprint(pr.ID))
-	defer pullWorkingPool.CheckOut(fmt.Sprint(pr.ID))
+	defer pullWorkingPool.Lock(fmt.Sprint(pr.ID))()
 
 	if err := db.WithTx(ctx, func(ctx context.Context) error {
 		if err := pr.LoadBaseRepo(ctx); err != nil {

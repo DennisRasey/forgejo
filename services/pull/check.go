@@ -300,8 +300,7 @@ func testPR(id int64) {
 }
 
 func testPRProtected(ctx context.Context, id int64) (*issues_model.PullRequest, bool) {
-	pullWorkingPool.CheckIn(fmt.Sprint(id))
-	defer pullWorkingPool.CheckOut(fmt.Sprint(id))
+	defer pullWorkingPool.Lock(fmt.Sprint(id))()
 
 	pr, err := issues_model.GetPullRequestByID(ctx, id)
 	if err != nil {

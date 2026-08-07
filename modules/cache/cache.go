@@ -11,6 +11,7 @@ import (
 
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/sync"
 
 	mc "code.forgejo.org/go-chi/cache"
 
@@ -20,7 +21,7 @@ import (
 var (
 	conn             mc.Cache
 	ErrInconvertible = errors.New("value from cache was not convertible to expected type")
-	mutexMap         MutexMap
+	mutexMap         sync.MutexMap
 )
 
 func newCache(cacheConfig setting.Cache) (mc.Cache, error) {

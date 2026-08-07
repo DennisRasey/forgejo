@@ -236,7 +236,7 @@ func servePackageFile(ctx *context.Context, params parameters, serveContent bool
 	helper.ServePackageFile(ctx, s, u, pf, opts)
 }
 
-var mavenUploadLock = sync.NewExclusivePool()
+var mavenUploadLock = sync.MutexMap{}
 
 // UploadPackageFile adds a file to the package. If the package does not exist, it gets created.
 func UploadPackageFile(ctx *context.Context) {
@@ -256,8 +256,7 @@ func UploadPackageFile(ctx *context.Context) {
 
 	packageName := buildPackageID(params.GroupID, params.ArtifactID)
 
-	mavenUploadLock.CheckIn(packageName)
-	defer mavenUploadLock.CheckOut(packageName)
+	defer mavenUploadLock.Lock(packageName)()
 
 	buf, err := packages_module.CreateHashedBufferFromReader(ctx.Req.Body)
 	if err != nil {

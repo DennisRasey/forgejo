@@ -13,9 +13,9 @@ import (
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/actions"
-	"forgejo.org/modules/cache"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/sync"
 	"forgejo.org/modules/util"
 	actions_service "forgejo.org/services/actions"
 
@@ -37,7 +37,7 @@ var _ runnerv1connect.RunnerServiceClient = (*Service)(nil)
 
 type Service struct {
 	runnerv1connect.UnimplementedRunnerServiceHandler
-	runnerRequestKeyMutexMap cache.MutexMap
+	runnerRequestKeyMutexMap sync.MutexMap
 }
 
 // Register for new runner.
