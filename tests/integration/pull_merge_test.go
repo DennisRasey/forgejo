@@ -313,7 +313,7 @@ func TestCantMergeConflict(t *testing.T) {
 			})
 			t.Run("Git version with replay", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
-				if git.CheckGitVersionAtLeast("2.44") != nil {
+				if git.CheckGitVersionAtLeast("2.54") != nil {
 					t.SkipNow()
 				}
 
@@ -329,6 +329,58 @@ func TestCantMergeConflict(t *testing.T) {
 			err = pull.Merge(t.Context(), pr, user1, gitRepo, repo_model.MergeStyleMerge, "", "CONFLICT", false)
 			require.Error(t, err, "Merge should return an error due to conflict")
 			assert.True(t, models.IsErrMergeConflicts(err), "Merge error is not a conflict error")
+		})
+
+		gitRepo.Close()
+	})
+}
+
+func TestRebaseOntoExistingCommit(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, giteaURL *url.URL) {
+		session := loginUser(t, "user1")
+		testRepoFork(t, session, "user2", "repo1", "user1", "repo1")
+		testEditFileToNewBranch(t, session, "user1", "repo1", "master", "base", "README.md", "Hello, World\n")
+		testNewFileToNewBranch(t, session, "user1", "repo1", "base", "target", "TEST.md", "Hello, Test\n")
+		testEditFile(t, session, "user1", "repo1", "base", "README.md", "Hello, World (Edited)\n")
+		testEditFile(t, session, "user1", "repo1", "target", "README.md", "Hello, World (Edited)\n")
+
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+		req := NewRequestWithJSON(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/%s/pulls", "user1", "repo1"), &api.CreatePullRequestOption{
+			Head:  "target",
+			Base:  "base",
+			Title: "create a pr with commit that exists in base",
+		}).AddTokenAuth(token)
+		session.MakeRequest(t, req, http.StatusCreated)
+
+		user1 := unittest.AssertExistsAndLoadBean(t, &user_model.User{
+			Name: "user1",
+		})
+		repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{
+			OwnerID: user1.ID,
+			Name:    "repo1",
+		})
+
+		pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+			HeadRepoID: repo1.ID,
+			BaseRepoID: repo1.ID,
+			HeadBranch: "target",
+			BaseBranch: "base",
+		})
+
+		gitRepo, err := gitrepo.OpenRepository(git.DefaultContext, repo1)
+		require.NoError(t, err)
+
+		t.Run("Rebase", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			err = pull.Merge(t.Context(), pr, user1, gitRepo, repo_model.MergeStyleRebase, "", "REBASE-EXISTING-COMMIT", false)
+			require.NoError(t, err, "Merge should succeed without error")
+
+			changedFiles, err := gitRepo.GetFilesChangedBetween("base~1", "base")
+			require.NoError(t, err)
+			assert.NotEmpty(t, changedFiles, "HEAD commit should not be empty after rebase")
+			assert.Len(t, changedFiles, 1, "HEAD commit should modify exactly one file after rebase")
+			assert.Contains(t, changedFiles, "TEST.md", "HEAD commit should modify TEST.md after rebase")
 		})
 
 		gitRepo.Close()
