@@ -46,6 +46,7 @@ var expandLocalReusableWorkflows = func(commit *git.Commit) jobparser.LocalWorkf
 		if err != nil {
 			return nil, fmt.Errorf("expanding reusable workflow failed to read path %s: %w", path, err)
 		}
+		defer reader.Close()
 
 		content, err := io.ReadAll(reader)
 		if err != nil {

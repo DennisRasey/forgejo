@@ -79,6 +79,8 @@ func (b *Blob) DataAsync() (io.ReadCloser, error) {
 		return nil, err
 	}
 
+	// note: size of this optimization is involved in unit tests, specifically TestExpandLocalReusableWorkflows -- if
+	// the optimization is ever changed, the tests should be adjusted to ensure the non-optimized workflow is tested
 	if size < 4096 {
 		buf := make([]byte, size)
 		_, err := io.ReadFull(rd, buf)

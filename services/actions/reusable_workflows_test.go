@@ -60,7 +60,7 @@ func TestExpandLocalReusableWorkflows(t *testing.T) {
 	require.NoError(t, err)
 	defer gitRepo.Close()
 
-	commit, err := gitRepo.GetCommit("e3868ecb4f8b483fc0bdd422561bf0062a7df907")
+	commit, err := gitRepo.GetCommit("0a621162c63e842226816407805f3ca4dfc4c8bc")
 	require.NoError(t, err)
 
 	fetcher := expandLocalReusableWorkflows(commit)
@@ -70,6 +70,15 @@ func TestExpandLocalReusableWorkflows(t *testing.T) {
 		content, err := fetcher(&jobparser.Job{}, "./.forgejo/workflows/reusable-1.yml")
 		require.NoError(t, err)
 		assert.Equal(t, testWorkflow, string(content))
+	})
+
+	// modules/git/blob.go has a specific optimized codepath for reading files <4096 bytes, where all data is buffered
+	// into memory immediately.  In that case, the reader doesn't need to be closed since it's a `NopCloser`, but in all
+	// other cases it does.  This test verifies that >4k files can be read without errors.
+	t.Run("successful fetch > 4k", func(t *testing.T) {
+		content, err := fetcher(&jobparser.Job{}, "./.forgejo/workflows/reusable-more-than-4k.yml")
+		require.NoError(t, err)
+		assert.Greater(t, len(content), 4096)
 	})
 
 	t.Run("file not exist", func(t *testing.T) {
