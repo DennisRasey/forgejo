@@ -221,6 +221,7 @@ func TestPackagePyPI(t *testing.T) {
 			AddBasicAuth(user.Name)
 		req.Header["Accept"] = []string{"application/vnd.pypi.simple.v1+html"}
 		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, []string{"application/vnd.pypi.simple.v1+html"}, resp.Header().Values("Content-Type"))
 
 		htmlDoc := NewHTMLParser(t, resp.Body)
 		nodes := htmlDoc.doc.Find("a").Nodes
@@ -247,6 +248,7 @@ func TestPackagePyPI(t *testing.T) {
 			AddBasicAuth(user.Name)
 		req.Header["Accept"] = []string{"application/vnd.pypi.simple.v1+json"}
 		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, []string{"application/vnd.pypi.simple.v1+json"}, resp.Header().Values("Content-Type"))
 		assert.Greater(t, resp.Body.Len(), 3)
 		txt := make([]byte, resp.Body.Len())
 		resp.Body.Read(txt)
@@ -258,5 +260,80 @@ func TestPackagePyPI(t *testing.T) {
 			hrefMatcher = regexp.MustCompile(fmt.Sprintf(`%s/files/%s/%s/test\.(tar\.gz)|(whl)`, root, regexp.QuoteMeta(packageName), regexp.QuoteMeta(packageVersion)))
 			assert.Regexp(t, hrefMatcher, filed.URL[21:])
 		}
+	})
+
+	checkMetadataJSON := func(t *testing.T, accept string) {
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/simple/%s", root, packageName)).
+			AddBasicAuth(user.Name)
+		req.Header["Accept"] = []string{accept}
+		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, []string{"application/vnd.pypi.simple.v1+json"}, resp.Header().Values("Content-Type"))
+		var obj pypi.PackageJSON
+		require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &obj))
+		assert.Equal(t, packageName, obj.Name)
+	}
+
+	checkMetadataHTML := func(t *testing.T, accept, expectedContentType string) {
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/simple/%s", root, packageName)).
+			AddBasicAuth(user.Name)
+		req.Header["Accept"] = []string{accept}
+		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, []string{expectedContentType}, resp.Header().Values("Content-Type"))
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		assert.Len(t, htmlDoc.doc.Find("a").Nodes, 2)
+	}
+
+	t.Run("PackageMetadataLatestJSON", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		checkMetadataJSON(t, "application/vnd.pypi.simple.latest+json")
+	})
+
+	t.Run("PackageMetadataLatestHTML", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		checkMetadataHTML(t, "application/vnd.pypi.simple.latest+html", "application/vnd.pypi.simple.v1+html")
+	})
+
+	t.Run("PackageMetadataTextHTML", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		checkMetadataHTML(t, "text/html", "text/html")
+	})
+
+	t.Run("PackageMetadataPreferredByQuality", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// the media type with the higher q value wins, regardless of header order
+		checkMetadataJSON(t, "text/html;q=0.5, application/vnd.pypi.simple.v1+json")
+		checkMetadataHTML(t, "application/vnd.pypi.simple.v1+json;q=0.5, text/html", "text/html")
+	})
+
+	t.Run("PackageMetadataNotAcceptable", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/simple/%s", root, packageName)).
+			AddBasicAuth(user.Name)
+		req.Header["Accept"] = []string{"application/xml"}
+		MakeRequest(t, req, http.StatusNotAcceptable)
+	})
+
+	t.Run("PackageMetadataWithoutAcceptHeader", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// PEP 691: clients that do not send an Accept header default to HTML
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/simple/%s", root, packageName)).
+			AddBasicAuth(user.Name)
+		resp := MakeRequest(t, req, http.StatusOK)
+		assert.Equal(t, []string{"text/html"}, resp.Header().Values("Content-Type"))
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		assert.Len(t, htmlDoc.doc.Find("a").Nodes, 2)
+	})
+
+	t.Run("PackageMetadataWildcardAccept", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// `*/*` matches any representation, fall back to HTML
+		checkMetadataHTML(t, "*/*", "text/html")
 	})
 }
