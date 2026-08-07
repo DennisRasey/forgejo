@@ -27,7 +27,7 @@ import (
 // MigrateRepositoryGitData starts migrating git related data after created migrating repository
 func MigrateRepositoryGitData(ctx context.Context, u *user_model.User,
 	repo *repo_model.Repository, opts migration.MigrateOptions,
-	httpTransport *http.Transport,
+	httpTransport http.RoundTripper,
 ) (*repo_model.Repository, error) {
 	repoPath := repo_model.RepoPath(u.Name, opts.RepoName)
 
