@@ -111,9 +111,9 @@ func testEditFile(t *testing.T, session *TestSession, user, repo, branch, filePa
 	return resp
 }
 
-func testEditFileToNewBranch(t *testing.T, session *TestSession, user, repo, branch, targetBranch, filePath, newContent string) *httptest.ResponseRecorder {
+func testFileToNewBranch(t *testing.T, session *TestSession, user, repo, branch, targetBranch, filePath, newContent, editMode string) *httptest.ResponseRecorder {
 	// Get to the 'edit this file' page
-	req := NewRequest(t, "GET", path.Join(user, repo, "_edit", branch, filePath))
+	req := NewRequest(t, "GET", path.Join(user, repo, "_"+editMode, branch, filePath))
 	resp := session.MakeRequest(t, req, http.StatusOK)
 
 	htmlDoc := NewHTMLParser(t, resp.Body)
@@ -121,7 +121,7 @@ func testEditFileToNewBranch(t *testing.T, session *TestSession, user, repo, bra
 	assert.NotEmpty(t, lastCommit)
 
 	// Submit the edits
-	req = NewRequestWithValues(t, "POST", path.Join(user, repo, "_edit", branch, filePath),
+	req = NewRequestWithValues(t, "POST", path.Join(user, repo, "_"+editMode, branch, filePath),
 		map[string]string{
 			"last_commit":     lastCommit,
 			"tree_path":       filePath,
@@ -139,6 +139,14 @@ func testEditFileToNewBranch(t *testing.T, session *TestSession, user, repo, bra
 	assert.Equal(t, newContent, resp.Body.String())
 
 	return resp
+}
+
+func testEditFileToNewBranch(t *testing.T, session *TestSession, user, repo, branch, targetBranch, filePath, newContent string) *httptest.ResponseRecorder {
+	return testFileToNewBranch(t, session, user, repo, branch, targetBranch, filePath, newContent, "edit")
+}
+
+func testNewFileToNewBranch(t *testing.T, session *TestSession, user, repo, branch, targetBranch, filePath, newContent string) *httptest.ResponseRecorder {
+	return testFileToNewBranch(t, session, user, repo, branch, targetBranch, filePath, newContent, "new")
 }
 
 func TestEditFile(t *testing.T) {

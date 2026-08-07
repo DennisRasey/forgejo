@@ -254,11 +254,14 @@ func rebaseTrackingOnToBase(ctx *mergeContext, mergeStyle repo_model.MergeStyle)
 		return nil
 	}
 
-	// Check git version for availability of git-replay. If it is available, we use
-	// it for performance and to preserve unknown commit headers like the
-	// "change-id" header used by Jujutsu and GitButler to track changes across
-	// rebase, amend etc.
-	if err := git.CheckGitVersionAtLeast("2.44"); err == nil {
+	// Check git version for availability and suitability of git-replay.
+	// If it is available, we use it for performance and to preserve unknown
+	// commit headers like the "change-id" header used by Jujutsu and GitButler
+	// to track changes across rebase, amend etc.
+	// While git-replay is generally available since version 2.44, until a fix
+	// released with version 2.54 it will spawn empty commits if a commit was
+	// already part of the base branch, instead of skipping it like git-rebase.
+	if err := git.CheckGitVersionAtLeast("2.54"); err == nil {
 		// Use git-replay for performance and to preserve unknown headers,
 		// like the "change-id" header used by Jujutsu and GitButler.
 		if err := git.NewCommand(ctx, "replay", "--onto").AddDynamicArguments(baseBranch).
