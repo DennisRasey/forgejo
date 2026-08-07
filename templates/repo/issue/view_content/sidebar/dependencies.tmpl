@@ -1,6 +1,6 @@
 <div class="ui form depending">
 	{{if (and (not .BlockedByDependencies) (not .BlockedByDependenciesNotPermitted) (not .BlockingDependencies) (not .BlockingDependenciesNotPermitted))}}
-		<span class="text"><strong>{{ctx.Locale.Tr "repo.issues.dependency.title"}}</strong></span>
+		<span class="text"><strong id="dependencies-label">{{ctx.Locale.Tr "repo.issues.dependency.title"}}</strong></span>
 		<br>
 		<p>
 			{{if .Issue.IsPull}}
@@ -106,7 +106,7 @@
 					<div class="ui search selection dropdown" id="new-dependency-drop-list" data-issue-id="{{.Issue.ID}}">
 						<input name="newDependency" type="hidden">
 						{{svg "octicon-triangle-down" 14 "dropdown icon"}}
-						<input type="text" class="search">
+						<input type="text" class="search" aria-labelledby="dependencies-label">
 						<div class="default text">{{ctx.Locale.Tr "repo.issues.dependency.add"}}</div>
 					</div>
 					<button class="ui icon button">

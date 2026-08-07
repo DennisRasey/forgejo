@@ -1,12 +1,18 @@
 import {expect, type Page} from '@playwright/test';
 import {AxeBuilder} from '@axe-core/playwright';
 
-export async function accessibilityCheck({page}: {page: Page}, includes: string[], excludes: string[], disabledRules: string[]) {
+export async function accessibilityCheck({page}: {page: Page}, includes: string[], excludes: string[], disabledRules: string[], withRules: string[] | null = null) {
   // contrast of inline links is still a global issue in Forgejo
   disabledRules.push('link-in-text-block');
 
-  let accessibilityScanner = new AxeBuilder({page})
-    .disableRules(disabledRules);
+  let accessibilityScanner = new AxeBuilder({page});
+
+  if (withRules === null) {
+    accessibilityScanner = accessibilityScanner.disableRules(disabledRules);
+  } else {
+    accessibilityScanner = accessibilityScanner.withRules(withRules);
+  }
+
   // passing the whole array seems to be not supported,
   // iterating has the nice side-effectof skipping this if the array is empty
   for (const incl of includes) {

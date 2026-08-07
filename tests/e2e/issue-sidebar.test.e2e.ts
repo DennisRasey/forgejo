@@ -4,11 +4,12 @@
 // web_src/js/features/repo-issue**
 // @watch end
 
-/* eslint playwright/expect-expect: ["error", { "assertFunctionNames": ["check_wip"] }] */
+/* eslint playwright/expect-expect: ["error", { "assertFunctionNames": ["check_wip", "accessibilityCheck"] }] */
 
 import {expect, type Page} from '@playwright/test';
 import {test} from './utils_e2e.ts';
 import {screenshot} from './shared/screenshots.ts';
+import {accessibilityCheck} from './shared/accessibility.ts';
 
 test.use({user: 'user2'});
 
@@ -391,4 +392,12 @@ test('Issue: Watch URL Retention', async ({page}) => {
 
   await button.click();
   expect(page.url()).not.toContain('/watch');
+});
+
+test('accessibility - button-name', async ({page}) => {
+  const response = await page.goto('/user2/repo1/issues/1');
+  expect(response?.status()).toBe(200);
+  await page.locator('.select-assignees-modify.dropdown').click();
+  await page.locator('.select-assignees-modify.dropdown .no-select.item').click();
+  await accessibilityCheck({page}, ['.issue-content-right'], [], [], ['button-name']);
 });

@@ -15,12 +15,12 @@
 						<div class="ui segment">
 							<form class="ui form" action="{{.Link}}" method="post">
 								<div class="field">
-									<label>{{ctx.Locale.Tr "repo.settings.tags.protection.pattern"}}</label>
+									<label for="tag-pattern">{{ctx.Locale.Tr "repo.settings.tags.protection.pattern"}}</label>
 									<div id="search-tag-box" class="ui search">
 										<div class="ui input">
-											<input class="prompt" name="name_pattern" autocomplete="off" value="{{.name_pattern}}" placeholder="v*" autofocus required>
+											<input id="tag-pattern" aria-describedby="tag-pattern-desc" class="prompt" name="name_pattern" autocomplete="off" value="{{.name_pattern}}" placeholder="v*" autofocus required>
 										</div>
-										<div class="help">{{ctx.Locale.Tr "repo.settings.tags.protection.pattern.description" "https://forgejo.org/docs/latest/user/protection/#protected-tags"}}</div>
+										<div id="tag-pattern-desc" class="help">{{ctx.Locale.Tr "repo.settings.tags.protection.pattern.description" "https://forgejo.org/docs/latest/user/protection/#protected-tags"}}</div>
 									</div>
 								</div>
 								<div class="whitelist field">
