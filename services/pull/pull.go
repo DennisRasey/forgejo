@@ -341,6 +341,8 @@ func TestPullRequest(ctx context.Context, doer *user_model.User, repoID, olderTh
 		if err == nil {
 			for _, pr := range prs {
 				ValidatePullRequest(ctx, pr, newCommitID, oldCommitID, doer)
+
+				pr.HeadCommitID = newCommitID
 				notify_service.PullRequestSynchronized(ctx, doer, pr)
 			}
 		}

@@ -172,8 +172,8 @@ var Notify = func(ctx context.Context, input *NotifyInput) error {
 	}
 	defer gitRepo.Close()
 
-	logger.Debug("Triggering workflow detection and workflows for commit %q (input Git ref: %q)",
-		commit.ID, input.Ref)
+	logger.Debug("Triggering workflow detection and workflows for commit %q (input Git ref: %q), event %s",
+		commit.ID, input.Ref, input.Event)
 
 	if skipWorkflows(input, commit) {
 		return nil

@@ -4,12 +4,15 @@
 package integration
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -1302,7 +1305,8 @@ jobs:
 
 func TestActionsWorkflowsAreTriggeredForOriginalCommit(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
-		workflow := `
+		t.Run("push", func(t *testing.T) {
+			workflow := `
 on:
   push:
 jobs:
@@ -1312,59 +1316,155 @@ jobs:
       - run: echo OK
 `
 
-		oldNotify := actions_service.Notify
-		defer func() {
-			actions_service.Notify = oldNotify
-		}()
+			oldNotify := actions_service.Notify
+			defer func() {
+				actions_service.Notify = oldNotify
+			}()
 
-		// Test that workflow runs are triggered for the original commit. That means that if commit A is pushed,
-		// immediately followed by commit B while triggers for A are still running, that one run is triggered for A and
-		// one for B, not two for either A or B. That is simulated by collecting all notifications and dispatching them
-		// all at once after A and B have been pushed.
-		receivedInput := make([]*actions_service.NotifyInput, 0)
-		actions_service.Notify = func(ctx context.Context, input *actions_service.NotifyInput) error {
-			receivedInput = append(receivedInput, input)
-			return nil
-		}
+			// Test that workflow runs are triggered for the original commit. That means that if commit A is pushed,
+			// immediately followed by commit B while triggers for A are still running, that one run is triggered for A
+			// and one for B, not two for either A or B. That is simulated by collecting all notifications and
+			// dispatching them all at once after A and B have been pushed.
+			receivedInput := make([]*actions_service.NotifyInput, 0)
+			actions_service.Notify = func(ctx context.Context, input *actions_service.NotifyInput) error {
+				receivedInput = append(receivedInput, input)
+				return nil
+			}
 
-		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
-			Files: forgery.MapFS{
-				".forgejo/workflows/workflow.yaml": forgery.MapFile(workflow),
-			},
+			user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+			repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+				Files: forgery.MapFS{
+					".forgejo/workflows/workflow.yaml": forgery.MapFile(workflow),
+				},
+			})
+
+			opts := files_service.ChangeRepoFilesOptions{
+				Files: []*files_service.ChangeRepoFile{
+					{
+						Operation:     "create",
+						TreePath:      "README.md",
+						ContentReader: strings.NewReader("Hello world!"),
+					},
+				},
+				Message: "add workflow",
+			}
+			_, err := files_service.ChangeRepoFiles(t.Context(), repo, user2, &opts)
+			require.NoError(t, err)
+
+			// Verify that the expected notifications have been generated and queued.
+			assert.Len(t, receivedInput, 3)
+			assert.Equal(t, webhook_module.HookEventCreate, receivedInput[0].Event)
+			assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[0].Ref)
+			assert.Empty(t, receivedInput[0].Commit)
+			assert.Equal(t, webhook_module.HookEventPush, receivedInput[1].Event)
+			assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[1].Ref)
+			assert.NotEmpty(t, receivedInput[1].Commit)
+			assert.Equal(t, webhook_module.HookEventPush, receivedInput[2].Event)
+			assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[2].Ref)
+			assert.NotEmpty(t, receivedInput[2].Commit)
+
+			// Dispatch the buffered inputs.
+			for _, input := range receivedInput {
+				require.NoError(t, oldNotify(t.Context(), input))
+			}
+
+			runs, err := db.Find[actions_model.ActionRun](t.Context(), actions_model.FindRunOptions{RepoID: repo.ID})
+			require.NoError(t, err)
+
+			slices.SortFunc(runs, func(a, b *actions_model.ActionRun) int {
+				return cmp.Compare(a.ID, b.ID)
+			})
+
+			assert.Len(t, runs, 2)
+			assert.Equal(t, receivedInput[1].Commit, runs[0].CommitSHA)
+			assert.Equal(t, webhook_module.HookEventPush, runs[0].Event)
+			assert.Equal(t, receivedInput[2].Commit, runs[1].CommitSHA)
+			assert.Equal(t, webhook_module.HookEventPush, runs[1].Event)
 		})
 
-		opts := files_service.ChangeRepoFilesOptions{
-			Files: []*files_service.ChangeRepoFile{
-				{
-					Operation:     "create",
-					TreePath:      "README.md",
-					ContentReader: strings.NewReader("Hello world!"),
+		t.Run("pull_request", func(t *testing.T) {
+			workflow := `
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo OK
+`
+
+			user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+			session := loginUser(t, "user2")
+
+			repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+				Files: forgery.MapFS{
+					".forgejo/workflows/workflow.yaml": forgery.MapFile(workflow),
+					"README.md":                        forgery.MapFile(""),
 				},
-			},
-			Message: "add workflow",
-		}
-		_, err := files_service.ChangeRepoFiles(t.Context(), repo, user2, &opts)
-		require.NoError(t, err)
+			})
 
-		// Verify that the expected notifications have been generated and queued.
-		assert.Len(t, receivedInput, 3)
-		assert.Equal(t, webhook_module.HookEventType("create"), receivedInput[0].Event)
-		assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[0].Ref)
-		assert.Empty(t, receivedInput[0].Commit)
-		assert.Equal(t, webhook_module.HookEventType("push"), receivedInput[1].Event)
-		assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[1].Ref)
-		assert.NotEmpty(t, receivedInput[1].Commit)
-		assert.Equal(t, webhook_module.HookEventType("push"), receivedInput[2].Event)
-		assert.Equal(t, git.RefName("refs/heads/main"), receivedInput[2].Ref)
-		assert.NotEmpty(t, receivedInput[2].Commit)
+			// Capture all future notifications.
+			oldNotify := actions_service.Notify
+			defer func() {
+				actions_service.Notify = oldNotify
+			}()
 
-		// Dispatch the buffered inputs.
-		for _, input := range receivedInput {
-			require.NoError(t, oldNotify(t.Context(), input))
-		}
+			inputMutex := sync.Mutex{}
 
-		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{CommitSHA: receivedInput[1].Commit})
-		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{CommitSHA: receivedInput[2].Commit})
+			receivedInput := make([]*actions_service.NotifyInput, 0)
+			actions_service.Notify = func(ctx context.Context, input *actions_service.NotifyInput) error {
+				inputMutex.Lock()
+				defer inputMutex.Unlock()
+				receivedInput = append(receivedInput, input)
+				return nil
+			}
+
+			// Create a pull request for README.md.
+			testEditFileToNewBranch(t, session, repo.OwnerName, repo.Name, repo.DefaultBranch, "change-readme", "README.md", "Hello!")
+			testPullCreate(t, session, repo.OwnerName, repo.Name, true, repo.DefaultBranch, "change-readme", "Update README.md")
+
+			// Two distinct commits should result in two action runs.
+			testEditFile(t, session, repo.OwnerName, repo.Name, "change-readme", "README.md", "One!")
+			testEditFile(t, session, repo.OwnerName, repo.Name, "change-readme", "README.md", "Two!")
+
+			// Wait until all expected notifications have been generated and queued.
+			allInputsReceived := func() bool {
+				inputMutex.Lock()
+				defer inputMutex.Unlock()
+
+				return len(receivedInput) == 7
+			}
+			require.Eventually(t, allInputsReceived, 5*time.Second, 50*time.Millisecond)
+
+			assert.Equal(t, webhook_module.HookEventPullRequest, receivedInput[2].Event)
+			assert.Equal(t, git.RefName("refs/pull/1/head"), receivedInput[2].Ref)
+			assert.NotEmpty(t, receivedInput[2].Commit)
+			assert.Equal(t, webhook_module.HookEventPullRequestSync, receivedInput[4].Event)
+			assert.Equal(t, git.RefName("refs/pull/1/head"), receivedInput[4].Ref)
+			assert.NotEmpty(t, receivedInput[4].Commit)
+			assert.Equal(t, webhook_module.HookEventPullRequestSync, receivedInput[6].Event)
+			assert.Equal(t, git.RefName("refs/pull/1/head"), receivedInput[6].Ref)
+			assert.NotEmpty(t, receivedInput[6].Commit)
+
+			// Dispatch the buffered inputs.
+			for _, input := range receivedInput {
+				require.NoError(t, oldNotify(t.Context(), input))
+			}
+
+			runs, err := db.Find[actions_model.ActionRun](t.Context(), actions_model.FindRunOptions{RepoID: repo.ID})
+			require.NoError(t, err)
+
+			slices.SortFunc(runs, func(a, b *actions_model.ActionRun) int {
+				return cmp.Compare(a.ID, b.ID)
+			})
+
+			assert.Len(t, runs, 3)
+			assert.Equal(t, receivedInput[2].Commit, runs[0].CommitSHA)
+			assert.Equal(t, webhook_module.HookEventPullRequest, runs[0].Event)
+			assert.Equal(t, receivedInput[4].Commit, runs[1].CommitSHA)
+			assert.Equal(t, webhook_module.HookEventPullRequestSync, runs[1].Event)
+			assert.Equal(t, receivedInput[6].Commit, runs[2].CommitSHA)
+			assert.Equal(t, webhook_module.HookEventPullRequestSync, runs[2].Event)
+		})
 	})
 }
