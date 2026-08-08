@@ -50,7 +50,8 @@ type APIContext struct {
 	user *user_model.User // the user which is being visited, in most cases it differs from Doer
 
 	repo       *Repository
-	comment    *issues_model.Comment
+	issues     map[int64]*issues_model.Issue
+	comments   map[int64]*issues_model.Comment
 	org        *APIOrganization
 	pkg        *Package
 	quotaGroup *quota_model.Group
@@ -229,6 +230,28 @@ func (ctx *APIContext) SetRepo(repo *Repository) {
 	ctx.repo = repo
 }
 
+func (ctx *APIContext) LoadIssue(indexParam string) *issues_model.Issue {
+	id := ctx.ParamsInt64(indexParam)
+	issue, ok := ctx.issues[id]
+	if !ok {
+		var err error
+		issue, err = issues_model.GetIssueByIndex(ctx.Context(), ctx.Repository().ID, id)
+		if err != nil {
+			if issues_model.IsErrIssueNotExist(err) {
+				ctx.NotFound("IsErrIssueNotExist", err)
+				return nil
+			}
+			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
+			return nil
+		}
+
+		issue.Repo = ctx.Repo().Repository
+
+		ctx.issues[id] = issue
+	}
+	return issue
+}
+
 func (ctx *APIContext) Repository() *repo_model.Repository {
 	return ctx.Repo().Repository
 }
@@ -239,14 +262,6 @@ func (ctx *APIContext) Permission() *access_model.Permission {
 
 func (ctx *APIContext) SetPermission(permission *access_model.Permission) {
 	ctx.Repo().Permission = *permission
-}
-
-func (ctx *APIContext) Comment() *issues_model.Comment {
-	return ctx.comment
-}
-
-func (ctx *APIContext) SetComment(comment *issues_model.Comment) {
-	ctx.comment = comment
 }
 
 func (ctx *APIContext) Organization() *org_model.Organization {
@@ -274,6 +289,33 @@ func (ctx *APIContext) PackageOwner() *user_model.User {
 		return nil
 	}
 	return ctx.Package().Owner
+}
+
+func (ctx *APIContext) LoadComment(idParam string) *issues_model.Comment {
+	id := ctx.ParamsInt64(idParam)
+	comment, ok := ctx.comments[id]
+	if !ok {
+		var err error
+		comment, err = issues_model.GetCommentByID(ctx, id)
+		if err != nil {
+			if issues_model.IsErrCommentNotExist(err) {
+				ctx.NotFound(err)
+			} else {
+				ctx.InternalServerError(err)
+			}
+			return nil
+		}
+
+		if err = comment.LoadIssue(ctx); err != nil {
+			ctx.InternalServerError(err)
+			return nil
+		}
+
+		comment.Issue.Repo = ctx.Repo().Repository
+
+		ctx.comments[id] = comment
+	}
+	return comment
 }
 
 func (ctx *APIContext) PackageAccessMode() perm.AccessMode {
@@ -424,10 +466,12 @@ func APIContexter() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			base, baseCleanUp := NewBaseContext(w, req)
 			ctx := &APIContext{
-				Base:  base,
-				cache: mc.GetCache(),
-				repo:  &Repository{PullRequest: &PullRequest{}},
-				org:   &APIOrganization{},
+				Base:     base,
+				issues:   make(map[int64]*issues_model.Issue),
+				comments: make(map[int64]*issues_model.Comment),
+				cache:    mc.GetCache(),
+				repo:     &Repository{PullRequest: &PullRequest{}},
+				org:      &APIOrganization{},
 			}
 			defer baseCleanUp()
 

@@ -257,12 +257,17 @@ func GetPullReviewComment(ctx *context.APIContext) {
 		return
 	}
 
-	if err := ctx.Comment().LoadPoster(ctx); err != nil {
+	comment := ctx.LoadComment("comment")
+	if ctx.Written() {
+		return
+	}
+
+	if err := comment.LoadPoster(ctx); err != nil {
 		ctx.InternalServerError(err)
 		return
 	}
 
-	apiComment, err := convert.ToPullReviewComment(ctx, review, ctx.Comment(), ctx.Doer())
+	apiComment, err := convert.ToPullReviewComment(ctx, review, comment, ctx.Doer())
 	if err != nil {
 		ctx.InternalServerError(err)
 		return
@@ -1091,7 +1096,7 @@ func DeletePullReviewComment(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	deleteIssueComment(ctx, issues_model.CommentTypeCode)
+	deleteIssueComment(ctx, "comment", issues_model.CommentTypeCode)
 }
 
 func dismissReview(ctx *context.APIContext, msg string, isDismiss, dismissPriors bool) {

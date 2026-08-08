@@ -73,13 +73,8 @@ func ListIssueComments(ctx *context.APIContext) {
 		ctx.Error(http.StatusUnprocessableEntity, "GetQueryBeforeSince", err)
 		return
 	}
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound("IsErrIssueNotExist", err)
-			return
-		}
-		ctx.Error(http.StatusInternalServerError, "GetRawIssueByIndex", err)
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 	if !ctx.Repo().CanReadIssuesOrPulls(issue.IsPull) {
@@ -185,16 +180,10 @@ func ListIssueCommentsAndTimeline(ctx *context.APIContext) {
 		ctx.Error(http.StatusUnprocessableEntity, "GetQueryBeforeSince", err)
 		return
 	}
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound("IsErrIssueNotExist", err)
-			return
-		}
-		ctx.Error(http.StatusInternalServerError, "GetRawIssueByIndex", err)
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
-	issue.Repo = ctx.Repo().Repository
 
 	opts := &issues_model.FindCommentsOptions{
 		ListOptions: utils.GetListOptions(ctx),
@@ -408,27 +397,12 @@ func CreateIssueComment(ctx *context.APIContext) {
 	//     "$ref": "#/responses/internalServerError"
 
 	form := web.GetForm(ctx).(*api.CreateIssueCommentOption)
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound("IsErrIssueNotExist", err)
-			return
-		}
-		ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
-	if !ctx.Repo().CanReadIssuesOrPulls(issue.IsPull) {
-		ctx.NotFound()
-		return
-	}
-
-	if issue.IsLocked && !ctx.Repo().CanWriteIssuesOrPulls(issue.IsPull) && !ctx.IsUserSiteAdmin() {
-		ctx.Error(http.StatusForbidden, "CreateIssueComment", errors.New(ctx.Locale.TrString("repo.issues.comment_on_locked")))
-		return
-	}
-
-	err = issue_service.SetIssueUpdateDate(ctx, issue, form.Updated, ctx.Doer())
+	err := issue_service.SetIssueUpdateDate(ctx, issue, form.Updated, ctx.Doer())
 	if err != nil {
 		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
 		return
@@ -485,7 +459,10 @@ func GetIssueComment(ctx *context.APIContext) {
 	//   "500":
 	//     "$ref": "#/responses/internalServerError"
 
-	comment := ctx.Comment()
+	comment := ctx.LoadComment("id")
+	if ctx.Written() {
+		return
+	}
 
 	if comment.Type != issues_model.CommentTypeComment {
 		ctx.Status(http.StatusNoContent)
@@ -611,7 +588,10 @@ func EditIssueCommentDeprecated(ctx *context.APIContext) {
 }
 
 func editIssueComment(ctx *context.APIContext, form api.EditIssueCommentOption) {
-	comment := ctx.Comment()
+	comment := ctx.LoadComment("id")
+	if ctx.Written() {
+		return
+	}
 
 	if !ctx.IsSigned() || (ctx.Doer().ID != comment.PosterID && !ctx.Repo().CanWriteIssuesOrPulls(comment.Issue.IsPull)) {
 		ctx.Status(http.StatusForbidden)
@@ -674,7 +654,7 @@ func DeleteIssueComment(ctx *context.APIContext) {
 	//   "500":
 	//     "$ref": "#/responses/internalServerError"
 
-	deleteIssueComment(ctx, issues_model.CommentTypeComment)
+	deleteIssueComment(ctx, "id", issues_model.CommentTypeComment)
 }
 
 // DeleteIssueCommentDeprecated delete a comment from an issue
@@ -713,11 +693,14 @@ func DeleteIssueCommentDeprecated(ctx *context.APIContext) {
 	//   "500":
 	//     "$ref": "#/responses/internalServerError"
 
-	deleteIssueComment(ctx, issues_model.CommentTypeComment)
+	deleteIssueComment(ctx, "id", issues_model.CommentTypeComment)
 }
 
-func deleteIssueComment(ctx *context.APIContext, commentType issues_model.CommentType) {
-	comment := ctx.Comment()
+func deleteIssueComment(ctx *context.APIContext, param string, commentType issues_model.CommentType) {
+	comment := ctx.LoadComment(param)
+	if ctx.Written() {
+		return
+	}
 
 	if !ctx.IsSigned() || (ctx.Doer().ID != comment.PosterID && !ctx.Repo().CanWriteIssuesOrPulls(comment.Issue.IsPull)) {
 		ctx.Status(http.StatusForbidden)

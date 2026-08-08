@@ -418,6 +418,22 @@ func fixtureSetIssue(t *testing.T, permissions *apiv1_permissions.Permissions, i
 	return issue
 }
 
+func fixtureLockIssue(t *testing.T, permissions *apiv1_permissions.Permissions, issue *issues_model.Issue) {
+	require.NoError(t, issues_model.LockIssue(t.Context(), &issues_model.IssueLockOptions{
+		Doer:   permissions.Doer(),
+		Issue:  issue,
+		Reason: "because",
+	}))
+}
+
+func fixtureUnlockIssue(t *testing.T, permissions *apiv1_permissions.Permissions, issue *issues_model.Issue) {
+	require.NoError(t, issues_model.UnlockIssue(t.Context(), &issues_model.IssueLockOptions{
+		Doer:   permissions.Doer(),
+		Issue:  issue,
+		Reason: "because",
+	}))
+}
+
 func fixtureGetComment(t *testing.T, content string) *issues_model.Comment {
 	var comment issues_model.Comment
 	found, err := db.GetEngine(t.Context()).Where("content = ?", content).Get(&comment)

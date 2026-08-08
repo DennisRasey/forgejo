@@ -160,14 +160,8 @@ func DeleteIssueStopwatch(ctx *context.APIContext) {
 }
 
 func prepareIssueStopwatch(ctx *context.APIContext, shouldExist bool) *issues_model.Issue {
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
-
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return nil
 	}
 

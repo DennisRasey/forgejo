@@ -901,11 +901,6 @@ func IsNewPinAllowed(ctx context.Context, repoID int64, isPull bool) (bool, erro
 	return maxPin < setting.Repository.Issue.MaxPinned, nil
 }
 
-// IsErrIssueMaxPinReached returns if the error is, that the User can't pin more Issues
-func IsErrIssueMaxPinReached(err error) bool {
-	return err == ErrIssueMaxPinReached
-}
-
 // InsertIssues insert issues to database
 func InsertIssues(ctx context.Context, issues ...*Issue) error {
 	ctx, committer, err := db.TxContext(ctx)

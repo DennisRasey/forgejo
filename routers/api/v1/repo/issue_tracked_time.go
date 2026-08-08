@@ -80,13 +80,8 @@ func ListTrackedTimes(ctx *context.APIContext) {
 		ctx.NotFound("Timetracker is disabled")
 		return
 	}
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -109,6 +104,7 @@ func ListTrackedTimes(ctx *context.APIContext) {
 		opts.UserID = user.ID
 	}
 
+	var err error
 	if opts.CreatedBeforeUnix, opts.CreatedAfterUnix, err = context.GetQueryBeforeSince(ctx.Base); err != nil {
 		ctx.Error(http.StatusUnprocessableEntity, "GetQueryBeforeSince", err)
 		return
@@ -187,13 +183,8 @@ func AddTime(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 	form := web.GetForm(ctx).(*api.AddTimeOption)
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -210,6 +201,7 @@ func AddTime(ctx *context.APIContext) {
 	if form.User != "" {
 		if (ctx.IsUserRepoAdmin() && ctx.Doer().Name != form.User) || ctx.IsUserSiteAdmin() {
 			// allow only RepoAdmin, Admin and User to add time
+			var err error
 			user, err = user_model.GetUserByName(ctx, form.User)
 			if err != nil {
 				ctx.Error(http.StatusInternalServerError, "GetUserByName", err)
@@ -271,13 +263,8 @@ func ResetIssueTime(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -290,7 +277,7 @@ func ResetIssueTime(ctx *context.APIContext) {
 		return
 	}
 
-	err = issues_model.DeleteIssueUserTimes(ctx, issue, ctx.Doer())
+	err := issues_model.DeleteIssueUserTimes(ctx, issue, ctx.Doer())
 	if err != nil {
 		if db.IsErrNotExist(err) {
 			ctx.Error(http.StatusNotFound, "DeleteIssueUserTimes", err)
@@ -344,13 +331,8 @@ func DeleteTime(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 

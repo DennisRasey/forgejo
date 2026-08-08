@@ -56,8 +56,8 @@ func GetIssueAttachment(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/error"
 
-	issue := getIssueFromContext(ctx)
-	if issue == nil {
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -99,8 +99,8 @@ func ListIssueAttachments(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/error"
 
-	issue := getIssueFromContext(ctx)
-	if issue == nil {
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -167,8 +167,8 @@ func CreateIssueAttachment(ctx *context.APIContext) {
 	//   "423":
 	//     "$ref": "#/responses/repoArchivedError"
 
-	issue := getIssueFromContext(ctx)
-	if issue == nil {
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -276,7 +276,12 @@ func EditIssueAttachment(ctx *context.APIContext) {
 	//   "423":
 	//     "$ref": "#/responses/repoArchivedError"
 
-	attachment := getIssueAttachmentSafeWrite(ctx)
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
+		return
+	}
+
+	attachment := getIssueAttachmentSafeWrite(ctx, issue)
 	if attachment == nil {
 		return
 	}
@@ -333,7 +338,12 @@ func DeleteIssueAttachment(ctx *context.APIContext) {
 	//   "423":
 	//     "$ref": "#/responses/repoArchivedError"
 
-	attachment := getIssueAttachmentSafeWrite(ctx)
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
+		return
+	}
+
+	attachment := getIssueAttachmentSafeWrite(ctx, issue)
 	if attachment == nil {
 		return
 	}
@@ -346,24 +356,7 @@ func DeleteIssueAttachment(ctx *context.APIContext) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func getIssueFromContext(ctx *context.APIContext) *issues_model.Issue {
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64("index"))
-	if err != nil {
-		ctx.NotFoundOrServerError("GetIssueByIndex", issues_model.IsErrIssueNotExist, err)
-		return nil
-	}
-
-	issue.Repo = ctx.Repo().Repository
-
-	return issue
-}
-
-func getIssueAttachmentSafeWrite(ctx *context.APIContext) *repo_model.Attachment {
-	issue := getIssueFromContext(ctx)
-	if issue == nil {
-		return nil
-	}
-
+func getIssueAttachmentSafeWrite(ctx *context.APIContext, issue *issues_model.Issue) *repo_model.Attachment {
 	if !canUserWriteIssueAttachment(ctx, issue) {
 		return nil
 	}

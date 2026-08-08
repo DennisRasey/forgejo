@@ -119,7 +119,7 @@ The `args` are the mandatory arguments to the function call.
 
 - At the root of the source tree
 - `COVERAGE_TEST_ARGS='-test.v -test.run=TestAPIv1Permissions' make coverage-reset coverage-run-integration-sqlite coverage-show-percentage | grep v1/permissions | grep -v v1/permissions/permissions.go | grep -v v1/permissions/test | sed -e 's/\t\t*/ /g' -e 's|forgejo.org/routers/||'`
-- `uncover coverage/textfmt.out ReqOrgOwnership`
+- `go run codeberg.org/clouds666/unkai@latest --functions ReqOrgOwnership`
 
 ### Forgejo development branch
 

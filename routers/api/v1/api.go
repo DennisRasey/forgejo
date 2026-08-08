@@ -60,7 +60,6 @@ import (
 	"strings"
 
 	auth_model "forgejo.org/models/auth"
-	issues_model "forgejo.org/models/issues"
 	"forgejo.org/models/organization"
 	"forgejo.org/models/perm"
 	quota_model "forgejo.org/models/quota"
@@ -191,38 +190,14 @@ func checkPermission(check func(ctx apiv1_permissions.Context)) func(*context.AP
 }
 
 // must be used within a group with a call to commentAssignment() to set ctx.Comment
-func reqValidCommentID() func(*context.APIContext) {
+func reqValidCommentID(idParam string) func(*context.APIContext) {
 	apiv1_permissions_testhelpers.RecordSignature(apiv1_permissions.ReqValidCommentID)
 	return func(ctx *context.APIContext) {
-		if ctx.Comment() == nil {
-			panic("reqValidCommentID requires commentAssignment to be called first")
-		}
-		apiv1_permissions.ReqValidCommentID(ctx, ctx.Comment())
-	}
-}
-
-// must be used within a group with a call to repoAssignment() to set ctx.Repo
-func commentAssignment(idParam string) func(ctx *context.APIContext) {
-	apiv1_permissions_testhelpers.FollowedBy(commentAssignment, apiv1_permissions.ReqValidCommentID)
-	return func(ctx *context.APIContext) {
-		comment, err := issues_model.GetCommentByID(ctx, ctx.ParamsInt64(idParam))
-		if err != nil {
-			if issues_model.IsErrCommentNotExist(err) {
-				ctx.NotFound(err)
-			} else {
-				ctx.InternalServerError(err)
-			}
+		comment := ctx.LoadComment(idParam)
+		if ctx.Written() {
 			return
 		}
-
-		if err = comment.LoadIssue(ctx); err != nil {
-			ctx.InternalServerError(err)
-			return
-		}
-
-		comment.Issue.Repo = ctx.Repo().Repository
-
-		ctx.SetComment(comment)
+		apiv1_permissions.ReqValidCommentID(ctx, comment)
 	}
 }
 
@@ -245,6 +220,29 @@ func checkTokenPublicOnly() func(*context.APIContext) {
 			org = ctx.Org().Organization.AsUser()
 		}
 		apiv1_permissions.CheckTokenPublicOnly(ctx, ctx.User(), org, packageOwner)
+	}
+}
+
+func reqIssueUnlockedOrCanWrite(indexParam string) func(ctx *context.APIContext) {
+	apiv1_permissions_testhelpers.RecordSignature(apiv1_permissions.ReqIssueUnlockedOrCanWrite)
+	return func(ctx *context.APIContext) {
+		issue := ctx.LoadIssue(indexParam)
+		if ctx.Written() {
+			return
+		}
+		apiv1_permissions.ReqIssueUnlockedOrCanWrite(ctx, issue)
+	}
+}
+
+func reqCommentIssueUnlockedOrCanWrite(idParam string) func(ctx *context.APIContext) {
+	apiv1_permissions_testhelpers.RecordSignature(apiv1_permissions.ReqIssueUnlockedOrCanWrite)
+	return func(ctx *context.APIContext) {
+		comment := ctx.LoadComment(idParam)
+		if ctx.Written() {
+			return
+		}
+
+		apiv1_permissions.ReqIssueUnlockedOrCanWrite(ctx, comment.Issue)
 	}
 }
 
@@ -433,7 +431,11 @@ func mustAllowPulls() func(ctx *context.APIContext) {
 func mustEnableLocalIssuesIfIsIssue() func(*context.APIContext) {
 	apiv1_permissions_testhelpers.RecordSignature(apiv1_permissions.MustEnableLocalIssuesIfIsIssue)
 	return func(ctx *context.APIContext) {
-		apiv1_permissions.MustEnableLocalIssuesIfIsIssue(ctx, ctx.ParamsInt64(":index"))
+		issue := ctx.LoadIssue("index")
+		if ctx.Written() {
+			return
+		}
+		apiv1_permissions.MustEnableLocalIssuesIfIsIssue(ctx, issue)
 	}
 }
 
@@ -1011,7 +1013,7 @@ func Routes() *web.Route {
 										m.Combo("").
 											Get(repo.GetPullReviewComment).
 											Delete(reqToken(), repo.DeletePullReviewComment)
-									}, commentAssignment("comment"), reqValidCommentID())
+									}, reqValidCommentID("comment"))
 								})
 								m.Post("/dismissals", reqToken(), bind(api.DismissPullReviewOptions{}), repo.DismissPullReview)
 								m.Post("/undismissals", reqToken(), repo.UnDismissPullReview)
@@ -1120,8 +1122,8 @@ func Routes() *web.Route {
 								Delete(reqToken(), repo.DeleteIssueComment)
 							m.Combo("/reactions").
 								Get(repo.GetIssueCommentReactions).
-								Post(reqToken(), bind(api.EditReactionOption{}), repo.PostIssueCommentReaction).
-								Delete(reqToken(), bind(api.EditReactionOption{}), repo.DeleteIssueCommentReaction)
+								Post(reqToken(), reqCommentIssueUnlockedOrCanWrite("id"), bind(api.EditReactionOption{}), repo.PostIssueCommentReaction).
+								Delete(reqToken(), reqCommentIssueUnlockedOrCanWrite("id"), bind(api.EditReactionOption{}), repo.DeleteIssueCommentReaction)
 							m.Group("/assets", func() {
 								m.Combo("").
 									Get(repo.ListIssueCommentAttachments).
@@ -1131,7 +1133,7 @@ func Routes() *web.Route {
 									Patch(reqToken(), mustNotBeArchived(), bind(api.EditAttachmentOptions{}), repo.EditIssueCommentAttachment).
 									Delete(reqToken(), mustNotBeArchived(), repo.DeleteIssueCommentAttachment)
 							}, mustEnableAttachments())
-						}, commentAssignment(":id"), reqValidCommentID())
+						}, reqValidCommentID("id"))
 					})
 					m.Group("/{index}", func() {
 						m.Combo("").Get(repo.GetIssue).
@@ -1139,8 +1141,8 @@ func Routes() *web.Route {
 							Delete(reqToken(), reqAdmin(), context.ReferencesGitRepo(), repo.DeleteIssue)
 						m.Group("/comments", func() {
 							m.Combo("").Get(repo.ListIssueComments).
-								Post(reqToken(), mustNotBeArchived(), bind(api.CreateIssueCommentOption{}), repo.CreateIssueComment)
-							m.Combo("/{id}", reqToken(), commentAssignment(":id"), reqValidCommentID()).Patch(bind(api.EditIssueCommentOption{}), repo.EditIssueCommentDeprecated).
+								Post(reqToken(), mustNotBeArchived(), reqIssueUnlockedOrCanWrite("index"), bind(api.CreateIssueCommentOption{}), repo.CreateIssueComment)
+							m.Combo("/{id}", reqToken(), reqValidCommentID("id")).Patch(bind(api.EditIssueCommentOption{}), repo.EditIssueCommentDeprecated).
 								Delete(repo.DeleteIssueCommentDeprecated)
 						})
 						m.Get("/timeline", repo.ListIssueCommentsAndTimeline)
@@ -1172,8 +1174,8 @@ func Routes() *web.Route {
 						})
 						m.Combo("/reactions").
 							Get(repo.GetIssueReactions).
-							Post(reqToken(), bind(api.EditReactionOption{}), repo.PostIssueReaction).
-							Delete(reqToken(), bind(api.EditReactionOption{}), repo.DeleteIssueReaction)
+							Post(reqToken(), reqIssueUnlockedOrCanWrite("index"), bind(api.EditReactionOption{}), repo.PostIssueReaction).
+							Delete(reqToken(), reqIssueUnlockedOrCanWrite("index"), bind(api.EditReactionOption{}), repo.DeleteIssueReaction)
 						m.Group("/assets", func() {
 							m.Combo("").
 								Get(repo.ListIssueAttachments).

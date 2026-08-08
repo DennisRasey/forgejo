@@ -62,13 +62,8 @@ func GetIssueDependencies(ctx *context.APIContext) {
 		return
 	}
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound("IsErrIssueNotExist", err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -191,7 +186,7 @@ func CreateIssueDependency(ctx *context.APIContext) {
 	//     "$ref": "#/responses/repoArchivedError"
 
 	// We want to make <:index> depend on <Form>, i.e. <:index> is the target
-	target := getParamsIssue(ctx)
+	target := ctx.LoadIssue("index")
 	if ctx.Written() {
 		return
 	}
@@ -253,7 +248,7 @@ func RemoveIssueDependency(ctx *context.APIContext) {
 	//     "$ref": "#/responses/repoArchivedError"
 
 	// We want to make <:index> depend on <Form>, i.e. <:index> is the target
-	target := getParamsIssue(ctx)
+	target := ctx.LoadIssue("index")
 	if ctx.Written() {
 		return
 	}
@@ -319,7 +314,7 @@ func GetIssueBlocks(ctx *context.APIContext) {
 	// We need to list the issues that DEPEND on this issue not the other way round
 	// Therefore whether dependencies are enabled or not in this repository is potentially irrelevant.
 
-	issue := getParamsIssue(ctx)
+	issue := ctx.LoadIssue("index")
 	if ctx.Written() {
 		return
 	}
@@ -416,7 +411,7 @@ func CreateIssueBlocking(ctx *context.APIContext) {
 	//   "404":
 	//     description: the issue does not exist
 
-	dependency := getParamsIssue(ctx)
+	dependency := ctx.LoadIssue("index")
 	if ctx.Written() {
 		return
 	}
@@ -474,7 +469,7 @@ func RemoveIssueBlocking(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	dependency := getParamsIssue(ctx)
+	dependency := ctx.LoadIssue("index")
 	if ctx.Written() {
 		return
 	}
@@ -496,20 +491,6 @@ func RemoveIssueBlocking(ctx *context.APIContext) {
 	}
 
 	ctx.JSON(http.StatusCreated, convert.ToAPIIssue(ctx, ctx.Doer(), dependency))
-}
-
-func getParamsIssue(ctx *context.APIContext) *issues_model.Issue {
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound("IsErrIssueNotExist", err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
-		return nil
-	}
-	issue.Repo = ctx.Repo().Repository
-	return issue
 }
 
 func getFormIssue(ctx *context.APIContext, form *api.IssueMeta) *issues_model.Issue {

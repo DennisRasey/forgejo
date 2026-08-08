@@ -41,26 +41,12 @@ func PinIssue(ctx *context.APIContext) {
 	//     "$ref": "#/responses/forbidden"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else if issues_model.IsErrIssueMaxPinReached(err) {
-			ctx.Error(http.StatusBadRequest, "MaxPinReached", err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
-	// If we don't do this, it will crash when trying to add the pin event to the comment history
-	err = issue.LoadRepo(ctx)
-	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "LoadRepo", err)
-		return
-	}
-
-	err = issue.Pin(ctx, ctx.Doer())
+	err := issue.Pin(ctx, ctx.Doer())
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "PinIssue", err)
 		return
@@ -98,24 +84,12 @@ func UnpinIssue(ctx *context.APIContext) {
 	//     "$ref": "#/responses/forbidden"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
-	// If we don't do this, it will crash when trying to add the unpin event to the comment history
-	err = issue.LoadRepo(ctx)
-	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "LoadRepo", err)
-		return
-	}
-
-	err = issue.Unpin(ctx, ctx.Doer())
+	err := issue.Unpin(ctx, ctx.Doer())
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "UnpinIssue", err)
 		return
@@ -159,17 +133,12 @@ func MoveIssuePin(ctx *context.APIContext) {
 	//     "$ref": "#/responses/forbidden"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
-	err = issue.MovePin(ctx, int(ctx.ParamsInt64(":position")))
+	err := issue.MovePin(ctx, int(ctx.ParamsInt64("position")))
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "MovePin", err)
 		return

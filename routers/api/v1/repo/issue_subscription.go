@@ -104,14 +104,8 @@ func DelIssueSubscription(ctx *context.APIContext) {
 }
 
 func setIssueSubscription(ctx *context.APIContext, watch bool) {
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
-
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -185,14 +179,8 @@ func CheckIssueSubscription(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
-
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -251,14 +239,8 @@ func GetIssueSubscribers(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
-
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 

@@ -825,19 +825,13 @@ func EditIssue(ctx *context.APIContext) {
 	//     "$ref": "#/responses/error"
 
 	form := web.GetForm(ctx).(*api.EditIssueOption)
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
-	issue.Repo = ctx.Repo().Repository
 	canWrite := ctx.Repo().CanWriteIssuesOrPulls(issue.IsPull)
 
-	err = issue.LoadAttributes(ctx)
+	err := issue.LoadAttributes(ctx)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "LoadAttributes", err)
 		return
@@ -999,17 +993,12 @@ func DeleteIssue(ctx *context.APIContext) {
 	//     "$ref": "#/responses/forbidden"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByID", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
-	if err = issue_service.DeleteIssue(ctx, ctx.Doer(), ctx.Repo().GitRepo, issue); err != nil {
+	if err := issue_service.DeleteIssue(ctx, ctx.Doer(), ctx.Repo().GitRepo, issue); err != nil {
 		ctx.Error(http.StatusInternalServerError, "DeleteIssueByID", err)
 		return
 	}
@@ -1055,13 +1044,8 @@ func UpdateIssueDeadline(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 	form := web.GetForm(ctx).(*api.EditDeadlineOption)
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 

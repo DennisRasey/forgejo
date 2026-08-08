@@ -48,13 +48,8 @@ func ListIssueLabels(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -168,13 +163,8 @@ func DeleteIssueLabel(ctx *context.APIContext) {
 	//     "$ref": "#/responses/validationError"
 	form := web.GetForm(ctx).(*api.DeleteLabelsOption)
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -316,13 +306,8 @@ func ClearIssueLabels(ctx *context.APIContext) {
 	//     "$ref": "#/responses/notFound"
 	form := web.GetForm(ctx).(*api.DeleteLabelsOption)
 
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
 		return
 	}
 
@@ -345,14 +330,9 @@ func ClearIssueLabels(ctx *context.APIContext) {
 }
 
 func prepareForReplaceOrAdd(ctx *context.APIContext, form api.IssueLabelsOption) (*issues_model.Issue, []*issues_model.Label, error) {
-	issue, err := issues_model.GetIssueByIndex(ctx, ctx.Repo().Repository.ID, ctx.ParamsInt64(":index"))
-	if err != nil {
-		if issues_model.IsErrIssueNotExist(err) {
-			ctx.NotFound()
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetIssueByIndex", err)
-		}
-		return nil, nil, err
+	issue := ctx.LoadIssue("index")
+	if ctx.Written() {
+		return nil, nil, errors.New("LoadIssue")
 	}
 
 	var (

@@ -6,6 +6,7 @@ package tests
 import (
 	"testing"
 
+	issues_model "forgejo.org/models/issues"
 	unit_model "forgejo.org/models/unit"
 	user_model "forgejo.org/models/user"
 	apiv1_permissions "forgejo.org/routers/api/v1/permissions"
@@ -70,11 +71,11 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.MustEnableLocalIssuesIfIs
 	},
 	call: func(t *testing.T, ctx apiv1_permissions.Context, data *testData, _ []any) {
 		t.Helper()
-		var index int64
+		var issue *issues_model.Issue
 		if data.Has("issue") {
-			index = fixtureGetIssue(t, data.Get("issue")).Index
+			issue = fixtureGetIssue(t, data.Get("issue"))
 		}
-		t.Logf("calling MustEnableLocalIssuesIfIsIssue(ctx, %d)", index)
-		apiv1_permissions.MustEnableLocalIssuesIfIsIssue(ctx, index)
+		t.Logf("calling MustEnableLocalIssuesIfIsIssue(ctx, %+v)", issue)
+		apiv1_permissions.MustEnableLocalIssuesIfIsIssue(ctx, issue)
 	},
 })
