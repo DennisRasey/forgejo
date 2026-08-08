@@ -45,7 +45,7 @@ func (te *TreeEntry) Size() int64 {
 		return te.size
 	}
 
-	if err := te.ptree.repo.WithCatFileBatchCheck(te.ptree.repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+	if err := te.ptree.repo.WithCatFileBatchCheck(te.ptree.repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 		_, err := wr.Write([]byte(te.ID.String() + "\n"))
 		if err != nil {
 			return err

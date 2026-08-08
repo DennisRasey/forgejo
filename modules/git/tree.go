@@ -43,7 +43,7 @@ func (t *Tree) ListEntries() (Entries, error) {
 
 	if t.repo != nil {
 		var entries Entries
-		if err := t.repo.WithCatFileBatch(t.repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+		if err := t.repo.WithCatFileBatch(t.repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 			if _, err := wr.Write([]byte(t.ID.String() + "\n")); err != nil {
 				return err
 			}

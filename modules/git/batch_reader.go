@@ -20,12 +20,6 @@ import (
 	"github.com/djherbis/nio/v3"
 )
 
-// WriteCloserError wraps an io.WriteCloser with an additional CloseWithError function
-type WriteCloserError interface {
-	io.WriteCloser
-	CloseWithError(err error) error
-}
-
 // ensureValidGitRepository runs git rev-parse in the repository path - thus ensuring that the repository is a valid repository.
 // Run before opening git cat-file.
 // This is needed otherwise the git cat-file will hang for invalid repositories.
@@ -44,7 +38,7 @@ func ensureValidGitRepository(ctx context.Context, repoPath string) error {
 }
 
 // catFileBatchCheck opens git cat-file --batch-check in the provided repo and returns a stdin pipe, a stdout reader and cancel function
-func catFileBatchCheck(ctx context.Context, repoPath string) (WriteCloserError, *bufio.Reader, func()) {
+func catFileBatchCheck(ctx context.Context, repoPath string) (io.Writer, *bufio.Reader, func()) {
 	batchStdinReader, batchStdinWriter := io.Pipe()
 	batchStdoutReader, batchStdoutWriter := io.Pipe()
 	ctx, ctxCancel := context.WithCancel(ctx)
@@ -94,7 +88,7 @@ func catFileBatchCheck(ctx context.Context, repoPath string) (WriteCloserError, 
 }
 
 // catFileBatch opens git cat-file --batch in the provided repo and returns a stdin pipe, a stdout reader and cancel function
-func catFileBatch(ctx context.Context, repoPath string) (WriteCloserError, *bufio.Reader, func()) {
+func catFileBatch(ctx context.Context, repoPath string) (io.Writer, *bufio.Reader, func()) {
 	// We often want to feed the commits in order into cat-file --batch, followed by their trees and sub trees as necessary.
 	// so let's create a batch stdin and stdout
 	batchStdinReader, batchStdinWriter := io.Pipe()

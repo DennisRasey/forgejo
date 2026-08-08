@@ -164,7 +164,7 @@ func (repo *Repository) IsObjectExist(name string) bool {
 	}
 
 	var sha []byte
-	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 		_, err := wr.Write([]byte(name + "\n"))
 		if err != nil {
 			return err
@@ -185,7 +185,7 @@ func (repo *Repository) IsReferenceExist(name string) bool {
 	}
 
 	var exist bool
-	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 		_, err := wr.Write([]byte(name + "\n"))
 		if err != nil {
 			log.Debug("Error accessing CatFileBatchCheck %v", err)

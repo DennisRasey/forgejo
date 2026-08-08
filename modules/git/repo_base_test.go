@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +23,7 @@ func TestCatFileBatch(t *testing.T) {
 	require.NoError(t, err)
 	defer repo.Close()
 
-	var wr WriteCloserError
+	var wr io.Writer
 	var r *bufio.Reader
 	var cancel1 func(error)
 	t.Run("Request cat file batch", func(t *testing.T) {
@@ -146,7 +147,7 @@ func TestCatFileBatchCheck(t *testing.T) {
 	require.NoError(t, err)
 	defer repo.Close()
 
-	var wr WriteCloserError
+	var wr io.Writer
 	var r *bufio.Reader
 	var cancel1 func(error)
 	t.Run("Request cat file batch check", func(t *testing.T) {

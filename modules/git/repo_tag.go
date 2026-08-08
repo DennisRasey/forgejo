@@ -256,7 +256,7 @@ func (repo *Repository) GetTags(skip, limit int) (tags []string, err error) {
 // GetTagType gets the type of the tag, either commit (simple) or tag (annotated)
 func (repo *Repository) GetTagType(id ObjectID) (string, error) {
 	var typ string
-	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 		_, err := wr.Write([]byte(id.String() + "\n"))
 		if err != nil {
 			return err
@@ -317,7 +317,7 @@ func (repo *Repository) getTag(tagID ObjectID, name string) (*Tag, error) {
 	}
 
 	var data []byte
-	if err := repo.WithCatFileBatch(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+	if err := repo.WithCatFileBatch(repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 		// The tag is an annotated tag with a message.
 		if _, err := wr.Write([]byte(tagID.String() + "\n")); err != nil {
 			return err

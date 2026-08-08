@@ -67,7 +67,7 @@ func FindLFSFile(repo *git.Repository, objectID git.ObjectID) ([]*LFSResult, err
 
 	// Next feed the commits in order into cat-file --batch, followed by their trees and sub trees as necessary.
 	// so let's create a batch stdin and stdout
-	if err := repo.WithCatFileBatch(repo.Ctx, func(batchStdinWriter git.WriteCloserError, batchReader *bufio.Reader) error {
+	if err := repo.WithCatFileBatch(repo.Ctx, func(batchStdinWriter io.Writer, batchReader *bufio.Reader) error {
 		// We'll use a scanner for the revList because it's simpler than a bufio.Reader
 		scan := bufio.NewScanner(revListReader)
 		trees := [][]byte{}

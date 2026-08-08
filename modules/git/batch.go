@@ -6,15 +6,16 @@ package git
 import (
 	"bufio"
 	"context"
+	"io"
 )
 
 type Batch struct {
 	cancel context.CancelFunc
 	Reader *bufio.Reader
-	Writer WriteCloserError
+	Writer io.Writer
 }
 
-func (repo *Repository) NewBatch(ctx context.Context) (*Batch, error) {
+func (repo *Repository) newBatch(ctx context.Context) (*Batch, error) {
 	// Now because of some insanity with git cat-file not immediately failing if not run in a valid git directory we need to run git rev-parse first!
 	if err := ensureValidGitRepository(ctx, repo.Path); err != nil {
 		return nil, err
@@ -25,7 +26,7 @@ func (repo *Repository) NewBatch(ctx context.Context) (*Batch, error) {
 	return &batch, nil
 }
 
-func (repo *Repository) NewBatchCheck(ctx context.Context) (*Batch, error) {
+func (repo *Repository) newBatchCheck(ctx context.Context) (*Batch, error) {
 	// Now because of some insanity with git cat-file not immediately failing if not run in a valid git directory we need to run git rev-parse first!
 	if err := ensureValidGitRepository(ctx, repo.Path); err != nil {
 		return nil, err

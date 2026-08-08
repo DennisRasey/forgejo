@@ -52,7 +52,7 @@ func (b *Blob) Size() int64 {
 		return b.size
 	}
 
-	if err := b.repo.WithCatFileBatchCheck(b.repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+	if err := b.repo.WithCatFileBatchCheck(b.repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 		_, err := wr.Write([]byte(b.ID.String() + "\n"))
 		if err != nil {
 			return nil

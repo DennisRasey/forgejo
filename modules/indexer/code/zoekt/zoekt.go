@@ -94,7 +94,7 @@ func (b *Indexer) addDelete(builder *index.Builder, filename string) {
 	builder.MarkFileAsChangedOrRemoved(filename)
 }
 
-func (b *Indexer) addUpdate(ctx context.Context, builder *index.Builder, batchWriter git.WriteCloserError, batchReader *bufio.Reader, update internal.FileUpdate, repo *repo_model.Repository) error {
+func (b *Indexer) addUpdate(ctx context.Context, builder *index.Builder, batchWriter io.Writer, batchReader *bufio.Reader, update internal.FileUpdate, repo *repo_model.Repository) error {
 	// Ignore vendored files in code search
 	if setting.Indexer.ExcludeVendored && analyze.IsVendor(update.Filename) {
 		return nil
@@ -178,16 +178,17 @@ func (b *Indexer) Index(ctx context.Context, repo *repo_model.Repository, sha st
 			return err
 		}
 		defer r.Close()
-		batch, err := r.NewBatch(ctx)
-		if err != nil {
-			return err
-		}
-		defer batch.Close()
-		for _, update := range changes.Updates {
-			err := b.addUpdate(ctx, builder, batch.Writer, batch.Reader, update, repo)
-			if err != nil {
-				return err
+
+		if err := r.WithCatFileBatch(ctx, func(w io.Writer, r *bufio.Reader) error {
+			for _, update := range changes.Updates {
+				err := b.addUpdate(ctx, builder, w, r, update, repo)
+				if err != nil {
+					return err
+				}
 			}
+			return nil
+		}); err != nil {
+			return nil
 		}
 	}
 

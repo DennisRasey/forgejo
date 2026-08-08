@@ -70,7 +70,7 @@ func (repo *Repository) CommitTree(author, committer *Signature, tree *Tree, opt
 
 func (repo *Repository) getTree(id ObjectID) (*Tree, error) {
 	var tree *Tree
-	if err := repo.WithCatFileBatch(repo.Ctx, func(wr WriteCloserError, rd *bufio.Reader) error {
+	if err := repo.WithCatFileBatch(repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
 		if _, err := wr.Write([]byte(id.String() + "\n")); err != nil {
 			return err
 		}

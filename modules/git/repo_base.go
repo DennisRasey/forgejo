@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -62,7 +63,7 @@ func OpenRepository(ctx context.Context, repoPath string) (*Repository, error) {
 	}, nil
 }
 
-func (repo *Repository) internalCatFile(lock *sync.Mutex, lockStack *string, batch **Batch, makeBatch func() (*Batch, error)) (WriteCloserError, *bufio.Reader, func(error), error) {
+func (repo *Repository) internalCatFile(lock *sync.Mutex, lockStack *string, batch **Batch, makeBatch func() (*Batch, error)) (io.Writer, *bufio.Reader, func(error), error) {
 	if lock.TryLock() {
 		// Capturing stack traces is a bit expensive for recording this diagnostic information, so only do it in
 		// dev/test.
@@ -118,15 +119,15 @@ func (repo *Repository) internalCatFile(lock *sync.Mutex, lockStack *string, bat
 //
 // - call the close method with an error if any error occurred while processing, signaling that the pipes to the
 // subprocess may be in an unexpected state and cannot be reused anymore
-func (repo *Repository) CatFileBatch(ctx context.Context) (WriteCloserError, *bufio.Reader, func(error), error) {
+func (repo *Repository) CatFileBatch(ctx context.Context) (io.Writer, *bufio.Reader, func(error), error) {
 	return repo.internalCatFile(&repo.batchLock, &repo.batchLockStack, &repo.batch,
-		func() (*Batch, error) { return repo.NewBatch(ctx) })
+		func() (*Batch, error) { return repo.newBatch(ctx) })
 }
 
 // WithCatFileBatch performs the same work as CatFileBatch, but with a closure-based API which makes error handling a
 // little easier.  It is still necessary to ensure that the entire response from any request sent to the writer is read
 // from the reader, leaving no leftover content in the pipe that the next musage might encounter.
-func (repo *Repository) WithCatFileBatch(ctx context.Context, closure func(WriteCloserError, *bufio.Reader) error) error {
+func (repo *Repository) WithCatFileBatch(ctx context.Context, closure func(io.Writer, *bufio.Reader) error) error {
 	wr, rd, close, err := repo.CatFileBatch(ctx)
 	if err != nil {
 		return err
@@ -147,15 +148,15 @@ func (repo *Repository) WithCatFileBatch(ctx context.Context, closure func(Write
 //
 // - call the close method with an error if any error occurred while processing, signaling that the pipes to the
 // subprocess may be in an unexpected state and cannot be reused anymore
-func (repo *Repository) CatFileBatchCheck(ctx context.Context) (WriteCloserError, *bufio.Reader, func(error), error) {
+func (repo *Repository) CatFileBatchCheck(ctx context.Context) (io.Writer, *bufio.Reader, func(error), error) {
 	return repo.internalCatFile(&repo.checkLock, &repo.checkLockStack, &repo.check,
-		func() (*Batch, error) { return repo.NewBatchCheck(ctx) })
+		func() (*Batch, error) { return repo.newBatchCheck(ctx) })
 }
 
 // WithCatFileBatch performs the same work as CatFileBatchCheck, but with a closure-based API which makes error handling
 // a little easier.  It is still necessary to ensure that the entire response from any request sent to the writer is
 // read from the reader, leaving no leftover content in the pipe that the next musage might encounter.
-func (repo *Repository) WithCatFileBatchCheck(ctx context.Context, closure func(WriteCloserError, *bufio.Reader) error) error {
+func (repo *Repository) WithCatFileBatchCheck(ctx context.Context, closure func(io.Writer, *bufio.Reader) error) error {
 	wr, rd, close, err := repo.CatFileBatchCheck(ctx)
 	if err != nil {
 		return err

@@ -64,7 +64,7 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 
 	// We will feed the commit IDs in order into cat-file --batch, followed by blobs as necessary.
 	// so let's create a batch stdin and stdout
-	if err := repo.WithCatFileBatch(repo.Ctx, func(batchStdinWriter WriteCloserError, batchReader *bufio.Reader) error {
+	if err := repo.WithCatFileBatch(repo.Ctx, func(batchStdinWriter io.Writer, batchReader *bufio.Reader) error {
 		writeID := func(id string) error {
 			_, err := batchStdinWriter.Write([]byte(id + "\n"))
 			return err

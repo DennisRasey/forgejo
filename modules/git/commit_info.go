@@ -127,7 +127,7 @@ func GetLastCommitForPaths(ctx context.Context, commit *Commit, treePath string,
 	}
 
 	commitCommits := map[string]*Commit{}
-	if err := commit.repo.WithCatFileBatch(ctx, func(batchStdinWriter WriteCloserError, batchReader *bufio.Reader) error {
+	if err := commit.repo.WithCatFileBatch(ctx, func(batchStdinWriter io.Writer, batchReader *bufio.Reader) error {
 		commitsMap := map[string]*Commit{}
 		commitsMap[commit.ID.String()] = commit
 
