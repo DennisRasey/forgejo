@@ -658,8 +658,18 @@ func PrepareViewPullInfo(ctx *context.Context, issue *issues_model.Issue) *git.C
 	}
 
 	if headBranchExist {
-		var err error
-		ctx.Data["UpdateAllowed"], ctx.Data["UpdateByRebaseAllowed"], err = pull_service.IsUserAllowedToUpdate(ctx, pull, ctx.Doer)
+		headRepoPerm, err := access_model.GetUserRepoPermission(ctx, pull.HeadRepo, ctx.Doer)
+		if err != nil {
+			ctx.ServerError("GetUserRepoPermission head", err)
+			return nil
+		}
+		baseRepoPerm, err := access_model.GetUserRepoPermission(ctx, pull.BaseRepo, ctx.Doer)
+		if err != nil {
+			ctx.ServerError("GetUserRepoPermission base", err)
+			return nil
+		}
+
+		ctx.Data["UpdateAllowed"], ctx.Data["UpdateByRebaseAllowed"], err = pull_service.IsUserAllowedToUpdate(ctx, pull, ctx.Doer, headRepoPerm, baseRepoPerm)
 		if err != nil {
 			ctx.ServerError("IsUserAllowedToUpdate", err)
 			return nil
@@ -1259,7 +1269,18 @@ func UpdatePullRequest(ctx *context.Context) {
 		return
 	}
 
-	allowedUpdateByMerge, allowedUpdateByRebase, err := pull_service.IsUserAllowedToUpdate(ctx, issue.PullRequest, ctx.Doer)
+	headRepoPerm, err := access_model.GetUserRepoPermission(ctx, issue.PullRequest.HeadRepo, ctx.Doer)
+	if err != nil {
+		ctx.ServerError("GetUserRepoPermission head", err)
+		return
+	}
+	baseRepoPerm, err := access_model.GetUserRepoPermission(ctx, issue.PullRequest.BaseRepo, ctx.Doer)
+	if err != nil {
+		ctx.ServerError("GetUserRepoPermission base", err)
+		return
+	}
+
+	allowedUpdateByMerge, allowedUpdateByRebase, err := pull_service.IsUserAllowedToUpdate(ctx, issue.PullRequest, ctx.Doer, headRepoPerm, baseRepoPerm)
 	if err != nil {
 		ctx.ServerError("IsUserAllowedToMerge", err)
 		return
