@@ -38,6 +38,9 @@
 			</div>
 		</details>
 		{{end}}
+		<a class="{{if .PageIsOrgSettingsRepos}}active {{end}}item" href="{{.OrgLink}}/settings/repos">
+			{{ctx.Locale.Tr "settings.repos"}}
+		</a>
 		<a class="{{if .PageIsSettingsBlockedUsers}}active {{end}}item" href="{{.OrgLink}}/settings/blocked_users">
 			{{ctx.Locale.Tr "settings.blocked_users"}}
 		</a>

@@ -1140,6 +1140,8 @@ func registerRoutes(m *web.Route) {
 					m.Post("/initialize", web.Bind(forms.InitializeLabelsForm{}), org.InitializeLabels)
 				})
 
+				m.Get("/repos", org_setting.Repos)
+
 				m.Group("/actions", func() {
 					m.Get("", org_setting.RedirectToDefaultSetting)
 					addSettingsRunnersRoutes()

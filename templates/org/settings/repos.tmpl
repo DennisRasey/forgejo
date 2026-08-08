@@ -1,0 +1,56 @@
+{{template "org/settings/layout_head" (dict "ctxData" . "pageClass" "organization settings repos")}}
+<div class="org-setting-content">
+	<h4 class="ui top attached header">
+		{{ctx.Locale.Tr "settings.repos"}} ({{ctx.Locale.Tr "admin.total" .Total}})
+	</h4>
+	<div class="ui attached table segment">
+		<table class="ui very basic striped table unstackable">
+			<thead>
+				<tr>
+					<th class="ten wide" data-sortt-asc="alphabetically" data-sortt-desc="reversealphabetically">
+						{{ctx.Locale.Tr "admin.repos.name"}}
+						{{SortArrow "alphabetically" "reversealphabetically" $.SortType false}}
+					</th>
+					<th class="three wide" data-sortt-asc="gitsize" data-sortt-desc="reversegitsize">
+						{{ctx.Locale.Tr "admin.repos.size"}}
+						{{SortArrow "gitsize" "reversegitsize" $.SortType false}}
+					</th>
+					<th class="three wide" data-sortt-asc="lfssize" data-sortt-desc="reverselfssize">
+						{{ctx.Locale.Tr "admin.repos.lfs_size"}}
+						{{SortArrow "lfssize" "reverselfssize" $.SortType false}}
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{range .Repos}}
+					<tr>
+						<td>
+							<a class="tw-break-anywhere" href="{{.Link}}">{{.Name}}</a>
+							{{if .IsArchived}}
+								<span class="ui basic label">{{ctx.Locale.Tr "repo.desc.archived"}}</span>
+							{{end}}
+							{{if .IsPrivate}}
+								<span class="ui basic label">{{ctx.Locale.Tr "repo.desc.private"}}</span>
+							{{end}}
+							{{if .IsTemplate}}
+								<span class="ui basic label">{{ctx.Locale.Tr "repo.desc.template"}}</span>
+							{{end}}
+							{{if .IsMirror}}
+								{{svg "octicon-mirror"}}
+							{{else if .IsFork}}
+								{{svg "octicon-repo-forked"}}
+							{{end}}
+						</td>
+						<td>{{ctx.Locale.TrSize .GitSize}}</td>
+						<td>{{ctx.Locale.TrSize .LFSSize}}</td>
+					</tr>
+				{{else}}
+					<tr><td class="tw-text-center" colspan="3">{{ctx.Locale.Tr "settings.repos_none"}}</td></tr>
+				{{end}}
+			</tbody>
+		</table>
+	</div>
+
+	{{template "base/paginate" .}}
+</div>
+{{template "org/settings/layout_footer" .}}
