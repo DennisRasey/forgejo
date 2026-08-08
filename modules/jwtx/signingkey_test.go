@@ -152,7 +152,7 @@ func TestJWTHasKid(t *testing.T) {
 }
 
 func TestCannotCreatePrivateKey(t *testing.T) {
-	_, err := InitAsymmetricSigningKey("/dev/directory-does-not-exist-and-you-should-not-have-permission-to-create/privatekey.pem", "RS256")
+	_, err := InitAsymmetricSigningKey("/directory-does-not-exist-and-you-should-not-have-permission-to-create/privatekey.pem", "RS256")
 	require.Error(t, err)
 	require.ErrorContains(t, err, "Error generating private key")
 }
