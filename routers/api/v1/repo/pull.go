@@ -1312,9 +1312,20 @@ func UpdatePullRequest(ctx *context.APIContext) {
 		return
 	}
 
+	headRepoPerm, err := access_model.GetUserRepoPermissionWithReducer(ctx, pr.HeadRepo, ctx.Doer(), ctx.Reducer())
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissionWithReducer head repo", err)
+		return
+	}
+	baseRepoPerm, err := access_model.GetUserRepoPermissionWithReducer(ctx, pr.BaseRepo, ctx.Doer(), ctx.Reducer())
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "GetUserRepoPermissionWithReducer base repo", err)
+		return
+	}
+
 	rebase := ctx.FormString("style") == "rebase"
 
-	allowedUpdateByMerge, allowedUpdateByRebase, err := pull_service.IsUserAllowedToUpdate(ctx, pr, ctx.Doer())
+	allowedUpdateByMerge, allowedUpdateByRebase, err := pull_service.IsUserAllowedToUpdate(ctx, pr, ctx.Doer(), headRepoPerm, baseRepoPerm)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "IsUserAllowedToMerge", err)
 		return
@@ -1334,6 +1345,10 @@ func UpdatePullRequest(ctx *context.APIContext) {
 			return
 		} else if models.IsErrRebaseConflicts(err) {
 			ctx.Error(http.StatusConflict, "Update", "rebase failed because of conflict")
+			return
+		} else if errors.Is(err, pull_service.ErrPullRequestIsUpdateToDate) {
+			// No need to report an error -- the update operation didn't do anything, but there was nothing to be done.
+			ctx.Status(http.StatusOK)
 			return
 		}
 		ctx.Error(http.StatusInternalServerError, "pull_service.Update", err)
