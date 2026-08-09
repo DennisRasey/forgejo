@@ -1,0 +1,22 @@
+on:
+  pull_request_target:
+    types: [opened]
+
+name: pr-checklist
+
+jobs:
+  warn-user:
+    runs-on: docker
+    container:
+      image: data.forgejo.org/oci/ci:2
+    if: "!contains(forgejo.event.pull_request.body, '[x] I confirm that I make this contribution in accordance with [Forgejo''s AI Agreement]') && !contains(fromJSON('[\"viceice-bot\", \"translate\", \"forgejo-backport-action\"]'), forgejo.actor)"
+    steps:
+      - run: |
+          body=$(jq -n '{body: "Please ensure that the standard [Forgejo pull request template](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/.forgejo/pull_request_template.md) is included in the pull request description, and that the AI Agreement compliance checkbox has been checked."}')
+          curl \
+            -v --fail \
+            -H "Authorization: bearer ${{ secrets.forgejo_token }}" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "$body" \
+            "${{ forgejo.server_url }}/api/v1/repos/${{ forgejo.event.repository.full_name }}/issues/${{ forgejo.event.pull_request.number }}/comments"
