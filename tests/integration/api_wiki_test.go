@@ -94,6 +94,52 @@ func TestAPIGetWikiPage(t *testing.T) {
 	}, page)
 }
 
+func TestAPIGetWikiPageUnescapedFilename(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	username := "user2"
+	// The page has unescaped special chars on the filesystem, we should still be
+	// able to fetch it.
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/wiki/page/Page-With-Unescaped-Special-Chars%%3A-%%281%%29", username, "repo1")
+
+	req := NewRequest(t, "GET", urlStr)
+	resp := MakeRequest(t, req, http.StatusOK)
+	var page *api.WikiPage
+	DecodeJSON(t, resp, &page)
+
+	assert.Equal(t, &api.WikiPage{
+		WikiPageMetaData: &api.WikiPageMetaData{
+			Title:   "Page With Unescaped Special Chars: (1)",
+			HTMLURL: page.HTMLURL,
+			SubURL:  "Page-With-Unescaped-Special-Chars%3A-%281%29",
+			LastCommit: &api.WikiCommit{
+				ID: "914af66433c9f4d1f7ae5159211869ed05277bf0",
+				Author: &api.CommitUser{
+					Identity: api.Identity{
+						Name:  "B Tasker",
+						Email: "github@bentasker.co.uk",
+					},
+					Date: "2026-08-04T06:17:17Z",
+				},
+				Committer: &api.CommitUser{
+					Identity: api.Identity{
+						Name:  "B Tasker",
+						Email: "github@bentasker.co.uk",
+					},
+					Date: "2026-08-04T07:00:48Z",
+				},
+				Message: "add page with unescaped special chars in filename\n",
+			},
+		},
+		ContentBase64: base64.StdEncoding.EncodeToString(
+			[]byte("# Page With Unescaped Special Chars: (1)\n\nThis is a page with unescaped special chars in the name - it should still be loadable\n"),
+		),
+		CommitCount: 1,
+		Sidebar:     "",
+		Footer:      "",
+	}, page)
+}
+
 func TestAPIListWikiPages(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -201,8 +247,31 @@ func TestAPIListWikiPages(t *testing.T) {
 			},
 		},
 		{
-			Title:   "Unescaped File",
+			Title:   "Page With Unescaped Special Chars: (1)",
 			HTMLURL: meta[4].HTMLURL,
+			SubURL:  "Page-With-Unescaped-Special-Chars%3A-%281%29",
+			LastCommit: &api.WikiCommit{
+				ID: "914af66433c9f4d1f7ae5159211869ed05277bf0",
+				Author: &api.CommitUser{
+					Identity: api.Identity{
+						Name:  "B Tasker",
+						Email: "github@bentasker.co.uk",
+					},
+					Date: "2026-08-04T06:17:17Z",
+				},
+				Committer: &api.CommitUser{
+					Identity: api.Identity{
+						Name:  "B Tasker",
+						Email: "github@bentasker.co.uk",
+					},
+					Date: "2026-08-04T07:00:48Z",
+				},
+				Message: "add page with unescaped special chars in filename\n",
+			},
+		},
+		{
+			Title:   "Unescaped File",
+			HTMLURL: meta[5].HTMLURL,
 			SubURL:  "Unescaped-File",
 			LastCommit: &api.WikiCommit{
 				ID: "0dca5bd9b5d7ef937710e056f575e86c0184ba85",
