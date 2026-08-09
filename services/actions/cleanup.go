@@ -108,18 +108,21 @@ func CleanupLogs(ctx context.Context) error {
 	for {
 		tasks, err := actions_model.FindOldTasksToExpire(ctx, olderThan, deleteLogBatchSize)
 		if err != nil {
-			return fmt.Errorf("find old tasks: %w", err)
+			return fmt.Errorf("could not retrieve tasks to expire: %w", err)
 		}
 		for _, task := range tasks {
-			if !task.HasLogs() {
-				continue
+			if task.HasLogs() {
+				err = actions_module.RemoveLogs(ctx, task.LogInStorage, task.LogFilename)
+				if err != nil && !errors.Is(err, os.ErrNotExist) {
+					log.Error("Failed to remove log %s (in storage %v) of task %v: %v",
+						task.LogFilename, task.LogInStorage, task.ID, err)
+
+					// do not return error here, continue to next task
+					continue
+				}
+				log.Trace("Removed log %s of task %v", task.LogFilename, task.ID)
 			}
 
-			if err := actions_module.RemoveLogs(ctx, task.LogInStorage, task.LogFilename); err != nil && !errors.Is(err, os.ErrNotExist) {
-				log.Error("Failed to remove log %s (in storage %v) of task %v: %v", task.LogFilename, task.LogInStorage, task.ID, err)
-				// do not return error here, continue to next task
-				continue
-			}
 			task.LogIndexes = nil // clear log indexes since it's a heavy field
 			task.LogExpired = true
 			if err := actions_model.UpdateTask(ctx, task, "log_indexes", "log_expired"); err != nil {
@@ -128,7 +131,6 @@ func CleanupLogs(ctx context.Context) error {
 				continue
 			}
 			count++
-			log.Trace("Removed log %s of task %v", task.LogFilename, task.ID)
 		}
 		if len(tasks) < deleteLogBatchSize {
 			break
