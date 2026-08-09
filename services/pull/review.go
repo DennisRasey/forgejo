@@ -199,35 +199,38 @@ func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, 
 
 	invalidated := false
 	head := pr.GetGitRefName()
-	if line > 0 {
-		if reviewID != 0 {
-			first, err := issues_model.FindComments(ctx, &issues_model.FindCommentsOptions{
-				ReviewID: reviewID,
-				Line:     line,
-				TreePath: treePath,
-				Type:     issues_model.CommentTypeCode,
-				ListOptions: db.ListOptions{
-					PageSize: 1,
-					Page:     1,
-				},
-			})
-			if err == nil && len(first) > 0 {
-				commitID = first[0].CommitSHA
-				invalidated = first[0].Invalidated
-				patch = first[0].Patch
-			} else if err != nil && !issues_model.IsErrCommentNotExist(err) {
-				return nil, fmt.Errorf("Find first comment for %d line %d path %s. Error: %w", reviewID, line, treePath, err)
-			} else {
-				review, err := issues_model.GetReviewByID(ctx, reviewID)
-				if err == nil && len(review.CommitID) > 0 {
-					head = review.CommitID
-				} else if err != nil && !issues_model.IsErrReviewNotExist(err) {
-					return nil, fmt.Errorf("GetReviewByID %d. Error: %w", reviewID, err)
-				}
+	if reviewID != 0 {
+		// If the comment is a reply to an existing comment, populate properties based upon the comment we're replying
+		// to (commit, patch, etc.) rather than recalculating those unnecessarily.  The UI also doesn't provide enough
+		// context (eg. before_commit_id, after_commit_id) to calculate this.
+		first, err := issues_model.FindComments(ctx, &issues_model.FindCommentsOptions{
+			ReviewID: reviewID,
+			Line:     line,
+			TreePath: treePath,
+			Type:     issues_model.CommentTypeCode,
+			ListOptions: db.ListOptions{
+				PageSize: 1,
+				Page:     1,
+			},
+		})
+		if err == nil && len(first) > 0 {
+			commitID = first[0].CommitSHA
+			invalidated = first[0].Invalidated
+			patch = first[0].Patch
+		} else if err != nil && !issues_model.IsErrCommentNotExist(err) {
+			return nil, fmt.Errorf("Find first comment for %d line %d path %s. Error: %w", reviewID, line, treePath, err)
+		} else {
+			review, err := issues_model.GetReviewByID(ctx, reviewID)
+			if err == nil && len(review.CommitID) > 0 {
+				head = review.CommitID
+			} else if err != nil && !issues_model.IsErrReviewNotExist(err) {
+				return nil, fmt.Errorf("GetReviewByID %d. Error: %w", reviewID, err)
 			}
 		}
+	}
 
-		if len(commitID) == 0 {
+	if len(commitID) == 0 {
+		if line > 0 {
 			// FIXME validate treePath
 			// Get latest commit referencing the commented line
 			// No need for get commit for base branch changes
@@ -239,33 +242,33 @@ func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, 
 				return nil, fmt.Errorf("LineBlame[%s, %s, %s, %d]: %w", pr.GetGitRefName(), gitRepo.Path, treePath, line, err)
 			}
 		} else {
-			blamedCommitID = commitID
+			// Commenting on a line that was removed. In this case, what we want to track in the comment is which line of
+			// code was this, in the last commit that the line of code actually existed in. We'll use a reverse git blame to
+			// identify this, from the PR base -> commit being viewed.
+			blame, err := gitRepo.ReverseLineBlame(beforeCommitID, treePath, uint64(-1*line), afterCommitID)
+			if err != nil {
+				return nil, fmt.Errorf("ReverseLineBlame[%s, %s, %d, %s]: %w", beforeCommitID, treePath, -1*line, afterCommitID, err)
+			} else if blame.CommitID == afterCommitID {
+				// Although this is a comment on the "previous" side of the diff, the reverse blame indicates that the line
+				// of code still exists in the commit being viewed (eg. it was a comment on a white line in the left-side of
+				// the diff, not a red removed line). In order to record the right information for where to place this
+				// commit, we'll convert this into a right-hand comment -- using the present line number that the reverse
+				// blame gave us:
+				commit, lineres, err := gitRepo.LineBlame(afterCommitID, treePath, blame.LineNumber)
+				if err == nil {
+					blamedCommitID = commit.ID.String()
+					blamedLine = int64(lineres)
+				} else if !errors.Is(err, git.ErrBlameFileDoesNotExist) && !errors.Is(err, git.ErrBlameFileNotEnoughLines) {
+					return nil, fmt.Errorf("LineBlame[%s, %s, %s, %d]: %w", pr.GetGitRefName(), gitRepo.Path, treePath, line, err)
+				}
+			} else {
+				blamedCommitID = blame.CommitID
+				// retain negative line numbering to identify we're commenting on the "previous" side of the diff
+				blamedLine = -1 * int64(blame.LineNumber)
+			}
 		}
 	} else {
-		// Commenting on a line that was removed. In this case, what we want to track in the comment is which line of
-		// code was this, in the last commit that the line of code actually existed in. We'll use a reverse git blame to
-		// identify this, from the PR base -> commit being viewed.
-		blame, err := gitRepo.ReverseLineBlame(beforeCommitID, treePath, uint64(-1*line), afterCommitID)
-		if err != nil {
-			return nil, fmt.Errorf("ReverseLineBlame[%s, %s, %d, %s]: %w", beforeCommitID, treePath, -1*line, afterCommitID, err)
-		} else if blame.CommitID == afterCommitID {
-			// Although this is a comment on the "previous" side of the diff, the reverse blame indicates that the line
-			// of code still exists in the commit being viewed (eg. it was a comment on a white line in the left-side of
-			// the diff, not a red removed line). In order to record the right information for where to place this
-			// commit, we'll convert this into a right-hand comment -- using the present line number that the reverse
-			// blame gave us:
-			commit, lineres, err := gitRepo.LineBlame(afterCommitID, treePath, blame.LineNumber)
-			if err == nil {
-				blamedCommitID = commit.ID.String()
-				blamedLine = int64(lineres)
-			} else if !errors.Is(err, git.ErrBlameFileDoesNotExist) && !errors.Is(err, git.ErrBlameFileNotEnoughLines) {
-				return nil, fmt.Errorf("LineBlame[%s, %s, %s, %d]: %w", pr.GetGitRefName(), gitRepo.Path, treePath, line, err)
-			}
-		} else {
-			blamedCommitID = blame.CommitID
-			// retain negative line numbering to identify we're commenting on the "previous" side of the diff
-			blamedLine = -1 * int64(blame.LineNumber)
-		}
+		blamedCommitID = commitID
 	}
 
 	// Only fetch diff if comment is review comment
