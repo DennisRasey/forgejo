@@ -33,6 +33,7 @@ func TestWikiSearchContent(t *testing.T) {
 	assert.Equal(t, []string{
 		"Home",
 		"Page With Spaced Name",
+		"Page With Unescaped Special Chars: (1)",
 		"Unescaped File",
 	}, res)
 }
