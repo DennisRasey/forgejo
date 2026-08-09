@@ -86,9 +86,6 @@ var ignoredErrorMessage = []string{
 	`:func1() [E] PullRequestList.LoadAttributes: issues and prs may be not in sync: cannot find issue`,
 	`:func1() [E] checkForInvalidation: GetRepositoryByIDCtx: repository does not exist `,
 
-	// TestAPIPullReview
-	`PullRequestReview() [E] Unsupported review webhook type`,
-
 	// TestAPIPullReviewRequest
 	`ToAPIPullRequest() [E] unable to resolve PR head ref`,
 

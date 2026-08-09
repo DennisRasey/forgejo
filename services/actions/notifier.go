@@ -452,9 +452,11 @@ func (n *actionsNotifier) PullRequestReview(ctx context.Context, pr *issues_mode
 		reviewHookType = webhook_module.HookEventPullRequestReviewComment
 	case issues_model.ReviewTypeReject:
 		reviewHookType = webhook_module.HookEventPullRequestReviewRejected
+	case issues_model.ReviewTypePending, issues_model.ReviewTypeRequest, issues_model.ReviewTypeUnknown:
+		log.Trace("Ignoring review type %v", review.Type)
+		return
 	default:
-		// unsupported review webhook type here
-		log.Error("Unsupported review webhook type")
+		log.Error("Unhandled review type: %v", review.Type)
 		return
 	}
 
