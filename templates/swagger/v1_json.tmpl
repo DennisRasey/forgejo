@@ -12618,6 +12618,105 @@
         }
       }
     },
+    "/repos/{owner}/{repo}/issues/{index}/lock": {
+      "put": {
+        "tags": [
+          "issue"
+        ],
+        "summary": "Lock an issue",
+        "operationId": "lockIssue",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "index of the issue to lock",
+            "name": "index",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/IssueLockOption"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "409": {
+            "$ref": "#/responses/conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "issue"
+        ],
+        "summary": "Unlock an issue",
+        "operationId": "unlockIssue",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "index of the issue to unlock",
+            "name": "index",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "409": {
+            "$ref": "#/responses/conflict"
+          }
+        }
+      }
+    },
     "/repos/{owner}/{repo}/issues/{index}/pin": {
       "post": {
         "tags": [
@@ -27743,6 +27842,16 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Updated"
+        }
+      },
+      "x-go-package": "forgejo.org/modules/structs"
+    },
+    "IssueLockOption": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "x-go-name": "Reason"
         }
       },
       "x-go-package": "forgejo.org/modules/structs"

@@ -1199,6 +1199,8 @@ func Routes() *web.Route {
 								Delete(reqToken(), reqAdmin(), repo.UnpinIssue)
 							m.Patch("/{position}", reqToken(), reqAdmin(), repo.MoveIssuePin)
 						})
+						m.Put("/lock", reqRepoWriter(unit.TypeIssues, unit.TypePullRequests), bind(api.IssueLockOption{}), repo.LockIssue)
+						m.Delete("/lock", reqRepoWriter(unit.TypeIssues, unit.TypePullRequests), repo.UnlockIssue)
 					}, mustEnableLocalIssuesIfIsIssue())
 				}, mustEnableIssuesOrPulls())
 				m.Group("/labels", func() {

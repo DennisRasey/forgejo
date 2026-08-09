@@ -244,5 +244,8 @@ type swaggerParameterBodies struct {
 	NoteOptions api.NoteOptions
 
 	// in:body
+	IssueLockOption api.IssueLockOption
+
+	// in:body
 	RegisterRunnerOptions api.RegisterRunnerOptions
 }
