@@ -4,7 +4,9 @@
 package actions
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	actions_model "forgejo.org/models/actions"
 	"forgejo.org/models/db"
@@ -29,17 +31,32 @@ func TestCleanup(t *testing.T) {
 		assert.Nil(t, task.LogIndexes)
 	})
 
-	t.Run("Ignores tasks without logs", func(t *testing.T) {
+	t.Run("Expires tasks without logs", func(t *testing.T) {
 		require.NoError(t, unittest.PrepareTestDatabase())
 
-		unittest.AssertSuccessfulInsert(t, &actions_model.ActionTask{ID: 1001, LogExpired: false, LogIndexes: []int64{}, LogFilename: "", Stopped: timeutil.TimeStamp(1)})
+		for i := int64(0); i <= deleteLogBatchSize; i++ {
+			task := &actions_model.ActionTask{
+				ID:          1000 + i,
+				LogExpired:  false,
+				LogIndexes:  []int64{},
+				LogFilename: "",
+				Stopped:     timeutil.TimeStamp(1),
+				TokenHash:   fmt.Sprintf("hash-%d", i),
+			}
+			unittest.AssertSuccessfulInsert(t, task)
+		}
 
-		require.NoError(t, CleanupLogs(db.DefaultContext))
+		cleanupSucceeded := func(collect *assert.CollectT) {
+			require.NoError(t, CleanupLogs(t.Context()))
+		}
+		require.EventuallyWithT(t, cleanupSucceeded, 10*time.Second, 100*time.Millisecond)
 
-		task := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: 1001})
-		assert.Empty(t, task.LogFilename)
-		assert.False(t, task.LogExpired)
-		assert.Nil(t, task.LogIndexes)
+		for i := int64(0); i <= deleteLogBatchSize; i++ {
+			task := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: 1000 + i})
+			assert.Empty(t, task.LogFilename)
+			assert.True(t, task.LogExpired)
+			assert.Nil(t, task.LogIndexes)
+		}
 	})
 }
 
