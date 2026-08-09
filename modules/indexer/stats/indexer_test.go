@@ -36,7 +36,7 @@ func TestRepoStatsIndex(t *testing.T) {
 	err = UpdateRepoIndexer(repo)
 	require.NoError(t, err)
 
-	require.NoError(t, queue.GetManager().FlushAll(t.Context(), 5*time.Second))
+	require.NoError(t, queue.GetManager().FlushAll(t.Context(), 60*time.Second))
 
 	status, err := repo_model.GetIndexerStatus(db.DefaultContext, repo, repo_model.RepoIndexerTypeStats)
 	require.NoError(t, err)

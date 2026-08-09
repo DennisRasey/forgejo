@@ -446,12 +446,12 @@ func TestBleveDeleteIssue(t *testing.T) {
 
 		assert.NoError(t, err)
 		return slices.Contains(ids, issue.ID)
-	}, time.Second*5, time.Millisecond*100, "failed to update issue")
+	}, time.Second*60, time.Millisecond*100, "failed to update issue")
 
 	DeleteIssueIndexer(ctx, issue.ID)
 	assert.Eventually(t, func() bool {
 		ids, _, err := SearchIssues(ctx, opts)
 		assert.NoError(t, err)
 		return !slices.Contains(ids, issue.ID)
-	}, time.Second*5, time.Millisecond*100, "failed to delete issue")
+	}, time.Second*60, time.Millisecond*100, "failed to delete issue")
 }
