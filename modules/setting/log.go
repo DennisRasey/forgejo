@@ -132,7 +132,52 @@ func prepareLoggerConfig(rootCfg ConfigProvider) {
 	}
 }
 
-func LogPrepareFilenameForWriter(fileName, defaultFileName string) string {
+var (
+	logDefaultFileName            = "forgejo.log"
+	logBackwardCompatibleFileName = "gitea.log"
+)
+
+func logBackwardCompatibleDefaultToForgejo(fileName, configFileName string) string {
+	// do not default to forgejo.log if the log file is explicitly
+	// specified in the config file
+	if configFileName != "" {
+		return fileName
+	}
+	backwardCompatibleFileName := filepath.Join(filepath.Dir(fileName), logBackwardCompatibleFileName)
+	stat, err := os.Lstat(backwardCompatibleFileName)
+	if err != nil && !os.IsNotExist(err) {
+		panic(fmt.Sprintf("os.Lstat %q: %v", backwardCompatibleFileName, err.Error()))
+	}
+	// gitea.log does not exist although the config file does not
+	// specify a default let's use forgejo.log instead and create a
+	// gitea.log symlink for backward compatibility
+	if os.IsNotExist(err) {
+		if err := os.Symlink(fileName, backwardCompatibleFileName); err != nil {
+			panic(fmt.Sprintf("os.Symlink %q to %q: %v", fileName, backwardCompatibleFileName, err.Error()))
+		}
+		return fileName
+	}
+	// gitea.log was not created by this function because it is not a
+	// symlink, use gitea.log instead of forgejo.log
+	if stat.Mode()&os.ModeSymlink == 0 {
+		return backwardCompatibleFileName
+	}
+	destination, err := os.Readlink(backwardCompatibleFileName)
+	if err != nil {
+		panic(fmt.Sprintf("os.Readlink %q: %v", backwardCompatibleFileName, err))
+	}
+	// the file was not created by this function because it does not
+	// point to the expected path, default to gitea.log instead of
+	// forgejo.log
+	if destination != fileName {
+		return backwardCompatibleFileName
+	}
+	// the symlink is as expected, let's use forgejo.log as a default
+	return fileName
+}
+
+func LogPrepareFilenameForWriter(configFileName, defaultFileName string) string {
+	fileName := configFileName
 	if fileName == "" {
 		fileName = defaultFileName
 	}
@@ -143,6 +188,11 @@ func LogPrepareFilenameForWriter(fileName, defaultFileName string) string {
 	}
 	if err := os.MkdirAll(filepath.Dir(fileName), os.ModePerm); err != nil {
 		panic(fmt.Sprintf("unable to create directory for log %q: %v", fileName, err.Error()))
+	}
+	// only relevant for the forgejo.log default (not when the default is
+	// access.log for instance)
+	if defaultFileName == logDefaultFileName {
+		fileName = logBackwardCompatibleDefaultToForgejo(fileName, configFileName)
 	}
 	return fileName
 }
@@ -158,13 +208,13 @@ func loadLogModeByName(rootCfg ConfigProvider, loggerName, modeName string) (wri
 
 	writerName = modeName
 	defaultFlags := "stdflags"
-	defaultFilaName := "gitea.log"
+	defaultFileName := logDefaultFileName
 	if loggerName == "access" {
 		// "access" logger is special, by default it doesn't have output flags, so it also needs a new writer name to avoid conflicting with other writers.
 		// so "access" logger's writer name is usually "file.access" or "console.access"
 		writerName += ".access"
 		defaultFlags = "none"
-		defaultFilaName = "access.log"
+		defaultFileName = "access.log"
 	}
 
 	writerMode.Level = log.LevelFromString(ConfigInheritedKeyString(sec, "LEVEL", Log.Level.String()))
@@ -192,7 +242,7 @@ func loadLogModeByName(rootCfg ConfigProvider, loggerName, modeName string) (wri
 			defaultFlags = "journaldflags"
 		}
 	case "file":
-		fileName := LogPrepareFilenameForWriter(ConfigInheritedKey(sec, "FILE_NAME").String(), defaultFilaName)
+		fileName := LogPrepareFilenameForWriter(ConfigInheritedKey(sec, "FILE_NAME").String(), defaultFileName)
 		writerOption := log.WriterFileOption{}
 		writerOption.FileName = fileName + filenameSuffix // FIXME: the suffix doesn't seem right, see its related comments
 		writerOption.LogRotate = ConfigInheritedKey(sec, "LOG_ROTATE").MustBool(true)

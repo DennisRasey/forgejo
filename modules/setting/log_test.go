@@ -4,6 +4,7 @@
 package setting
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/test"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -222,13 +224,13 @@ ACCESS = file
 }
 `
 	dump := manager.GetLogger(log.DEFAULT).DumpWriters()
-	require.JSONEq(t, strings.ReplaceAll(writerDump, "$FILENAME", tempPath("gitea.log")), toJSON(dump))
+	require.JSONEq(t, strings.ReplaceAll(writerDump, "$FILENAME", tempPath("forgejo.log")), toJSON(dump))
 
 	dump = manager.GetLogger("access").DumpWriters()
 	require.JSONEq(t, strings.ReplaceAll(writerDumpAccess, "$FILENAME", tempPath("access.log")), toJSON(dump))
 
 	dump = manager.GetLogger("router").DumpWriters()
-	require.JSONEq(t, strings.ReplaceAll(writerDump, "$FILENAME", tempPath("gitea.log")), toJSON(dump))
+	require.JSONEq(t, strings.ReplaceAll(writerDump, "$FILENAME", tempPath("forgejo.log")), toJSON(dump))
 }
 
 func TestLogConfigLegacyModeDisable(t *testing.T) {
@@ -399,9 +401,102 @@ COMPRESSION_LEVEL = 4
 
 	dump := manager.GetLogger(log.DEFAULT).DumpWriters()
 	expected := writerDump
-	expected = strings.ReplaceAll(expected, "$FILENAME-0", tempPath("gitea.log"))
+	expected = strings.ReplaceAll(expected, "$FILENAME-0", tempPath("forgejo.log"))
 	expected = strings.ReplaceAll(expected, "$FILENAME-1", tempPath("file-xxx.log"))
 	require.JSONEq(t, expected, toJSON(dump))
+}
+
+func TestLogPrepareFilenameForWriter(t *testing.T) {
+	t.Run("forgejo.log is the default and a backward compatible symlink is created for gitea.log", func(t *testing.T) {
+		d := t.TempDir()
+		defer test.MockVariableValue(&Log.RootPath, d)()
+		logFileBackward := filepath.Join(d, logBackwardCompatibleFileName)
+		logFile := filepath.Join(d, logDefaultFileName)
+		assert.NoFileExists(t, logFileBackward)
+		assert.Equal(t, logFile, LogPrepareFilenameForWriter("", logDefaultFileName))
+		assert.FileExists(t, logFileBackward)
+		// it already exists so it does nothing
+		assert.Equal(t, logFile, LogPrepareFilenameForWriter("", logDefaultFileName))
+		assert.FileExists(t, logFileBackward)
+	})
+
+	t.Run("lstat on the gitea.log file panics", func(t *testing.T) {
+		d := t.TempDir()
+		defer test.MockVariableValue(&Log.RootPath, d)()
+		defer test.MockVariableValue(&logBackwardCompatibleFileName, "\000")()
+		test.PanicErrorContains(t, func() { LogPrepareFilenameForWriter("", logDefaultFileName) }, "os.Lstat")
+	})
+
+	t.Run("forgejo.log is not the default if gitea.log already exists", func(t *testing.T) {
+		t.Run("as a regular file", func(t *testing.T) {
+			d := t.TempDir()
+			defer test.MockVariableValue(&Log.RootPath, d)()
+			logFileBackward := filepath.Join(d, logBackwardCompatibleFileName)
+			logFile := filepath.Join(d, logDefaultFileName)
+			require.NoError(t, os.WriteFile(logFileBackward, []byte("logline"), 0o666))
+			assert.NoFileExists(t, logFile)
+			assert.Equal(t, logFileBackward, LogPrepareFilenameForWriter("", logDefaultFileName))
+			assert.NoFileExists(t, logFile)
+		})
+		t.Run("as a symlink to a different file", func(t *testing.T) {
+			d := t.TempDir()
+			defer test.MockVariableValue(&Log.RootPath, d)()
+			logFileBackward := filepath.Join(d, logBackwardCompatibleFileName)
+			logFile := filepath.Join(d, logDefaultFileName)
+			require.NoError(t, os.Symlink("/somewhere/else", logFileBackward))
+			assert.NoFileExists(t, logFile)
+			assert.Equal(t, logFileBackward, LogPrepareFilenameForWriter("", logDefaultFileName))
+			assert.NoFileExists(t, logFile)
+		})
+	})
+
+	t.Run("absolute filename", func(t *testing.T) {
+		d := t.TempDir()
+		defer test.MockVariableValue(&Log.RootPath, d)()
+		expected := filepath.Join(d, "my.log")
+		assert.Equal(t, expected, LogPrepareFilenameForWriter(expected, logDefaultFileName))
+		assert.NoFileExists(t, filepath.Join(d, logBackwardCompatibleFileName))
+	})
+
+	t.Run("relative filename", func(t *testing.T) {
+		d := t.TempDir()
+		defer test.MockVariableValue(&Log.RootPath, d)()
+		fileName := "my.log"
+		assert.Equal(t, filepath.Join(d, fileName), LogPrepareFilenameForWriter(fileName, logDefaultFileName))
+		assert.NoFileExists(t, filepath.Join(d, logBackwardCompatibleFileName))
+	})
+
+	t.Run("unclean absolute filename", func(t *testing.T) {
+		d := t.TempDir()
+		defer test.MockVariableValue(&Log.RootPath, d)()
+		expected := filepath.Join(d, "my.log")
+		unclean := filepath.Join(d, "..", filepath.Base(d), "my.log")
+		assert.Equal(t, expected, LogPrepareFilenameForWriter(unclean, logDefaultFileName))
+		assert.NoFileExists(t, filepath.Join(d, logBackwardCompatibleFileName))
+	})
+
+	t.Run("mkdir on the root path for logs panics", func(t *testing.T) {
+		d := t.TempDir()
+		logdir := filepath.Join(d, "logdir")
+		require.NoError(t, os.MkdirAll(logdir, 0o000))
+		rootPath := filepath.Join(logdir, "rootpath")
+		defer test.MockVariableValue(&Log.RootPath, rootPath)()
+		test.PanicErrorContains(t, func() { LogPrepareFilenameForWriter("", logDefaultFileName) }, "unable to create directory")
+	})
+
+	t.Run("gitea.log is explicitly set in the config file", func(t *testing.T) {
+		d := t.TempDir()
+		defer test.MockVariableValue(&Log.RootPath, d)()
+		giteaLog := filepath.Join(d, "dir/gitea.log")
+		assert.Equal(t, giteaLog, LogPrepareFilenameForWriter(giteaLog, logDefaultFileName))
+	})
+
+	t.Run("no backward compatibility effort if the default is not forgejo.log", func(t *testing.T) {
+		d := t.TempDir()
+		defer test.MockVariableValue(&Log.RootPath, d)()
+		alternateDefaultFileName := "access.log"
+		assert.Equal(t, filepath.Join(d, alternateDefaultFileName), LogPrepareFilenameForWriter("", alternateDefaultFileName))
+	})
 }
 
 func TestLegacyLoggerMigrations(t *testing.T) {

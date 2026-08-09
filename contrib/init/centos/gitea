@@ -30,7 +30,7 @@ GITEA_USER=git
 SERVICENAME="Gitea - Git with a cup of tea"
 LOCKFILE=/var/lock/subsys/gitea
 LOGPATH=${GITEA_HOME}/log
-LOGFILE=${LOGPATH}/gitea.log
+LOGFILE=${LOGPATH}/forgejo.log
 RETVAL=0
 
 # Read configuration from /etc/sysconfig/gitea to override defaults
