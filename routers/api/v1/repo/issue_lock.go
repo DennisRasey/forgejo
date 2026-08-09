@@ -47,7 +47,7 @@ func LockIssue(ctx *context.APIContext) {
 	//     "$ref": "#/responses/notFound"
 	//   "409":
 	//     "$ref": "#/responses/conflict"
-	issue := getIssueFromContext(ctx)
+	issue := ctx.LoadIssue("index")
 
 	if issue == nil {
 		return
@@ -114,7 +114,7 @@ func UnlockIssue(ctx *context.APIContext) {
 	//     "$ref": "#/responses/notFound"
 	//   "409":
 	//     "$ref": "#/responses/conflict"
-	issue := getIssueFromContext(ctx)
+	issue := ctx.LoadIssue("index")
 
 	if issue == nil {
 		return
