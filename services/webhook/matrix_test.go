@@ -216,39 +216,10 @@ func TestMatrixJSONPayload(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "PUT", req.Method)
-	assert.Equal(t, "/_matrix/client/v3/rooms/ROOM_ID/send/m.room.message/86aaa4d69df5aa487cb0148af4ae7e546933057b", req.URL.Path)
+	assert.Equal(t, "/_matrix/client/v3/rooms/ROOM_ID/send/m.room.message/Le5CqY5h6_wPgbUm8YkjQV1tML1yIs_VhIyk8RjQox4", req.URL.Path)
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 	var body MatrixPayload
 	err = json.NewDecoder(req.Body).Decode(&body)
 	require.NoError(t, err)
 	assert.Equal(t, "[test/repo] user1 pushed 2 commits to test:\n[2020558](http://localhost:3000/test/repo/commit/2020558fe2e34debb818a514715839cabd25e778): commit message - user1\n[2020558](http://localhost:3000/test/repo/commit/2020558fe2e34debb818a514715839cabd25e778): commit message - user1", body.Body)
-}
-
-func Test_getTxnID(t *testing.T) {
-	type args struct {
-		payload []byte
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name:    "dummy payload",
-			args:    args{payload: []byte("Hello World")},
-			want:    "0a4d55a8d778e5022fab701977c5d840bbc486d0",
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := getMatrixTxnID(tt.args.payload)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("getMatrixTxnID() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			assert.Equal(t, tt.want, got)
-		})
-	}
 }

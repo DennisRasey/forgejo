@@ -122,11 +122,8 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 	case http.MethodPut:
 		switch w.Type {
 		case webhook_module.MATRIX: // used when t.Version == 1
-			txnID, err := getMatrixTxnID([]byte(payloadContent))
-			if err != nil {
-				return nil, nil, err
-			}
-			url := fmt.Sprintf("%s/%s", w.URL, url.PathEscape(txnID))
+			stateKey := getMatrixStateKey(t)
+			url := fmt.Sprintf("%s/%s", w.URL, stateKey)
 			req, err = http.NewRequest("PUT", url, strings.NewReader(payloadContent))
 			if err != nil {
 				return nil, nil, err

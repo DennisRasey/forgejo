@@ -6,8 +6,8 @@ package webhook
 import (
 	"bytes"
 	"context"
-	"crypto/sha1"
-	"encoding/hex"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"html"
 	"html/template"
@@ -80,11 +80,8 @@ func (matrixHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t
 		return nil, nil, err
 	}
 
-	txnID, err := getMatrixTxnID(body)
-	if err != nil {
-		return nil, nil, err
-	}
-	req, err := http.NewRequest(http.MethodPut, w.URL+"/"+txnID, bytes.NewReader(body))
+	stateKey := getMatrixStateKey(t)
+	req, err := http.NewRequest(http.MethodPut, w.URL+"/"+stateKey, bytes.NewReader(body))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -92,8 +89,6 @@ func (matrixHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t
 
 	return req, body, nil
 }
-
-const matrixPayloadSizeLimit = 1024 * 64
 
 // MatrixMeta contains the Matrix metadata
 type MatrixMeta struct {
@@ -295,19 +290,12 @@ func getMessageBody(htmlText string) string {
 	return htmlText
 }
 
-// getMatrixTxnID computes the transaction ID to ensure idempotency
-func getMatrixTxnID(payload []byte) (string, error) {
-	if len(payload) >= matrixPayloadSizeLimit {
-		return "", fmt.Errorf("getMatrixTxnID: payload size %d > %d", len(payload), matrixPayloadSizeLimit)
-	}
-
-	h := sha1.New()
-	_, err := h.Write(payload)
-	if err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(h.Sum(nil)), nil
+// getMatrixStateKey computes the transaction ID to ensure idempotency
+func getMatrixStateKey(t *webhook_model.HookTask) string {
+	// we hash the original payload (and not the sent text), because we want multiple matrix messages,
+	// even if the resulting text is identical (like "New comment on pull request #1234 <name> by <sender>")
+	hash := sha256.Sum256([]byte(t.PayloadContent))
+	return base64.RawURLEncoding.EncodeToString(hash[:])
 }
 
 // MatrixLinkToRef Matrix-formatter link to a repo ref
