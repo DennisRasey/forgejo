@@ -79,8 +79,6 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.ReqIssueUnlockedOrCanWrit
 			if data.Has("issueLocked") {
 				if data.Get("issueLocked") == "true" {
 					fixtureLockIssue(t, permissions, issue)
-				} else {
-					fixtureUnlockIssue(t, permissions, issue)
 				}
 			}
 		}
