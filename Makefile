@@ -854,7 +854,7 @@ check: test
 
 .PHONY: install $(TAGS_PREREQ)
 install: $(wildcard *.go) | verify-version
-	CGO_CFLAGS="$(CGO_CFLAGS)" $(GO) install -v -tags '$(TAGS)' -ldflags '$(LDFLAGS)'
+	CGO_CFLAGS="$(CGO_CFLAGS)" $(GO) install $(GOFLAGS) $(EXTRA_GOFLAGS) -v -tags '$(TAGS)' -ldflags '$(LDFLAGS)'
 
 .PHONY: build
 build: frontend backend
