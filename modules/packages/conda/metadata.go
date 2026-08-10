@@ -1,4 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package conda
@@ -56,7 +57,7 @@ type FileMetadata struct {
 	NoArch         string   `json:"noarch,omitempty"`
 	Build          string   `json:"build,omitempty"`
 	BuildNumber    int64    `json:"build_number,omitempty"`
-	Dependencies   []string `json:"dependencies,omitempty"`
+	Dependencies   []string `json:"dependencies"`
 	Platform       string   `json:"platform,omitempty"`
 	Timestamp      int64    `json:"timestamp,omitempty"`
 }
@@ -157,6 +158,12 @@ func parsePackageTar(r io.Reader) (*Package, error) {
 
 			if !checkVersion(i.Version) {
 				return nil, ErrInvalidVersion
+			}
+
+			// https://github.com/conda/conda-build/blob/3b6a390cf5231ed65d58b8a9b7624219206c3982/conda_build/metadata.py#L1873
+			// Even if dependencies are null, parse it as empty array.
+			if i.Dependencies == nil {
+				i.Dependencies = []string{}
 			}
 
 			if a != nil {

@@ -1,4 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package conda
@@ -100,6 +101,7 @@ func TestParsePackage(t *testing.T) {
 		assert.Equal(t, projectURL, p.VersionMetadata.ProjectURL)
 		assert.Equal(t, repositoryURL, p.VersionMetadata.RepositoryURL)
 		assert.Equal(t, documentationURL, p.VersionMetadata.DocumentationURL)
+		assert.NotNil(t, p.FileMetadata.Dependencies)
 	})
 
 	t.Run(".tar.bz2", func(t *testing.T) {
