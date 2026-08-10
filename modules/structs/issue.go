@@ -263,7 +263,10 @@ func (it IssueTemplate) Type() IssueTemplateType {
 // IssueMeta basic issue information
 // swagger:model
 type IssueMeta struct {
-	Index int64  `json:"index"`
+	// required:true
+	Index int64 `json:"index"`
+	// required:true
 	Owner string `json:"owner"`
-	Name  string `json:"repo"`
+	// required:true
+	Name string `json:"repo"`
 }
