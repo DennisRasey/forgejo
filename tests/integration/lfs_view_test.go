@@ -89,7 +89,7 @@ func TestLFSRender(t *testing.T) {
 		assert.Contains(t, content, "Testing READMEs in LFS")
 	})
 
-	t.Run("/settings/lfs/pointers", func(t *testing.T) {
+	t.Run("Pointer and Find View", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
 		// visit /user2/lfs/settings/lfs/pointer
@@ -97,6 +97,7 @@ func TestLFSRender(t *testing.T) {
 		resp := session.MakeRequest(t, req, http.StatusOK)
 
 		// follow the first link to /user2/lfs/settings/lfs/find?oid=....
+		// (to get to the 'Find commits' view)
 		filesTable := NewHTMLParser(t, resp.Body).doc.Find("#lfs-files-table")
 		assert.Contains(t, filesTable.Text(), "Find commits")
 		lfsFind := filesTable.Find(`.primary.button[href^="/user2"]`)
@@ -108,7 +109,24 @@ func TestLFSRender(t *testing.T) {
 		req = NewRequest(t, "GET", lfsFindPath)
 		resp = session.MakeRequest(t, req, http.StatusOK)
 		doc := NewHTMLParser(t, resp.Body).doc
-		assert.Equal(t, 1, doc.Find(`.sha.label[href="/user2/lfs/commit/73cf03db6ece34e12bf91e8853dc58f678f2f82d"]`).Length(), "could not find link to commit")
+
+		// Check name
+		lfsFilename := doc.Find(`a[href^="/user2/lfs/src/commit/73cf03db6ece34e12bf91e8853dc58f678f2f82d/subdir/README.md"]`).Text()
+		assert.NotNil(t, lfsFilename, "could not find file link")
+		assert.Equal(t, "subdir/README.md", lfsFilename, "incorrect file name")
+
+		// Check branch
+		branchString := doc.Find(`a[href^="/user2/lfs/src/branch/master"]`).Text()
+		assert.NotNil(t, branchString, "could not find branch link")
+		assert.Equal(t, "master", branchString, "incorrect branch")
+
+		// Check SHA
+		shortShaString := doc.Find(`a[href^="/user2/lfs/commit/73cf03db6ece34e12bf91e8853dc58f678f2f82d"]`).Text()
+		assert.NotNil(t, shortShaString, "could not find sha link")
+		assert.Equal(t, "73cf03db6e", shortShaString, "incorrect sha")
+
+		// Check date
+		assert.Equal(t, "2022-12-21", doc.Find(`td[data-test-name="date"]`).Text())
 	})
 
 	// check that an invalid lfs entry defaults to plaintext

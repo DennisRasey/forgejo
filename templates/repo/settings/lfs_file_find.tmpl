@@ -6,37 +6,26 @@
 			</h4>
 			<table id="lfs-files-find-table" class="ui attached segment single line table">
 				<tbody>
+					{{if .Results}}
+					<tr>
+						<td>{{ctx.Locale.Tr "repo.files.filename"}}</td>
+						<td>{{ctx.Locale.Tr "repo.branch"}}</td>
+						<td>{{ctx.Locale.Tr "repo.commit"}}</td>
+						<td>{{ctx.Locale.Tr "repo.commits.date"}}</td>
+					</tr>
+					{{end}}
 					{{range .Results}}
 						<tr>
 							<td>
-								{{svg "octicon-file"}}
-								<a href="{{$.RepoLink}}/src/commit/{{.SHA}}/{{PathEscapeSegments .Name}}" title="{{.Name}}">{{.Name}}</a>
-							</td>
-							<td class="message">
-								<span class="truncate">
-									<a href="{{$.RepoLink}}/commit/{{.SHA}}" title="{{.Summary}}">
-										{{.Summary | RenderEmoji $.Context}}
-									</a>
-								</span>
+								<a href="{{$.RepoLink}}/src/commit/{{.SHA}}/{{PathEscapeSegments .Name}}">{{.Name}}</a>
 							</td>
 							<td>
-								<span class="text grey">{{svg "octicon-git-branch"}}{{.BranchName}}</span>
+								<a class="primary" href="{{$.RepoLink}}/src/branch/{{PathEscapeSegments .BranchName}}">{{.BranchName}}</a>
 							</td>
 							<td>
-								{{if .ParentHashes}}
-									{{ctx.Locale.Tr "repo.diff.parent"}}
-									{{range .ParentHashes}}
-										<a class="primary sha label" href="{{$.RepoLink}}/commit/{{.String}}">
-											<span class="shortsha">{{ShortSha .String}}</span>
-										</a>
-									{{end}}
-								{{end}}
-								{{ctx.Locale.Tr "repo.diff.commit"}}
-								<a class="primary sha label" href="{{$.RepoLink}}/commit/{{.SHA}}">
-									<span class="shortsha">{{ShortSha .SHA}}</span>
-								</a>
+								<a class="primary sha" href="{{$.RepoLink}}/commit/{{.SHA}}">{{ShortSha .SHA}}</a>
 							</td>
-							<td>{{DateUtils.TimeSince .When}}</td>
+							<td data-test-name="date">{{DateUtils.AbsoluteShort .When}}</td>
 						</tr>
 					{{else}}
 						<tr>
