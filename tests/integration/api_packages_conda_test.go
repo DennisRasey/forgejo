@@ -1,4 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -246,6 +247,8 @@ func TestPackageConda(t *testing.T) {
 			assert.Equal(t, packageVersion, packageInfo.Version)
 			assert.Equal(t, "noarch", packageInfo.Subdir)
 			assert.Equal(t, "xxx", packageInfo.Build)
+			assert.NotNil(t, packageInfo.Dependencies)
+			assert.Empty(t, packageInfo.Dependencies)
 			assert.Equal(t, pd.Files[0].Blob.HashMD5, packageInfo.HashMD5)
 			assert.Equal(t, pd.Files[0].Blob.HashSHA256, packageInfo.HashSHA256)
 			assert.Equal(t, pd.Files[0].Blob.Size, packageInfo.Size)
@@ -277,6 +280,8 @@ func TestPackageConda(t *testing.T) {
 			assert.Equal(t, packageVersion, packageInfo.Version)
 			assert.Equal(t, "noarch", packageInfo.Subdir)
 			assert.Equal(t, "xxx", packageInfo.Build)
+			assert.NotNil(t, packageInfo.Dependencies)
+			assert.Empty(t, packageInfo.Dependencies)
 			assert.Equal(t, pd.Files[0].Blob.HashMD5, packageInfo.HashMD5)
 			assert.Equal(t, pd.Files[0].Blob.HashSHA256, packageInfo.HashSHA256)
 			assert.Equal(t, pd.Files[0].Blob.Size, packageInfo.Size)
