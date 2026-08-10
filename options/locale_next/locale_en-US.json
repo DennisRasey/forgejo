@@ -964,6 +964,7 @@
 	"members.invite_team_member": "Invite to team",
 	"members.user": "User",
 	"members.user_already_member": "This user is already a member of the organization.",
+	"members.successfully_invited": "User successfully invited to the organization.",
 	"members.no_team_selected": "Organization members must belong to at least one team.",
 	"org.teams.hide_membership_to_org": "Hide my membership to %s",
 	"pulls.status_checks.skipped": "Some checks were skipped",

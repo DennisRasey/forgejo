@@ -167,6 +167,8 @@ func MembersAction(ctx *context.Context) {
 
 		if !addedToTeam {
 			ctx.Flash.Error(ctx.Tr("members.no_team_selected"))
+		} else if setting.Service.AddMembersByInvitations {
+			ctx.Flash.Info(ctx.Tr("members.successfully_invited"))
 		}
 		ctx.Redirect(ctx.Org.OrgLink + "/members")
 		return

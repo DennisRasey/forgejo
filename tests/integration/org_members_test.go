@@ -254,15 +254,15 @@ func TestOrgAddMemberGeneratesAnInvite(t *testing.T) {
 
 	session := loginUser(t, "user2")
 
-	teamURL := fmt.Sprintf("/org/%s/members", org.Name)
-	req := NewRequestWithValues(t, "POST", teamURL+"/action/add", map[string]string{
+	membersURL := fmt.Sprintf("/org/%s/members", org.Name)
+	req := NewRequestWithValues(t, "POST", membersURL+"/action/add", map[string]string{
 		"uid":    "2",
 		"uname":  user.LoginName,
 		"team_1": "on",
 		"team_2": "on",
 	})
 	resp := session.MakeRequest(t, req, http.StatusSeeOther)
-	assert.Equal(t, teamURL, resp.Header().Get("Location"))
+	assert.Equal(t, membersURL, resp.Header().Get("Location"))
 
 	user = unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
 	isMember, err = organization.IsTeamMember(db.DefaultContext, team1.OrgID, team1.ID, user.ID)
@@ -273,4 +273,7 @@ func TestOrgAddMemberGeneratesAnInvite(t *testing.T) {
 	assert.False(t, isMember)
 	unittest.AssertExistsAndLoadBean(t, &organization.TeamInvite{TeamID: team1.ID, InviterID: 2, InvitedID: optional.Some(user.ID)})
 	unittest.AssertExistsAndLoadBean(t, &organization.TeamInvite{TeamID: team2.ID, InviterID: 2, InvitedID: optional.Some(user.ID)})
+
+	doc := NewHTMLParser(t, session.MakeRequest(t, NewRequest(t, "GET", membersURL), http.StatusOK).Body)
+	assert.Contains(t, strings.TrimSpace(doc.Find(".flash-info").Text()), "User successfully invited to the organization.")
 }
