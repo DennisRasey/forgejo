@@ -397,13 +397,21 @@ func TeamMembers(ctx *context.Context) {
 		ctx.ServerError("GetInvitesByTeamID", err)
 		return
 	}
+	pendingInvites := make([]*org_model.TeamInvite, 0, len(invites))
+	expiredInvites := make([]*org_model.TeamInvite, 0, len(invites))
 	for _, invite := range invites {
 		if invite.LoadInvitedUser(ctx) != nil {
 			ctx.ServerError("LoadInvitedUser", err)
 			return
 		}
+		if invite.IsExpired() {
+			expiredInvites = append(expiredInvites, invite)
+		} else {
+			pendingInvites = append(pendingInvites, invite)
+		}
 	}
-	ctx.Data["Invites"] = invites
+	ctx.Data["PendingInvites"] = pendingInvites
+	ctx.Data["ExpiredInvites"] = expiredInvites
 	ctx.Data["IsEmailInviteEnabled"] = setting.MailService != nil
 
 	ctx.HTML(http.StatusOK, tplTeamMembers)
@@ -582,7 +590,7 @@ func DeleteTeam(ctx *context.Context) {
 func TeamInvite(ctx *context.Context) {
 	invite, org, team, inviter, err := getTeamInviteFromContext(ctx)
 	if err != nil {
-		if org_model.IsErrTeamInviteNotFound(err) {
+		if org_model.IsErrTeamInviteNotFound(err) || org_model.IsErrTeamInviteExpired(err) {
 			ctx.NotFound("ErrTeamInviteNotFound", err)
 		} else {
 			ctx.ServerError("getTeamInviteFromContext", err)
@@ -616,7 +624,7 @@ func TeamInvite(ctx *context.Context) {
 func TeamInvitePost(ctx *context.Context) {
 	invite, org, team, _, err := getTeamInviteFromContext(ctx)
 	if err != nil {
-		if org_model.IsErrTeamInviteNotFound(err) {
+		if org_model.IsErrTeamInviteNotFound(err) || org_model.IsErrTeamInviteExpired(err) {
 			ctx.NotFound("ErrTeamInviteNotFound", err)
 		} else {
 			ctx.ServerError("getTeamInviteFromContext", err)
@@ -653,6 +661,10 @@ func getTeamInviteFromContext(ctx *context.Context) (*org_model.TeamInvite, *org
 	invite, err := org_model.GetInviteByToken(ctx, ctx.Params("token"))
 	if err != nil {
 		return nil, nil, nil, nil, err
+	}
+
+	if invite.IsExpired() {
+		return nil, nil, nil, nil, org_model.ErrTeamInviteExpired{Token: invite.Token}
 	}
 
 	inviter, err := user_model.GetUserByID(ctx, invite.InviterID)

@@ -90,6 +90,13 @@ func TestDisplayInvites(t *testing.T) {
 	// the two invited users are shown
 	assert.Equal(t, "/user31", doc.Find("a:contains('user31')").AttrOr("href", ""))
 	assert.Equal(t, 1, doc.Find("div.flex-item-main:contains('external_user@example.com')").Length())
+	// the expired invitations are also shown
+	assert.Equal(t, "/user30", doc.Find("a:contains('user30')").AttrOr("href", ""))
+	assert.Equal(t, 1, doc.Find("div.flex-item-main:contains('other_ext_user@example.com')").Length())
+	// there are buttons to remove any of those invitations
+	assert.Equal(t, 4, doc.Find(fmt.Sprintf("form[action='%s/action/remove_invite'] button:contains('Remove')", teamURL)).Length())
+	// and buttons to renew the expired ones
+	assert.Equal(t, 2, doc.Find(fmt.Sprintf("form[action='%s/action/add'] button:contains('Renew')", teamURL)).Length())
 }
 
 func TestAddMembersByInvitations(t *testing.T) {

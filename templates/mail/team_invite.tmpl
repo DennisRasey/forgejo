@@ -8,8 +8,10 @@
 	<p>{{.locale.Tr "mail.team_invite.text_1" (DotEscape .Inviter.DisplayName) (DotEscape .Team.Name) (DotEscape .Organization.DisplayName)}}</p>
 	<p>{{.locale.Tr "mail.team_invite.text_2"}}</p><p><a href="{{.InviteURL}}">{{.InviteURL}}</a></p>
 	<p>{{.locale.Tr "mail.link_not_working_do_paste"}}</p>
+	{{if .ExpirationDelay}}
+		<p>{{.locale.TrPluralString .ExpirationDelay "mail.team_invite.expiration" .ExpirationDelay}}</p>
+	{{end}}
 	<p>{{.locale.Tr "mail.team_invite.text_3" .Invite.Email}}</p>
-
 	<p>© <a target="_blank" rel="noopener noreferrer" href="{{AppUrl}}">{{AppName}}</a></p>
 </body>
 </html>

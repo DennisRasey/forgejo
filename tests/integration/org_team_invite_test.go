@@ -15,8 +15,11 @@ import (
 	"forgejo.org/models/organization"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
+	"forgejo.org/modules/timeutil"
+	"forgejo.org/services/mailer"
 	"forgejo.org/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -30,6 +33,14 @@ func TestOrgTeamEmailInvite(t *testing.T) {
 	}
 
 	defer tests.PrepareTestEnv(t)()
+	mailerCalled := false
+	defer test.MockVariableValue(&mailer.SendAsync, func(msgs ...*mailer.Message) {
+		assert.Len(t, msgs, 1)
+		assert.Equal(t, "user5@example.com", msgs[0].To)
+		assert.Equal(t, "User One has invited you to join the <<<< >> >> > >> > >>> >> organization", msgs[0].Subject)
+		assert.Contains(t, msgs[0].Body, "This invitation will expire in 14 days")
+		mailerCalled = true
+	})()
 
 	org := unittest.AssertExistsAndLoadBean(t, &organization.Organization{ID: 3})
 	team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 2})
@@ -49,6 +60,9 @@ func TestOrgTeamEmailInvite(t *testing.T) {
 	resp := session.MakeRequest(t, req, http.StatusSeeOther)
 	req = NewRequest(t, "GET", test.RedirectURL(resp))
 	session.MakeRequest(t, req, http.StatusOK)
+
+	// check that an invite email was sent
+	assert.True(t, mailerCalled)
 
 	// get the invite token
 	invites, err := organization.GetInvitesByTeamID(db.DefaultContext, team.ID)
@@ -497,6 +511,51 @@ func TestOrgTeamEmailInviteCannotBeAcceptedByOtherUser(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, isMember)
 	isMember, err = organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, attacker.ID)
+	require.NoError(t, err)
+	assert.False(t, isMember)
+}
+
+// Test that a user cannot accept an invite if it is expired
+func TestOrgTeamEmailInviteExpired(t *testing.T) {
+	if setting.MailService == nil {
+		t.Skip()
+		return
+	}
+
+	defer tests.PrepareTestEnv(t)()
+
+	team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 2})
+	inviter := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+
+	isMember, err := organization.IsTeamMember(t.Context(), team.OrgID, team.ID, user.ID)
+	require.NoError(t, err)
+	assert.False(t, isMember)
+
+	// create the invite
+	invite, err := organization.CreateTeamInviteForUser(t.Context(), inviter, user, team)
+	require.NoError(t, err)
+
+	// set a deadline in the past, so that the invite is expired
+	invite.ExpiryUnix = optional.Some(timeutil.TimeStamp(int64(timeutil.TimeStampNow()) - 500))
+	_, err = db.GetEngine(t.Context()).Table("team_invite").Cols("expiry_unix").Update(
+		&organization.TeamInvite{ExpiryUnix: optional.Some(timeutil.TimeStamp(int64(timeutil.TimeStampNow()) - 500))},
+	)
+	require.NoError(t, err)
+
+	// log in the invited user
+	session := loginUser(t, "user5")
+
+	// view the invite
+	inviteURL := fmt.Sprintf("/org/invite/%s", invite.Token)
+	req := NewRequest(t, "GET", inviteURL)
+	session.MakeRequest(t, req, http.StatusNotFound)
+
+	// attempt to accept the invite despite the 404
+	req = NewRequest(t, "POST", inviteURL)
+	session.MakeRequest(t, req, http.StatusNotFound)
+
+	isMember, err = organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, user.ID)
 	require.NoError(t, err)
 	assert.False(t, isMember)
 }

@@ -400,6 +400,10 @@
 	"mail.actions.run_info_sha": "Commit: %[1]s",
 	"mail.actions.run_info_trigger": "Triggered because: %[1]s by: %[2]s",
 	"mail.issue.action.close_by_commit": "%[1]s closed %[2]s in commit %[3]s.",
+	"mail.team_invite.expiration": {
+		"one": "This invitation will expire in %d day.",
+		"other": "This invitation will expire in %d days."
+	},
 	"repo.diff.commit.next-short": "Next",
 	"repo.diff.commit.previous-short": "Prev",
 	"discussion.locked": "This discussion has been locked. Commenting is limited to contributors.",
@@ -987,6 +991,10 @@
 	"repo.watch.pull_requests": "Pull requests",
 	"repo.watch.releases": "Releases",
 	"repo.watch.releases.hint": "(Email only)",
+	"org.teams.invite_team_member.expired_list": "Expired invitations",
+	"org.teams.invite_expires_on": "expires on %[1]s",
+	"org.teams.invited_on": "invited on %[1]s",
+	"org.teams.renew_invite": "Renew",
 	"markup.filepreview.line": "Line %[1]d in %[2]s",
 	"markup.filepreview.lines": "Lines %[1]d to %[2]d in %[3]s",
 	"markup.filepreview.truncated": "Preview has been truncated",

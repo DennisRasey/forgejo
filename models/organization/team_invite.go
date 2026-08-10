@@ -6,10 +6,12 @@ package organization
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"forgejo.org/models/db"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/optional"
+	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
@@ -52,6 +54,23 @@ func (err ErrTeamInviteNotFound) Unwrap() error {
 	return util.ErrNotExist
 }
 
+type ErrTeamInviteExpired struct {
+	Token string
+}
+
+func IsErrTeamInviteExpired(err error) bool {
+	_, ok := err.(ErrTeamInviteExpired)
+	return ok
+}
+
+func (err ErrTeamInviteExpired) Error() string {
+	return fmt.Sprintf("team invite has expired [token: %s]", err.Token)
+}
+
+func (err ErrTeamInviteExpired) Unwrap() error {
+	return util.ErrInvalidArgument
+}
+
 // ErrInvitedUserAlreadyAdded indicates that a user is already part of a team and can not be invited again.
 type ErrInvitedUserAlreadyAdded struct {
 	Email         string
@@ -74,31 +93,40 @@ func (err ErrInvitedUserAlreadyAdded) Unwrap() error {
 
 // TeamInvite represents an invite to a team
 type TeamInvite struct {
-	ID          int64                  `xorm:"pk autoincr"`
-	Token       string                 `xorm:"UNIQUE(token) INDEX NOT NULL DEFAULT ''"`
-	InviterID   int64                  `xorm:"NOT NULL DEFAULT 0"`
-	OrgID       int64                  `xorm:"INDEX NOT NULL DEFAULT 0"`
-	TeamID      int64                  `xorm:"UNIQUE(team_mail) INDEX NOT NULL DEFAULT 0"`
-	Email       string                 `xorm:"UNIQUE(team_mail) NOT NULL DEFAULT ''"`
-	InvitedID   optional.Option[int64] `xorm:"index REFERENCES(user, id)"`
-	InvitedUser *user_model.User       `xorm:"-"`
-	CreatedUnix timeutil.TimeStamp     `xorm:"INDEX created"`
-	UpdatedUnix timeutil.TimeStamp     `xorm:"INDEX updated"`
+	ID          int64                               `xorm:"pk autoincr"`
+	Token       string                              `xorm:"UNIQUE(token) INDEX NOT NULL DEFAULT ''"`
+	InviterID   int64                               `xorm:"NOT NULL DEFAULT 0"`
+	OrgID       int64                               `xorm:"INDEX NOT NULL DEFAULT 0"`
+	TeamID      int64                               `xorm:"UNIQUE(team_mail) INDEX NOT NULL DEFAULT 0"`
+	Email       string                              `xorm:"UNIQUE(team_mail) NOT NULL DEFAULT ''"`
+	InvitedID   optional.Option[int64]              `xorm:"index REFERENCES(user, id)"`
+	InvitedUser *user_model.User                    `xorm:"-"`
+	CreatedUnix timeutil.TimeStamp                  `xorm:"INDEX created"`
+	UpdatedUnix timeutil.TimeStamp                  `xorm:"INDEX updated"`
+	ExpiryUnix  optional.Option[timeutil.TimeStamp] `xorm:"expiry_unix"`
 }
 
 // CreateTeamInviteByEmail creates a TeamInvite for someone who does not have an account yet.
 func CreateTeamInviteByEmail(ctx context.Context, doer *user_model.User, team *Team, email string) (*TeamInvite, error) {
-	has, err := db.GetEngine(ctx).Exist(&TeamInvite{
+	existingInvite := TeamInvite{
 		TeamID: team.ID,
 		Email:  email,
-	})
+	}
+	has, err := db.GetEngine(ctx).Get(&existingInvite)
 	if err != nil {
 		return nil, err
 	}
 	if has {
-		return nil, ErrTeamInviteAlreadyExist{
-			TeamID: team.ID,
-			Email:  email,
+		if existingInvite.IsExpired() {
+			_, err := db.GetEngine(ctx).Delete(&existingInvite)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, ErrTeamInviteAlreadyExist{
+				TeamID: team.ID,
+				Email:  email,
+			}
 		}
 	}
 
@@ -125,11 +153,12 @@ func CreateTeamInviteByEmail(ctx context.Context, doer *user_model.User, team *T
 	token := util.CryptoRandomString(util.RandomStringMedium)
 
 	invite := &TeamInvite{
-		Token:     token,
-		InviterID: doer.ID,
-		OrgID:     team.OrgID,
-		TeamID:    team.ID,
-		Email:     email,
+		Token:      token,
+		InviterID:  doer.ID,
+		OrgID:      team.OrgID,
+		TeamID:     team.ID,
+		Email:      email,
+		ExpiryUnix: getInviteExpiry(),
 	}
 
 	return invite, db.Insert(ctx, invite)
@@ -137,17 +166,25 @@ func CreateTeamInviteByEmail(ctx context.Context, doer *user_model.User, team *T
 
 // CreateTeamInviteForUser creates a TeamInvite for someone who already has an account on the instance.
 func CreateTeamInviteForUser(ctx context.Context, doer, invited *user_model.User, team *Team) (*TeamInvite, error) {
-	has, err := db.GetEngine(ctx).Exist(&TeamInvite{
+	existingInvite := TeamInvite{
 		TeamID:    team.ID,
 		InvitedID: optional.Some(invited.ID),
-	})
+	}
+	has, err := db.GetEngine(ctx).Get(&existingInvite)
 	if err != nil {
 		return nil, err
 	}
 	if has {
-		return nil, ErrTeamInviteAlreadyExist{
-			TeamID: team.ID,
-			Email:  invited.Email,
+		if existingInvite.IsExpired() {
+			_, err := db.GetEngine(ctx).Delete(&existingInvite)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, ErrTeamInviteAlreadyExist{
+				TeamID: team.ID,
+				Email:  invited.Email,
+			}
 		}
 	}
 
@@ -180,6 +217,7 @@ func CreateTeamInviteForUser(ctx context.Context, doer, invited *user_model.User
 		Email:       invited.Email,
 		InvitedID:   optional.Some(invited.ID),
 		InvitedUser: invited,
+		ExpiryUnix:  getInviteExpiry(),
 	}
 
 	return invite, db.Insert(ctx, invite)
@@ -225,4 +263,20 @@ func (i *TeamInvite) LoadInvitedUser(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// IsExpired determines if an invite is no longer valid because it expired
+func (i *TeamInvite) IsExpired() bool {
+	hasExpiry, deadline := i.ExpiryUnix.Get()
+	now := timeutil.TimeStampNow()
+	return hasExpiry && deadline < now
+}
+
+// getInviteExpiry computes the expiration date of an invite created now
+func getInviteExpiry() optional.Option[timeutil.TimeStamp] {
+	if setting.Service.TeamInvitationExpiryDays == 0 {
+		return optional.None[timeutil.TimeStamp]()
+	}
+	deadline := timeutil.TimeStampNow().AddDuration(time.Duration(setting.Service.TeamInvitationExpiryDays) * 24 * time.Hour)
+	return optional.Some(deadline)
 }

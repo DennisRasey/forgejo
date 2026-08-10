@@ -8,6 +8,7 @@
   invited_id: 31
   created_unix: 1778862588
   updated_unix: 1778862588
+  expiry_unix: null
 
 -
   id: 2
@@ -19,3 +20,28 @@
   invited_id: null
   created_unix: 1778862590
   updated_unix: 1778862590
+  expiry_unix: null
+
+-
+  id: 3
+  token: "vK3LPGvav-3EMT3jOj8VZi"
+  inviter_id: 1
+  org_id: 3
+  team_id: 2
+  email: "user30@example.com"
+  invited_id: 30
+  created_unix: 1778862588
+  updated_unix: 1778862588
+  expiry_unix: 1785062092
+
+-
+  id: 4
+  token: "X12ae849d-tMab189cKp0n"
+  inviter_id: 1
+  org_id: 3
+  team_id: 2
+  email: "other_ext_user@example.com"
+  invited_id: null
+  created_unix: 1778862590
+  updated_unix: 1778862590
+  expiry_unix: 1785062092

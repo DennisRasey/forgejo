@@ -53,13 +53,14 @@ func MailTeamInvite(ctx context.Context, inviter *user_model.User, team *org_mod
 
 	subject := locale.TrString("mail.team_invite.subject", inviter.DisplayName(), org.DisplayName())
 	mailMeta := map[string]any{
-		"locale":       locale,
-		"Inviter":      inviter,
-		"Organization": org,
-		"Team":         team,
-		"Invite":       invite,
-		"Subject":      subject,
-		"InviteURL":    inviteURL,
+		"locale":          locale,
+		"Inviter":         inviter,
+		"Organization":    org,
+		"Team":            team,
+		"Invite":          invite,
+		"Subject":         subject,
+		"InviteURL":       inviteURL,
+		"ExpirationDelay": setting.Service.TeamInvitationExpiryDays,
 	}
 
 	var mailBody bytes.Buffer
