@@ -44,9 +44,6 @@ forgejo.org/models/issues
 	IsErrUnknownDependencyType
 	IsErrIssueWasClosed
 
-forgejo.org/models/organization
-	SearchMembersOptions.ToConds
-
 forgejo.org/models/perm/access
 	GetRepoWriters
 
