@@ -457,7 +457,7 @@ func ListPageRevisions(ctx *context.APIContext) {
 // findEntryForFile finds the tree entry for a target filepath.
 func findEntryForFile(commit *git.Commit, target string) (*git.TreeEntry, error) {
 	entry, err := commit.GetTreeEntryByPath(target)
-	if err != nil {
+	if err != nil && !git.IsErrNotExist(err) {
 		return nil, err
 	}
 	if entry != nil {
@@ -524,5 +524,8 @@ func wikiContentsByName(ctx *context.APIContext, commit *git.Commit, wikiName wi
 		}
 		return "", ""
 	}
-	return wikiContentsByEntry(ctx, entry), gitFilename
+	// Return the name of the file the entry was found in rather than
+	// gitFilename. findEntryForFile falls back to unescaped names and
+	// callers use the returned name to look up commits
+	return wikiContentsByEntry(ctx, entry), entry.Name()
 }
