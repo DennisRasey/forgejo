@@ -132,6 +132,107 @@ func TestGenerateZoektQuery_SpecialCharacters(t *testing.T) {
 	require.NotNil(t, q)
 }
 
+func TestZoektFormatter_Format(t *testing.T) {
+	for _, testCase := range []struct {
+		name          string
+		content       string
+		lineNumber    int
+		offset        int // offset relative to the start of the file
+		matchLength   int
+		expectedLines []int
+		expectedText  string
+	}{
+		{
+			name:          "single line without trailing newline",
+			content:       "test",
+			lineNumber:    1,
+			offset:        0,
+			matchLength:   4,
+			expectedLines: []int{1},
+			expectedText:  "test",
+		},
+		{
+			name:          "match on the last line without trailing newline",
+			content:       "one\ntwo\ntest",
+			lineNumber:    3,
+			offset:        8,
+			matchLength:   4,
+			expectedLines: []int{2, 3},
+			expectedText:  "test",
+		},
+		{
+			name:          "match on the last line with trailing newline",
+			content:       "one\ntwo\ntest\n",
+			lineNumber:    3,
+			offset:        8,
+			matchLength:   4,
+			expectedLines: []int{2, 3},
+			expectedText:  "test",
+		},
+		{
+			name:          "match on the first line",
+			content:       "test\ntwo\nthree",
+			lineNumber:    1,
+			offset:        0,
+			matchLength:   4,
+			expectedLines: []int{1, 2},
+			expectedText:  "test",
+		},
+		{
+			name:          "match on a line in the middle",
+			content:       "one\ntest\nthree\nfour",
+			lineNumber:    2,
+			offset:        4,
+			matchLength:   4,
+			expectedLines: []int{1, 2, 3},
+			expectedText:  "test",
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			files := []zoekt.FileMatch{
+				{
+					RepositoryID: 1,
+					FileName:     "example.txt",
+					Version:      "commit123",
+					Content:      []byte(testCase.content),
+					LineMatches: []zoekt.LineMatch{
+						{
+							LineNumber: testCase.lineNumber,
+							LineFragments: []zoekt.LineFragmentMatch{
+								{
+									Offset:      uint32(testCase.offset),
+									MatchLength: testCase.matchLength,
+								},
+							},
+						},
+					},
+				},
+			}
+
+			results := convertZoektResult(files)
+			require.Len(t, results, 1)
+
+			formatter := &zoektFormatter{}
+			result, err := formatter.Format(results[0])
+			require.NoError(t, err)
+
+			lineNumbers := make([]int, 0, len(result.Lines))
+			for _, line := range result.Lines {
+				lineNumbers = append(lineNumbers, line.Num)
+			}
+			assert.Equal(t, testCase.expectedLines, lineNumbers)
+
+			var matchedLine string
+			for _, line := range result.Lines {
+				if line.Num == testCase.lineNumber {
+					matchedLine = string(line.FormattedContent)
+				}
+			}
+			assert.Contains(t, matchedLine, `<span class="search-highlight">`+testCase.expectedText+`</span>`)
+		})
+	}
+}
+
 func TestConvertZoektResult_IgnoresFilenameMatches(t *testing.T) {
 	files := []zoekt.FileMatch{
 		{
