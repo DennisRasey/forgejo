@@ -68,75 +68,34 @@ func TestActionRunNowDoneStatusMatrix(t *testing.T) {
 	}
 
 	for _, testCase := range []struct {
-		name         string
-		statuses     []actions_model.Status
-		hasLastRun   bool
-		lastStatuses []actions_model.Status
-		run          bool
+		name     string
+		statuses []actions_model.Status
+		run      bool
 	}{
 		{
-			name:     "FailureNoLastRun",
+			name:     "Failure",
 			statuses: failureStatuses,
 			run:      true,
 		},
 		{
-			name:     "SuccessNoLastRun",
+			name:     "Success",
 			statuses: successStatuses,
 			run:      false,
-		},
-		{
-			name:         "FailureLastRunSuccess",
-			statuses:     failureStatuses,
-			hasLastRun:   true,
-			lastStatuses: successStatuses,
-			run:          true,
-		},
-		{
-			name:         "FailureLastRunFailure",
-			statuses:     failureStatuses,
-			hasLastRun:   true,
-			lastStatuses: failureStatuses,
-			run:          true,
-		},
-		{
-			name:         "SuccessLastRunFailure",
-			statuses:     successStatuses,
-			hasLastRun:   true,
-			lastStatuses: failureStatuses,
-			run:          true,
-		},
-		{
-			name:         "SuccessLastRunSuccess",
-			statuses:     successStatuses,
-			hasLastRun:   true,
-			lastStatuses: successStatuses,
-			run:          false,
 		},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {
 			var called bool
-			defer test.MockVariableValue(&MailActionRun, func(run *actions_model.ActionRun, priorStatus actions_model.Status, lastRun *actions_model.ActionRun) error {
+			defer test.MockVariableValue(&MailActionRun, func(run *actions_model.ActionRun, priorStatus actions_model.Status) error {
 				called = true
 				return nil
 			})()
 			for _, status := range testCase.statuses {
-				for _, lastStatus := range testCase.lastStatuses {
-					called = false
-					n := NewNotifier()
-					var lastRun *actions_model.ActionRun
-					if testCase.hasLastRun {
-						lastRun = &actions_model.ActionRun{
-							Status: lastStatus,
-						}
-					}
-					n.ActionRunNowDone(t.Context(),
-						&actions_model.ActionRun{
-							Status: status,
-						},
-						actions_model.StatusUnknown,
-						lastRun)
-					assert.Equal(t, testCase.run, called, "status = %s, lastStatus = %s", status, lastStatus)
-				}
+				called = false
+				n := NewNotifier()
+				n.ActionRunNowDone(t.Context(), &actions_model.ActionRun{
+					Status: status,
+				}, actions_model.StatusUnknown)
+				assert.Equal(t, testCase.run, called, "status = %s", status)
 			}
 		})
 	}
@@ -183,7 +142,7 @@ func TestActionRunNowDoneNotificationMail(t *testing.T) {
 		defer MockMailSettings(func(msgs ...*Message) {
 			assert.Fail(t, "no mail should be sent")
 		})()
-		notify_service.ActionRunNowDone(ctx, run2, actions_model.StatusRunning, nil)
+		notify_service.ActionRunNowDone(ctx, run2, actions_model.StatusRunning)
 	})
 
 	t.Run("WorkflowEnableEmailNotificationIsFalse", func(t *testing.T) {
@@ -194,7 +153,7 @@ func TestActionRunNowDoneNotificationMail(t *testing.T) {
 			assert.Fail(t, "no mail should be sent")
 		})()
 		run2.NotifyEmail = false
-		notify_service.ActionRunNowDone(ctx, run2, actions_model.StatusRunning, nil)
+		notify_service.ActionRunNowDone(ctx, run2, actions_model.StatusRunning)
 	})
 
 	for _, testCase := range []struct {
@@ -288,36 +247,7 @@ func TestActionRunNowDoneNotificationMail(t *testing.T) {
 				})()
 				require.NotNil(t, setting.MailService)
 
-				notify_service.ActionRunNowDone(ctx, run1, actions_model.StatusWaiting, nil)
-				assert.Equal(t, testCase.expectMail, mailSent)
-			})
-
-			t.Run("SendNotificationEmailOnActionRunRecovered", func(t *testing.T) {
-				mailSent := false
-				defer MockMailSettings(func(msgs ...*Message) {
-					assert.Len(t, msgs, 1)
-					msg := msgs[0]
-					assert.False(t, mailSent, "sent mail twice")
-					expectedEmail := testCase.triggerUser.Email
-					if testCase.expected == "owner" { // otherwise "trigger"
-						expectedEmail = testCase.owner.Email
-					}
-					require.Contains(t, msg.To, expectedEmail, "sent mail to unknown sender")
-					mailSent = true
-					assert.Contains(t, msg.Body, testCase.triggerUser.HTMLURL())
-					assert.Contains(t, msg.Body, testCase.triggerUser.Name)
-					// what happened
-					assert.Contains(t, msg.Body, "recovered")
-					// old status of run
-					assert.Contains(t, msg.Body, "failure")
-					// new status of run
-					assert.Contains(t, msg.Body, "success")
-					// prior status of this run
-					assert.Contains(t, msg.Body, "running")
-				})()
-				require.NotNil(t, setting.MailService)
-
-				notify_service.ActionRunNowDone(ctx, run2, actions_model.StatusRunning, run1)
+				notify_service.ActionRunNowDone(ctx, run1, actions_model.StatusWaiting)
 				assert.Equal(t, testCase.expectMail, mailSent)
 			})
 		})

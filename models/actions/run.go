@@ -483,12 +483,6 @@ func GetLatestRun(ctx context.Context, repoID int64) (*ActionRun, error) {
 	return &run, nil
 }
 
-func GetRunBefore(ctx context.Context, _ *ActionRun) (*ActionRun, error) {
-	// TODO return the most recent run related to the run given in argument
-	// see https://codeberg.org/forgejo/user-research/issues/63 for context
-	return nil, util.ErrNotExist
-}
-
 func GetLatestRunForBranchAndWorkflow(ctx context.Context, repoID int64, branch, workflowFile, event string) (*ActionRun, error) {
 	var run ActionRun
 	q := db.GetEngine(ctx).Where("repo_id=?", repoID).And("workflow_id=?", workflowFile)

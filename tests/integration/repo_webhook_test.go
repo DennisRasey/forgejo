@@ -490,7 +490,6 @@ func testWebhookFormsSharedChooseEvents(t *testing.T, htmlForm *goquery.Selectio
 		"pull_request_sync",
 		"pull_request_review_request",
 		"action_failure",
-		"action_recover",
 		"action_success",
 	}
 

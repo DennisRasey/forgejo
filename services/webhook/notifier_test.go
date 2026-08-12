@@ -14,7 +14,6 @@ import (
 	webhook_model "forgejo.org/models/webhook"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/json"
-	"forgejo.org/modules/log"
 	"forgejo.org/modules/repository"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/structs"
@@ -144,32 +143,6 @@ func TestAction(t *testing.T) {
 	triggerUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2, OwnerID: triggerUser.ID})
 
-	oldSuccessRun := &actions_model.ActionRun{
-		ID:            1,
-		Status:        actions_model.StatusSuccess,
-		Index:         1,
-		RepoID:        repo.ID,
-		Stopped:       1693648027,
-		WorkflowID:    "some_workflow",
-		Title:         "oldSuccessRun",
-		TriggerUser:   triggerUser,
-		TriggerUserID: triggerUser.ID,
-		TriggerEvent:  "push",
-	}
-	oldSuccessRun.LoadAttributes(db.DefaultContext)
-	oldFailureRun := &actions_model.ActionRun{
-		ID:            1,
-		Status:        actions_model.StatusFailure,
-		Index:         1,
-		RepoID:        repo.ID,
-		Stopped:       1693648027,
-		WorkflowID:    "some_workflow",
-		Title:         "oldFailureRun",
-		TriggerUser:   triggerUser,
-		TriggerUserID: triggerUser.ID,
-		TriggerEvent:  "push",
-	}
-	oldFailureRun.LoadAttributes(db.DefaultContext)
 	newSuccessRun := &actions_model.ActionRun{
 		ID:            1,
 		Status:        actions_model.StatusSuccess,
@@ -197,10 +170,10 @@ func TestAction(t *testing.T) {
 	}
 	newFailureRun.LoadAttributes(db.DefaultContext)
 
-	t.Run("Successful Run after Nothing", func(t *testing.T) {
+	t.Run("Successful Run", func(t *testing.T) {
 		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
 
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newSuccessRun, actions_model.StatusWaiting, nil)
+		NewNotifier().ActionRunNowDone(db.DefaultContext, newSuccessRun, actions_model.StatusWaiting)
 
 		// there's only one of these at the time
 		hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_success' AND payload_content LIKE '%success%newSuccessRun%'"))
@@ -211,59 +184,12 @@ func TestAction(t *testing.T) {
 		assert.Equal(t, structs.HookActionSuccess, payloadContent.Action)
 		assert.Equal(t, actions_model.StatusWaiting.String(), payloadContent.PriorStatus)
 		assertActionEqual(t, newSuccessRun, payloadContent.Run)
-		assert.Nil(t, payloadContent.LastRun)
 	})
 
-	t.Run("Successful Run after Failure", func(t *testing.T) {
+	t.Run("Failed Run", func(t *testing.T) {
 		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
 
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newSuccessRun, actions_model.StatusWaiting, oldFailureRun)
-
-		{
-			hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_success' AND payload_content LIKE '%success%newSuccessRun%oldFailureRun%'"))
-			assert.Equal(t, webhook_module.HookEventActionRunSuccess, hookTask.EventType)
-
-			var payloadContent structs.ActionPayload
-			require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
-			assert.Equal(t, structs.HookActionSuccess, payloadContent.Action)
-			assert.Equal(t, actions_model.StatusWaiting.String(), payloadContent.PriorStatus)
-			assertActionEqual(t, newSuccessRun, payloadContent.Run)
-			assertActionEqual(t, oldFailureRun, payloadContent.LastRun)
-		}
-		{
-			hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_recover' AND payload_content LIKE '%recover%newSuccessRun%oldFailureRun%'"))
-			assert.Equal(t, webhook_module.HookEventActionRunRecover, hookTask.EventType)
-
-			log.Error("something: %s", hookTask.PayloadContent)
-			var payloadContent structs.ActionPayload
-			require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
-			assert.Equal(t, structs.HookActionRecover, payloadContent.Action)
-			assert.Equal(t, actions_model.StatusWaiting.String(), payloadContent.PriorStatus)
-			assertActionEqual(t, newSuccessRun, payloadContent.Run)
-			assertActionEqual(t, oldFailureRun, payloadContent.LastRun)
-		}
-	})
-
-	t.Run("Successful Run after Success", func(t *testing.T) {
-		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
-
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newSuccessRun, actions_model.StatusWaiting, oldSuccessRun)
-
-		hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_success' AND payload_content LIKE '%success%newSuccessRun%oldSuccessRun%'"))
-		assert.Equal(t, webhook_module.HookEventActionRunSuccess, hookTask.EventType)
-
-		var payloadContent structs.ActionPayload
-		require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
-		assert.Equal(t, structs.HookActionSuccess, payloadContent.Action)
-		assert.Equal(t, actions_model.StatusWaiting.String(), payloadContent.PriorStatus)
-		assertActionEqual(t, newSuccessRun, payloadContent.Run)
-		assertActionEqual(t, oldSuccessRun, payloadContent.LastRun)
-	})
-
-	t.Run("Failed Run after Nothing", func(t *testing.T) {
-		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
-
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newFailureRun, actions_model.StatusWaiting, nil)
+		NewNotifier().ActionRunNowDone(db.DefaultContext, newFailureRun, actions_model.StatusWaiting)
 
 		// there should only be this one at the time
 		hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_failure' AND payload_content LIKE '%failure%newFailureRun%'"))
@@ -274,38 +200,5 @@ func TestAction(t *testing.T) {
 		assert.Equal(t, structs.HookActionFailure, payloadContent.Action)
 		assert.Equal(t, actions_model.StatusWaiting.String(), payloadContent.PriorStatus)
 		assertActionEqual(t, newFailureRun, payloadContent.Run)
-		assert.Nil(t, payloadContent.LastRun)
-	})
-
-	t.Run("Failed Run after Failure", func(t *testing.T) {
-		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
-
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newFailureRun, actions_model.StatusWaiting, oldFailureRun)
-
-		hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_failure' AND payload_content LIKE '%failure%newFailureRun%oldFailureRun%'"))
-		assert.Equal(t, webhook_module.HookEventActionRunFailure, hookTask.EventType)
-
-		var payloadContent structs.ActionPayload
-		require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
-		assert.Equal(t, structs.HookActionFailure, payloadContent.Action)
-		assert.Equal(t, actions_model.StatusWaiting.String(), payloadContent.PriorStatus)
-		assertActionEqual(t, newFailureRun, payloadContent.Run)
-		assertActionEqual(t, oldFailureRun, payloadContent.LastRun)
-	})
-
-	t.Run("Failed Run after Success", func(t *testing.T) {
-		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
-
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newFailureRun, actions_model.StatusWaiting, oldSuccessRun)
-
-		hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_failure' AND payload_content LIKE '%failure%newFailureRun%oldSuccessRun%'"))
-		assert.Equal(t, webhook_module.HookEventActionRunFailure, hookTask.EventType)
-
-		var payloadContent structs.ActionPayload
-		require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
-		assert.Equal(t, structs.HookActionFailure, payloadContent.Action)
-		assert.Equal(t, actions_model.StatusWaiting.String(), payloadContent.PriorStatus)
-		assertActionEqual(t, newFailureRun, payloadContent.Run)
-		assertActionEqual(t, oldSuccessRun, payloadContent.LastRun)
 	})
 }

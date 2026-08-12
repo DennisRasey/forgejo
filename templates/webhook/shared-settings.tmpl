@@ -162,12 +162,6 @@
 					{{ctx.Locale.Tr "repo.settings.event_action_failure"}}
 					<span class="help">{{ctx.Locale.Tr "repo.settings.event_action_failure_desc"}}</span>
 				</label>
-				<!-- Action Run Recover -->
-				<label>
-					<input name="action_recover" type="checkbox" {{if .Webhook.ActionRunRecover}}checked{{end}}>
-					{{ctx.Locale.Tr "repo.settings.event_action_recover"}}
-					<span class="help">{{ctx.Locale.Tr "repo.settings.event_action_recover_desc"}}</span>
-				</label>
 				<!-- Action Run Success -->
 				<label>
 					<input name="action_success" type="checkbox" {{if .Webhook.ActionRunSuccess}}checked{{end}}>

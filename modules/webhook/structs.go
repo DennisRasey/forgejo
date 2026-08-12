@@ -28,7 +28,6 @@ type HookEvents struct {
 	Release                  bool `json:"release"`
 	Package                  bool `json:"package"`
 	ActionRunFailure         bool `json:"action_run_failure"`
-	ActionRunRecover         bool `json:"action_run_recover"`
 	ActionRunSuccess         bool `json:"action_run_success"`
 }
 

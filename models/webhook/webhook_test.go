@@ -74,8 +74,7 @@ func TestWebhook_EventsArray(t *testing.T) {
 		"pull_request", "pull_request_assign", "pull_request_label", "pull_request_milestone",
 		"pull_request_comment", "pull_request_review_approved", "pull_request_review_rejected",
 		"pull_request_review_comment", "pull_request_sync", "wiki", "repository", "release",
-		"package", "pull_request_review_request", "action_run_failure",
-		"action_run_recover", "action_run_success",
+		"package", "pull_request_review_request", "action_run_failure", "action_run_success",
 	},
 		(&Webhook{
 			HookEvent: &webhook_module.HookEvent{SendEverything: true},
@@ -157,7 +156,6 @@ func TestCreateWebhook(t *testing.T) {
 			// string(webhook_module.HookEventSchedule),
 			// string(webhook_module.HookEventWorkflowDispatch),
 			string(webhook_module.HookEventActionRunFailure),
-			string(webhook_module.HookEventActionRunRecover),
 			string(webhook_module.HookEventActionRunSuccess),
 		},
 			hookFromDb.EventsArray())

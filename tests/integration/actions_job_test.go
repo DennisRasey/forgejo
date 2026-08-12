@@ -828,13 +828,14 @@ func TestActionsRunsEvaluateIf(t *testing.T) {
 			notifier := notify_service.NewMockNotifier(t)
 			notifier.On("Run").Return()
 			notifier.On("PushCommits", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
-			notifier.On("ActionRunNowDone",
+			notifier.On(
+				"ActionRunNowDone",
 				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
 				mock.MatchedBy(func(run *actions_model.ActionRun) bool {
 					return run.Title == ".forgejo/workflows/serverside_if.yml" && run.Status == actions_model.StatusSkipped
 				}),
 				actions_model.StatusWaiting, // priorStatus
-				mock.MatchedBy(func(lastRun *actions_model.ActionRun) bool { return lastRun == nil })).
+			).
 				Return()
 			notify_service.RegisterNotifier(notifier)
 			defer notify_service.UnregisterNotifier(notifier)

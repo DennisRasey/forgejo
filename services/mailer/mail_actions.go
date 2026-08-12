@@ -1,5 +1,6 @@
 // Copyright 2025 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-or-later
+
 package mailer
 
 import (
@@ -17,7 +18,7 @@ const (
 )
 
 var MailActionRun = mailActionRun // make it mockable
-func mailActionRun(run *actions_model.ActionRun, priorStatus actions_model.Status, lastRun *actions_model.ActionRun) error {
+func mailActionRun(run *actions_model.ActionRun, priorStatus actions_model.Status) error {
 	if setting.MailService == nil {
 		// No mail service configured
 		return nil
@@ -40,10 +41,10 @@ func mailActionRun(run *actions_model.ActionRun, priorStatus actions_model.Statu
 		return nil
 	}
 
-	return sendMailActionRun(user, run, priorStatus, lastRun)
+	return sendMailActionRun(user, run, priorStatus)
 }
 
-func sendMailActionRun(to *user_model.User, run *actions_model.ActionRun, priorStatus actions_model.Status, lastRun *actions_model.ActionRun) error {
+func sendMailActionRun(to *user_model.User, run *actions_model.ActionRun, priorStatus actions_model.Status) error {
 	var (
 		locale  = translation.NewLocale(to.Language)
 		content bytes.Buffer
@@ -69,7 +70,7 @@ func sendMailActionRun(to *user_model.User, run *actions_model.ActionRun, priorS
 		"RepoFullName":    run.Repo.FullName(),
 		"Run":             run,
 		"TriggerUserLink": run.TriggerUser.HTMLURL(),
-		"LastRun":         lastRun,
+		"LastRun":         nil,
 		"PriorStatus":     priorStatus,
 		"CommitSHA":       commitSHA,
 		"IsSuccess":       run.Status.IsSuccess(),

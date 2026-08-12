@@ -370,15 +370,15 @@ jobs:
 type callArgsActionRunNowDone struct {
 	run         *actions_model.ActionRun
 	priorStatus actions_model.Status
-	lastRun     *actions_model.ActionRun
 }
+
 type mockNotifier struct {
 	notify_service.NullNotifier
 	calls []*callArgsActionRunNowDone
 }
 
-func (m *mockNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status, lastRun *actions_model.ActionRun) {
-	m.calls = append(m.calls, &callArgsActionRunNowDone{run, priorStatus, lastRun})
+func (m *mockNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
+	m.calls = append(m.calls, &callArgsActionRunNowDone{run, priorStatus})
 }
 
 func Test_prepareJobForEmitting(t *testing.T) {
@@ -724,7 +724,6 @@ func Test_prepareJobForEmitting(t *testing.T) {
 						require.Len(t, notifier.calls, 1)
 						call := notifier.calls[0]
 						assert.Equal(t, actionRun.ID, call.run.ID)
-						assert.Nil(t, call.lastRun)
 						assert.Equal(t, actions_model.StatusRunning, call.priorStatus)
 						assert.Equal(t, tt.actionRunStatusChange, call.run.Status)
 					}

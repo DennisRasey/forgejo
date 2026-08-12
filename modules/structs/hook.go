@@ -508,9 +508,6 @@ type ActionPayload struct {
 	// the status of this run before it completed
 	// this must be a not done status
 	PriorStatus string `json:"prior_status"`
-	// the last run for the same workflow
-	// could be nil when Run is the first for it's workflow
-	LastRun *ActionRun `json:"last_run,omitempty"`
 }
 
 // JSONPayload return payload information

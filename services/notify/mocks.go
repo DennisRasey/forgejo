@@ -47,8 +47,8 @@ func (_m *MockNotifier) EXPECT() *MockNotifier_Expecter {
 }
 
 // ActionRunNowDone provides a mock function for the type MockNotifier
-func (_mock *MockNotifier) ActionRunNowDone(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status, lastRun *actions.ActionRun) {
-	_mock.Called(ctx, run, priorStatus, lastRun)
+func (_mock *MockNotifier) ActionRunNowDone(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status) {
+	_mock.Called(ctx, run, priorStatus)
 	return
 }
 

@@ -113,7 +113,6 @@ func TestHookEventInclusion(t *testing.T) {
 			string(webhook_module.HookEventRelease),
 			string(webhook_module.HookEventPackage),
 			string(webhook_module.HookEventActionRunFailure),
-			string(webhook_module.HookEventActionRunRecover),
 			string(webhook_module.HookEventActionRunSuccess),
 		},
 	}

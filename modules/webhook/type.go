@@ -71,8 +71,6 @@ func (h HookEventType) Event() string {
 		return "release"
 	case HookEventActionRunFailure:
 		return "action_run_failure"
-	case HookEventActionRunRecover:
-		return "action_run_recover"
 	case HookEventActionRunSuccess:
 		return "action_run_success"
 	}

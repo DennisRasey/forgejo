@@ -5,7 +5,6 @@ package actions
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	actions_model "forgejo.org/models/actions"
@@ -22,7 +21,6 @@ import (
 	"forgejo.org/modules/repository"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
-	"forgejo.org/modules/util"
 	webhook_module "forgejo.org/modules/webhook"
 	"forgejo.org/services/convert"
 	notify_service "forgejo.org/services/notify"
@@ -839,20 +837,10 @@ func (n *actionsNotifier) MigrateRepository(ctx context.Context, doer, u *user_m
 // the ActionRun of the same workflow that finished before priorRun/updatedRun.
 func sendActionRunNowDoneNotificationIfNeeded(ctx context.Context, priorRun, updatedRun *actions_model.ActionRun) error {
 	if !priorRun.Status.IsDone() && updatedRun.Status.IsDone() {
-		lastRun, err := actions_model.GetRunBefore(ctx, updatedRun)
-		if err != nil && !errors.Is(err, util.ErrNotExist) {
+		if err := updatedRun.LoadAttributes(ctx); err != nil {
 			return err
 		}
-		// when no last run was found lastRun is nil
-		if lastRun != nil {
-			if err = lastRun.LoadAttributes(ctx); err != nil {
-				return err
-			}
-		}
-		if err = updatedRun.LoadAttributes(ctx); err != nil {
-			return err
-		}
-		notify_service.ActionRunNowDone(ctx, updatedRun, priorRun.Status, lastRun)
+		notify_service.ActionRunNowDone(ctx, updatedRun, priorRun.Status)
 	}
 	return nil
 }
