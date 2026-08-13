@@ -153,7 +153,8 @@ func TestAfterTx(t *testing.T) {
 
 			sut := func(ctx context.Context) {
 				_, err = db.GetEngine(ctx).Insert(
-					&issues_model.PullRequest{IssueID: 2, BaseRepoID: 1, HeadRepoID: 1000})
+					&issues_model.PullRequest{IssueID: 2, BaseRepoID: 1, HeadRepoID: 1000},
+				)
 				require.NoError(t, err)
 				db.AfterTx(ctx, func() {
 					countAfter, err = db.GetEngine(ctx).Count(&issues_model.PullRequest{})

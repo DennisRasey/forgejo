@@ -38,7 +38,7 @@ func StoreFollowingRepos(ctx context.Context, localRepoID int64, followingRepoLi
 	}
 
 	// Begin transaction
-	dbCtx, committer, err := db.TxContext((ctx))
+	dbCtx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err
 	}

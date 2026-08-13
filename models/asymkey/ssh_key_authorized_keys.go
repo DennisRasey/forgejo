@@ -146,7 +146,7 @@ func InspectPublicKeys(ctx context.Context) ([]InspectionFinding, error) {
 	// Create a set of all the expected output in the `authorized_keys` file.
 	expectedKeys := make(container.Set[string])
 	if err := db.GetEngine(ctx).Where("type != ?", KeyTypePrincipal).Iterate(new(PublicKey), func(idx int, bean any) (err error) {
-		keyWithComment := (bean.(*PublicKey)).AuthorizedString()
+		keyWithComment := bean.(*PublicKey).AuthorizedString()
 		if !strings.HasPrefix(keyWithComment, tplCommentPrefix) {
 			return fmt.Errorf("unexpected AuthorizedString")
 		}
@@ -267,7 +267,7 @@ func RewriteAllPublicKeys(ctx context.Context) error {
 // regeneratePublicKeys regenerates the authorized_keys file
 func regeneratePublicKeys(ctx context.Context, t io.StringWriter) error {
 	if err := db.GetEngine(ctx).Where("type != ?", KeyTypePrincipal).Iterate(new(PublicKey), func(idx int, bean any) (err error) {
-		_, err = t.WriteString((bean.(*PublicKey)).AuthorizedString())
+		_, err = t.WriteString(bean.(*PublicKey).AuthorizedString())
 		return err
 	}); err != nil {
 		return err

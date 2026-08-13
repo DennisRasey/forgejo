@@ -466,14 +466,16 @@ func Migrate(x *xorm.Engine) error {
 	} else if len(versionRecords) > 1 {
 		return fmt.Errorf(
 			"corrupt migrations: Forgejo database has unexpected records in the table `version`; a single record is expected w/ ID=1, but %d records were found",
-			len(versionRecords))
+			len(versionRecords),
+		)
 	} else {
 		previousVersion = versionRecords[0].Version
 	}
 	currentVersion := versionRecords[0]
 	if currentVersion.ID != 1 {
 		return fmt.Errorf(
-			"corrupt migrations: Forgejo database has corrupted records in the table `version`; a single record with ID=1 is expected, but a record with ID=%d was found instead", currentVersion.ID)
+			"corrupt migrations: Forgejo database has corrupted records in the table `version`; a single record with ID=1 is expected, but a record with ID=%d was found instead", currentVersion.ID,
+		)
 	}
 
 	curDBVer := currentVersion.Version

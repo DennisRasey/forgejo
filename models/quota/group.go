@@ -343,7 +343,8 @@ func GetGroupsForUser(ctx context.Context, userID int64) (GroupList, error) {
 				From("quota_group_mapping").
 				Where(builder.And(
 					builder.Eq{"kind": KindUser},
-					builder.Eq{"mapped_id": userID}),
+					builder.Eq{"mapped_id": userID},
+				),
 				))).
 		Find(&groups)
 	if err != nil {

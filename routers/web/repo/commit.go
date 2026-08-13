@@ -255,7 +255,8 @@ func FileHistory(ctx *context.Context) {
 			Revision: ctx.Repo.RefName,
 			File:     fileName,
 			Page:     page,
-		})
+		},
+	)
 	if err != nil {
 		ctx.ServerError("CommitsByFileAndRange", err)
 		return

@@ -605,7 +605,8 @@ func activityQueryCondition(ctx context.Context, opts GetFeedsOptions) (builder.
 	} else if !opts.Actor.IsAdmin {
 		uidCond := builder.Select("`user`.id").From("`user`").Where(
 			builder.Eq{"keep_activity_private": false}.
-				And(builder.In("visibility", structs.VisibleTypePublic, structs.VisibleTypeLimited))).
+				And(builder.In("visibility", structs.VisibleTypePublic, structs.VisibleTypeLimited)),
+		).
 			Or(builder.Eq{"id": opts.Actor.ID})
 
 		if opts.RequestedUser != nil {
@@ -853,8 +854,9 @@ func DeleteIssueActions(ctx context.Context, repoID, issueID, issueIndex int64) 
 	_, err := e.Where("repo_id = ?", repoID).
 		In("op_type", ActionCreateIssue, ActionCreatePullRequest).
 		Where(builder.Or(
-			builder.Like{"content", strconv.FormatInt(issueIndex, 10) + "|%"},            // "IssueIndex|content..."
-			builder.Like{"content", "[\"" + strconv.FormatInt(issueIndex, 10) + "\"%"})). // JSON, ["IssueIndex"...
+			builder.Like{"content", strconv.FormatInt(issueIndex, 10) + "|%"}, // "IssueIndex|content..."
+			builder.Like{"content", "[\"" + strconv.FormatInt(issueIndex, 10) + "\"%"},
+		)). // JSON, ["IssueIndex"...
 		Delete(&Action{})
 	return err
 }

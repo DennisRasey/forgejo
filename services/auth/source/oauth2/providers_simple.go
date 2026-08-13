@@ -55,13 +55,15 @@ func init() {
 		NewSimpleProvider("bitbucket", "Bitbucket", []string{"account"},
 			func(clientKey, secret, callbackURL string, scopes ...string) goth.Provider {
 				return bitbucket.New(clientKey, secret, callbackURL, scopes...)
-			}))
+			}),
+	)
 
 	RegisterGothProvider(
 		NewSimpleProvider("dropbox", "Dropbox", nil,
 			func(clientKey, secret, callbackURL string, scopes ...string) goth.Provider {
 				return dropbox.New(clientKey, secret, callbackURL, scopes...)
-			}))
+			}),
+	)
 
 	RegisterGothProvider(NewSimpleProvider("facebook", "Facebook", nil,
 		func(clientKey, secret, callbackURL string, scopes ...string) goth.Provider {

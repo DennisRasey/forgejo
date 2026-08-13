@@ -127,7 +127,8 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 						RefFullName: git.RefNameFromTag(tagName),
 						OldCommitID: opts.OldCommitID,
 						NewCommitID: objectFormat.EmptyObjectID().String(),
-					}, repo_module.NewPushCommits())
+					}, repo_module.NewPushCommits(),
+				)
 
 				delTags = append(delTags, tagName)
 				notify_service.DeleteRef(ctx, pusher, repo, opts.RefFullName)
@@ -149,7 +150,8 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 							RefFullName: opts.RefFullName,
 							OldCommitID: objectFormat.EmptyObjectID().String(),
 							NewCommitID: opts.NewCommitID,
-						}, commits)
+						}, commits,
+					)
 
 					addTags = append(addTags, tagName)
 					notify_service.CreateRef(ctx, pusher, repo, opts.RefFullName, opts.NewCommitID)

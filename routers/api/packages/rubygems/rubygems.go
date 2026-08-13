@@ -102,7 +102,8 @@ func enumeratePackages(ctx *context.Context, filename string, pvs []*packages_mo
 func ServePackageInfo(ctx *context.Context) {
 	packageName := ctx.Params("package")
 	versions, err := packages_model.GetVersionsByPackageName(
-		ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems, packageName)
+		ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems, packageName,
+	)
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return
@@ -125,7 +126,8 @@ func ServePackageInfo(ctx *context.Context) {
 // See also https://guides.rubygems.org/rubygems-org-compact-index-api/.
 func ServeVersionsFile(ctx *context.Context) {
 	packages, err := packages_model.GetPackagesByType(
-		ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems)
+		ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems,
+	)
 	if err != nil {
 		apiError(ctx, http.StatusInternalServerError, err)
 		return
@@ -134,7 +136,8 @@ func ServeVersionsFile(ctx *context.Context) {
 	result.WriteString(Sep)
 	for _, pack := range packages {
 		versions, err := packages_model.GetVersionsByPackageName(
-			ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems, pack.Name)
+			ctx, ctx.Package.Owner.ID, packages_model.TypeRubyGems, pack.Name,
+		)
 		if err != nil {
 			apiError(ctx, http.StatusInternalServerError, err)
 			return

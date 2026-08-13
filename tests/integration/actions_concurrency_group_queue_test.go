@@ -239,7 +239,8 @@ func TestActionConcurrencyGroupQueueFetchNext(t *testing.T) {
 							"  test:\n" +
 							"    runs-on: ubuntu-latest\n" +
 							"    steps:\n" +
-							"      - run: echo deployment goes here\n"),
+							"      - run: echo deployment goes here\n",
+					),
 				},
 			},
 		)

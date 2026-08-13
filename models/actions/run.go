@@ -305,7 +305,9 @@ func RepoNumOpenActions(ctx context.Context, repoID int64) int {
 			Table("action_run").
 			Where(
 				builder.Eq{"repo_id": repoID}.And(
-					builder.In("status", PendingStatuses()))).
+					builder.In("status", PendingStatuses()),
+				),
+			).
 			Count()
 		if err != nil {
 			return 0, fmt.Errorf("query error: %v", err)

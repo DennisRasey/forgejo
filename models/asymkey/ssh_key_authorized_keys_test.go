@@ -65,7 +65,7 @@ func TestInspectPublicKeys(t *testing.T) {
 				// Skip one key
 				return nil
 			}
-			_, err = file.WriteString((bean.(*PublicKey)).AuthorizedString())
+			_, err = file.WriteString(bean.(*PublicKey).AuthorizedString())
 			return err
 		})
 		require.NoError(t, err)

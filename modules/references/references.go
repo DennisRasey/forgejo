@@ -178,7 +178,8 @@ func getGiteaHostName() string {
 				`(\s|^|\(|\[)` +
 					regexp.QuoteMeta(strings.TrimSpace(setting.AppURL)) +
 					`([0-9a-zA-Z-_\.]+/[0-9a-zA-Z-_\.]+)/` +
-					`((?:issues)|(?:pulls))/([0-9]+)(?:\s|$|\)|\]|[:;,.?!]\s|[:;,.?!]$)`)
+					`((?:issues)|(?:pulls))/([0-9]+)(?:\s|$|\)|\]|[:;,.?!]\s|[:;,.?!]$)`,
+			)
 		} else {
 			giteaHost = ""
 			giteaIssuePullPattern = nil

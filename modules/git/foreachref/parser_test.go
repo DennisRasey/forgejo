@@ -59,7 +59,8 @@ func TestParser(t *testing.T) {
 			givenInput: strings.NewReader(
 				"refname:short v0.0.1\x00\x00" + "\n" +
 					"refname:short v0.0.2\x00\x00" + "\n" +
-					"refname:short v0.0.3\x00\x00" + "\n"),
+					"refname:short v0.0.3\x00\x00" + "\n",
+			),
 
 			wantRefs: []map[string]string{
 				{"refname:short": "v0.0.1"},

@@ -131,7 +131,8 @@ func ChangeCollaborationAccessMode(ctx *context.Context) {
 		ctx,
 		ctx.Repo.Repository,
 		ctx.FormInt64("uid"),
-		perm.AccessMode(ctx.FormInt("mode"))); err != nil {
+		perm.AccessMode(ctx.FormInt("mode")),
+	); err != nil {
 		log.Error("ChangeCollaborationAccessMode: %v", err)
 	}
 }

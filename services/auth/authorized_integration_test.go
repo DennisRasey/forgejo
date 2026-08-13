@@ -304,7 +304,8 @@ func newEITester(t *testing.T, tweaks ...tweak) *ExternalIssuerTester {
 		&GetAuthorizedIntegrationHTTPClient,
 		func() *http.Client {
 			return eit.testServer.Client()
-		})
+		},
+	)
 
 	return eit
 }

@@ -800,7 +800,8 @@ func newAITester(t *testing.T, setupAI ...func(*auth.AuthorizedIntegration)) *Au
 		&auth_service.GetAuthorizedIntegrationHTTPClient,
 		func() *http.Client {
 			return ait.testServer.Client()
-		})
+		},
+	)
 
 	ait.authorizedIntegration = &auth.AuthorizedIntegration{
 		UserID:   2,

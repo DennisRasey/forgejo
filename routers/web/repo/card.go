@@ -310,7 +310,8 @@ func drawIssueSummaryCard(ctx *context.Context, issue *issues_model.Issue) (*car
 				),
 				state,
 			),
-			color.Gray{128}, 36, card.Top, card.Left)
+			color.Gray{128}, 36, card.Top, card.Left,
+		)
 	} else {
 		_, err = issueStats.DrawText(
 			fmt.Sprintf("%s, %s",
@@ -322,7 +323,8 @@ func drawIssueSummaryCard(ctx *context.Context, issue *issues_model.Issue) (*car
 				),
 				state,
 			),
-			color.Gray{128}, 36, card.Top, card.Left)
+			color.Gray{128}, 36, card.Top, card.Left,
+		)
 	}
 	if err != nil {
 		return nil, err
@@ -336,7 +338,8 @@ func drawIssueSummaryCard(ctx *context.Context, issue *issues_model.Issue) (*car
 			issue.Poster.Name,
 			issue.CreatedUnix.AsTime().Format(time.DateOnly),
 		),
-		color.Gray{128}, 36, card.Middle, card.Left)
+		color.Gray{128}, 36, card.Middle, card.Left,
+	)
 	if err != nil {
 		return nil, err
 	}

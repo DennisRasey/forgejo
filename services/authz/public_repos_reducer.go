@@ -37,7 +37,8 @@ func (*PublicReposAuthorizationReducer) RepoReadAccessFilter() builder.Cond {
 		builder.Eq{"is_private": false},
 		builder.NotIn("owner_id", builder.Select("id").From("`user`").Where(
 			builder.Or(builder.Eq{"visibility": structs.VisibleTypeLimited}, builder.Eq{"visibility": structs.VisibleTypePrivate}),
-		)))
+		)),
+	)
 }
 
 func (*PublicReposAuthorizationReducer) AllowAdminOverride() bool {

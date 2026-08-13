@@ -286,7 +286,8 @@ func TestGetContentFromMailReader(t *testing.T) {
 			"yS9WV1dFR0dHQfh0ptLR0fGjDgiHw8LpdIqGhoYdm9P/RCwWS3qXok+ePOHs2bO8fv06eZ3c39+X\r\n" +
 			"7AZ3MlK2wzMzMwwMDPD48WMAamtr6e/vo7m5uWBCwKYMWFhYoK2tjWAwiEaj4ejRXmw2W8oCqaAO\r\n" +
 			"wO1209XVhSzLHD5s+3F5UGAwGo2bt8OhUEjU1NQUdBDc8s9QMBhkYmIieVVVaLDZbHwHmmIQk3rD\r\n" +
-			"exgAAAAASUVORK5CYII=\r\n")
+			"exgAAAAASUVORK5CYII=\r\n",
+	)
 	require.NoError(t, err)
 	assert.Equal(t, expectedAttachment, content.Attachments[0].Content)
 
@@ -379,7 +380,8 @@ func TestGetContentFromMailReader(t *testing.T) {
 			"yS9WV1dFR0dHQfh0ptLR0fGjDgiHw8LpdIqGhoYdm9P/RCwWS3qXok+ePOHs2bO8fv06eZ3c39+X\r\n" +
 			"7AZ3MlK2wzMzMwwMDPD48WMAamtr6e/vo7m5uWBCwKYMWFhYoK2tjWAwiEaj4ejRXmw2W8oCqaAO\r\n" +
 			"wO1209XVhSzLHD5s+3F5UGAwGo2bt8OhUEjU1NQUdBDc8s9QMBhkYmIieVVVaLDZbHwHmmIQk3rD\r\n" +
-			"exgAAAAASUVORK5CYII=\r\n")
+			"exgAAAAASUVORK5CYII=\r\n",
+	)
 	require.NoError(t, err)
 	assert.Equal(t, expectedAttachment, content.Attachments[0].Content)
 }

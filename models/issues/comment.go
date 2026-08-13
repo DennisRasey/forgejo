@@ -1530,7 +1530,8 @@ func UpdateIssueNumCommentsBuilder(issueID int64) *builder.Builder {
 	subQuery := builder.Select("COUNT(*)").From("`comment`").Where(
 		builder.Eq{"issue_id": issueID}.And(
 			builder.In("`type`", ConversationCountedCommentType()),
-		))
+		),
+	)
 
 	return builder.Update(builder.Eq{"num_comments": subQuery}).
 		From("`issue`").Where(builder.Eq{"id": issueID})

@@ -105,25 +105,31 @@ func TestRender_Images(t *testing.T) {
 
 	test(
 		"!["+title+"]("+url+")",
-		`<p><a href="`+result+`" target="_blank" rel="nofollow noopener"><img src="`+result+`" alt="`+title+`" loading="lazy"/></a></p>`)
+		`<p><a href="`+result+`" target="_blank" rel="nofollow noopener"><img src="`+result+`" alt="`+title+`" loading="lazy"/></a></p>`,
+	)
 
 	test(
 		"[["+title+"|"+url+"]]",
-		`<p><a href="`+result+`" rel="nofollow"><img src="`+result+`" title="`+title+`" alt=""/></a></p>`)
+		`<p><a href="`+result+`" rel="nofollow"><img src="`+result+`" title="`+title+`" alt=""/></a></p>`,
+	)
 	test(
 		"[!["+title+"]("+url+")]("+href+")",
-		`<p><a href="`+href+`" rel="nofollow"><img src="`+result+`" alt="`+title+`"/></a></p>`)
+		`<p><a href="`+href+`" rel="nofollow"><img src="`+result+`" alt="`+title+`"/></a></p>`,
+	)
 
 	test(
 		"!["+title+"]("+url+")",
-		`<p><a href="`+result+`" target="_blank" rel="nofollow noopener"><img src="`+result+`" alt="`+title+`" loading="lazy"/></a></p>`)
+		`<p><a href="`+result+`" target="_blank" rel="nofollow noopener"><img src="`+result+`" alt="`+title+`" loading="lazy"/></a></p>`,
+	)
 
 	test(
 		"[["+title+"|"+url+"]]",
-		`<p><a href="`+result+`" rel="nofollow"><img src="`+result+`" title="`+title+`" alt=""/></a></p>`)
+		`<p><a href="`+result+`" rel="nofollow"><img src="`+result+`" title="`+title+`" alt=""/></a></p>`,
+	)
 	test(
 		"[!["+title+"]("+url+")]("+href+")",
-		`<p><a href="`+href+`" rel="nofollow"><img src="`+result+`" alt="`+title+`"/></a></p>`)
+		`<p><a href="`+href+`" rel="nofollow"><img src="`+result+`" alt="`+title+`"/></a></p>`,
+	)
 }
 
 func TestRender_Buttons(t *testing.T) {
@@ -142,14 +148,17 @@ func TestRender_Buttons(t *testing.T) {
 
 	test(
 		"<button>Test</button>",
-		`<p><button type="button">Test</button></p>`)
+		`<p><button type="button">Test</button></p>`,
+	)
 
 	test(
 		`<button class="toggle-escape-button btn interact-bg">Test</button>`,
-		`<p><button type="button" class="toggle-escape-button btn interact-bg">Test</button></p>`)
+		`<p><button type="button" class="toggle-escape-button btn interact-bg">Test</button></p>`,
+	)
 	test(
 		`<button type="submit" class="toggle-escape-button btn interact-bg">Test</button>`,
-		`<p><button type="button" class="toggle-escape-button btn interact-bg">Test</button></p>`)
+		`<p><button type="button" class="toggle-escape-button btn interact-bg">Test</button></p>`,
+	)
 }
 
 func testAnswers(baseURLContent, baseURLImages string) []string {
@@ -1502,7 +1511,8 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 			"fn main() {}\n"+
 			"```",
 		`<pre class="code-block"><code class="chroma language-rust display"><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span><span class="w">
-</span></code></pre>`)
+</span></code></pre>`,
+	)
 
 	// Comma stripped
 	test(
@@ -1510,7 +1520,8 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 			"fn main() {}\n"+
 			"```",
 		`<pre class="code-block"><code class="chroma language-rust display"><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span><span class="w">
-</span></code></pre>`)
+</span></code></pre>`,
+	)
 
 	// Pandoc stripping
 	// https://pandoc.org/MANUAL.html#extension-fenced_code_attributes
@@ -1523,7 +1534,8 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 		`<pre class="code-block"><code class="chroma language-haskell display"><span class="nf">qsort</span> <span class="kt">[]</span>     <span class="ow">=</span> <span class="kt">[]</span>
 <span class="nf">qsort</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">xs</span><span class="p">)</span> <span class="ow">=</span> <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&lt;</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span> <span class="o">++</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">++</span>
                <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&gt;=</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span>
-</code></pre>`)
+</code></pre>`,
+	)
 
 	// Pandoc language extracting
 	// https://pandoc.org/MANUAL.html#extension-fenced_code_attributes
@@ -1536,7 +1548,8 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 		`<pre class="code-block"><code class="chroma language-haskell display"><span class="nf">qsort</span> <span class="kt">[]</span>     <span class="ow">=</span> <span class="kt">[]</span>
 <span class="nf">qsort</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">xs</span><span class="p">)</span> <span class="ow">=</span> <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&lt;</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span> <span class="o">++</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">++</span>
                <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&gt;=</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span>
-</code></pre>`)
+</code></pre>`,
+	)
 
 	// No language identifier
 	test(
@@ -1544,5 +1557,6 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 			"fn main() {}\n"+
 			"```",
 		`<pre class="code-block"><code class="chroma language-text display">fn main() {}
-</code></pre>`)
+</code></pre>`,
+	)
 }

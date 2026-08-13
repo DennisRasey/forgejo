@@ -97,7 +97,8 @@ jobs:
     if: ${{ always() && needs.job1.result == 'success' }}
     steps:
       - run: echo "will be checked by act_runner"
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{2: actions_model.StatusWaiting},
 		},
@@ -116,7 +117,8 @@ jobs:
     if: ${{ always() && needs.job1.result == 'failure' }}
     steps:
       - run: echo "will be checked by act_runner"
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{2: actions_model.StatusWaiting},
 		},
@@ -134,7 +136,8 @@ jobs:
     needs: job1
     steps:
       - run: echo "should be skipped"
-`)},
+`,
+				)},
 			},
 			// Status goes to waiting for `prepareJobForEmitting` to evaluate `if`, even in default condition, so one
 			// codepath always handles this consistently.
@@ -155,7 +158,8 @@ jobs:
     uses: ./.forgejo/workflows/reusable.yml
 __metadata:
   workflow_call_id: b5a9f46f1f2513d7777fde50b169d323a6519e349cc175484c947ac315a209ed
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{
 				3: actions_model.StatusSuccess,
@@ -176,7 +180,8 @@ jobs:
     uses: ./.forgejo/workflows/reusable.yml
 __metadata:
   workflow_call_id: b5a9f46f1f2513d7777fde50b169d323a6519e349cc175484c947ac315a209ed
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{
 				3: actions_model.StatusSuccess,
@@ -197,7 +202,8 @@ jobs:
     uses: ./.forgejo/workflows/reusable.yml
 __metadata:
   workflow_call_id: b5a9f46f1f2513d7777fde50b169d323a6519e349cc175484c947ac315a209ed
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{
 				3: actions_model.StatusSkipped,
@@ -223,7 +229,8 @@ incomplete_with_needs:
   output: something
 __metadata:
   workflow_call_id: b5a9f46f1f2513d7777fde50b169d323a6519e349cc175484c947ac315a209ed
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{
 				2: actions_model.StatusWaiting,
@@ -249,7 +256,8 @@ incomplete_matrix_needs:
   output: something
 __metadata:
   workflow_call_id: b5a9f46f1f2513d7777fde50b169d323a6519e349cc175484c947ac315a209ed
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{
 				2: actions_model.StatusWaiting,
@@ -270,7 +278,8 @@ jobs:
     uses: ./.forgejo/workflows/reusable.yml
 __metadata:
   workflow_call_id: b5a9f46f1f2513d7777fde50b169d323a6519e349cc175484c947ac315a209ed
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{
 				3: actions_model.StatusFailure,
@@ -291,7 +300,8 @@ jobs:
     uses: ./.forgejo/workflows/reusable.yml
 __metadata:
   workflow_call_id: b5a9f46f1f2513d7777fde50b169d323a6519e349cc175484c947ac315a209ed
-`)},
+`,
+				)},
 			},
 			want: map[int64]actions_model.Status{
 				3: actions_model.StatusFailure,

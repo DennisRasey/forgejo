@@ -297,7 +297,9 @@ func getConcurrencyCondition() builder.Cond {
 			builder.Eq{"inner_run.status": StatusRunning}.Or(
 				// Blocking runs are pending execution, & are younger than the outer_run
 				builder.In("inner_run.status", PendingStatuses()).
-					And(builder.Lt{"inner_run.`index`": builder.Expr("outer_run.`index`")})))
+					And(builder.Lt{"inner_run.`index`": builder.Expr("outer_run.`index`")}),
+			),
+		)
 
 	// OK to pick if there are no blocking runs
 	concurrencyCond = concurrencyCond.Or(builder.NotExists(subQuery))

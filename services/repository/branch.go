@@ -473,7 +473,8 @@ func DeleteBranch(ctx context.Context, doer *user_model.User, repo *repo_model.R
 			PusherName:   doer.Name,
 			RepoUserName: repo.OwnerName,
 			RepoName:     repo.Name,
-		}); err != nil {
+		},
+	); err != nil {
 		log.Error("Update: %v", err)
 	}
 

@@ -21,4 +21,4 @@ type sourceInterface interface {
 	auth_model.SourceSettable
 }
 
-var _ (sourceInterface) = &smtp.Source{}
+var _ sourceInterface = &smtp.Source{}

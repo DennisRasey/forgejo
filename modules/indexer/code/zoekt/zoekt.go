@@ -148,7 +148,8 @@ func (b *Indexer) addUpdate(ctx context.Context, builder *index.Builder, batchWr
 			Content:  charset.ToUTF8DropErrors(fileContents, charset.ConvertOpts{}),
 			Branches: branches,
 			Language: detectLanguage(update.Filename, fileContents),
-		})
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("error adding document with name %s: %w", update.Filename, err)
 	}

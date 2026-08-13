@@ -315,11 +315,13 @@ func teamUnitsRepoCond(id string, userID, orgID, teamID int64, units ...unit.Typ
 								builder.Eq{
 									"org_id":     orgID,
 									"lower_name": strings.ToLower(organization.OwnerTeamName),
-								}),
+								},
+							),
 							"uid": userID,
 						}),
 					),
-				)).And(
+				),
+			).And(
 				builder.In(
 					"team_id", builder.Select("team_id").From("team_unit").Where(
 						builder.Eq{
@@ -350,7 +352,8 @@ func issuePullAccessibleRepoCond(repoIDstr string, userID int64, org *organizati
 					repo_model.UserOrgPublicUnitRepoCond(userID, org.ID),                // user org public non-member repos, TODO: check repo has issues
 					builder.And(
 						builder.In("issue.repo_id", builder.Select("id").From("repository").Where(builder.Eq{"owner_id": org.ID})),
-						repo_model.UserAccessRepoCond(repoIDstr, userID)), // user can access org repo in a unit independent way
+						repo_model.UserAccessRepoCond(repoIDstr, userID),
+					), // user can access org repo in a unit independent way
 				),
 			)
 		}

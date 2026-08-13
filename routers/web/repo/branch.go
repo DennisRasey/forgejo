@@ -157,7 +157,8 @@ func RestoreBranchPost(ctx *context.Context) {
 			PusherName:   ctx.Doer.Name,
 			RepoUserName: ctx.Repo.Owner.Name,
 			RepoName:     ctx.Repo.Repository.Name,
-		}); err != nil {
+		},
+	); err != nil {
 		log.Error("RestoreBranch: Update: %v", err)
 	}
 

@@ -111,9 +111,11 @@ func VerifyGPGKey(ctx context.Context, ownerID int64, keyID, token, signature st
 func VerificationToken(user *user_model.User, minutes int) string {
 	return base.EncodeSha256(
 		time.Now().Truncate(1*time.Minute).Add(time.Duration(minutes)*time.Minute).Format(
-			time.RFC1123Z) + ":" +
+			time.RFC1123Z,
+		) + ":" +
 			user.CreatedUnix.Format(time.RFC1123Z) + ":" +
 			user.Name + ":" +
 			user.Email + ":" +
-			strconv.FormatInt(user.ID, 10))
+			strconv.FormatInt(user.ID, 10),
+	)
 }

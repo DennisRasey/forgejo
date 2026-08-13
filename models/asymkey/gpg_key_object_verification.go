@@ -137,7 +137,8 @@ func ParseObjectWithSignature(ctx context.Context, c *GitObject) *ObjectVerifica
 		committer,
 		keyID,
 		setting.AppName,
-		""); commitVerification != nil {
+		"",
+	); commitVerification != nil {
 		if commitVerification.Reason == BadSignature {
 			defaultReason = BadSignature
 		} else {

@@ -29,7 +29,8 @@ var refNamePatternInvalid = regexp.MustCompile(
 		`(?://)|` + // no "//" anywhere
 		`(?:@{)|` + // no "@{"
 		`(?:[/.]$)|` + // no terminal '/' or '.'
-		`(?:^@$)`) // Not "@"
+		`(?:^@$)`,
+) // Not "@"
 
 // IsValidRefPattern ensures that the provided string could be a valid reference
 func IsValidRefPattern(name string) bool {

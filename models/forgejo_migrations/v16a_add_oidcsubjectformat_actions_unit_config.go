@@ -64,5 +64,6 @@ func setOIDCSubjectFormatLegacy15(x *xorm.Engine) error {
 				return fmt.Errorf("UPDATE expected to affect 1 row, but was %d", r)
 			}
 			return nil
-		})
+		},
+	)
 }

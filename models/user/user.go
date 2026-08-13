@@ -1366,7 +1366,8 @@ func isUserVisibleToViewerCond(viewer *User) builder.Cond {
 			builder.
 				Select("`team_user`.org_id").
 				From("team_user").
-				Where(builder.Eq{"`team_user`.uid": viewer.ID})))
+				Where(builder.Eq{"`team_user`.uid": viewer.ID})),
+	)
 }
 
 // IsUserVisibleToViewer check if viewer is able to see user profile
@@ -1404,7 +1405,10 @@ func IsUserVisibleToViewer(ctx context.Context, u, viewer *User) bool {
 						builder.In("org_id",
 							builder.Select("org_id").
 								From("team_user", "t2").
-								Where(builder.Eq{"uid": u.ID}))))).
+								Where(builder.Eq{"uid": u.ID})),
+					),
+				),
+			).
 			Count()
 		if err != nil {
 			return false

@@ -236,7 +236,8 @@ func GetIndexShortStat(ctx context.Context, repoPath, commitID string) (numFiles
 }
 
 var shortStatFormat = regexp.MustCompile(
-	`\s*(\d+) files? changed(?:, (\d+) insertions?\(\+\))?(?:, (\d+) deletions?\(-\))?`)
+	`\s*(\d+) files? changed(?:, (\d+) insertions?\(\+\))?(?:, (\d+) deletions?\(-\))?`,
+)
 
 var patchCommits = regexp.MustCompile(`^From\s(\w+)\s`)
 

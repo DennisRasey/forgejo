@@ -125,7 +125,7 @@ func (parser *inlineParser) Parse(parent ast.Node, block text.Reader, pc parser.
 	block.Advance(ender - opener + len(parser.end))
 
 	if parser == defaultDualDollarParser {
-		trimBlock(&(node.(*InlineBlock)).Inline, block)
+		trimBlock(&node.(*InlineBlock).Inline, block)
 	} else {
 		trimBlock(node.(*Inline), block)
 	}

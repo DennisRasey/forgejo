@@ -279,7 +279,8 @@ func CreateRepositoryDirectly(ctx context.Context, doer, u *user_model.User, opt
 			if err2 := util.RemoveAll(repoPath); err2 != nil {
 				log.Error("initRepository: %v", err)
 				return fmt.Errorf(
-					"delete repo directory %s/%s failed(2): %v", u.Name, repo.Name, err2)
+					"delete repo directory %s/%s failed(2): %v", u.Name, repo.Name, err2,
+				)
 			}
 			return fmt.Errorf("initRepository: %w", err)
 		}

@@ -359,7 +359,8 @@ func generateKeypair(owner string) (string, string, error) {
 		"Arch Package signature only",
 		fmt.Sprintf("%s@noreply.%s", owner, setting.Packages.RegistryHost), &packet.Config{
 			RSABits: 4096,
-		})
+		},
+	)
 	if err != nil {
 		return "", "", err
 	}

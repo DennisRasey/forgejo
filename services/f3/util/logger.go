@@ -79,8 +79,11 @@ func (o *f3Logger) Trace(message string, args ...any) {
 func (o *f3Logger) Debug(message string, args ...any) {
 	o.l.Log(1, forgejo_log.DEBUG, message, args...)
 }
+
 func (o *f3Logger) Info(message string, args ...any) { o.l.Log(1, forgejo_log.INFO, message, args...) }
+
 func (o *f3Logger) Warn(message string, args ...any) { o.l.Log(1, forgejo_log.WARN, message, args...) }
+
 func (o *f3Logger) Error(message string, args ...any) {
 	o.l.Log(1, forgejo_log.ERROR, message, args...)
 }

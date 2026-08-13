@@ -524,7 +524,8 @@ func GetReviewByIssueIDUserIDAndTypes(ctx context.Context, issueID, userID int64
 
 	has, err := db.GetEngine(ctx).Where(
 		builder.In("type", types).
-			And(builder.Eq{"issue_id": issueID, "reviewer_id": userID, "original_author_id": 0})).
+			And(builder.Eq{"issue_id": issueID, "reviewer_id": userID, "original_author_id": 0}),
+	).
 		Desc("id").
 		Get(review)
 	if err != nil {

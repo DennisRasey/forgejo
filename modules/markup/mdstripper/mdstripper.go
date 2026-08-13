@@ -47,7 +47,8 @@ func (r *stripRenderer) Render(w io.Writer, source []byte, doc ast.Node) error {
 				r.processString(
 					w,
 					v.Value(source),
-					coalesce)
+					coalesce,
+				)
 				if v.SoftLineBreak() {
 					r.doubleSpace(w)
 				}

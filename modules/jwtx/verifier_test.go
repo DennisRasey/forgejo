@@ -75,7 +75,7 @@ func genVerificationKey(t *testing.T, skey SigningKey) VerificationKey {
 	require.NoError(t, err)
 	assert.NotNil(t, vkey)
 	assert.Nil(t, vcfg)
-	return (vkey)
+	return vkey
 }
 
 // generate signing keys and add them all to the privKeyVerifier

@@ -182,7 +182,8 @@ func IterateByKeyset[Bean any](ctx context.Context, cond builder.Cond, orderFiel
 			}
 			if lastKey != nil {
 				sess = sess.Where(
-					builder.Expr(fmt.Sprintf("%s > %s", rowValue.String(), rowParameterValue.String()), lastKey...))
+					builder.Expr(fmt.Sprintf("%s > %s", rowValue.String(), rowParameterValue.String()), lastKey...),
+				)
 			}
 
 			if err := sess.Limit(batchSize).Find(&beans); err != nil {

@@ -99,7 +99,8 @@ func PrepareTestEnv(t *testing.T, skip int, syncModels ...any) (*xorm.Engine, fu
 			unittest.FixturesOptions{
 				Dir:              fixturesDir,
 				OnlyAffectModels: syncModels,
-			}, x); err != nil {
+			}, x,
+		); err != nil {
 			t.Errorf("error whilst initializing fixtures from %s: %v", fixturesDir, err)
 			return x, deferFn
 		}

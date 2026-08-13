@@ -245,7 +245,8 @@ func GetAllCommits(ctx *context.APIContext) {
 				Not:      not,
 				Page:     listOptions.Page,
 				PageSize: listOptions.PageSize,
-			})
+			},
+		)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, "CommitsByFileAndRange", err)
 			return

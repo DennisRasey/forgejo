@@ -23,7 +23,8 @@ func syncForeignKeyWithDelete(x *xorm.Engine, bean any, cond builder.Cond) error
 		tableName := x.TableName(bean)
 		log.Warn(
 			"Foreign key creation on table %s required deleting %d records with inconsistent foreign key values.",
-			tableName, rowsDeleted)
+			tableName, rowsDeleted,
+		)
 	}
 
 	// Sync() drops indexes by default, which will cause unnecessary rebuilding of indexes when syncForeignKeyWithDelete

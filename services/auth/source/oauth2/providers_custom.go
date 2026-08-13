@@ -64,7 +64,8 @@ func init() {
 				scopes = append(scopes, "user:email")
 			}
 			return github.NewCustomisedURL(clientID, secret, callbackURL, custom.AuthURL, custom.TokenURL, custom.ProfileURL, custom.EmailURL, scopes...), nil
-		}))
+		},
+	))
 
 	RegisterGothProvider(NewCustomProvider(
 		"gitlab", "GitLab", &CustomURLSettings{
@@ -74,7 +75,8 @@ func init() {
 		}, func(clientID, secret, callbackURL string, custom *CustomURLMapping, scopes []string) (goth.Provider, error) {
 			scopes = append(scopes, "read_user")
 			return gitlab.NewCustomisedURL(clientID, secret, callbackURL, custom.AuthURL, custom.TokenURL, custom.ProfileURL, scopes...), nil
-		}))
+		},
+	))
 
 	RegisterGothProvider(NewCustomProvider(
 		"gitea", "Gitea", &CustomURLSettings{
@@ -84,7 +86,8 @@ func init() {
 		},
 		func(clientID, secret, callbackURL string, custom *CustomURLMapping, scopes []string) (goth.Provider, error) {
 			return gitea.NewCustomisedURL(clientID, secret, callbackURL, custom.AuthURL, custom.TokenURL, custom.ProfileURL, scopes...), nil
-		}))
+		},
+	))
 
 	RegisterGothProvider(NewCustomProvider(
 		"nextcloud", "Nextcloud", &CustomURLSettings{
@@ -94,7 +97,8 @@ func init() {
 		},
 		func(clientID, secret, callbackURL string, custom *CustomURLMapping, scopes []string) (goth.Provider, error) {
 			return nextcloud.NewCustomisedURL(clientID, secret, callbackURL, custom.AuthURL, custom.TokenURL, custom.ProfileURL, scopes...), nil
-		}))
+		},
+	))
 
 	RegisterGothProvider(NewCustomProvider(
 		"mastodon", "Mastodon", &CustomURLSettings{
@@ -102,7 +106,8 @@ func init() {
 		},
 		func(clientID, secret, callbackURL string, custom *CustomURLMapping, scopes []string) (goth.Provider, error) {
 			return mastodon.NewCustomisedURL(clientID, secret, callbackURL, custom.AuthURL, scopes...), nil
-		}))
+		},
+	))
 
 	RegisterGothProvider(NewCustomProvider(
 		"azureadv2", "Azure AD v2", &CustomURLSettings{

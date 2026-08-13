@@ -198,7 +198,7 @@ func (kase *testCase) doTest(t *testing.T) {
 	}
 
 	for c := 0; c < len(after); c++ {
-		l := (after)[c]
+		l := after[c]
 		r := issue.Comments[c]
 
 		// Ignore some inner data of the aggregator to facilitate testing
@@ -222,7 +222,7 @@ func (kase *testCase) doTest(t *testing.T) {
 			l.AssigneeTeamID = 0
 		}
 
-		assert.Equal(t, (after)[c], issue.Comments[c],
+		assert.Equal(t, after[c], issue.Comments[c],
 			"Comment %v is not equal", c,
 		)
 	}

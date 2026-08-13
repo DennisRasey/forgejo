@@ -343,7 +343,8 @@ func updateRepositoryProjectCount(ctx context.Context, repoID int64) error {
 			"`num_projects`": builder.Select("count(*)").From("`project`").
 				Where(builder.Eq{"`project`.`repo_id`": repoID}.
 					And(builder.Eq{"`project`.`type`": TypeRepository})),
-		}).From("`repository`").Where(builder.Eq{"id": repoID})); err != nil {
+		},
+	).From("`repository`").Where(builder.Eq{"id": repoID})); err != nil {
 		return err
 	}
 
@@ -353,7 +354,8 @@ func updateRepositoryProjectCount(ctx context.Context, repoID int64) error {
 				Where(builder.Eq{"`project`.`repo_id`": repoID}.
 					And(builder.Eq{"`project`.`type`": TypeRepository}).
 					And(builder.Eq{"`project`.`is_closed`": true})),
-		}).From("`repository`").Where(builder.Eq{"id": repoID})); err != nil {
+		},
+	).From("`repository`").Where(builder.Eq{"id": repoID})); err != nil {
 		return err
 	}
 	return nil

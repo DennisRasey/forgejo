@@ -277,7 +277,8 @@ func (c *compareDump) assertEqualSlices(before, after reflect.Value, fields comp
 			_ = c.assertEqualValues(
 				reflect.Indirect(before.Index(i).Elem()),
 				reflect.Indirect(after.Index(i).Elem()),
-				fields)
+				fields,
+			)
 		}
 	}
 	return after.Interface()

@@ -128,28 +128,35 @@ func TestRender_CrossReferences(t *testing.T) {
 
 	test(
 		"gogits/gogs#12345",
-		`<p><a href="`+util.URLJoin(markup.TestAppURL, "gogits", "gogs", "issues", "12345")+`" class="ref-issue" rel="nofollow">gogits/gogs#12345</a></p>`)
+		`<p><a href="`+util.URLJoin(markup.TestAppURL, "gogits", "gogs", "issues", "12345")+`" class="ref-issue" rel="nofollow">gogits/gogs#12345</a></p>`,
+	)
 	test(
 		"go-gitea/gitea#12345",
-		`<p><a href="`+util.URLJoin(markup.TestAppURL, "go-gitea", "gitea", "issues", "12345")+`" class="ref-issue" rel="nofollow">go-gitea/gitea#12345</a></p>`)
+		`<p><a href="`+util.URLJoin(markup.TestAppURL, "go-gitea", "gitea", "issues", "12345")+`" class="ref-issue" rel="nofollow">go-gitea/gitea#12345</a></p>`,
+	)
 	test(
 		"/home/gitea/go-gitea/gitea#12345",
-		`<p>/home/gitea/go-gitea/gitea#12345</p>`)
+		`<p>/home/gitea/go-gitea/gitea#12345</p>`,
+	)
 	test(
 		util.URLJoin(markup.TestAppURL, "gogitea", "gitea", "issues", "12345"),
-		`<p><a href="`+util.URLJoin(markup.TestAppURL, "gogitea", "gitea", "issues", "12345")+`" class="ref-issue" rel="nofollow">gogitea/gitea#12345</a></p>`)
+		`<p><a href="`+util.URLJoin(markup.TestAppURL, "gogitea", "gitea", "issues", "12345")+`" class="ref-issue" rel="nofollow">gogitea/gitea#12345</a></p>`,
+	)
 	test(
 		util.URLJoin(markup.TestAppURL, "go-gitea", "gitea", "issues", "12345"),
-		`<p><a href="`+util.URLJoin(markup.TestAppURL, "go-gitea", "gitea", "issues", "12345")+`" class="ref-issue" rel="nofollow">go-gitea/gitea#12345</a></p>`)
+		`<p><a href="`+util.URLJoin(markup.TestAppURL, "go-gitea", "gitea", "issues", "12345")+`" class="ref-issue" rel="nofollow">go-gitea/gitea#12345</a></p>`,
+	)
 	test(
 		util.URLJoin(markup.TestAppURL, "gogitea", "some-repo-name", "issues", "12345"),
-		`<p><a href="`+util.URLJoin(markup.TestAppURL, "gogitea", "some-repo-name", "issues", "12345")+`" class="ref-issue" rel="nofollow">gogitea/some-repo-name#12345</a></p>`)
+		`<p><a href="`+util.URLJoin(markup.TestAppURL, "gogitea", "some-repo-name", "issues", "12345")+`" class="ref-issue" rel="nofollow">gogitea/some-repo-name#12345</a></p>`,
+	)
 
 	sha := "65f1bf27bc3bf70f64657658635e66094edbcb4d"
 	urlWithQuery := util.URLJoin(markup.TestAppURL, "forgejo", "some-repo-name", "commit", sha, "README.md") + "?display=source#L1-L5"
 	test(
 		urlWithQuery,
-		`<p><a href="`+urlWithQuery+`" rel="nofollow"><code>`+sha[:10]+`/README.md (L1-L5)</code></a></p>`)
+		`<p><a href="`+urlWithQuery+`" rel="nofollow"><code>`+sha[:10]+`/README.md (L1-L5)</code></a></p>`,
+	)
 }
 
 func TestRender_links(t *testing.T) {
@@ -175,78 +182,102 @@ func TestRender_links(t *testing.T) {
 
 	test(
 		"https://www.example.com",
-		`<p><a href="https://www.example.com" rel="nofollow">https://www.example.com</a></p>`)
+		`<p><a href="https://www.example.com" rel="nofollow">https://www.example.com</a></p>`,
+	)
 	test(
 		"http://www.example.com",
-		`<p><a href="http://www.example.com" rel="nofollow">http://www.example.com</a></p>`)
+		`<p><a href="http://www.example.com" rel="nofollow">http://www.example.com</a></p>`,
+	)
 	test(
 		"https://example.com",
-		`<p><a href="https://example.com" rel="nofollow">https://example.com</a></p>`)
+		`<p><a href="https://example.com" rel="nofollow">https://example.com</a></p>`,
+	)
 	test(
 		"http://example.com",
-		`<p><a href="http://example.com" rel="nofollow">http://example.com</a></p>`)
+		`<p><a href="http://example.com" rel="nofollow">http://example.com</a></p>`,
+	)
 	test(
 		"http://foo.com/blah_blah",
-		`<p><a href="http://foo.com/blah_blah" rel="nofollow">http://foo.com/blah_blah</a></p>`)
+		`<p><a href="http://foo.com/blah_blah" rel="nofollow">http://foo.com/blah_blah</a></p>`,
+	)
 	test(
 		"http://foo.com/blah_blah/",
-		`<p><a href="http://foo.com/blah_blah/" rel="nofollow">http://foo.com/blah_blah/</a></p>`)
+		`<p><a href="http://foo.com/blah_blah/" rel="nofollow">http://foo.com/blah_blah/</a></p>`,
+	)
 	test(
 		"http://www.example.com/wpstyle/?p=364",
-		`<p><a href="http://www.example.com/wpstyle/?p=364" rel="nofollow">http://www.example.com/wpstyle/?p=364</a></p>`)
+		`<p><a href="http://www.example.com/wpstyle/?p=364" rel="nofollow">http://www.example.com/wpstyle/?p=364</a></p>`,
+	)
 	test(
 		"https://www.example.com/foo/?bar=baz&inga=42&quux",
-		`<p><a href="https://www.example.com/foo/?bar=baz&amp;inga=42&amp;quux" rel="nofollow">https://www.example.com/foo/?bar=baz&amp;inga=42&amp;quux</a></p>`)
+		`<p><a href="https://www.example.com/foo/?bar=baz&amp;inga=42&amp;quux" rel="nofollow">https://www.example.com/foo/?bar=baz&amp;inga=42&amp;quux</a></p>`,
+	)
 	test(
 		"http://142.42.1.1/",
-		`<p><a href="http://142.42.1.1/" rel="nofollow">http://142.42.1.1/</a></p>`)
+		`<p><a href="http://142.42.1.1/" rel="nofollow">http://142.42.1.1/</a></p>`,
+	)
 	test(
 		"https://github.com/go-gitea/gitea/?p=aaa/bbb.html#ccc-ddd",
-		`<p><a href="https://github.com/go-gitea/gitea/?p=aaa/bbb.html#ccc-ddd" rel="nofollow">https://github.com/go-gitea/gitea/?p=aaa/bbb.html#ccc-ddd</a></p>`)
+		`<p><a href="https://github.com/go-gitea/gitea/?p=aaa/bbb.html#ccc-ddd" rel="nofollow">https://github.com/go-gitea/gitea/?p=aaa/bbb.html#ccc-ddd</a></p>`,
+	)
 	test(
 		"https://en.wikipedia.org/wiki/URL_(disambiguation)",
-		`<p><a href="https://en.wikipedia.org/wiki/URL_(disambiguation)" rel="nofollow">https://en.wikipedia.org/wiki/URL_(disambiguation)</a></p>`)
+		`<p><a href="https://en.wikipedia.org/wiki/URL_(disambiguation)" rel="nofollow">https://en.wikipedia.org/wiki/URL_(disambiguation)</a></p>`,
+	)
 	test(
 		"https://foo_bar.example.com/",
-		`<p><a href="https://foo_bar.example.com/" rel="nofollow">https://foo_bar.example.com/</a></p>`)
+		`<p><a href="https://foo_bar.example.com/" rel="nofollow">https://foo_bar.example.com/</a></p>`,
+	)
 	test(
 		"https://stackoverflow.com/questions/2896191/what-is-go-used-fore",
-		`<p><a href="https://stackoverflow.com/questions/2896191/what-is-go-used-fore" rel="nofollow">https://stackoverflow.com/questions/2896191/what-is-go-used-fore</a></p>`)
+		`<p><a href="https://stackoverflow.com/questions/2896191/what-is-go-used-fore" rel="nofollow">https://stackoverflow.com/questions/2896191/what-is-go-used-fore</a></p>`,
+	)
 	test(
 		"https://username:password@gitea.com",
-		`<p><a href="https://username:password@gitea.com" rel="nofollow">https://username:password@gitea.com</a></p>`)
+		`<p><a href="https://username:password@gitea.com" rel="nofollow">https://username:password@gitea.com</a></p>`,
+	)
 	test(
 		"ftp://gitea.com/file.txt",
-		`<p><a href="ftp://gitea.com/file.txt" rel="nofollow">ftp://gitea.com/file.txt</a></p>`)
+		`<p><a href="ftp://gitea.com/file.txt" rel="nofollow">ftp://gitea.com/file.txt</a></p>`,
+	)
 	test(
 		"magnet:?xt=urn:btih:5dee65101db281ac9c46344cd6b175cdcadabcde&dn=download",
-		`<p><a href="magnet:?xt=urn:btih:5dee65101db281ac9c46344cd6b175cdcadabcde&amp;dn=download" rel="nofollow">magnet:?xt=urn:btih:5dee65101db281ac9c46344cd6b175cdcadabcde&amp;dn=download</a></p>`)
+		`<p><a href="magnet:?xt=urn:btih:5dee65101db281ac9c46344cd6b175cdcadabcde&amp;dn=download" rel="nofollow">magnet:?xt=urn:btih:5dee65101db281ac9c46344cd6b175cdcadabcde&amp;dn=download</a></p>`,
+	)
 
 	// Test that should *not* be turned into URL
 	test(
 		"www.example.com",
-		`<p>www.example.com</p>`)
+		`<p>www.example.com</p>`,
+	)
 	test(
 		"example.com",
-		`<p>example.com</p>`)
+		`<p>example.com</p>`,
+	)
 	test(
 		"test.example.com",
-		`<p>test.example.com</p>`)
+		`<p>test.example.com</p>`,
+	)
 	test(
 		"http://",
-		`<p>http://</p>`)
+		`<p>http://</p>`,
+	)
 	test(
 		"https://",
-		`<p>https://</p>`)
+		`<p>https://</p>`,
+	)
 	test(
 		"://",
-		`<p>://</p>`)
+		`<p>://</p>`,
+	)
 	test(
 		"www",
-		`<p>www</p>`)
+		`<p>www</p>`,
+	)
 	test(
 		"ftps://gitea.com",
-		`<p>ftps://gitea.com</p>`)
+		`<p>ftps://gitea.com</p>`,
+	)
 
 	// Restore previous settings
 	setting.Markdown.CustomURLSchemes = defaultCustom
@@ -312,22 +343,28 @@ func TestRender_email(t *testing.T) {
 
 	test(
 		"info@gitea.com",
-		`<p><a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a></p>`)
+		`<p><a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a></p>`,
+	)
 	test(
 		"(info@gitea.com)",
-		`<p>(<a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a>)</p>`)
+		`<p>(<a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a>)</p>`,
+	)
 	test(
 		"[info@gitea.com]",
-		`<p>[<a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a>]</p>`)
+		`<p>[<a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a>]</p>`,
+	)
 	test(
 		"info@gitea.com.",
-		`<p><a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a>.</p>`)
+		`<p><a href="mailto:info@gitea.com" rel="nofollow">info@gitea.com</a>.</p>`,
+	)
 	test(
 		"firstname+lastname@gitea.com",
-		`<p><a href="mailto:firstname+lastname@gitea.com" rel="nofollow">firstname+lastname@gitea.com</a></p>`)
+		`<p><a href="mailto:firstname+lastname@gitea.com" rel="nofollow">firstname+lastname@gitea.com</a></p>`,
+	)
 	test(
 		"send email to info@gitea.co.uk.",
-		`<p>send email to <a href="mailto:info@gitea.co.uk" rel="nofollow">info@gitea.co.uk</a>.</p>`)
+		`<p>send email to <a href="mailto:info@gitea.co.uk" rel="nofollow">info@gitea.co.uk</a>.</p>`,
+	)
 
 	test(
 		`j.doe@example.com,
@@ -339,43 +376,54 @@ func TestRender_email(t *testing.T) {
 <a href="mailto:j.doe@example.com" rel="nofollow">j.doe@example.com</a>.<br/>
 <a href="mailto:j.doe@example.com" rel="nofollow">j.doe@example.com</a>;<br/>
 <a href="mailto:j.doe@example.com" rel="nofollow">j.doe@example.com</a>?<br/>
-<a href="mailto:j.doe@example.com" rel="nofollow">j.doe@example.com</a>!</p>`)
+<a href="mailto:j.doe@example.com" rel="nofollow">j.doe@example.com</a>!</p>`,
+	)
 
 	// Test that should *not* be turned into email links
 	test(
 		"\"info@gitea.com\"",
-		`<p>&#34;info@gitea.com&#34;</p>`)
+		`<p>&#34;info@gitea.com&#34;</p>`,
+	)
 	test(
 		"/home/gitea/mailstore/info@gitea/com",
-		`<p>/home/gitea/mailstore/info@gitea/com</p>`)
+		`<p>/home/gitea/mailstore/info@gitea/com</p>`,
+	)
 	test(
 		"git@try.gitea.io:go-gitea/gitea.git",
-		`<p>git@try.gitea.io:go-gitea/gitea.git</p>`)
+		`<p>git@try.gitea.io:go-gitea/gitea.git</p>`,
+	)
 	test(
 		"gitea@3",
-		`<p>gitea@3</p>`)
+		`<p>gitea@3</p>`,
+	)
 	test(
 		"gitea@gmail.c",
-		`<p>gitea@gmail.c</p>`)
+		`<p>gitea@gmail.c</p>`,
+	)
 	test(
 		"email@domain@domain.com",
-		`<p>email@domain@domain.com</p>`)
+		`<p>email@domain@domain.com</p>`,
+	)
 	test(
 		"email@domain..com",
-		`<p>email@domain..com</p>`)
+		`<p>email@domain..com</p>`,
+	)
 
 	// Test fediverse handle
 	test(
 		"@forgejo@floss.social",
-		`<p><a href="https://fedirect.toolforge.org/?id=%40forgejo%40floss.social" rel="nofollow">@forgejo@floss.social</a></p>`)
+		`<p><a href="https://fedirect.toolforge.org/?id=%40forgejo%40floss.social" rel="nofollow">@forgejo@floss.social</a></p>`,
+	)
 
 	test(
 		"!forgejo@programming.dev",
-		`<p><a href="https://fedirect.toolforge.org/?id=%21forgejo%40programming.dev" rel="nofollow">!forgejo@programming.dev</a></p>`)
+		`<p><a href="https://fedirect.toolforge.org/?id=%21forgejo%40programming.dev" rel="nofollow">!forgejo@programming.dev</a></p>`,
+	)
 
 	test(
 		"@#&@forgejo.org",
-		`<p><a href="https://fedirect.toolforge.org/?id=%40%23%26%40forgejo.org" rel="nofollow">@#&amp;@forgejo.org</a></p>`)
+		`<p><a href="https://fedirect.toolforge.org/?id=%40%23%26%40forgejo.org" rel="nofollow">@#&amp;@forgejo.org</a></p>`,
+	)
 }
 
 func TestRender_emoji(t *testing.T) {
@@ -399,50 +447,62 @@ func TestRender_emoji(t *testing.T) {
 	for i := range emoji.GemojiData {
 		test(
 			emoji.GemojiData[i].Emoji,
-			`<p><span class="emoji" aria-label="`+emoji.GemojiData[i].Description+`" data-alias="`+emoji.GemojiData[i].Aliases[0]+`">`+emoji.GemojiData[i].Emoji+`</span></p>`)
+			`<p><span class="emoji" aria-label="`+emoji.GemojiData[i].Description+`" data-alias="`+emoji.GemojiData[i].Aliases[0]+`">`+emoji.GemojiData[i].Emoji+`</span></p>`,
+		)
 	}
 	for i := range emoji.GemojiData {
 		test(
 			":"+emoji.GemojiData[i].Aliases[0]+":",
-			`<p><span class="emoji" aria-label="`+emoji.GemojiData[i].Description+`" data-alias="`+emoji.GemojiData[i].Aliases[0]+`">`+emoji.GemojiData[i].Emoji+`</span></p>`)
+			`<p><span class="emoji" aria-label="`+emoji.GemojiData[i].Description+`" data-alias="`+emoji.GemojiData[i].Aliases[0]+`">`+emoji.GemojiData[i].Emoji+`</span></p>`,
+		)
 	}
 
 	// Text that should be turned into or recognized as emoji
 	test(
 		":gitea:",
-		`<p><span class="emoji" aria-label="gitea" data-alias="gitea"><img alt=":gitea:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/gitea.png"/></span></p>`)
+		`<p><span class="emoji" aria-label="gitea" data-alias="gitea"><img alt=":gitea:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/gitea.png"/></span></p>`,
+	)
 	test(
 		":custom-emoji:",
-		`<p>:custom-emoji:</p>`)
+		`<p>:custom-emoji:</p>`,
+	)
 	setting.UI.CustomEmojisLookup.Add("custom-emoji")
 	test(
 		":custom-emoji:",
-		`<p><span class="emoji" aria-label="custom-emoji" data-alias="custom-emoji"><img alt=":custom-emoji:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/custom-emoji.png"/></span></p>`)
+		`<p><span class="emoji" aria-label="custom-emoji" data-alias="custom-emoji"><img alt=":custom-emoji:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/custom-emoji.png"/></span></p>`,
+	)
 	test(
 		"这是字符:1::+1: some🐊 \U0001f44d:custom-emoji: :gitea:",
 		`<p>这是字符:1:<span class="emoji" aria-label="thumbs up" data-alias="+1">👍</span> some<span class="emoji" aria-label="crocodile" data-alias="crocodile">🐊</span> `+
 			`<span class="emoji" aria-label="thumbs up" data-alias="+1">👍</span><span class="emoji" aria-label="custom-emoji" data-alias="custom-emoji"><img alt=":custom-emoji:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/custom-emoji.png"/></span> `+
-			`<span class="emoji" aria-label="gitea" data-alias="gitea"><img alt=":gitea:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/gitea.png"/></span></p>`)
+			`<span class="emoji" aria-label="gitea" data-alias="gitea"><img alt=":gitea:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/gitea.png"/></span></p>`,
+	)
 	test(
 		"Some text with 😄 in the middle",
-		`<p>Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> in the middle</p>`)
+		`<p>Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> in the middle</p>`,
+	)
 	test(
 		"Some text with :smile: in the middle",
-		`<p>Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> in the middle</p>`)
+		`<p>Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> in the middle</p>`,
+	)
 	test(
 		"Some text with 😄😄 2 emoji next to each other",
-		`<p>Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span><span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> 2 emoji next to each other</p>`)
+		`<p>Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span><span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> 2 emoji next to each other</p>`,
+	)
 	test(
 		"😎🤪🔐🤑❓",
-		`<p><span class="emoji" aria-label="smiling face with sunglasses" data-alias="sunglasses">😎</span><span class="emoji" aria-label="zany face" data-alias="zany_face">🤪</span><span class="emoji" aria-label="locked with key" data-alias="closed_lock_with_key">🔐</span><span class="emoji" aria-label="money-mouth face" data-alias="money_mouth_face">🤑</span><span class="emoji" aria-label="red question mark" data-alias="question">❓</span></p>`)
+		`<p><span class="emoji" aria-label="smiling face with sunglasses" data-alias="sunglasses">😎</span><span class="emoji" aria-label="zany face" data-alias="zany_face">🤪</span><span class="emoji" aria-label="locked with key" data-alias="closed_lock_with_key">🔐</span><span class="emoji" aria-label="money-mouth face" data-alias="money_mouth_face">🤑</span><span class="emoji" aria-label="red question mark" data-alias="question">❓</span></p>`,
+	)
 
 	// should match nothing
 	test(
 		"2001:0db8:85a3:0000:0000:8a2e:0370:7334",
-		`<p>2001:0db8:85a3:0000:0000:8a2e:0370:7334</p>`)
+		`<p>2001:0db8:85a3:0000:0000:8a2e:0370:7334</p>`,
+	)
 	test(
 		":not exist:",
-		`<p>:not exist:</p>`)
+		`<p>:not exist:</p>`,
+	)
 }
 
 func TestRender_ShortLinks(t *testing.T) {
@@ -491,71 +551,88 @@ func TestRender_ShortLinks(t *testing.T) {
 	test(
 		"[[Link]]",
 		`<p><a href="`+url+`" rel="nofollow">Link</a></p>`,
-		`<p><a href="`+urlWiki+`" rel="nofollow">Link</a></p>`)
+		`<p><a href="`+urlWiki+`" rel="nofollow">Link</a></p>`,
+	)
 	test(
 		"[[Link.jpg]]",
 		`<p><a href="`+imgurl+`" rel="nofollow"><img src="`+imgurl+`" title="Link.jpg" alt=""/></a></p>`,
-		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Link.jpg" alt=""/></a></p>`)
+		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Link.jpg" alt=""/></a></p>`,
+	)
 	test(
 		"[["+favicon+"]]",
 		`<p><a href="`+favicon+`" rel="nofollow"><img src="`+favicon+`" title="favicon.ico" alt=""/></a></p>`,
-		`<p><a href="`+favicon+`" rel="nofollow"><img src="`+favicon+`" title="favicon.ico" alt=""/></a></p>`)
+		`<p><a href="`+favicon+`" rel="nofollow"><img src="`+favicon+`" title="favicon.ico" alt=""/></a></p>`,
+	)
 	test(
 		"[[Name|Link]]",
 		`<p><a href="`+url+`" rel="nofollow">Name</a></p>`,
-		`<p><a href="`+urlWiki+`" rel="nofollow">Name</a></p>`)
+		`<p><a href="`+urlWiki+`" rel="nofollow">Name</a></p>`,
+	)
 	test(
 		"[[Name|Link.jpg]]",
 		`<p><a href="`+imgurl+`" rel="nofollow"><img src="`+imgurl+`" title="Name" alt=""/></a></p>`,
-		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Name" alt=""/></a></p>`)
+		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Name" alt=""/></a></p>`,
+	)
 	test(
 		"[[Name|Link.jpg|alt=AltName]]",
 		`<p><a href="`+imgurl+`" rel="nofollow"><img src="`+imgurl+`" title="AltName" alt="AltName"/></a></p>`,
-		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="AltName" alt="AltName"/></a></p>`)
+		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="AltName" alt="AltName"/></a></p>`,
+	)
 	test(
 		"[[Name|Link.jpg|title=Title]]",
 		`<p><a href="`+imgurl+`" rel="nofollow"><img src="`+imgurl+`" title="Title" alt=""/></a></p>`,
-		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Title" alt=""/></a></p>`)
+		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Title" alt=""/></a></p>`,
+	)
 	test(
 		"[[Name|Link.jpg|alt=AltName|title=Title]]",
 		`<p><a href="`+imgurl+`" rel="nofollow"><img src="`+imgurl+`" title="Title" alt="AltName"/></a></p>`,
-		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Title" alt="AltName"/></a></p>`)
+		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Title" alt="AltName"/></a></p>`,
+	)
 	test(
 		"[[Name|Link.jpg|alt=\"AltName\"|title='Title']]",
 		`<p><a href="`+imgurl+`" rel="nofollow"><img src="`+imgurl+`" title="Title" alt="AltName"/></a></p>`,
-		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Title" alt="AltName"/></a></p>`)
+		`<p><a href="`+imgurlWiki+`" rel="nofollow"><img src="`+imgurlWiki+`" title="Title" alt="AltName"/></a></p>`,
+	)
 	test(
 		"[[Name|Link Other.jpg|alt=\"AltName\"|title='Title']]",
 		`<p><a href="`+otherImgurl+`" rel="nofollow"><img src="`+otherImgurl+`" title="Title" alt="AltName"/></a></p>`,
-		`<p><a href="`+otherImgurlWiki+`" rel="nofollow"><img src="`+otherImgurlWiki+`" title="Title" alt="AltName"/></a></p>`)
+		`<p><a href="`+otherImgurlWiki+`" rel="nofollow"><img src="`+otherImgurlWiki+`" title="Title" alt="AltName"/></a></p>`,
+	)
 	test(
 		"[[Link]] [[Other Link]]",
 		`<p><a href="`+url+`" rel="nofollow">Link</a> <a href="`+otherURL+`" rel="nofollow">Other Link</a></p>`,
-		`<p><a href="`+urlWiki+`" rel="nofollow">Link</a> <a href="`+otherURLWiki+`" rel="nofollow">Other Link</a></p>`)
+		`<p><a href="`+urlWiki+`" rel="nofollow">Link</a> <a href="`+otherURLWiki+`" rel="nofollow">Other Link</a></p>`,
+	)
 	test(
 		"[[Link?]]",
 		`<p><a href="`+encodedURL+`" rel="nofollow">Link?</a></p>`,
-		`<p><a href="`+encodedURLWiki+`" rel="nofollow">Link?</a></p>`)
+		`<p><a href="`+encodedURLWiki+`" rel="nofollow">Link?</a></p>`,
+	)
 	test(
 		"[[Link]] [[Other Link]] [[Link?]]",
 		`<p><a href="`+url+`" rel="nofollow">Link</a> <a href="`+otherURL+`" rel="nofollow">Other Link</a> <a href="`+encodedURL+`" rel="nofollow">Link?</a></p>`,
-		`<p><a href="`+urlWiki+`" rel="nofollow">Link</a> <a href="`+otherURLWiki+`" rel="nofollow">Other Link</a> <a href="`+encodedURLWiki+`" rel="nofollow">Link?</a></p>`)
+		`<p><a href="`+urlWiki+`" rel="nofollow">Link</a> <a href="`+otherURLWiki+`" rel="nofollow">Other Link</a> <a href="`+encodedURLWiki+`" rel="nofollow">Link?</a></p>`,
+	)
 	test(
 		"[[Link #.jpg]]",
 		`<p><a href="`+encodedImgurl+`" rel="nofollow"><img src="`+encodedImgurl+`" title="Link #.jpg" alt=""/></a></p>`,
-		`<p><a href="`+encodedImgurlWiki+`" rel="nofollow"><img src="`+encodedImgurlWiki+`" title="Link #.jpg" alt=""/></a></p>`)
+		`<p><a href="`+encodedImgurlWiki+`" rel="nofollow"><img src="`+encodedImgurlWiki+`" title="Link #.jpg" alt=""/></a></p>`,
+	)
 	test(
 		"[[Name|Link #.jpg|alt=\"AltName\"|title='Title']]",
 		`<p><a href="`+encodedImgurl+`" rel="nofollow"><img src="`+encodedImgurl+`" title="Title" alt="AltName"/></a></p>`,
-		`<p><a href="`+encodedImgurlWiki+`" rel="nofollow"><img src="`+encodedImgurlWiki+`" title="Title" alt="AltName"/></a></p>`)
+		`<p><a href="`+encodedImgurlWiki+`" rel="nofollow"><img src="`+encodedImgurlWiki+`" title="Title" alt="AltName"/></a></p>`,
+	)
 	test(
 		"[[some/path/Link #.jpg]]",
 		`<p><a href="`+notencodedImgurl+`" rel="nofollow"><img src="`+notencodedImgurl+`" title="Link #.jpg" alt=""/></a></p>`,
-		`<p><a href="`+notencodedImgurlWiki+`" rel="nofollow"><img src="`+notencodedImgurlWiki+`" title="Link #.jpg" alt=""/></a></p>`)
+		`<p><a href="`+notencodedImgurlWiki+`" rel="nofollow"><img src="`+notencodedImgurlWiki+`" title="Link #.jpg" alt=""/></a></p>`,
+	)
 	test(
 		"<p><a href=\"https://example.org\">[[foobar]]</a></p>",
 		`<p><a href="https://example.org" rel="nofollow">[[foobar]]</a></p>`,
-		`<p><a href="https://example.org" rel="nofollow">[[foobar]]</a></p>`)
+		`<p><a href="https://example.org" rel="nofollow">[[foobar]]</a></p>`,
+	)
 }
 
 func TestRender_RelativeImages(t *testing.T) {
@@ -590,12 +667,14 @@ func TestRender_RelativeImages(t *testing.T) {
 	test(
 		`<img src="Link">`,
 		`<img src="`+util.URLJoin(mediatree, "Link")+`"/>`,
-		`<img src="`+util.URLJoin(rawwiki, "Link")+`"/>`)
+		`<img src="`+util.URLJoin(rawwiki, "Link")+`"/>`,
+	)
 
 	test(
 		`<img src="./icon.png">`,
 		`<img src="`+util.URLJoin(mediatree, "icon.png")+`"/>`,
-		`<img src="`+util.URLJoin(rawwiki, "icon.png")+`"/>`)
+		`<img src="`+util.URLJoin(rawwiki, "icon.png")+`"/>`,
+	)
 }
 
 func Test_ParseClusterFuzz(t *testing.T) {
@@ -661,20 +740,24 @@ func TestPostProcess_RenderDocument(t *testing.T) {
 	// Issue index shouldn't be post processing in a document.
 	test(
 		"#1",
-		"#1")
+		"#1",
+	)
 
 	// But cross-referenced issue index should work.
 	test(
 		"go-gitea/gitea#12345",
-		`<a href="`+util.URLJoin(markup.TestAppURL, "go-gitea", "gitea", "issues", "12345")+`" class="ref-issue">go-gitea/gitea#12345</a>`)
+		`<a href="`+util.URLJoin(markup.TestAppURL, "go-gitea", "gitea", "issues", "12345")+`" class="ref-issue">go-gitea/gitea#12345</a>`,
+	)
 
 	// Test that other post processing still works.
 	test(
 		":gitea:",
-		`<span class="emoji" aria-label="gitea" data-alias="gitea"><img alt=":gitea:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/gitea.png"/></span>`)
+		`<span class="emoji" aria-label="gitea" data-alias="gitea"><img alt=":gitea:" src="`+setting.StaticURLPrefix+`/assets/img/emoji/gitea.png"/></span>`,
+	)
 	test(
 		"Some text with 😄 in the middle",
-		`Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> in the middle`)
+		`Some text with <span class="emoji" aria-label="grinning face with smiling eyes" data-alias="smile">😄</span> in the middle`,
+	)
 	test("http://localhost:3000/person/repo/issues/4#issuecomment-1234",
 		`<a href="http://localhost:3000/person/repo/issues/4#issuecomment-1234" class="ref-issue">person/repo#4 (comment)</a>`)
 }
@@ -1345,26 +1428,32 @@ func TestRenderDescriptionHTML(t *testing.T) {
 
 	test(
 		"https://www.example.com",
-		`<a href="https://www.example.com" target="_blank" rel="noopener noreferrer">https://www.example.com</a>`)
+		`<a href="https://www.example.com" target="_blank" rel="noopener noreferrer">https://www.example.com</a>`,
+	)
 
 	test(
 		"Example repository with `Arc`",
-		"Example repository with `Arc`")
+		"Example repository with `Arc`",
+	)
 
 	test(
 		"Example repository with `Arc` and tools.",
-		"Example repository with `Arc` and tools.")
+		"Example repository with `Arc` and tools.",
+	)
 
 	test(
 		"`Arc<Test>` implements",
-		"`Arc&lt;Test&gt;` implements")
+		"`Arc&lt;Test&gt;` implements",
+	)
 
 	test(
 		"Arc<test> is broken",
-		"Arc<test> is broken</test>")
+		"Arc<test> is broken</test>",
+	)
 
 	// issue #10770
 	test(
 		"A weird alternative to `Arc<RwLock<T>>`",
-		"A weird alternative to `Arc&lt;RwLock&lt;T&gt;&gt;`")
+		"A weird alternative to `Arc&lt;RwLock&lt;T&gt;&gt;`",
+	)
 }

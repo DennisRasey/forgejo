@@ -1451,7 +1451,8 @@ func MergePullRequest(ctx *context.Context) {
 	// interactions, and all effective work should use `workCtx` instead.
 	workCtx, cancelWorkCtx := stdCtx.WithTimeout(
 		stdCtx.WithoutCancel(ctx),
-		time.Duration(setting.Git.Timeout.Default)*time.Second)
+		time.Duration(setting.Git.Timeout.Default)*time.Second,
+	)
 	defer cancelWorkCtx()
 
 	if err := pull_service.Merge(workCtx, pr, ctx.Doer, ctx.Repo.GitRepo, repo_model.MergeStyle(form.Do), form.HeadCommitID, message, false); err != nil {

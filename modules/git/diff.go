@@ -378,7 +378,8 @@ func FindAdjustedLineNumber(cutDiff string, originalLine int64, fullDiff io.Read
 				if lineText != endOfCutDiff {
 					return LinePlacement{}, fmt.Errorf(
 						"line was adjusted from index %d to %d, but contents changed from %q to %q: %w",
-						originalLine, leftLine, endOfCutDiff, lineText, ErrLineNotFound)
+						originalLine, leftLine, endOfCutDiff, lineText, ErrLineNotFound,
+					)
 				}
 				return LinePlacement{Left: leftLine, Right: rightLine}, nil
 			}

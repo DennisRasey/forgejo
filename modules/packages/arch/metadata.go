@@ -142,7 +142,7 @@ func ParsePackage(r *packages.HashedBuffer) (*Package, error) {
 	err = tarball.Extract(context.TODO(), r, func(ctx context.Context, file archives.FileInfo) error {
 		// ref:https://gitlab.archlinux.org/pacman/pacman/-/blob/91546004903eea5d5267d59898a6029ba1d64031/lib/libalpm/add.c#L529-L533
 		if !strings.HasPrefix(file.Name(), ".") {
-			files = append(files, (file.Header.(*tar.Header)).Name)
+			files = append(files, file.Header.(*tar.Header).Name)
 		}
 
 		switch file.Name() {

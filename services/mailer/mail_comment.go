@@ -33,7 +33,8 @@ func MailParticipantsComment(ctx context.Context, c *issues_model.Comment, opTyp
 			ActionType: opType,
 			Content:    content,
 			Comment:    c,
-		}, mentions); err != nil {
+		}, mentions,
+	); err != nil {
 		log.Error("mailIssueCommentToParticipants: %v", err)
 	}
 	return nil
@@ -56,7 +57,8 @@ func MailMentionsComment(ctx context.Context, pr *issues_model.PullRequest, c *i
 			ActionType: activities_model.ActionCommentPull,
 			Content:    c.Content,
 			Comment:    c,
-		}, mentions, visited, true); err != nil {
+		}, mentions, visited, true,
+	); err != nil {
 		log.Error("mailIssueCommentBatch: %v", err)
 	}
 	return nil

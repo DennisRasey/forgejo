@@ -186,7 +186,7 @@ func (s *Service) FetchTask(
 		// it means there may still be some tasks not be assigned.
 		// try to pick a task for the runner that send the request.
 		if t, err := actions_service.PickTask(ctx, runner, requestKey, nil); err != nil {
-			if !(actions_service.IsNoTaskAvailable(err)) {
+			if !actions_service.IsNoTaskAvailable(err) {
 				log.Error("pick task failed: %v", err)
 				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("pick task: %w", err))
 			}
@@ -198,7 +198,7 @@ func (s *Service) FetchTask(
 			for taskCapacity > 0 {
 				t, err := actions_service.PickTask(ctx, runner, requestKey, nil)
 				if err != nil {
-					if !(actions_service.IsNoTaskAvailable(err)) {
+					if !actions_service.IsNoTaskAvailable(err) {
 						// Don't return an error to the client/runner -- we've already assigned one-or-more tasks to the runner
 						// and if we don't return them, they can't be picked up by another runner and will become zombie tasks.
 						// Log the error and return the tasks we've assigned so far.
@@ -256,7 +256,7 @@ func (*Service) FetchSingleTask(
 		}
 
 		if t, err := actions_service.PickTask(ctx, runner, requestKey, handle); err != nil {
-			if !(actions_service.IsNoTaskAvailable(err)) {
+			if !actions_service.IsNoTaskAvailable(err) {
 				log.Error("pick task failed: %v", err)
 				return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("pick task: %w", err))
 			}

@@ -591,7 +591,8 @@ func runTestCase(t *testing.T, testCase *requiredScopeTestCase, user *user_model
 			}
 			categoryUnauthorizedScopes := auth_model.GetRequiredScopes(
 				unauthorizedLevel,
-				category)
+				category,
+			)
 			unauthorizedScopes = append(unauthorizedScopes, categoryUnauthorizedScopes...)
 		}
 

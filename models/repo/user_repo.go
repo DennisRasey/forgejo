@@ -172,7 +172,8 @@ func GetIssuePostersWithSearch(ctx context.Context, repo *Repository, isPull boo
 	users := make([]*user_model.User, 0, 30)
 	prefixCond := builder.Or(
 		db.BuildCaseInsensitiveLike("name", search+"%"),
-		db.BuildCaseInsensitiveLike("full_name", "%"+search+"%"))
+		db.BuildCaseInsensitiveLike("full_name", "%"+search+"%"),
+	)
 
 	cond := builder.In("`user`.id",
 		builder.Select("poster_id").From("issue").Where(

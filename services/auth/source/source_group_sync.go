@@ -58,7 +58,8 @@ func SyncGroupsToTeamsCached(
 	membershipsToAdd, membershipsToRemove := resolveMappedMemberships(
 		ctx, user,
 		sourceUserGroups, sourceGroupTeamMapping,
-		dynGroupMaps, dynGroupMapsRemoval)
+		dynGroupMaps, dynGroupMapsRemoval,
+	)
 
 	if sourceGroupTeamRemoval || dynGroupMapsRemoval {
 		if err := syncGroupsToTeamsCached(ctx, user, membershipsToRemove, syncRemove, orgCache, teamCache); err != nil {

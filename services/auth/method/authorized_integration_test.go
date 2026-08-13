@@ -917,7 +917,8 @@ func newAITester(t *testing.T, tweaks ...tweak) *AuthorizedIntegrationTester {
 		&auth.GetAuthorizedIntegrationHTTPClient,
 		func() *http.Client {
 			return ait.testServer.Client()
-		})
+		},
+	)
 
 	ait.dbAI = &auth_model.AuthorizedIntegration{
 		UserID:   2,

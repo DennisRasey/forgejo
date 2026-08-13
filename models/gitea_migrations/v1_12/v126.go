@@ -19,6 +19,7 @@ func FixTopicRepositoryCount(x *xorm.Engine) error {
 			"`repo_count`": builder.Select("count(*)").From("`repo_topic`").Where(builder.Eq{
 				"`repo_topic`.`topic_id`": builder.Expr("`topic`.`id`"),
 			}),
-		}).From("`topic`").Where(builder.Eq{"'1'": "1"}))
+		},
+	).From("`topic`").Where(builder.Eq{"'1'": "1"}))
 	return err
 }

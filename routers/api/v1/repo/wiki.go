@@ -444,7 +444,8 @@ func ListPageRevisions(ctx *context.APIContext) {
 			Revision: ctx.Repo().Repository.GetWikiBranchName(),
 			File:     pageFilename,
 			Page:     page,
-		})
+		},
+	)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "CommitsByFileAndRange", err)
 		return

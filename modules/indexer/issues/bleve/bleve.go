@@ -155,7 +155,8 @@ func termQuery(token internal.Token) query.Query {
 	innerQ := bleve.NewDisjunctionQuery(
 		inner_bleve.MatchPhraseQuery(token.Term, "title", issueIndexerAnalyzer, token.Fuzzy, 2.0),
 		inner_bleve.MatchPhraseQuery(token.Term, "content", issueIndexerAnalyzer, token.Fuzzy, 1.0),
-		inner_bleve.MatchPhraseQuery(token.Term, "comments", issueIndexerAnalyzer, token.Fuzzy, 1.0))
+		inner_bleve.MatchPhraseQuery(token.Term, "comments", issueIndexerAnalyzer, token.Fuzzy, 1.0),
+	)
 
 	if issueID, err := token.ParseIssueReference(); err == nil {
 		idQuery := inner_bleve.NumericEqualityQuery(issueID, "index")
@@ -273,7 +274,8 @@ func (b *Indexer) Search(ctx context.Context, options *internal.SearchOptions) (
 		filters = append(filters, inner_bleve.NumericRangeInclusiveQuery(
 			options.UpdatedAfterUnix,
 			options.UpdatedBeforeUnix,
-			"updated_unix"))
+			"updated_unix",
+		))
 	}
 
 	switch len(filters) {

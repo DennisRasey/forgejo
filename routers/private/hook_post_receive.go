@@ -289,7 +289,8 @@ func HookPostReceive(ctx *app_context.PrivateContext) {
 				log.Error("Failed to get active PR in: %-v Branch: %s to: %-v Error: %v", repo, branch, baseRepo, err)
 				ctx.JSON(http.StatusInternalServerError, private.HookPostReceiveResult{
 					Err: fmt.Sprintf(
-						"Failed to get active PR in: %-v Branch: %s to: %-v Error: %v", repo, branch, baseRepo, err),
+						"Failed to get active PR in: %-v Branch: %s to: %-v Error: %v", repo, branch, baseRepo, err,
+					),
 					RepoWasEmpty: wasEmpty,
 				})
 				return

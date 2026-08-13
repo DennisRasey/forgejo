@@ -18,4 +18,4 @@ type sourceInterface interface {
 	auth_model.SourceSettable
 }
 
-var _ (sourceInterface) = &pam.Source{}
+var _ sourceInterface = &pam.Source{}

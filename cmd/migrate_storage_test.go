@@ -33,7 +33,8 @@ func createLocalStorage(t *testing.T) (storage.ObjectStorage, string) {
 		t.Context(),
 		&setting.Storage{
 			Path: p,
-		})
+		},
+	)
 	require.NoError(t, err)
 
 	return storage, p

@@ -87,7 +87,8 @@ func (source *Source) findUserDN(l *ldap.Conn, name string) (string, bool) {
 	log.Trace("Searching for DN using filter %s and base %s", userFilter, source.UserBase)
 	search := ldap.NewSearchRequest(
 		source.UserBase, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0,
-		false, userFilter, []string{}, nil)
+		false, userFilter, []string{}, nil,
+	)
 
 	// Ensure we found a user
 	sr, err := l.Search(search)
@@ -154,7 +155,8 @@ func checkAdmin(l *ldap.Conn, ls *Source, userDN string) bool {
 	search := ldap.NewSearchRequest(
 		userDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, ls.AdminFilter,
 		[]string{ls.AttributeName},
-		nil)
+		nil,
+	)
 
 	sr, err := l.Search(search)
 
@@ -179,7 +181,8 @@ func checkRestricted(l *ldap.Conn, ls *Source, userDN string) bool {
 	search := ldap.NewSearchRequest(
 		userDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, ls.RestrictedFilter,
 		[]string{ls.AttributeName},
-		nil)
+		nil,
+	)
 
 	sr, err := l.Search(search)
 
@@ -340,7 +343,8 @@ func (source *Source) SearchEntry(name, passwd string, directBind bool) *SearchR
 	log.Trace("Fetching attributes '%v', '%v', '%v', '%v', '%v', '%v', '%v' with filter '%s' and base '%s'", source.AttributeUsername, source.AttributeName, source.AttributeSurname, source.AttributeMail, source.AttributeSSHPublicKey, source.AttributeAvatar, source.UserUID, userFilter, userDN)
 	search := ldap.NewSearchRequest(
 		userDN, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, userFilter,
-		attribs, nil)
+		attribs, nil,
+	)
 
 	sr, err := l.Search(search)
 	if err != nil {
@@ -455,7 +459,8 @@ func (source *Source) SearchEntries() ([]*SearchResult, error) {
 	log.Trace("Fetching attributes '%v', '%v', '%v', '%v', '%v', '%v' with filter %s and base %s", source.AttributeUsername, source.AttributeName, source.AttributeSurname, source.AttributeMail, source.AttributeSSHPublicKey, source.AttributeAvatar, userFilter, source.UserBase)
 	search := ldap.NewSearchRequest(
 		source.UserBase, ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false, userFilter,
-		attribs, nil)
+		attribs, nil,
+	)
 
 	var sr *ldap.SearchResult
 	if source.UsePagedSearch() {

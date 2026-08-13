@@ -30,7 +30,7 @@ func NewPassthroughStreamer(next HTMLStreamer) *PassthroughHTMLStreamer {
 	return &PassthroughHTMLStreamer{next: next}
 }
 
-var _ (HTMLStreamer) = &PassthroughHTMLStreamer{}
+var _ HTMLStreamer = &PassthroughHTMLStreamer{}
 
 // Error tells the next streamer in line that there is an error
 func (p *PassthroughHTMLStreamer) Error(err error) error {

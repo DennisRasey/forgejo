@@ -1082,7 +1082,8 @@ func RepoRefByType(refType RepoRefType, ignoreNotExistErr ...bool) func(*Context
 					ctx.Repo.RepoLink,
 					util.PathEscapeSegments(prefix),
 					ctx.Repo.BranchNameSubURL(),
-					util.PathEscapeSegments(ctx.Repo.TreePath)))
+					util.PathEscapeSegments(ctx.Repo.TreePath),
+				))
 				return cancel
 			}
 		}

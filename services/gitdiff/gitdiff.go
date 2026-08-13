@@ -157,7 +157,8 @@ func (d *DiffLine) GetBlobExcerptQuery() string {
 		d.SectionInfo.LastLeftIdx, d.SectionInfo.LastRightIdx,
 		d.SectionInfo.LeftIdx, d.SectionInfo.RightIdx,
 		d.SectionInfo.LeftHunkSize, d.SectionInfo.RightHunkSize,
-		url.QueryEscape(d.SectionInfo.Path))
+		url.QueryEscape(d.SectionInfo.Path),
+	)
 	return query
 }
 

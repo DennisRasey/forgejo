@@ -90,7 +90,8 @@ func IsEmailDomainAllowed(email string) (validEmail, ok bool) {
 	return true, isEmailDomainAllowedInternal(
 		parsedAddress.Address,
 		setting.Service.EmailDomainAllowList,
-		setting.Service.EmailDomainBlockList)
+		setting.Service.EmailDomainBlockList,
+	)
 }
 
 func isEmailDomainAllowedInternal(

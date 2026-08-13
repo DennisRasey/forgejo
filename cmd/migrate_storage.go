@@ -225,7 +225,8 @@ func runMigrateStorage(stdCtx context.Context, ctx *cli.Command) error {
 			stdCtx,
 			&setting.Storage{
 				Path: p,
-			})
+			},
+		)
 	case string(setting.MinioStorageType):
 		dstStorage, err = storage.NewMinioStorage(
 			stdCtx,
@@ -241,7 +242,8 @@ func runMigrateStorage(stdCtx context.Context, ctx *cli.Command) error {
 					InsecureSkipVerify: ctx.Bool("minio-insecure-skip-verify"),
 					ChecksumAlgorithm:  ctx.String("minio-checksum-algorithm"),
 				},
-			})
+			},
+		)
 	default:
 		return fmt.Errorf("unsupported storage type: %s", ctx.String("storage"))
 	}

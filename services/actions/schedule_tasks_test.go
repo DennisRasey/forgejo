@@ -55,7 +55,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: true
-`),
+`,
+			),
 		},
 	}
 
@@ -134,7 +135,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: true
-`),
+`,
+				),
 			},
 			want: []actions_model.ActionRun{
 				{
@@ -166,7 +168,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: true
-`),
+`,
+				),
 			},
 			want: []actions_model.ActionRun{
 				{
@@ -323,7 +326,8 @@ jobs:
         dim1: "${{ fromJSON(needs.other-job.outputs.some-output) }}"
     steps:
       - run: true
-`),
+`,
+			),
 		},
 	}
 
@@ -385,7 +389,8 @@ jobs:
     runs-on: "${{ fromJSON(needs.other-job.outputs.some-output) }}"
     steps:
       - run: true
-`),
+`,
+			),
 		},
 	}
 
@@ -474,7 +479,8 @@ jobs:
     uses: ./.forgejo/workflows/reusable.yml
   job3:
     uses: some-org/some-repo/.forgejo/workflows/reusable-path.yml@main
-`),
+`,
+			),
 		},
 	}
 

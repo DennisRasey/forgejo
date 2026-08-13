@@ -152,7 +152,8 @@ func Search(ctx *context.Context) {
 				// Color:       not supported yet
 				Lines: code_indexer.HighlightSearchResultCode(
 					r.Filename, r.LineNumbers, r.HighlightedRanges,
-					strings.Join(r.LineCodes, "\n")),
+					strings.Join(r.LineCodes, "\n"),
+				),
 			})
 		}
 	}

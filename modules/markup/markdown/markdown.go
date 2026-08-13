@@ -70,7 +70,8 @@ func SpecializedMarkdown() goldmark.Markdown {
 		specMarkdown = goldmark.New(
 			goldmark.WithExtensions(
 				extension.NewTable(
-					extension.WithTableCellAlignMethod(extension.TableCellAlignAttribute)),
+					extension.WithTableCellAlignMethod(extension.TableCellAlignAttribute),
+				),
 				extension.Strikethrough,
 				extension.TaskList,
 				extension.DefinitionList,

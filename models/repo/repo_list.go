@@ -341,7 +341,8 @@ func SearchRepositoryCondition(opts *SearchRepoOptions) builder.Cond {
 			builder.Eq{"is_private": false},
 			builder.NotIn("owner_id", builder.Select("id").From("`user`").Where(
 				builder.Or(builder.Eq{"visibility": structs.VisibleTypeLimited}, builder.Eq{"visibility": structs.VisibleTypePrivate}),
-			)))
+			)),
+		)
 	}
 
 	if has, value := opts.IsPrivate.Get(); has {
@@ -632,7 +633,9 @@ func AccessibleRepositoryCondition(user *user_model.User, unitType unit.Type) bu
 			builder.Eq{"`repository`.is_private": false},
 			// 2. Aren't in an private organisation/user or limited organisation/user if the doer is not logged in.
 			builder.NotIn("`repository`.owner_id", builder.Select("id").From("`user`").Where(
-				builder.In("visibility", orgVisibilityLimit)))))
+				builder.In("visibility", orgVisibilityLimit),
+			)),
+		))
 	}
 
 	if user != nil {

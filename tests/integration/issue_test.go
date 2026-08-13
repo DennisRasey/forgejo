@@ -890,7 +890,8 @@ func TestSearchIssues(t *testing.T) {
 
 	expectedIssueCount := min(
 		// from the fixtures
-		20, setting.UI.IssuePagingNum)
+		20, setting.UI.IssuePagingNum,
+	)
 
 	req := NewRequest(t, "GET", "/issues/search")
 	resp := session.MakeRequest(t, req, http.StatusOK)
@@ -1015,7 +1016,8 @@ func TestSearchIssuesWithLabels(t *testing.T) {
 
 	expectedIssueCount := min(
 		// from the fixtures
-		20, setting.UI.IssuePagingNum)
+		20, setting.UI.IssuePagingNum,
+	)
 
 	session := loginUser(t, "user1")
 	link, _ := url.Parse("/issues/search")

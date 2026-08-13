@@ -435,7 +435,8 @@ func Routes() *web.Route {
 		"/login/oauth/userinfo",
 		gzipMid, sessioner, context.Contexter(),
 		oauth2Enabled, optionsCorsHandler(), ignoreCSRF, webAuth(&auth_method.OAuth2{}),
-		auth.InfoOAuth)
+		auth.InfoOAuth,
+	)
 
 	routes.NotFound(
 		gzipMid, sessioner, context.Contexter(), webAuth(buildAuthGroup()),
@@ -448,7 +449,8 @@ func Routes() *web.Route {
 				panic("missing middleware context.Contexter()")
 			}
 			ctx.NotFound("", nil)
-		})
+		},
+	)
 
 	return routes
 }

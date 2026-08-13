@@ -116,7 +116,8 @@ func AddCommitDivergenceToPulls(x *xorm.Engine) error {
 				count,
 				float64(migrated)/float64(count)*100,
 				int(math.Ceil(float64(migrated)/float64(batchSize))),
-				count-int64(migrated))
+				count-int64(migrated),
+			)
 		default:
 		}
 	}

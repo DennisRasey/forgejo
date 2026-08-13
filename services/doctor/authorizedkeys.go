@@ -63,7 +63,8 @@ func checkAuthorizedKeys(ctx context.Context, logger log.Logger, autofix bool) e
 				"authorized_keys file %q contains validity errors.\nRegenerate it with:\n\t\"%s\"\nor\n\t\"%s\"",
 				fPath,
 				"forgejo admin regenerate keys",
-				"forgejo doctor check --run authorized-keys --fix")
+				"forgejo doctor check --run authorized-keys --fix",
+			)
 			return errors.New("errors discovered from InspectPublicKeys")
 		}
 		err := asymkey_model.RewriteAllPublicKeys(ctx)
