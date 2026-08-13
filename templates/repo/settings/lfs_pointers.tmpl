@@ -47,6 +47,10 @@
 								<a class="ui primary button" href="{{$.LFSFilesLink}}/find?oid={{.Oid}}&size={{.Size}}&sha={{.SHA}}">{{ctx.Locale.Tr "repo.settings.lfs_findcommits"}}</a>
 							</td>
 						</tr>
+					{{else}}
+						<tr>
+							<td colspan="6" class="tw-text-center">{{ctx.Locale.Tr "repo.settings.lfs.no_pointers"}}</td>
+						</tr>
 					{{end}}
 				</tbody>
 			</table>
