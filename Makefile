@@ -635,6 +635,9 @@ coverage-run-migration-%: generate-ini-% | compute-migration-packages
 coverage-run-integration-%: generate-ini-%
 	$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/$*.ini COVERAGE_TEST_DATABASE=$* COVERAGE_TEST_PACKAGES=forgejo.org/tests/integration coverage-run
 
+coverage-run-e2e: frontend playwright generate-ini-sqlite
+	$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini COVERAGE_TEST_DATABASE=sqlite PLAYWRIGHT_PROJECT=firefox COVERAGE_TEST_PACKAGES=forgejo.org/tests/e2e COVERAGE_TEST_ARGS="-test.run TestE2e ${COVERAGE_TEST_ARGS}" coverage-run
+
 .PHONY: tidy
 tidy:
 	$(eval MIN_GO_VERSION := $(shell grep -Eo '^go\s+[0-9]+\.[0-9.]+' go.mod | cut -d' ' -f2))

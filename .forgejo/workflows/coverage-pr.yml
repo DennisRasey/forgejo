@@ -46,6 +46,7 @@ jobs:
       - run: |
           su forgejo -c 'make coverage-run'
           su forgejo -c 'make coverage-run-sqlite'
+          su forgejo -c 'make coverage-run-e2e'
           su forgejo -c 'make coverage-merge coverage-show-percentage'
         timeout-minutes: 60
         env:

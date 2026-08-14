@@ -6,6 +6,7 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -19,6 +20,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/indexer/stats"
+	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 	issue_service "forgejo.org/services/issue"
 	files_service "forgejo.org/services/repository/files"
@@ -193,7 +195,7 @@ body:
 }
 
 func readStringFile(t *testing.T, fn string) string {
-	c, err := os.ReadFile(fn)
+	c, err := os.ReadFile(filepath.Join(setting.AppWorkPath, fn))
 	require.NoError(t, err)
 	return string(c)
 }

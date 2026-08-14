@@ -136,6 +136,7 @@ func TestE2e(t *testing.T) {
 				cmd := exec.Command(runArgs[0], thisTest...)
 				cmd.Env = os.Environ()
 				cmd.Env = append(cmd.Env, fmt.Sprintf("GITEA_URL=%s", setting.AppURL))
+				cmd.Dir = setting.AppWorkPath
 
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
