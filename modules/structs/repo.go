@@ -450,3 +450,13 @@ type RepoTargetOption struct {
 	// required: true
 	Name string `json:"name"`
 }
+
+// RepoFundingEntry is a funding option for a repo
+type RepoFundingEntry struct {
+	// Identifies the funding provider to which the entry belongs
+	ProviderName string `json:"provider_name"`
+	// Identifies to other users the account on the funding provider, similar to a "display name"; suitable for use as hyperlink text
+	Title string `json:"title"`
+	// The direct funding entry data, such as the URL to a funding provider's webpage associated with the project to which the entry belongs
+	Value string `json:"value"`
+}

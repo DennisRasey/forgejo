@@ -93,8 +93,14 @@ func clamp[T cmp.Ordered](n, minN, maxN T) (new T, didClamp bool) {
 	return new, new != n
 }
 
-func addFundingProvider(providers map[string]*FundingProviderConfig, provider *FundingProviderConfig) {
-	providers[provider.Name] = provider
+func addFundingProvider(provider *FundingProviderConfig) {
+	FundingProviders[provider.Name] = provider
+}
+
+// GetFundingProviderByName returns a reference to the configured funding
+// provider that has the given Name, or nil if Forgejo knows no such provider.
+func GetFundingProviderByName(name string) *FundingProviderConfig {
+	return FundingProviders[name]
 }
 
 const (
@@ -114,67 +120,67 @@ func LoadBuiltInFundingProviders() {
 
 	// built-in providers are largely based on github's list at <https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository#about-funding-files>
 	// `polar` is intentionally omitted, see https://codeberg.org/forgejo/forgejo/pulls/13361#issuecomment-20078290
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "community_bridge", // aka LFX Mentorship, but the config calls it community_bridge for compat
 		Title:        "funding.communitybridge.org/projects/%[1]s",
 		Template:     "https://crowdfunding.linuxfoundation.org/initiatives/%[1]s", // originally https://funding.communitybridge.org/projects/*
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "github",
 		Title:        "github.com/sponsors/%[1]s",
 		Template:     "https://github.com/sponsors/%[1]s",
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "issuehunt",
 		Title:        "issuehunt.io/r/%[1]s",
 		Template:     "https://issuehunt.io/r/%[1]s",
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "ko_fi",
 		Title:        "ko-fi.com/%[1]s",
 		Template:     "https://ko-fi.com/%[1]s",
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "liberapay",
 		Title:        "liberapay.com/%[1]s",
 		Template:     "https://liberapay.com/%[1]s",
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "open_collective",
 		Title:        "opencollective.com/%[1]s",
 		Template:     "https://opencollective.com/%[1]s",
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "patreon",
 		Title:        "patreon.com/%[1]s",
 		Template:     "https://patreon.com/%[1]s",
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "tidelift",
 		Title:        "tidelift.com/funding/github/%[1]s",
 		Template:     "https://tidelift.com/funding/github/%[1]s",
 		InputPattern: twoSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "buy_me_a_coffee",
 		Title:        "buymeacoffee.com/%[1]s",
 		Template:     "https://buymeacoffee.com/%[1]s",
 		InputPattern: singleSegmentRegex,
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "thanks_dev",
 		Title:        "thanks.dev/%[1]s",
 		Template:     "https://thanks.dev/%[1]s",
 		InputPattern: threeSegmentRegex, // we expect something like "u/gh/example"
 	})
-	addFundingProvider(FundingProviders, &FundingProviderConfig{
+	addFundingProvider(&FundingProviderConfig{
 		Name:         "custom",
 		Title:        "%[1]s",
 		Template:     "%[1]s",
@@ -244,10 +250,10 @@ func loadCustomFundingProvidersFrom(rootCfg ConfigProvider) {
 		provider.Template = template
 		provider.InputPattern = inputPattern
 
-		if FundingProviders[name] != nil {
-			log.Warn("%s constructs a funding provider that already exists, existing provider %s is unchanged", sec.Name(), name)
+		if GetFundingProviderByName(name) == nil {
+			addFundingProvider(provider)
 		} else {
-			FundingProviders[name] = provider
+			log.Warn("%s constructs a funding provider that already exists, existing provider %s is unchanged", sec.Name(), name)
 		}
 	}
 }
