@@ -426,7 +426,7 @@ func TestBleveDeleteIssue(t *testing.T) {
 	tmp := t.TempDir()
 	defer test.MockVariableValue(&setting.Indexer.IssuePath, filepath.Join(tmp, "indexers/issues.bleve"))()
 	defer test.MockVariableValue(&setting.Indexer.IssueType, "bleve")()
-	<-InitIssueIndexer(false)
+	<-InitIssueIndexer(true)
 
 	ctx := t.Context()
 	issue := unittest.AssertExistsAndLoadBean(t, &issues.Issue{ID: 1})
