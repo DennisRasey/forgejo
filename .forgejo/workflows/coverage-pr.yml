@@ -48,7 +48,7 @@ jobs:
           su forgejo -c 'make coverage-run-sqlite'
           su forgejo -c 'make coverage-run-e2e'
           su forgejo -c 'make coverage-merge coverage-show-percentage'
-        timeout-minutes: 60
+        timeout-minutes: 120
         env:
           TEST_ELASTICSEARCH_URL: http://elasticsearch:9200
           TEST_MINIO_ENDPOINT: minio:9000
