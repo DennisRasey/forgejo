@@ -619,7 +619,7 @@ func TestRenamedFileHistory(t *testing.T) {
 
 			renameNotice := htmlDoc.doc.Find(".ui.bottom.attached.header")
 			assert.Equal(t, 1, renameNotice.Length())
-			assert.Contains(t, renameNotice.Text(), "Renamed from licnse (Browse further)")
+			assert.Contains(t, renameNotice.Text(), "Renamed from licnse (Previous history)")
 
 			oldFileHistoryLink, ok := renameNotice.Find("a").Attr("href")
 			assert.True(t, ok)
@@ -636,7 +636,7 @@ func TestRenamedFileHistory(t *testing.T) {
 			resp = MakeRequest(t, NewRequest(t, "GET", "/user2/repo59/commits/branch/master/license?page=2"), http.StatusOK)
 			page2 := NewHTMLParser(t, resp.Body)
 
-			// Browse further is only shown on 2nd page
+			// Show previous history link is only shown on 2nd page
 			browseFurtherSel := ".ui.bottom.attached.header a[href='/user2/repo59/commits/commit/80b83c5c8220c3aa3906e081f202a2a7563ec879/licnse']"
 			page1.AssertElement(t, browseFurtherSel, false)
 			page2.AssertElement(t, browseFurtherSel, true)
@@ -702,7 +702,7 @@ func TestRenamedFileHistory(t *testing.T) {
 
 			renameNotice := htmlDoc.doc.Find(".ui.bottom.attached.header")
 			assert.Equal(t, 1, renameNotice.Length())
-			assert.Contains(t, renameNotice.Text(), "Renamed from #beep (Browse further)")
+			assert.Contains(t, renameNotice.Text(), "Renamed from #beep (Previous history)")
 
 			oldFileHistoryLink, ok := renameNotice.Find("a").Attr("href")
 			assert.True(t, ok)
