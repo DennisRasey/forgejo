@@ -1,4 +1,5 @@
 import {emojiKeys} from '../features/emoji.js';
+import {GET} from '../modules/fetch.js';
 
 const maxMatches = 6;
 
@@ -35,4 +36,18 @@ export function matchMention(queryText) {
   }
 
   return sortAndReduce(results);
+}
+
+export async function matchIssue(owner, repo, issueIndexStr, query, isPull) {
+  let url = `${window.config.appSubUrl}/${owner}/${repo}/issues/suggestions?q=${encodeURIComponent(query)}`;
+  if (isPull !== undefined) {
+    url += `&pull=${isPull ? '1' : '0'}`;
+  }
+  const res = await GET(url);
+
+  const issues = await res.json();
+  const issueIndex = parseInt(issueIndexStr);
+
+  // filter out issue with same number
+  return issues.filter((i) => i.number !== issueIndex);
 }

@@ -492,6 +492,8 @@ test('text expander has higher prio then prefix continuation', async ({page}) =>
   expect(response?.status()).toBe(200);
 
   const textarea = page.locator('textarea[name=content]');
+  const suggestionList = page.locator('[data-tab-panel="markdown-writer"] .suggestions');
+
   const initText = `* first`;
   await textarea.fill(initText);
   await textarea.evaluate((it:HTMLTextAreaElement) => it.setSelectionRange(it.value.indexOf('rst'), it.value.indexOf('rst')));
@@ -509,8 +511,38 @@ test('text expander has higher prio then prefix continuation', async ({page}) =>
   await textarea.press('Enter');
   await expect(textarea).toHaveValue(`* first\n* 😸\n* @user2 `);
 
+  // Test issue completion
   await textarea.press('Enter');
-  await expect(textarea).toHaveValue(`* first\n* 😸\n* @user2 \n* `);
+  await textarea.pressSequentially('#issue1');
+  // Because the issue completion is async, we need to wait for it
+  await suggestionList.waitFor();
+  await expect(suggestionList).toBeVisible();
+  await textarea.press('Enter');
+  await expect(textarea).toHaveValue(`* first\n* 😸\n* @user2 \n* #1`);
+
+  // Test pull request completion via '#'
+  await textarea.press('Enter');
+  await textarea.pressSequentially('#pull');
+  await suggestionList.waitFor();
+  await expect(suggestionList).toBeVisible();
+  await textarea.press('Enter');
+  await expect(textarea).toHaveValue(`* first\n* 😸\n* @user2 \n* #1\n* !5`);
+
+  // Test pull request completion via '!'
+  await textarea.press('Enter');
+  await textarea.pressSequentially('!issue');
+  await suggestionList.waitFor();
+  await expect(suggestionList).toBeVisible();
+
+  // Only pull requests should be suggested, not issues
+  await expect(suggestionList.locator('[class*="octicon-issue"]')).toHaveCount(0);
+  await expect(suggestionList.locator('[class*="octicon-git-pull-request"]')).not.toHaveCount(0);
+
+  await textarea.press('Enter');
+  await expect(textarea).toHaveValue(`* first\n* 😸\n* @user2 \n* #1\n* !5\n* !2`);
+
+  await textarea.press('Enter');
+  await expect(textarea).toHaveValue(`* first\n* 😸\n* @user2 \n* #1\n* !5\n* !2\n* `);
 });
 
 test('Combo Markdown: preview mode switch', async ({page}) => {
@@ -555,6 +587,35 @@ test('Combo Markdown: preview mode switch', async ({page}) => {
   expect(await page.locator('markdown-toolbar .switch').evaluate((el) => getComputedStyle(el).height)).toBe(await page.locator('md-header.markdown-toolbar-button').evaluate((el) => getComputedStyle(el).height));
 
   await screenshot(page);
+});
+
+test('issue suggestions', async ({page}) => {
+  const response = await page.goto('/user2/repo1/issues/1');
+  expect(response?.status()).toBe(200);
+
+  const textarea = page.locator('#comment-form textarea[name=content]');
+
+  await textarea.focus();
+  await textarea.pressSequentially('#');
+
+  const suggestionList = page.locator('#comment-form .suggestions');
+  await expect(suggestionList).toBeVisible();
+
+  const expectedSuggestions = [
+    {number: '5', label: 'pull5', iconClass: 'octicon-git-pull-request', colorClass: 'text green'},
+    {number: '4', label: 'issue5', iconClass: 'octicon-issue-closed', colorClass: 'text red'},
+    {number: '3', label: 'issue3', iconClass: 'octicon-git-pull-request', colorClass: 'text green'},
+    {number: '2', label: 'issue2', iconClass: 'octicon-git-pull-request', colorClass: 'text purple'},
+  ];
+
+  for (const {number, label, iconClass, colorClass} of expectedSuggestions) {
+    const item = suggestionList.locator(`li:has-text("${label}")`);
+    await expect(item).toContainText(number);
+    await expect(item).toContainText(label);
+
+    const svg = item.locator(`svg.${iconClass}`);
+    await expect(svg).toHaveClass(new RegExp(`\\b${colorClass.replace(' ', '\\b.*\\b')}\\b`));
+  }
 });
 
 test('Multiple combo markdown: insert table', async ({page}) => {
