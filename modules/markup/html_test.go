@@ -699,16 +699,20 @@ func TestPostProcess_ResolvedImageURL(t *testing.T) {
 
 	test(
 		`<img src="`+mediaBase+`/image.jpg">`,
-		`<img src="`+mediaBase+`/image.jpg"/>`)
+		`<img src="`+mediaBase+`/image.jpg"/>`,
+	)
 	test(
 		`<img src="image.jpg">`,
-		`<img src="`+mediaBase+`/image.jpg"/>`)
+		`<img src="`+mediaBase+`/image.jpg"/>`,
+	)
 	test(
 		`<img src="./image.jpg">`,
-		`<img src="`+mediaBase+`/image.jpg"/>`)
+		`<img src="`+mediaBase+`/image.jpg"/>`,
+	)
 	test(
 		`<img src="/image.jpg">`,
-		`<img src="`+mediaBase+`/image.jpg"/>`)
+		`<img src="`+mediaBase+`/image.jpg"/>`,
+	)
 }
 
 func Test_ParseClusterFuzz(t *testing.T) {
