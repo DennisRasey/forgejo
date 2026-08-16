@@ -654,6 +654,18 @@ func TeamInvitePost(ctx *context.Context) {
 		log.Error("RemoveInviteByID: %v", err)
 	}
 
+	// if there is another invite in the same org for the same user, redirect them to that
+	if linkedToUser {
+		nextInvite, err := org_model.GetInviteByOrgAndUser(ctx, org.ID, invitedUserID)
+		if err != nil && !org_model.IsErrTeamInviteNotFound(err) {
+			log.Error("GetInviteByOrgAndUser: %v", err)
+		}
+		if nextInvite != nil {
+			ctx.Redirect("/org/invite/" + nextInvite.Token)
+			return
+		}
+	}
+	// otherwise redirect them to the page of the team they joined
 	ctx.Redirect(org.OrganisationLink() + "/teams/" + url.PathEscape(team.LowerName))
 }
 

@@ -251,6 +251,39 @@ func GetInviteByToken(ctx context.Context, token string) (*TeamInvite, error) {
 	return invite, nil
 }
 
+// GetInviteByOrgAndUser finds any non-expired invite for this user to teams of the given org
+func GetInviteByOrgAndUser(ctx context.Context, orgID, userID int64) (*TeamInvite, error) {
+	invite := &TeamInvite{
+		OrgID:     orgID,
+		InvitedID: optional.Some(userID),
+	}
+
+	has, err := db.GetEngine(ctx).Where("expiry_unix > ? OR expiry_unix = 0", timeutil.TimeStampNow()).Get(invite)
+	if err != nil {
+		return nil, err
+	}
+	if !has {
+		return nil, ErrTeamInviteNotFound{}
+	}
+	return invite, nil
+}
+
+// GetTeamsInvitedTo lists the teams of an organization a user is invited to
+func GetTeamsInvitedTo(ctx context.Context, orgID, userID int64) ([]*Team, error) {
+	teams := make([]*Team, 0, 10)
+	return teams, db.GetEngine(ctx).
+		Where(builder.And(
+			builder.Eq{
+				"team_invite.invited_id": userID,
+				"team_invite.org_id":     orgID,
+			},
+			builder.Expr("team_invite.expiry_unix > ? OR expiry_unix = 0", timeutil.TimeStampNow()),
+		)).
+		Join("INNER", "`team_invite`", "`team_invite`.team_id = team.id").
+		Table("team").
+		Find(&teams)
+}
+
 func (i *TeamInvite) LoadInvitedUser(ctx context.Context) error {
 	if i.InvitedUser == nil {
 		hasInvitedUser, userID := i.InvitedID.Get()

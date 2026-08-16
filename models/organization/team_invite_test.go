@@ -62,6 +62,15 @@ func TestTeamInvite(t *testing.T) {
 		_, err = organization.CreateTeamInviteForUser(db.DefaultContext, user1, user5, team)
 		require.Error(t, err)
 
+		// Check that the invite is visible through various getters
+		singleInvite, err := organization.GetInviteByOrgAndUser(db.DefaultContext, team.OrgID, user5.ID)
+		require.NoError(t, err)
+		assert.Equal(t, invite.ID, singleInvite.ID)
+		teams, err := organization.GetTeamsInvitedTo(db.DefaultContext, team.OrgID, user5.ID)
+		require.NoError(t, err)
+		assert.Len(t, teams, 1)
+		assert.Equal(t, team, teams[0])
+
 		// should remove invite
 		require.NoError(t, organization.RemoveInviteByID(db.DefaultContext, invite.ID, invite.TeamID))
 

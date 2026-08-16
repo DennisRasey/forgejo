@@ -132,6 +132,23 @@ func Home(ctx *context.Context) {
 		return
 	}
 
+	if ctx.Doer != nil {
+		invite, err := organization.GetInviteByOrgAndUser(ctx, org.ID, ctx.Doer.ID)
+		if err != nil && !organization.IsErrTeamInviteNotFound(err) {
+			ctx.ServerError("GetInviteByOrgAndUser", err)
+			return
+		}
+		ctx.Data["Invite"] = invite
+		if invite != nil {
+			teams, err := organization.GetTeamsInvitedTo(ctx, org.ID, ctx.Doer.ID)
+			if err != nil {
+				ctx.ServerError("GetTeamsInvitedTo", err)
+				return
+			}
+			ctx.Data["TeamsInvitedTo"] = teams
+		}
+	}
+
 	ctx.Data["Repos"] = repos
 	ctx.Data["Total"] = count
 	ctx.Data["Members"] = members

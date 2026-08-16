@@ -438,35 +438,49 @@ func TestOrgTeamEmailInviteExistingUser(t *testing.T) {
 
 	defer tests.PrepareTestEnv(t)()
 
-	team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 2})
+	team1 := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 1})
+	team2 := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 2})
 	inviter := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
 
-	isMember, err := organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, user.ID)
+	isMember, err := organization.IsTeamMember(db.DefaultContext, team1.OrgID, team1.ID, user.ID)
+	require.NoError(t, err)
+	assert.False(t, isMember)
+	isMember, err = organization.IsTeamMember(db.DefaultContext, team2.OrgID, team2.ID, user.ID)
 	require.NoError(t, err)
 	assert.False(t, isMember)
 
-	// create the invite
-	invite, err := organization.CreateTeamInviteForUser(db.DefaultContext, inviter, user, team)
+	// create the invites
+	invite1, err := organization.CreateTeamInviteForUser(db.DefaultContext, inviter, user, team1)
+	require.NoError(t, err)
+	invite2, err := organization.CreateTeamInviteForUser(db.DefaultContext, inviter, user, team2)
 	require.NoError(t, err)
 
 	// log in the invited user
 	session := loginUser(t, "user5")
 
-	// view the invite
-	inviteURL := fmt.Sprintf("/org/invite/%s", invite.Token)
-	req := NewRequest(t, "GET", inviteURL)
+	// view the first invite
+	inviteURL1 := fmt.Sprintf("/org/invite/%s", invite1.Token)
+	req := NewRequest(t, "GET", inviteURL1)
 	session.MakeRequest(t, req, http.StatusOK)
 
 	// accept the invite
-	req = NewRequest(t, "POST", inviteURL)
+	req = NewRequest(t, "POST", inviteURL1)
 	resp := session.MakeRequest(t, req, http.StatusSeeOther)
-	req = NewRequest(t, "GET", test.RedirectURL(resp))
+	// after the first invite is accepted, the user is directly redirected to the next invite in the same org
+	inviteURL2 := fmt.Sprintf("/org/invite/%s", invite2.Token)
+	assert.Equal(t, test.RedirectURL(resp), inviteURL2)
+	req = NewRequest(t, "GET", inviteURL2)
 	session.MakeRequest(t, req, http.StatusOK)
 
-	isMember, err = organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, user.ID)
+	// the user has become a member of the first team
+	isMember, err = organization.IsTeamMember(db.DefaultContext, team1.OrgID, team1.ID, user.ID)
 	require.NoError(t, err)
 	assert.True(t, isMember)
+	// the second invite wasn't accepted yet, so the user isn't a member
+	isMember, err = organization.IsTeamMember(db.DefaultContext, team2.OrgID, team2.ID, user.ID)
+	require.NoError(t, err)
+	assert.False(t, isMember)
 }
 
 // Test that a user cannot accept an invite if it was meant for another user
