@@ -677,6 +677,40 @@ func TestRender_RelativeImages(t *testing.T) {
 	)
 }
 
+// Verifies that PostProcess does not re-resolve <img> src URLs that are already in the resolved form
+// (produced by the markdown renderer: `![alt](image.jpg)` into `<img src="/user/repo/media/branch/main/image.jpg">`).
+func TestPostProcess_ResolvedImageURL(t *testing.T) {
+	defer test.MockVariableValue(&setting.AppURL, markup.TestAppURL)()
+
+	test := func(input, expected string) {
+		var res strings.Builder
+		err := markup.PostProcess(&markup.RenderContext{
+			Ctx: git.DefaultContext,
+			Links: markup.Links{
+				Base:       "/user/repo",
+				BranchPath: "branch/main",
+			},
+		}, strings.NewReader(input), &res)
+		require.NoError(t, err)
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(res.String()))
+	}
+
+	mediaBase := util.URLJoin("/user/repo", "media", "branch", "main")
+
+	test(
+		`<img src="`+mediaBase+`/image.jpg">`,
+		`<img src="`+mediaBase+`/image.jpg"/>`)
+	test(
+		`<img src="image.jpg">`,
+		`<img src="`+mediaBase+`/image.jpg"/>`)
+	test(
+		`<img src="./image.jpg">`,
+		`<img src="`+mediaBase+`/image.jpg"/>`)
+	test(
+		`<img src="/image.jpg">`,
+		`<img src="`+mediaBase+`/image.jpg"/>`)
+}
+
 func Test_ParseClusterFuzz(t *testing.T) {
 	defer test.MockVariableValue(&setting.AppURL, markup.TestAppURL)()
 

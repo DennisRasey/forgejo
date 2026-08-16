@@ -146,6 +146,19 @@ func TestRender_Media(t *testing.T) {
 		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
 	}
 
+	testBranchTree := func(input, expected string) {
+		buffer, err := RenderString(&markup.RenderContext{
+			Ctx: git.DefaultContext,
+			Links: markup.Links{
+				Base:       setting.AppSubURL,
+				BranchPath: "branch/main",
+				TreePath:   "deep/nested/folder",
+			},
+		}, input)
+		require.NoError(t, err)
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
+	}
+
 	url := "../../.images/src/02/train.jpg"
 	result := util.URLJoin(AppSubURL, url)
 
@@ -173,6 +186,16 @@ func TestRender_Media(t *testing.T) {
 		`<p><a href="http://localhost:3000/gogits/gogs/lem-post.png"><img src="http://localhost:3000/gogits/gogs/lem-post.png" alt="http://localhost:3000/gogits/gogs/lem-post.png" /></a></p>`)
 	test("[[file:./lem-post.mp4][file:./lem-post.mp4]]",
 		`<p><a href="http://localhost:3000/gogits/gogs/lem-post.mp4"><video src="http://localhost:3000/gogits/gogs/lem-post.mp4">http://localhost:3000/gogits/gogs/lem-post.mp4</video></a></p>`)
+
+	mediaBase := util.URLJoin(AppSubURL, "media", "branch", "main")
+	mediaTree := util.URLJoin(mediaBase, "deep", "nested", "folder")
+
+	testBranchTree("[[file:/image.jpg]]",
+		`<p><img src="`+mediaBase+`/image.jpg" alt="`+mediaBase+`/image.jpg" /></p>`)
+	testBranchTree("[[file:image.jpg]]",
+		`<p><img src="`+mediaTree+`/image.jpg" alt="`+mediaTree+`/image.jpg" /></p>`)
+	testBranchTree("[[file:./image.jpg]]",
+		`<p><img src="`+mediaTree+`/image.jpg" alt="`+mediaTree+`/image.jpg" /></p>`)
 }
 
 func TestRender_Source(t *testing.T) {
