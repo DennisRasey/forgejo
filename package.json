@@ -108,7 +108,7 @@
     "eslint-plugin-vue": "10.10.0",
     "eslint-plugin-vue-scoped-css": "2.12.0",
     "eslint-plugin-wc": "3.1.0",
-    "globals": "17.9.0",
+    "globals": "17.11.0",
     "happy-dom": "20.11.2",
     "license-checker-rseidelsohn": "5.0.1",
     "markdownlint-cli": "0.48.0",
