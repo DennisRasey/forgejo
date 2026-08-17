@@ -672,10 +672,6 @@
 	"keys.verify.token.hint": "Valid lang ang token sa loob ng 1 minuto. <a href=\"%[1]s\">Kumuha ng bago kung nag-expire na ito</a>.",
 	"admin.dashboard.actions_action_user": "Bawiin ang tiwala ng Forgejo Actions para sa mga hindi aktibong user",
 	"admin.dashboard.transfer_lingering_logs": "Ilipat ang mga actions log ng mga natapos na actions na trabaho mula sa database sa storage",
-	"actions.status.diagnostics.waiting": {
-		"one": "Naghihintay ng runner na may sumusunod na label: %s",
-		"other": "Naghihintay ng runner na may sumusunod na mga label: %s"
-	},
 	"actions.status.unknown": "Hindi alam",
 	"actions.status.waiting": "Hinihintay",
 	"actions.status.running": "Tumatakbo",

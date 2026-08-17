@@ -631,13 +631,6 @@
 		"many": "%s íoslódálacha",
 		"other": "%s íoslódálacha"
 	},
-	"actions.status.diagnostics.waiting": {
-		"one": "Ag fanacht le rithire leis an lipéad seo a leanas: %s",
-		"two": "Ag fanacht le rithire leis an lipéad seo a lipéid: %s",
-		"few": "Ag fanacht le rithire leis an lipéad seo a lipéid: %s",
-		"many": "Ag fanacht le rithire leis an lipéad seo a lipéid: %s",
-		"other": "Ag fanacht le rithire leis an lipéad seo a lipéid: %s"
-	},
 	"actions.runs.run_attempt_label": "Iarracht rith #%[1]s (%[2]s)",
 	"actions.runs.viewing_out_of_date_run": "Tá tú ag féachaint ar rith atá as dáta den phost seo a cuireadh i gcrích %[1]s.",
 	"actions.runs.view_most_recent_run": "Féach ar an rith is déanaí",

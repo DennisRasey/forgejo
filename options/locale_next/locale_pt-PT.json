@@ -685,11 +685,6 @@
 	"repo.pulls.poster_trust_revoke.tooltip": "O autor deste pedido de integração deixará de ser considerado confiável para executar sequências de trabalho acionadas por um evento `pull_request`, cada execução terá que ser aprovada manualmente.",
 	"admin.dashboard.actions_action_user": "Revogar a confiança em Forgejo Actions para utilizadores inativos",
 	"keys.verify.token.hint": "O token é válido apenas por 1 minuto. <a href=\"%[1]s\">Obtenha um novo se ele expirou</a>.",
-	"actions.status.diagnostics.waiting": {
-		"one": "Aguardando por um executor com o seguinte rótulo: %s",
-		"many": "Aguardando por um executor com os seguintes rótulos: %s",
-		"other": "Aguardando por um executor com os seguintes rótulos: %s"
-	},
 	"actions.status.unknown": "Desconhecido",
 	"actions.status.waiting": "Aguardando",
 	"actions.status.running": "Em execução",

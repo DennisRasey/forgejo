@@ -648,7 +648,6 @@
 	"packages.common.install": "若要安裝此套件，請執行以下指令：",
 	"packages.common.registry": "從命令列設定此註冊表：",
 	"packages.common.repository": "儲存庫資訊",
-	"actions.status.diagnostics.waiting": "等待具有以下標籤的 Runner：%s",
 	"actions.runs.run_attempt_label": "執行嘗試 #%[1]s (%[2]s)",
 	"actions.runs.viewing_out_of_date_run": "您正在檢視此任務於 %[1]s 執行的過時執行。",
 	"actions.runs.view_most_recent_run": "檢視最近一次執行",

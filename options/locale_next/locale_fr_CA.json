@@ -689,11 +689,6 @@
 	"repo.issues.filter_modified.hint": "Filtrer par dernière date de modification",
 	"search.syntax": "Syntaxe de recherche",
 	"admin.dashboard.transfer_lingering_logs": "Transférer les journaux des actions terminées de la base de données au stockage",
-	"actions.status.diagnostics.waiting": {
-		"one": "Attente d'un exécuteur avec l'étiquette suivante : %s",
-		"many": "Attente d'un exécuteur avec les étiquettes suivantes : %s",
-		"other": ""
-	},
 	"actions.status.unknown": "Inconnu",
 	"actions.status.waiting": "En attente",
 	"actions.status.running": "En cours d'exécution",

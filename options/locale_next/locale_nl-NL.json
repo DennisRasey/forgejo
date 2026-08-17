@@ -666,10 +666,6 @@
 	"repo.pulls.poster_trust_revoke": "Intrekken",
 	"repo.pulls.poster_trust_revoke.tooltip": "De auteur van dit pull request zal niet langer worden vertrouwd om werkstromen uit te voeren die worden geactiveerd door een `pull_request` evenement, elke run zal handmatig moeten worden goedgekeurd.",
 	"admin.dashboard.actions_action_user": "Vertrouwen in acties van Forgejo intrekken voor inactieve gebruikers",
-	"actions.status.diagnostics.waiting": {
-		"one": "Wachten op een runner met het volgende label: %s",
-		"other": "Wachten op een runner met de volgende labels: %s"
-	},
 	"actions.status.unknown": "Onbekend",
 	"actions.status.waiting": "Wachten",
 	"actions.status.running": "Bezig",
@@ -871,5 +867,48 @@
 	"repo.files.caption": "Bestanden in de repository (nieuwste commit bovenaan)",
 	"repo.files.filename": "Bestandsnaam",
 	"repo.files.last_commit_message": "Laatste commitbericht",
-	"repo.files.last_commit_date": "Datum van de laatste commit"
+	"repo.files.last_commit_date": "Datum van de laatste commit",
+	"relativetime.duration.secs": {
+		"one": "%d seconde",
+		"other": "%d secondes"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minuut",
+		"other": "%d minuten"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d uur",
+		"other": "%d uur"
+	},
+	"relativetime.duration.days": {
+		"one": "%d dag",
+		"other": "%d dagen"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d week",
+		"other": "%d weken"
+	},
+	"relativetime.duration.months": {
+		"one": "%d maand",
+		"other": "%d maanden"
+	},
+	"relativetime.duration.years": {
+		"one": "%d jaar",
+		"other": "%d jaren"
+	},
+	"repo.empty_commit_message": "Lege commit-bericht",
+	"repo.issues.context.copy_markdown": "Markdown kopiëren",
+	"repo.packages.visibility_warning": "Deze repository is privé, maar de gekoppelde pakketten zijn openbaar (eigenaar %s is openbaar).",
+	"migrate.in_progress.issues.progress": {
+		"one": "%[1]d issue gemigreerd",
+		"other": "%[1]d issues gemigreerd"
+	},
+	"migrate.in_progress.pulls.progress": {
+		"one": "%[1]d pull request gemigreerd",
+		"other": "%[1]d pull requests gemigreerd"
+	},
+	"search.match_inside_quotes": "Neem alleen resultaten op die overeenkomen met de term tussen aanhalingstekens",
+	"search.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Raadpleeg de documentatie</a> voor meer informatie over zoeken, operatoren en filters.",
+	"repo.settings.lfs.size": "Grootte",
+	"repo.settings.lfs.last_update": "Laatste update"
 }

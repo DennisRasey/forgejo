@@ -691,10 +691,6 @@
 	"moderation.users.cannot_suspend_admins": "Användare med administrativa rättigheter kan inte bli avstängda.",
 	"moderation.users.cannot_suspend_org": "Organisationer kan inte bli avstängda.",
 	"moderation.users.already_suspended": "Användarkontot är redan avstängt.",
-	"actions.status.diagnostics.waiting": {
-		"one": "Väntar på en körare med följande etikett: %s",
-		"other": "Väntar på en körare med följande etiketter: %s"
-	},
 	"actions.status.unknown": "Okänd",
 	"actions.status.waiting": "Väntar",
 	"actions.status.running": "Körs",
@@ -981,5 +977,34 @@
 	"repo.watch.issues": "Ärenden",
 	"repo.watch.pull_requests": "Ändringsförfrågningar",
 	"repo.watch.releases": "Utgåvor",
-	"repo.watch.releases.hint": "(e-post endast)"
+	"repo.watch.releases.hint": "(e-post endast)",
+	"repo.empty_commit_message": "Tomt inchecknings meddelande",
+	"packages.container.annotations": "Annoteringar",
+	"repo.settings.lfs.size": "Storlek",
+	"repo.settings.lfs.last_update": "Senaste uppdatering",
+	"mail.team_invite.expiration": {
+		"one": "Denna inbjudan upphör att gälla om %d dag.",
+		"other": "Denna inbjudan upphör att gälla om %d dagar."
+	},
+	"repo.commit": "Incheckning",
+	"actions.status.info.blocked": "Blockerad för %[1]s",
+	"actions.status.info.cancelled": "Avbruten %[1]s efter %[2]s",
+	"actions.status.info.failure": "Misslyckades %[1]s efter %[2]s",
+	"actions.status.info.running": "Körandes för %[1]s",
+	"actions.status.info.success": "Lyckades %[1]s på %[2]s",
+	"actions.status.info.waiting": {
+		"one": "Väntar i %[1]s på en körare med följande etikett: %[2]s",
+		"other": "Väntar i %[1]s på en körare med följande etiketter: %[2]s"
+	},
+	"actions.status.info.assigned_runner_link": "Tilldelad till körare <a href=\"%[1]s\">%[2]s</a> (%[3]s)",
+	"actions.status.info.assigned_runner_no_link": "Tilldelad till körare %[1]s (%[2]s)",
+	"members.successfully_invited": "Användaren har blivit inbjuden till organisation.",
+	"org.teams.hide_membership_to_org": "Dölj mitt medlemskap till %s",
+	"repo.size_format.no_lfs": "%[1]s: %[2]s",
+	"repo.branch": "Gren",
+	"org.teams.invite_team_member.expired_list": "Utgångna inbjudningar",
+	"org.teams.invite_expires_on": "upphör den %[1]s",
+	"org.teams.invited_on": "inbjuden den %[1]s",
+	"org.teams.renew_invite": "Förnya",
+	"repo.settings.lfs.no_pointers": "Inga blobpekare hittades i det här kodförrådet."
 }

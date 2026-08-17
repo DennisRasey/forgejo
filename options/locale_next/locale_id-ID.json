@@ -670,7 +670,6 @@
 	"access_token.error.specified_repos_none": "Token akses dengan repositori tertentu harus memiliki setidaknya satu repositori.",
 	"access_token.error.specified_repos_and_public_only": "Token akses dengan repositori tertentu tidak dapat digabungkan dengan cakupan hanya-publik.",
 	"access_token.error.specified_repos_and_invalid_scope": "Token akses dengan repositori tertentu hanya dapat digunakan dengan cakupan read:issue, write:issue, read:repository, dan write:repository.",
-	"actions.status.diagnostics.waiting": "Menunggu runner dengan label berikut: %s",
 	"actions.status.unknown": "Tidak diketahui",
 	"actions.status.waiting": "Menunggu",
 	"actions.status.running": "Berjalan",
