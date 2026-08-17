@@ -9,8 +9,7 @@
 		</div>
 		<div>
 			<button class="link-action" data-url="fetch-action-test?k=1">test action</button>
-			<button class="link-action" data-url="fetch-action-test?k=1" data-modal-confirm="confirm?">test with confirm</button>
-			<button class="ui red button link-action" data-url="fetch-action-test?k=1" data-modal-confirm="confirm?">test with risky confirm</button>
+			<button class="link-action" data-url="fetch-action-test?k=1" data-modal-id="confirm">test with confirm</button>
 		</div>
 	</div>
 	<div>
@@ -32,6 +31,15 @@
 		</div>
 	</div>
 </div>
+<dialog id="confirm">
+	<article>
+		<div class="content">confirm?</div>
+		<div class="actions">
+			<button type="button" class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+			<button class="ui primary button ok">{{ctx.Locale.Tr "modal.confirm"}}</button>
+		</div>
+	</article>
+</dialog>
 <style>
 	.ui.message.flash-message {
 		text-align: start;

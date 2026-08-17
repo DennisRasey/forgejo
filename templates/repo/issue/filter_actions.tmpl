@@ -9,7 +9,6 @@
 		{{if $.IsRepoAdmin}}
 			<button class="ui red button issue-action"
 				data-action="delete" data-url="{{$.RepoLink}}/issues/delete"
-				data-action-delete-confirm="{{ctx.Locale.Tr "confirm_delete_selected"}}"
 			>{{ctx.Locale.Tr "repo.issues.delete"}}</button>
 		{{end}}
 	<!-- Labels -->
@@ -126,3 +125,12 @@
 	{{end}}
 </div>
 
+<dialog id="delete-issues">
+	<article>
+		<div class="content">{{ctx.Locale.Tr "confirm_delete_selected"}}</div>
+		<div class="actions">
+			<button type="button" class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+			<button class="ui primary button ok">{{ctx.Locale.Tr "modal.confirm"}}</button>
+		</div>
+	</article>
+</dialog>

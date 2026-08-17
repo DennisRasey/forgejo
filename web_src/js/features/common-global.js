@@ -8,12 +8,12 @@ import {svg} from '../svg.js';
 import {hideElem, showElem, toggleElem, resetForms, initSubmitEventPolyfill, submitEventSubmitter} from '../utils/dom.js';
 import {htmlEscape} from 'escape-goat';
 import {showTemporaryTooltip} from '../modules/tippy.js';
-import {confirmModal} from './comp/ConfirmModal.js';
 import {showErrorToast} from '../modules/toast.js';
 import {request, POST, GET} from '../modules/fetch.js';
 import '../htmx.js';
 import {initTab} from '../modules/tab.ts';
 import {initGlobalShowModal} from './show-modal.ts';
+import {showModal} from '../modules/modal.ts';
 
 const {appUrl, appSubUrl, i18n} = window.config;
 
@@ -370,7 +370,6 @@ export async function initDropzone(dropzoneEl, zone = undefined) {
 async function linkAction(e) {
   // A "link-action" can post AJAX request to its "data-url"
   // Then the browser is redirected to: the "redirect" in response, or "data-redirect" attribute, or current URL by reloading.
-  // If the "link-action" has "data-modal-confirm" attribute, a confirm modal dialog will be shown before taking action.
   const el = e.target.closest('.link-action');
   if (!el) return;
 
@@ -382,16 +381,14 @@ async function linkAction(e) {
     el.disabled = false;
   };
 
-  const modalConfirmContent = htmlEscape(el.getAttribute('data-modal-confirm') || '');
-  if (!modalConfirmContent) {
+  // If the "link-action" has "data-modal-id" attribute, a confirm modal dialog will be shown before taking action.
+  const modalID = el.getAttribute('data-modal-id');
+  if (!modalID) {
     await doRequest();
     return;
   }
 
-  const isRisky = el.classList.contains('red') || el.classList.contains('yellow') || el.classList.contains('orange') || el.classList.contains('negative');
-  if (await confirmModal({content: modalConfirmContent, buttonColor: isRisky ? 'orange' : 'primary'})) {
-    await doRequest();
-  }
+  showModal(modalID, doRequest);
 }
 
 export function initGlobalLinkActions() {

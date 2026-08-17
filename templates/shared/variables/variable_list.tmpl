@@ -45,7 +45,7 @@
 				<button class="btn interact-bg tw-p-2 link-action"
 					data-tooltip-content="{{ctx.Locale.Tr "actions.variables.deletion"}}"
 					data-url="{{$.Link}}/{{.ID}}/delete"
-					data-modal-confirm="{{ctx.Locale.Tr "actions.variables.deletion.description"}}"
+					data-modal-id="delete-variable"
 				>
 					{{svg "octicon-trash"}}
 				</button>
@@ -89,4 +89,14 @@
 			{{template "base/modal_actions_confirm" (dict "ModalButtonTypes" "confirm")}}
 		</form>
 		</article>
+</dialog>
+
+<dialog id="delete-variable">
+	<article>
+		<div class="content">{{ctx.Locale.Tr "actions.variables.deletion.description"}}</div>
+		<div class="actions">
+			<button type="button" class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+			<button class="ui primary button ok">{{ctx.Locale.Tr "modal.confirm"}}</button>
+		</div>
+	</article>
 </dialog>

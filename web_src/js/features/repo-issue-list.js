@@ -2,11 +2,11 @@ import $ from 'jquery';
 import {updateIssuesMeta} from './repo-issue.js';
 import {toggleElem, hideElem, isElemHidden} from '../utils/dom.js';
 import {htmlEscape} from 'escape-goat';
-import {confirmModal} from './comp/ConfirmModal.js';
 import {showErrorToast} from '../modules/toast.js';
 import {createSortable} from '../modules/sortable.js';
 import {DELETE, POST} from '../modules/fetch.js';
 import {parseDom} from '../utils.js';
+import {showModal} from '../modules/modal.ts';
 
 function initRepoIssueListCheckboxes() {
   const issueSelectAll = document.querySelector('.issue-checkbox-all');
@@ -73,20 +73,22 @@ function initRepoIssueListCheckboxes() {
       action = 'toggle-alt';
     }
 
+    const updateIssue = async () => {
+      try {
+        await updateIssuesMeta(url, action, issueIDs, elementId);
+        window.location.reload();
+      } catch (err) {
+        showErrorToast(err.responseJSON?.error ?? err.message);
+      }
+    };
+
     // for delete
     if (action === 'delete') {
-      const confirmText = e.target.getAttribute('data-action-delete-confirm');
-      if (!await confirmModal({content: confirmText, buttonColor: 'orange'})) {
-        return;
-      }
+      showModal('delete-issues', updateIssue);
+      return;
     }
 
-    try {
-      await updateIssuesMeta(url, action, issueIDs, elementId);
-      window.location.reload();
-    } catch (err) {
-      showErrorToast(err.responseJSON?.error ?? err.message);
-    }
+    await updateIssue();
   });
 }
 

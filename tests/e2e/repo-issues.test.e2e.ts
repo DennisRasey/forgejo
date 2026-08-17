@@ -45,3 +45,16 @@ test('Label filter exclusion', async ({page}) => {
     page.getByRole('link', {name: 'issue1'}),
   ).toBeVisible();
 });
+
+test('Delete multiple issues', async ({page}) => {
+  const response = await page.goto('/user2/repo1/issues');
+  expect(response?.status()).toBe(200);
+
+  const deleteButton = page.getByRole('button', {name: 'Delete'});
+  await expect(deleteButton).toBeHidden();
+  await page.getByLabel('Check/Uncheck "issue1"').click();
+  await expect(deleteButton).toBeVisible();
+
+  await deleteButton.click();
+  await expect(page.locator('#delete-issues')).toBeVisible();
+});
