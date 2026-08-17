@@ -669,11 +669,6 @@
 	"moderation.action.account.delete": "Usuń konto",
 	"moderation.report.mark_as_ignored": "Oznacz jako ignorowane",
 	"search.syntax": "Syntax wyszukiwania",
-	"actions.status.diagnostics.waiting": {
-		"one": "Oczekiwanie na runner z następującą etykietą: %s",
-		"few": "Oczekiwanie na runnery z następującą etykietą: %s",
-		"many": "Oczekiwanie na runnery z następującą etykietą: %s"
-	},
 	"actions.status.unknown": "Nieznane",
 	"actions.status.waiting": "Oczekiwanie",
 	"actions.status.running": "Uruchomione",
@@ -768,5 +763,42 @@
 		"few": "%d miesiące",
 		"many": "%d miesięcy"
 	},
-	"repo.issues.context.copy_markdown": "Skopiuj Markdown"
+	"repo.issues.context.copy_markdown": "Skopiuj Markdown",
+	"packages.container.annotations": "Adnotacje",
+	"repo.empty_commit_message": "Pusta wiadomość commita",
+	"mail.team_invite.expiration": {
+		"one": "To zaproszenie wygaśnie za %d dzień.",
+		"few": "To zaproszenie wygaśnie za %d dni.",
+		"many": "To zaproszenie wygaśnie za %d dni."
+	},
+	"repo.packages.visibility_warning": "To repozytorium jest prywatne, ale podlinkowane pakiety są widoczne publicznie (właściciel %s jest publiczny).",
+	"migrate.in_progress.issues.progress": {
+		"one": "Zmigrowano %[1]d zgłoszenie",
+		"few": "Zmigrowano %[1]d zgłoszenia",
+		"many": "Zmigrowano %[1]d zgłoszeń"
+	},
+	"migrate.in_progress.pulls.progress": {
+		"one": "Zmigrowano %[1]d pull request",
+		"few": "Zmigrowano %[1]d pull requesty",
+		"many": "Zmigrowano %[1]d pull requestów"
+	},
+	"search.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Zobacz dokumentację</a> żeby dowiedzieć się więcej o wyszukiwaniu, operatorach oraz filtrach.",
+	"repo.settings.lfs.size": "Wielkość",
+	"repo.settings.lfs.last_update": "Ostatnia aktualizacja",
+	"repo.settings.lfs.no_pointers": "Brak wskaźników do danego bloba w repozytorium.",
+	"repo.settings.units.more_units_disable_hint": "Podpowiedź \"Włącz więcej\" może zostać wykłączona poprzez <a href=\"%s\">Ustawienia użytkownika > Wygląd</a>.",
+	"install.ssh_authorized_keys_inspection_error": "Nie udało się przeczytać aktualnego pliku authorized_keys: %v",
+	"install.ssh_authorized_keys_unexpected_key": "Włączenie serwera SSH dla Forgejo konfliktuje z plikiem zlokalizowanym w %s, który zawiera aktualnie klucze SSH. Sugestia: użyj dedykowanego użytkownika dla Forgejo albo wyłącz SSH.",
+	"keys.verify.token.hint": "Ten token jest ważny tylko 1 minutę. <a href=\"%[1]s\">Pobierz nowy jeżeli tamten się skończył</a>.",
+	"admin.federation.federation": "Federacja",
+	"admin.federation.host.id": "ID",
+	"admin.federation.host.port": "Port",
+	"admin.federation.host.software_name": "Oprogramowanie",
+	"admin.federation.host.created": "Utworzono",
+	"admin.federation.host.updated": "Zaaktualizowano",
+	"admin.federation.host.latest_activity": "Ostatnia aktywność",
+	"admin.federation.users": "Użytkownicy",
+	"mail.issue.action.close_by_commit": "%[1]s zamknięty %[2]s w commicie %[3]s.",
+	"editor.textarea.tab_hint": "Linia jest już wcięta. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora.",
+	"editor.textarea.shift_tab_hint": "Brak wcięcia dla tej linii. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora."
 }

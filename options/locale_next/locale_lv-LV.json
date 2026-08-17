@@ -541,7 +541,7 @@
 	"og.repo.summary_card.alt_description": "Glabātavas %[1]s kopsavilkuma kartīte, aprakstīta kā: %[2]s",
 	"mail.actions.run_info_sha": "Iesūtījums: %[1]s",
 	"repo.settings.push_mirror.branch_filter.description": "Zarus, kurus spoguļot. Atstāt tukšu, lai spoguļotu visus zarus. Pierakstu skatīt <a href=\"%[1]s\">%[2]s dokumentācijā</a>. Piemēri: <code>main, release/*</code>",
-	"repo.settings.push_mirror.branch_filter.label": "Zaru atlasītājs (izvēles)",
+	"repo.settings.push_mirror.branch_filter.label": "Zaru atsijātājs (izvēles)",
 	"discussion.sidebar.reference": "Atsauce",
 	"admin.moderation.no_open_reports": "Pašlaik nav atvērtu pārskatu.",
 	"admin.moderation.moderation_reports": "Satura pārraudzības pārskati",
@@ -684,11 +684,6 @@
 	"repo.pulls.poster_trust_revoke": "Atsaukt",
 	"repo.pulls.poster_trust_revoke.tooltip": "Šī izmaiņu pieprasījuma izveidotājam vairs netiks uzticēts izpildīt notikuma `pull_request` notikuma izraisītas darbplūsmas, katra izpilde būs pašrocīgi jāapstiprina.",
 	"admin.dashboard.actions_action_user": "Atsaukt Forgejo darbību uzticamību neaktīviem lietotājiem",
-	"actions.status.diagnostics.waiting": {
-		"zero": "Gaida uz izpildītāju ar šādām iezīmēm: %s",
-		"one": "Gaida uz izpildītāju ar šādām iezīmēm: %s",
-		"other": "Gaida uz izpildītāju ar šādām iezīmēm: %s"
-	},
 	"actions.status.unknown": "Nezināms",
 	"actions.status.waiting": "Gaida",
 	"actions.status.running": "Izpildās",
@@ -842,5 +837,23 @@
 		"zero": "%d sekunžu",
 		"one": "%d sekunde",
 		"other": "%d sekundes"
-	}
+	},
+	"org.teams.hide_membership_to_org": "Paslēpt manu dalību %s",
+	"repo.settings.lfs.last_update": "Pēdējais atjauninājums",
+	"repo.settings.lfs.size": "Lielums",
+	"repo.size_format.no_lfs": "%[1]s: %[2]s",
+	"repo.watching": "Vēro",
+	"repo.watch.issues": "Pieteikumi",
+	"repo.watch.pull_requests": "Izmaiņu pieprasījumi",
+	"repo.watch.releases": "Laidieni",
+	"repo.watch.releases.hint": "(Tikai e-pastā)",
+	"actions.status.info.assigned_runner_no_link": "Piešķirts izpildītājam %[1]s (%[2]s)",
+	"actions.status.info.assigned_runner_link": "Piešķirts izpildītājam <a href=\"%[1]s\">%[2]s</a> (%[3]s)",
+	"actions.status.info.running": "Izpildās %[1]s",
+	"actions.status.info.blocked": "Aizturēts %[1]s",
+	"repo.branch": "Zars",
+	"repo.commit": "Iesūtījums",
+	"actions.status.info.failure": "Neizdevās %[1]s pēc %[2]s",
+	"actions.status.info.cancelled": "Atcelta %[1]s pēc %[2]s",
+	"repo.settings.lfs.no_pointers": "Šajā glabātavā nav atrasts neviens blob rādītājs."
 }

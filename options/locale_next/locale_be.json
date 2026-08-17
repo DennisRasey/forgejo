@@ -196,11 +196,6 @@
 		"few": "%s загрузки",
 		"many": "%s загрузак"
 	},
-	"actions.status.diagnostics.waiting": {
-		"one": "Чаканне выканаўцы з наступнай мэткай: %s",
-		"few": "Чаканне выканаўцы з наступнымі меткамі: %s",
-		"many": "Чаканне выканаўцы з наступнымі меткамі: %s"
-	},
 	"actions.runs.run_attempt_label": "Спроба запуску #%[1]s (%[2]s)",
 	"actions.runs.viewing_out_of_date_run": "Вы пераглядаеце застарэлы запуск гэтай задачы, які быў выкананы %[1]s.",
 	"actions.runs.view_most_recent_run": "Праглядзець апошні запуск",

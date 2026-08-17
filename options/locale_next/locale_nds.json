@@ -666,10 +666,6 @@
 	"repo.pulls.poster_trust_revoke": "Torüggnehmen",
 	"repo.pulls.poster_trust_revoke.tooltip": "De Schriever vun deesem Haalvörslag word nich mehr vertroot, Warkwiesen, wat vun eenem `pull_request`-Vörfall utlööst worden, uttoföhren. Elkeen Utföhren mutt neei tostimmt worden.",
 	"admin.dashboard.actions_action_user": "Forgejo-Aktioonen-Vertroen för inaktiiv Brukers torüggnehmen",
-	"actions.status.diagnostics.waiting": {
-		"one": "Wacht up eenen Loper mit deesem Vermark: %s",
-		"other": "Wacht up eenen Loper mit deesen Vermarkens: %s"
-	},
 	"actions.status.unknown": "Unbekannt",
 	"actions.status.waiting": "Wacht",
 	"actions.status.running": "Löppt",
@@ -981,5 +977,37 @@
 	"relativetime.duration.years": {
 		"one": "%d Jahr",
 		"other": "%d Jahren"
-	}
+	},
+	"repo.empty_commit_message": "Lege Kommitterens-Naricht",
+	"packages.container.annotations": "Anmarkens",
+	"actions.status.info.blocked": "Blockeert siet %[1]s",
+	"actions.status.info.cancelled": "%[1]s na %[2]s ofbroken",
+	"actions.status.info.failure": "%[1]s na %[2]s fehlslagen",
+	"actions.status.info.running": "Löppt siet %[1]s",
+	"actions.status.info.success": "%[1]s in %[2]s daankregen",
+	"actions.status.info.waiting": {
+		"one": "Wacht siet %[1]s up eenen Loper mit deesem Vermark: %[2]s",
+		"other": "Wacht siet %[1]s up eenen Loper mit deesen Vermarkens: %[2]s"
+	},
+	"actions.status.info.assigned_runner_link": "To Loper <a href=\"%[1]s\">%[2]s</a> (%[3]s) towiesen",
+	"actions.status.info.assigned_runner_no_link": "To Loper %[1]s (%[2]s) towiesen",
+	"repo.size_format.no_lfs": "%[1]s: %[2]s",
+	"repo.settings.lfs.size": "Grött",
+	"repo.settings.lfs.last_update": "Tolest verneeit",
+	"org.teams.hide_membership_to_org": "Miene Liddmatenskupp in %s verbargen",
+	"mail.team_invite.expiration": {
+		"one": "Deese Inladen löppt in %d Dag av.",
+		"other": "Deese Inladen löppt in %d Dagen av."
+	},
+	"members.successfully_invited": "Bruker is to de Vereenigung inladen worden.",
+	"org.teams.invite_team_member.expired_list": "Avlopen Inladens",
+	"org.teams.invite_expires_on": "löppt am %[1]s av",
+	"org.teams.invited_on": "am %[1]s inladen",
+	"org.teams.renew_invite": "Vernejen",
+	"repo.commit": "Kommitteren",
+	"repo.branch": "Twieg",
+	"repo.settings.lfs.no_pointers": "Keene Blob-Wiesers in deesem Repositorium funnen.",
+	"org.pending_invite_notification_single_team": "Du büst inladen worden, to de Klottje %s in deeser Vereenigung bitotreden.",
+	"org.pending_invite_notification_multiple_teams": "Du büst inladen worden, to deesen Klottjen in deeser Vereenigung bitotreden: %s.",
+	"org.view_invite": "Ankieken"
 }

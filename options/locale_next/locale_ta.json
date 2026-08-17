@@ -674,10 +674,6 @@
 	"keys.verify.token.hint": "கிள்ளாக்கு 1 மணித்துளி மட்டுமே செல்லுபடியாகும். <a href=\"%[1]s\">அது காலாவதியானால் புதியதைப் பெறவும்</a>.",
 	"admin.dashboard.actions_action_user": "செயலற்ற பயனர்களுக்கான Forgejo செயல்கள் நம்பிக்கையைத் திரும்பப் பெறவும்",
 	"admin.dashboard.transfer_lingering_logs": "தரவுத்தளத்திலிருந்து சேமிப்பகத்திற்கு முடிக்கப்பட்ட செயல்களின் பதிவுகளை மாற்றும்",
-	"actions.status.diagnostics.waiting": {
-		"one": "பின்வரும் லேபிளுடன் ரன்னருக்காகக் காத்திருக்கிறது: %s",
-		"other": "பின்வரும் லேபிள்களுடன் ரன்னருக்காகக் காத்திருக்கிறது: %s"
-	},
 	"actions.status.unknown": "தெரியவில்லை",
 	"actions.status.waiting": "காத்திருக்கிறது",
 	"actions.status.running": "ஓடுகிறது",

@@ -684,11 +684,6 @@
 	"repo.pulls.poster_trust_revoke": "Odvolat",
 	"repo.pulls.poster_trust_revoke.tooltip": "Autor této žádosti o sloučení již nebude moci spouštět běhy workflow iniciované událostí `pull_request`, každé spuštění bude muset být ručně schváleno.",
 	"admin.dashboard.actions_action_user": "Odvolat důvěřování ve Forgejo Actions neaktivním uživatelům",
-	"actions.status.diagnostics.waiting": {
-		"one": "Čekání na runner s následujícím štítkem: %s",
-		"few": "Čekání na runner s následujícími štítky: %s",
-		"other": "Čekání na runner s následujícími štítky: %s"
-	},
 	"actions.status.unknown": "Neznámý",
 	"actions.status.waiting": "Čeká",
 	"actions.status.running": "Probíhá",
@@ -970,5 +965,79 @@
 	"repo.issues.context.copy_markdown": "Kopírovat Markdown",
 	"actions.workflow.pre_execution_warning": "Varování workflow:",
 	"actions.workflow.permissions_warning": "Úloha <code>%[1]s</code> nebo její workflow má pole <code>permissions</code>, které není podporováno službou Forgejo a bude ignorováno. Pro přidání schopností k této úloze použijte <a href=\"%[2]s\">autorizovanou integraci</a>.",
-	"settings.profile.dotprofile.hint": "Pokročilé přizpůsobení profilu, včetně ověřovacích odkazů, lze provést pomocí repozitáře <code>%s</code>. <a href=\"%s\" target=\"_blank\">Zjistěte více</a>."
+	"settings.profile.dotprofile.hint": "Pokročilé přizpůsobení profilu, včetně ověřovacích odkazů, lze provést pomocí repozitáře <code>%s</code>. <a href=\"%s\" target=\"_blank\">Zjistěte více</a>.",
+	"relativetime.duration.secs": {
+		"one": "%d sekunda",
+		"few": "%d sekundy",
+		"other": "%d sekund"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minuta",
+		"few": "%d minuty",
+		"other": "%d minut"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d hodina",
+		"few": "%d hodiny",
+		"other": "%d hodin"
+	},
+	"relativetime.duration.days": {
+		"one": "%d den",
+		"few": "%d dny",
+		"other": "%d dní"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d týden",
+		"few": "%d týdny",
+		"other": "%d týdnů"
+	},
+	"relativetime.duration.months": {
+		"one": "%d měsíc",
+		"few": "%d měsíce",
+		"other": "%d měsíců"
+	},
+	"relativetime.duration.years": {
+		"one": "%d rok",
+		"few": "%d roky",
+		"other": "%d let"
+	},
+	"repo.empty_commit_message": "Prázdná zpráva revize",
+	"repo.watching": "Sledování",
+	"repo.watch.issues": "Problémy",
+	"repo.watch.pull_requests": "Žádosti o sloučení",
+	"repo.watch.releases": "Vydání",
+	"repo.watch.releases.hint": "(Pouze e-mail)",
+	"packages.container.annotations": "Anotace",
+	"actions.status.info.blocked": "Zablokováno %[1]s",
+	"actions.status.info.cancelled": "Zrušeno %[1]s po %[2]s",
+	"actions.status.info.failure": "Selhalo %[1]s po %[2]s",
+	"actions.status.info.running": "Běží %[1]s",
+	"actions.status.info.success": "Uspělo %[1]s za %[2]s",
+	"actions.status.info.waiting": {
+		"one": "Čekání na %[1]s pro runner s následujícím štítkem: %[2]s",
+		"few": "Čekání na %[1]s pro runner s následujícími štítky: %[2]s",
+		"other": "Čekání na %[1]s pro runner s následujícími štítky: %[2]s"
+	},
+	"actions.status.info.assigned_runner_link": "Přiděleno runneru <a href=\"%[1]s\">%[2]s</a> (%[3]s)",
+	"actions.status.info.assigned_runner_no_link": "Přiděleno runneru %[1]s (%[2]s)",
+	"repo.size_format.no_lfs": "%[1]s: %[2]s",
+	"repo.settings.lfs.size": "Velikost",
+	"repo.settings.lfs.last_update": "Poslední aktualizace",
+	"org.teams.hide_membership_to_org": "Skrýt mé členství v organizaci %s",
+	"mail.team_invite.expiration": {
+		"one": "Tato pozvánka vyprší za %d den.",
+		"few": "Tato pozvánka vyprší za %d dny.",
+		"other": "Tato pozvánka vyprší za %d dní."
+	},
+	"repo.commit": "Revize",
+	"members.successfully_invited": "Uživatel úspěšně pozván do organizace.",
+	"repo.branch": "Větev",
+	"org.teams.invite_team_member.expired_list": "Pozvánky s vypršenou platností",
+	"org.teams.invite_expires_on": "vyprší %[1]s",
+	"org.teams.invited_on": "pozván %[1]s",
+	"org.teams.renew_invite": "Obnovit",
+	"repo.settings.lfs.no_pointers": "V tomto repozitáři nebyly nalezeny žádné ukazatele blobů.",
+	"org.pending_invite_notification_single_team": "Byl jsi pozván do týmu %s v této organizaci.",
+	"org.pending_invite_notification_multiple_teams": "Byl jsi pozván to následujících týmů této organizace: %s.",
+	"org.view_invite": "Zobrazit"
 }

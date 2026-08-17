@@ -467,7 +467,7 @@
 	"repo.issue_indexer.title": "Sorun Endeksleyici",
 	"relativetime.mins": {
 		"one": "%d dakika önce",
-		"other": "%d dakika_önce"
+		"other": "%d dakika önce"
 	},
 	"relativetime.hours": {
 		"one": "%d saat önce",
@@ -761,10 +761,6 @@
 	"access_token.error.specified_repos_none": "Belirtilen depolara sahip erişim jetonları’nda(token) en az bir depo bulunmalıdır.",
 	"access_token.error.specified_repos_and_public_only": "Belirtilen depolara sahip erişim jetonları(token’lar), sadece-herkese-açık kapsamıyla birleştirilemez.",
 	"access_token.error.specified_repos_and_invalid_scope": "Belirtilen depolara sahip erişim jetonları yalnızca read:issue, write:issue, read:repository ve write:repository kapsamlarıyla kullanılabilir.",
-	"actions.status.diagnostics.waiting": {
-		"one": "Aşağıdaki etikete sahip bir koşucu bekleniyor: %s",
-		"other": "Aşağıdaki etiketlere sahip bir koşucu bekleniyor: %s"
-	},
 	"actions.runners.uuid": "Evrensel Benzersiz Kimlik Tanımlayıcı(UUID)",
 	"actions.runners.token": "Jeton(Token)",
 	"actions.runners.ephemeral": "Geçici",
@@ -871,5 +867,49 @@
 	"actions.variables.not_found": "Değişken bulunamadı.",
 	"markup.filepreview.line": "%[2]s 'de %[1]d Satır",
 	"markup.filepreview.lines": "%[3]s içindeki %[1]d ile %[2]d arasındaki Satırlar",
-	"markup.filepreview.truncated": "Önizleme kısaltılmıştır"
+	"markup.filepreview.truncated": "Önizleme kısaltılmıştır",
+	"relativetime.duration.secs": {
+		"one": "%d saniye",
+		"other": "%d saniye"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d dakika",
+		"other": "%d dakika"
+	},
+	"repo.empty_commit_message": "Boş değişiklik(commit) mesajı",
+	"relativetime.duration.years": {
+		"one": "%d yıl",
+		"other": "%d yıl"
+	},
+	"relativetime.duration.months": {
+		"one": "%d ay",
+		"other": "%d ay"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d hafta",
+		"other": "%d hafta"
+	},
+	"relativetime.duration.days": {
+		"one": "%d gün",
+		"other": "%d gün"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d saat",
+		"other": "%d saat"
+	},
+	"repo.issues.context.copy_markdown": "Markdown'ı Kopyala",
+	"repo.packages.visibility_warning": "Bu depo gizli fakat bağlı olduğu paketler herkese açık (sahip %s herkese açık).",
+	"migrate.in_progress.issues.progress": {
+		"one": "%[1]d sorun aktarıldı",
+		"other": "%[1]d sorun aktarıldı"
+	},
+	"migrate.in_progress.pulls.progress": {
+		"one": "%[1]d çekme isteği aktarıldı",
+		"other": "%[1]d çekme isteği aktarıldı"
+	},
+	"search.match_inside_quotes": "Sadece tırnak içindeki metinle eşleşen sonuçları göster",
+	"search.docs": "Arama, operatörler ve filtreler hakkında detaylı bilgi için <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">belgeye bakın</a>.",
+	"repo.settings.lfs.size": "Boyut",
+	"repo.settings.lfs.last_update": "Son güncelleme",
+	"repo.settings.units.more_units_disable_hint": "\"Daha fazla aktifleştir\" ipucu <a href=\"%s\">Kullanıcı ayarları > Görünüm</a>'den kapatılabilir."
 }

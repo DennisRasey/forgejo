@@ -705,10 +705,6 @@
 	"pulls.manual_merge.commit.title": "Τίτλος υποβολής συγχώνευσης",
 	"pulls.manual_merge.commit.body": "Σώμα υποβολής συγχώνευσης",
 	"pulls.manual_merge.copy.button": "Αντιγραφή μηνύματος υποβολής συγχώνευσης",
-	"actions.status.diagnostics.waiting": {
-		"one": "Αναμονή για έναν εκτελεστή με την ακόλουθη ετικέτα: %s",
-		"other": "Αναμονή για έναν εκτελεστή με τις ακόλουθες ετικέτες: %s"
-	},
 	"repo.pulls.poster_trust_deny.tooltip": "Οι ροές εργασίας που αναμένουν έγκριση θα ακυρωθούν.",
 	"actions.runners.runner_details.page_title": "Εκτελεστής %s",
 	"actions.runners.edit_runner.name_label": "Όνομα",

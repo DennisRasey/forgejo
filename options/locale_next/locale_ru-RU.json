@@ -533,7 +533,7 @@
 	"settings.visibility.description": "Видимость профиля влияет на доступ других до ваших не частных репозиториев. <a href=\"%s\" target=\"_blank\">Подробнее</a>.",
 	"repo.diff.commit.previous-short": "Пред.",
 	"repo.diff.commit.next-short": "След.",
-	"profile.actions.tooltip": "Показать действия",
+	"profile.actions.tooltip": "Другие действия",
 	"feed.atom.link": "Atom-лента",
 	"keys.ssh.link": "Ключи SSH",
 	"keys.gpg.link": "Ключи GPG",
@@ -681,12 +681,7 @@
 	"repo.pulls.poster_trust_always": "Одобрить и начать доверять",
 	"repo.pulls.poster_trust_revoke": "Отозвать",
 	"keys.verify.token.hint": "Токен действителен в течение 1 минуты. <a href=\"%[1]s\">Получите новый, если этот истёк</a>.",
-	"admin.dashboard.actions_action_user": "Отозвать доверие Forgejo Действий у неактивных пользователей",
-	"actions.status.diagnostics.waiting": {
-		"one": "Ожидается исполнитель, имеющий метку: %s",
-		"few": "Ожидается исполнитель, имеющий одну из меток: %s",
-		"many": "Ожидается исполнитель, имеющий одну из меток: %s"
-	},
+	"admin.dashboard.actions_action_user": "Отозвать доверие Действий Forgejo у неактивных пользователей",
 	"actions.status.unknown": "Неизвестно",
 	"actions.status.waiting": "Ожидает",
 	"actions.status.running": "Запущено",
@@ -980,5 +975,29 @@
 	"actions.runners.edit_runner.properties_options": "Опции",
 	"actions.workflow.pre_execution_warning": "Предупреждения р. потока:",
 	"actions.secrets.mutation.header": "Изменить секрет «%s»",
-	"actions.secrets.mutation.failure_message": "Не удалось изменить секрет «%s»."
+	"actions.secrets.mutation.failure_message": "Не удалось изменить секрет «%s».",
+	"repo.empty_commit_message": "Пустое сообщение коммита",
+	"settings.authorized_integration.forgejo_actions_local.description": "Действия Forgejo смогут получить доступ к Forgejo через эту авторизованную интеграцию из одного выбранного репозитория при условии, что выполнение соответствует условиям, определенным ниже.",
+	"settings.authorized_integration.forgejo_actions_local.repo.required": "Необходимо указать исходный репозиторий Действий Forgejo.",
+	"settings.authorized_integration.forgejo_actions_local.git_ref.error": "Ошибка при чтении ссылки git: %s",
+	"packages.container.annotations": "Аннотации",
+	"actions.runners.runner_setup.program_options_snippet_aria": "Как использовать forgejo-runner",
+	"actions.runs.workflow_dispatch_description": "Запуск коммита <a href=\"%[1]s\">%[2]s </a>, вызванный <a href=\"%[3]s\">%[4]s </a>",
+	"repo.settings.lfs.size": "Размер",
+	"repo.settings.lfs.last_update": "Посл. обн.",
+	"mail.team_invite.expiration": {
+		"one": "Это приглашение истечёт через %d день.",
+		"few": "Это приглашение истечёт через %d дня.",
+		"many": "Это приглашение истечёт через %d дней."
+	},
+	"repo.watch.releases.hint": "(только по эл. почте)",
+	"org.teams.invite_team_member.expired_list": "Истёкшие приглашения",
+	"form.website.valid_url_schemes": "Разрешённые протоколы: %s",
+	"graphs.recent_commits.title": "Количество коммитов за последний год",
+	"repo.commit": "Коммит",
+	"org.pending_invite_notification_single_team": "Вы приглашены в команду %s в этой организации.",
+	"org.pending_invite_notification_multiple_teams": "Вы приглашены в следующие команды в этой организации: %s.",
+	"org.view_invite": "Просмотреть",
+	"repo.settings.lfs.no_pointers": "Указатели blob'ов не найдены в репозитории.",
+	"actions.runs.prioritize_run": "Приоритизировать выполнение"
 }
