@@ -131,7 +131,6 @@ func NewMainApp(version, versionExtra string) *cli.Command {
 	//
 	if executable == "forgejo-cli" {
 		subCmdsStandalone = append(subCmdsStandalone, forgejo.CmdActions(context.Background()))
-		subCmdWithConfig = append(subCmdWithConfig, forgejo.CmdF3(context.Background()))
 		globalFlags = func() []cli.Flag {
 			return []cli.Flag{
 				&cli.BoolFlag{

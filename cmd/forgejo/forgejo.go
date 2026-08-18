@@ -36,7 +36,6 @@ func CmdForgejo(ctx context.Context) *cli.Command {
 		Flags: []cli.Flag{},
 		Commands: []*cli.Command{
 			CmdActions(ctx),
-			CmdF3(ctx),
 		},
 	}
 }

@@ -5,7 +5,6 @@ go 1.26.0
 toolchain go1.26.6
 
 require (
-	code.forgejo.org/f3/gof3/v3 v3.11.15
 	code.forgejo.org/forgejo-contrib/go-libravatar v0.0.0-20260301104140-add494e31dab
 	code.forgejo.org/forgejo/actions-proto v0.7.0
 	code.forgejo.org/forgejo/go-rpmutils v1.0.0
@@ -182,7 +181,6 @@ require (
 	github.com/go-webauthn/x v0.2.3 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/gorilla/css v1.0.1 // indirect

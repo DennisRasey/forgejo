@@ -230,7 +230,6 @@ func LoadSettings() {
 	LoadQueueSettings()
 	loadProjectFrom(CfgProvider)
 	loadMimeTypeMapFrom(CfgProvider)
-	loadF3From(CfgProvider)
 	loadAuthorizedIntegrationFrom(CfgProvider)
 }
 
