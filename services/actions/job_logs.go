@@ -5,6 +5,7 @@ package actions
 
 import (
 	"archive/zip"
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -15,6 +16,8 @@ import (
 	actions_model "forgejo.org/models/actions"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/modules/actions"
+	"forgejo.org/modules/json"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/util"
 )
@@ -116,6 +119,66 @@ func OpenJobLogReader(
 	}
 	stepFilename := fmt.Sprintf("job-%d-attempt-%d-step-%d.log", job.ID, task.Attempt, stepIdx)
 	return reader, stepFilename, modtime, nil
+}
+
+// JobLogFilterOptions configures how WriteJobLogStream transforms its input.
+type JobLogFilterOptions struct {
+	// JSON switches the output format from plaintext lines to NDJSON, where
+	// each emitted line is a {time, content} object on its own line. When
+	// false, lines are written verbatim in the storage form
+	// (actions.FormatLog output) — the cheap text path stays on
+	// http.ServeContent and never calls this.
+	JSON bool
+}
+
+// jsonLine is the NDJSON shape emitted by WriteJobLogStream when opts.JSON
+// is true. time.Time marshals as RFC3339Nano via the configured json module.
+type jsonLine struct {
+	Time    time.Time `json:"time"`
+	Content string    `json:"content"`
+}
+
+// WriteJobLogStream scans reader line-by-line and writes a (possibly
+// re-encoded) view to w. The reader is assumed to already cover exactly the
+// byte range the caller wants to scan (the underlying log, or a step-bounded
+// window). Today the only re-encoding is opts.JSON; without it the function
+// is a line-buffered passthrough that callers can wire up uniformly.
+func WriteJobLogStream(w io.Writer, reader io.Reader, opts JobLogFilterOptions) error {
+	scanner := bufio.NewScanner(reader)
+	scanner.Buffer(make([]byte, actions.MaxStoredLineSize), actions.MaxStoredLineSize)
+
+	var enc json.Encoder
+	if opts.JSON {
+		enc = json.NewEncoder(w)
+	}
+
+	for scanner.Scan() {
+		if opts.JSON {
+			t, c, err := actions.ParseLog(scanner.Text())
+			if err != nil {
+				// Malformed line; safe to skip. Storage writes well-formed
+				// lines, so this should be rare and tolerable -- but log so
+				// operators have something to attach when users report missing
+				// lines.
+				log.Warn("WriteJobLogStream: skipping malformed line: %v", err)
+				continue
+			}
+			if err := enc.Encode(jsonLine{Time: t.UTC(), Content: c}); err != nil {
+				return fmt.Errorf("could not encode NDJSON line: %w", err)
+			}
+			continue
+		}
+		if _, err := w.Write(scanner.Bytes()); err != nil {
+			return fmt.Errorf("could not write log line: %w", err)
+		}
+		if _, err := w.Write([]byte{'\n'}); err != nil {
+			return fmt.Errorf("could not write log newline: %w", err)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("could not scan log stream: %w", err)
+	}
+	return nil
 }
 
 // WriteRunLogsZip writes a ZIP of the latest per-job logs for the run to w.

@@ -17,6 +17,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/actions"
+	"forgejo.org/modules/json"
 	"forgejo.org/modules/setting"
 
 	runnerv1 "code.forgejo.org/forgejo/actions-proto/runner/v1"
@@ -237,6 +238,29 @@ jobs:
 			)
 			req.AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusNotFound)
+		})
+
+		t.Run("format=ndjson: 200 NDJSON every line", func(t *testing.T) {
+			req := NewRequestf(t, "GET",
+				"/api/v1/repos/%s/actions/jobs/%d/logs?format=ndjson",
+				repoA.FullName(), jobID,
+			)
+			req.AddTokenAuth(token)
+			resp := MakeRequest(t, req, http.StatusOK)
+			assert.Contains(t, resp.Header().Get("Content-Type"), "application/x-ndjson")
+			assert.Empty(t, resp.Header().Get("Accept-Ranges"))
+
+			lines := strings.Split(strings.TrimRight(resp.Body.String(), "\n"), "\n")
+			require.Len(t, lines, len(outcome.logRows))
+
+			type jsonLine struct {
+				Time    time.Time `json:"time"`
+				Content string    `json:"content"`
+			}
+			var l0 jsonLine
+			require.NoError(t, json.Unmarshal([]byte(lines[0]), &l0))
+			assert.Equal(t, "setup banner line", l0.Content)
+			assert.False(t, l0.Time.IsZero())
 		})
 
 		httpContextA := NewAPITestContext(t, user2.Name, repoA.Name, auth_model.AccessTokenScopeWriteUser)

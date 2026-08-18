@@ -28,6 +28,12 @@ const (
 
 	timeFormat     = "2006-01-02T15:04:05.0000000Z07:00"
 	defaultBufSize = MaxLineSize
+
+	// MaxStoredLineSize is the upper bound on a single stored log line as it
+	// appears on disk: the timestamp prefix, then a space, then up to
+	// MaxLineSize bytes of content. Callers using bufio.Scanner over stored
+	// log bytes should size their buffer at least this large.
+	MaxStoredLineSize = len(timeFormat) + MaxLineSize + 1
 )
 
 func ExistsLogs(ctx context.Context, filename string) (bool, error) {
@@ -102,8 +108,7 @@ func ReadLogs(ctx context.Context, inStorage bool, filename string, offset, limi
 	}
 
 	scanner := bufio.NewScanner(f)
-	maxLineSize := len(timeFormat) + MaxLineSize + 1
-	scanner.Buffer(make([]byte, maxLineSize), maxLineSize)
+	scanner.Buffer(make([]byte, MaxStoredLineSize), MaxStoredLineSize)
 
 	var rows []*runnerv1.LogRow
 	for scanner.Scan() && (int64(len(rows)) < limit || limit < 0) {
