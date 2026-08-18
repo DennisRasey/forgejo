@@ -191,6 +191,76 @@ body:
 				return sb.String()
 			}())
 	})
+	newRepo(t, 2, "funding_basic_complete", nil, []FileChanges{{
+		Filename: ".forgejo/FUNDING.yml",
+		Versions: []string{`
+community_bridge: example
+github:
+  - example
+  - example2
+issuehunt: example
+ko_fi: [example, example_2_electric_boogaloo]
+liberapay: example
+patreon: example
+open_collective: example
+buy_me_a_coffee: example
+thanks_dev: u/gh/example
+tidelift: npm/example
+custom: ["https://example.com", 😀.com]
+`},
+	}}, nil)
+	newRepo(t, 2, "funding_some_valid", nil, []FileChanges{{
+		Filename: ".forgejo/FUNDING.yml",
+		Versions: []string{`
+ko_fi: 1337
+custom: ["https://example.com"]
+ko-fi: example
+`},
+	}}, nil)
+	newRepo(t, 2, "funding_one_invalid", nil, []FileChanges{{
+		Filename: ".forgejo/FUNDING.yml",
+		Versions: []string{`
+custom:
+- localhost
+- [localhost]
+`},
+	}}, nil)
+	newRepo(t, 2, "funding_with_a_really_ridiculously_long_title_that_doesnt_really_happen_all_that_often_normally_but_could_really_mess_with_things_if_not_handled_properly", nil, []FileChanges{{
+		Filename: ".forgejo/FUNDING.yml",
+		Versions: []string{`
+custom: example.com
+`},
+	}}, nil)
+	newRepo(t, 2, "funding_evil", nil, []FileChanges{{
+		Filename: ".forgejo/FUNDING.yml",
+		Versions: []string{`
+ko_fi: '"><script>alert(1);</script><a class="'
+liberapay: "text/other"
+thanks_dev: "could/be/real/bad"
+custom:
+  - '#" style="background: url(localhost)'
+  - 'https://example.com" class="rogue injection'
+  - 'https://example.com/" class="rogue injection'
+  - '<script>alert` + "`" + `1` + "`" + `</script>'
+  - 'Arbitrary: text'
+`},
+	}}, nil)
+	newRepo(t, 6, ".profile", nil, []FileChanges{{
+		Filename: ".forgejo/FUNDING.yml",
+		Versions: []string{`
+ko_fi: example
+liberapay: example
+custom: "http://localhost:3003/"
+`},
+	}}, nil)
+	newRepo(t, 39, ".profile", nil, []FileChanges{{
+		Filename: "FUNDING.yml",
+		Versions: []string{`
+ko_fi: example
+liberapay: example
+custom: "http://localhost:3003/"
+`},
+	}}, nil)
 	// add your repo declarations here
 }
 

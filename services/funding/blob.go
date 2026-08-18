@@ -38,20 +38,20 @@ func processFundingConfig(config rawRepoFundingConfig) ([]*api.RepoFundingEntry,
 			break // we've reached our limit, as reported by a downstream list processor (error already listed)
 		}
 		if len(entryList) >= setting.MaxFundingEntriesPerConfig {
-			errs = append(errs, &ErrTooManyFundingProviders{TotalLimit: setting.MaxFundingEntriesPerConfig})
+			errs = append(errs, ErrTooManyFundingProviders{TotalLimit: setting.MaxFundingEntriesPerConfig})
 			break // we've reached our limit; no point checking further, even for parse errors (there may be many!)
 		}
 
 		providerName := entry.Key
 		provider := setting.GetFundingProviderByName(providerName)
 		if provider == nil {
-			errs = append(errs, &ErrUnknownFundingProvider{Name: providerName})
+			errs = append(errs, ErrUnknownFundingProvider{Name: providerName})
 			continue
 		}
 
 		entryData := entry.Value
 		if entryData == nil {
-			errs = append(errs, &ErrInvalidYamlType{Name: providerName})
+			errs = append(errs, ErrInvalidYamlType{Name: providerName})
 			continue
 		}
 
@@ -67,7 +67,7 @@ func processFundingConfig(config rawRepoFundingConfig) ([]*api.RepoFundingEntry,
 			entryList, errs, limitReached = processRowAsSlice(provider, slice, entryList, errs)
 
 		default:
-			errs = append(errs, &ErrInvalidYamlType{Name: providerName})
+			errs = append(errs, ErrInvalidYamlType{Name: providerName})
 			continue
 		}
 	}
@@ -83,7 +83,7 @@ func processRowAsString(provider *setting.FundingProviderConfig, value string, e
 		if slices.ContainsFunc(entryList, func(e *api.RepoFundingEntry) bool {
 			return e.Value == newEntry.Value
 		}) {
-			errs = append(errs, &ErrDuplicateFundingEntry{Name: provider.Name, Value: newEntry.Value})
+			errs = append(errs, ErrDuplicateFundingEntry{Name: provider.Name, Value: newEntry.Value})
 			return entryList, errs
 		}
 		entryList = append(entryList, newEntry)
@@ -94,12 +94,12 @@ func processRowAsString(provider *setting.FundingProviderConfig, value string, e
 func processRowAsSlice(provider *setting.FundingProviderConfig, slice []any, entryList []*api.RepoFundingEntry, errs []error) ([]*api.RepoFundingEntry, []error, bool) {
 	for _, value := range slice {
 		if len(entryList) >= setting.MaxFundingEntriesPerConfig {
-			errs = append(errs, &ErrTooManyFundingProviders{TotalLimit: setting.MaxFundingEntriesPerConfig})
+			errs = append(errs, ErrTooManyFundingProviders{TotalLimit: setting.MaxFundingEntriesPerConfig})
 			return entryList, errs, true // we've reached our limit; no point checking further, even for parse errors (there may be many!)
 		}
 		str, ok := value.(string)
 		if !ok {
-			errs = append(errs, &ErrInvalidYamlType{Name: provider.Name})
+			errs = append(errs, ErrInvalidYamlType{Name: provider.Name})
 		} else {
 			entryList, errs = processRowAsString(provider, str, entryList, errs)
 		}
