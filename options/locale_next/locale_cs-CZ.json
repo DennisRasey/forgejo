@@ -969,5 +969,10 @@
 	"actions.runs.prioritization_success": "Běh workflow #%d je nyní prioritizován.",
 	"actions.runs.deprioritization_success": "Běh workflow #%d již nebude prioritizován.",
 	"actions.workflow.pre_execution_warning": "Varování workflow:",
-	"actions.workflow.permissions_warning": "Úloha <code>%[1]s</code> nebo její workflow má pole <code>permissions</code>, které není podporováno službou Forgejo a bude ignorováno. Pro přidání schopností k této úloze použijte <a href=\"%[2]s\">autorizovanou integraci</a>."
+	"actions.workflow.permissions_warning": "Úloha <code>%[1]s</code> nebo její workflow má pole <code>permissions</code>, které není podporováno službou Forgejo a bude ignorováno. Pro přidání schopností k této úloze použijte <a href=\"%[2]s\">autorizovanou integraci</a>.",
+	"repo.watching": "Sledování",
+	"repo.watch.issues": "Problémy",
+	"repo.watch.pull_requests": "Žádosti o sloučení",
+	"repo.watch.releases": "Vydání",
+	"repo.watch.releases.hint": "(Pouze e-mail)"
 }

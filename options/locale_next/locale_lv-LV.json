@@ -542,7 +542,7 @@
 	"og.repo.summary_card.alt_description": "Glabātavas %[1]s kopsavilkuma kartīte, aprakstīta kā: %[2]s",
 	"mail.actions.run_info_sha": "Iesūtījums: %[1]s",
 	"repo.settings.push_mirror.branch_filter.description": "Zarus, kurus spoguļot. Atstāt tukšu, lai spoguļotu visus zarus. Pierakstu skatīt <a href=\"%[1]s\">%[2]s dokumentācijā</a>. Piemēri: <code>main, release/*</code>",
-	"repo.settings.push_mirror.branch_filter.label": "Zaru atlasītājs (izvēles)",
+	"repo.settings.push_mirror.branch_filter.label": "Zaru atsijātājs (izvēles)",
 	"discussion.sidebar.reference": "Atsauce",
 	"admin.moderation.no_open_reports": "Pašlaik nav atvērtu pārskatu.",
 	"admin.moderation.moderation_reports": "Satura pārraudzības pārskati",
@@ -807,5 +807,10 @@
 	"members.user_already_member": "Šis lietotājs jau ir apvienības dalībnieks.",
 	"members.no_team_selected": "Apvienības dalībniekiem ir jābūt vismaz vienā komandā.",
 	"pulls.status_checks.skipped": "Dažas pārbaudes tika izlaistas",
-	"members.invite_member": "Uzaicināt dalībnieku"
+	"members.invite_member": "Uzaicināt dalībnieku",
+	"repo.watching": "Vēro",
+	"repo.watch.issues": "Pieteikumi",
+	"repo.watch.pull_requests": "Izmaiņu pieprasījumi",
+	"repo.watch.releases": "Laidieni",
+	"repo.watch.releases.hint": "(Tikai e-pastā)"
 }
