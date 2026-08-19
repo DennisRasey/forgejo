@@ -556,7 +556,7 @@
 
 -
   id: 896
-  title: "job output"
+  title: "job output `baz`"
   repo_id: 4
   owner_id: 5
   workflow_id: "test.yaml"

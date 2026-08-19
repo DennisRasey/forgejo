@@ -1,5 +1,5 @@
 - id: 1000
-  title: "A scheduled workflow"
+  title: "A scheduled workflow `foo`"
   repo_id: 4
   owner_id: 5
   workflow_id: "scheduled.yaml"
@@ -16,7 +16,7 @@
   need_approval: false
   approved_by: 0
 - id: 1001
-  title: "Running workflow_dispatch"
+  title: "Running workflow_dispatch `bar`"
   repo_id: 4
   owner_id: 5
   workflow_id: "dispatch.yaml"
