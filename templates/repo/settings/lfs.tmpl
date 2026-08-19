@@ -1,10 +1,8 @@
 {{template "repo/settings/layout_head" (dict "ctxData" . "pageClass" "repository settings lfs")}}
 	<div class="repo-setting-content">
-		<div class="ui attached table segment">
-			<h4 class="ui top attached header">
-				{{ctx.Locale.Tr "repo.settings.lfs_filelist"}} ({{ctx.Locale.Tr "admin.total" .Total}})
-			</h4>
-		</div>
+		<h4 class="ui top attached header">
+			{{ctx.Locale.Tr "repo.settings.lfs_filelist"}} ({{ctx.Locale.Tr "admin.total" .Total}})
+		</h4>
 		<div class="ui attached segment">
 			<table id="lfs-files-table" class="ui very basic table unstackable">
 				<thead>
