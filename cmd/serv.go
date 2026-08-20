@@ -21,6 +21,7 @@ import (
 	asymkey_model "forgejo.org/models/asymkey"
 	git_model "forgejo.org/models/git"
 	"forgejo.org/models/perm"
+	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/lfs"
@@ -138,6 +139,32 @@ func handleCliResponseExtra(extra private.ResponseExtra) error {
 	return nil
 }
 
+func getKeyCheckMessage(
+	key *asymkey_model.PublicKey, user *user_model.User, appName string,
+) string {
+	instanceName := "this Forgejo instance"
+	appNameParts := strings.Split(strings.TrimSpace(appName), " ")
+	if len(appNameParts) <= 2 {
+		instanceName = strings.Join(appNameParts, " ")
+	}
+
+	msgTmpl := "Hi there%s! You've successfully authenticated with the %s, but %s " +
+		"does not provide shell access.\nIf this is unexpected, please log in with password and " +
+		"setup %s under another user."
+	username := ""
+	var authenticatedWith string
+	switch key.Type {
+	case asymkey_model.KeyTypeDeploy:
+		authenticatedWith = "deploy key named " + key.Name
+	case asymkey_model.KeyTypePrincipal:
+		authenticatedWith = "principal " + key.Content
+	default:
+		username = ", " + user.Name
+		authenticatedWith = "key named " + key.Name
+	}
+	return fmt.Sprintf(msgTmpl, username, authenticatedWith, instanceName, instanceName)
+}
+
 func runServ(ctx context.Context, c *cli.Command) error {
 	ctx, cancel := installSignals(ctx)
 	defer cancel()
@@ -178,15 +205,7 @@ func runServ(ctx context.Context, c *cli.Command) error {
 		if err != nil {
 			return fail(ctx, "Key check failed", "Failed to check provided key: %v", err)
 		}
-		switch key.Type {
-		case asymkey_model.KeyTypeDeploy:
-			fmt.Println("Hi there! You've successfully authenticated with the deploy key named " + key.Name + ", but Forgejo does not provide shell access.")
-		case asymkey_model.KeyTypePrincipal:
-			fmt.Println("Hi there! You've successfully authenticated with the principal " + key.Content + ", but Forgejo does not provide shell access.")
-		default:
-			fmt.Println("Hi there, " + user.Name + "! You've successfully authenticated with the key named " + key.Name + ", but Forgejo does not provide shell access.")
-		}
-		fmt.Println("If this is unexpected, please log in with password and setup Forgejo under another user.")
+		fmt.Println(getKeyCheckMessage(key, user, setting.AppName))
 		return nil
 	} else if c.Bool("debug") {
 		log.Debug("SSH_ORIGINAL_COMMAND: %s", os.Getenv("SSH_ORIGINAL_COMMAND"))
