@@ -99,8 +99,9 @@ func (opts FindCollaborationOptions) ToConds() builder.Cond {
 
 // ChangeCollaborationAccessMode sets new access mode for the collaboration.
 func ChangeCollaborationAccessMode(ctx context.Context, repo *Repository, uid int64, mode perm.AccessMode) error {
-	// Discard invalid input
-	if mode <= perm.AccessModeNone || mode > perm.AccessModeOwner {
+	// Discard invalid input. Collaborator should not be able to become owner via
+	// collaboration, at most it is a repository admin.
+	if mode <= perm.AccessModeNone || mode >= perm.AccessModeOwner {
 		return nil
 	}
 
