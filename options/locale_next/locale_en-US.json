@@ -189,6 +189,7 @@
 	"keys.ssh.link": "SSH keys",
 	"keys.gpg.link": "GPG keys",
 	"keys.verify.token.hint": "The token is only valid for 1 minute. <a href=\"%[1]s\">Get a new one if it expired</a>.",
+	"keys.ssh.disabled": "SSH key management is disabled on this instance by an administrator.",
 	"admin.federation.federation": "Federation",
 	"admin.federation.hosts": "Hosts",
 	"admin.federation.hosts.title": "Federation hosts",

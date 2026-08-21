@@ -12,6 +12,7 @@ import (
 	"forgejo.org/models/db"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/container"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
 	"forgejo.org/modules/translation"
@@ -273,4 +274,41 @@ func TestAdminAvatarSizeNotice(t *testing.T) {
 	assert.Contains(t,
 		htmlDoc.doc.Find("form div:has(input[name=\"avatar\"]) .help").Text(),
 		"Custom avatar may not exceed 1 MiB in size or be larger than 4096x4096 pixels")
+}
+
+func TestSSHKeyManagementStatus(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	locale := translation.NewLocale("en-US")
+
+	t.Run("Enabled", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		session := loginUser(t, "user2")
+		req := NewRequest(t, "GET", "/user/settings/keys")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, "#add-ssh-button", true)
+
+		assert.NotContains(t,
+			htmlDoc.doc.Find(".user-setting-content .ui.warning.message").Text(),
+			locale.TrString("keys.ssh.disabled"),
+		)
+	})
+
+	t.Run("Disabled", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Admin.UserDisabledFeatures, container.SetOf("manage_ssh_keys"))()
+
+		session := loginUser(t, "user2")
+		req := NewRequest(t, "GET", "/user/settings/keys")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, "#add-ssh-button", false)
+
+		assert.Contains(t,
+			htmlDoc.doc.Find(".user-setting-content .ui.warning.message").Text(),
+			locale.TrString("keys.ssh.disabled"),
+		)
+	})
 }

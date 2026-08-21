@@ -1,6 +1,10 @@
 {{template "user/settings/layout_head" (dict "ctxData" . "pageClass" "user settings sshkeys")}}
 	<div class="user-setting-content">
-		{{if not ($.UserDisabledFeatures.Contains "manage_ssh_keys")}}
+		{{if $.UserDisabledFeatures.Contains "manage_ssh_keys"}}
+			<div class="ui warning message">
+				<p>{{ctx.Locale.Tr "keys.ssh.disabled"}}</p>
+			</div>
+		{{else}}
 			{{template "user/settings/keys_ssh" .}}
 		{{end}}
 		{{template "user/settings/keys_principal" .}}
