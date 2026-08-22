@@ -80,7 +80,7 @@
     "vue3-calendar-heatmap": "2.0.5",
     "webpack": "5.109.2",
     "webpack-cli": "7.2.2",
-    "wrap-ansi": "10.0.0"
+    "wrap-ansi": "10.0.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
