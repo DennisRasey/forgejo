@@ -125,6 +125,14 @@ func (opts FindSecretsOptions) ToConds() builder.Cond {
 	return cond
 }
 
+var _ db.FindOptionsOrder = FindSecretsOptions{}
+
+// ToOrders implements db.FindOptionsOrder to have a stable sort order
+func (opts FindSecretsOptions) ToOrders() string {
+	// Sort by name. ID serves as a tie-breaker.
+	return "name, id"
+}
+
 func (s *Secret) SetData(data string) {
 	normalizedData := util.ReserveLineBreakForTextarea(data)
 	s.Data = keying.ActionSecret.Encrypt([]byte(normalizedData), keying.ColumnAndID("data", s.ID))
