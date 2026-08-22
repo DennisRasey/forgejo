@@ -5,9 +5,11 @@ package actions
 
 import (
 	"testing"
+	"time"
 
 	actions_model "forgejo.org/models/actions"
 	"forgejo.org/models/unittest"
+	notify_service "forgejo.org/services/notify"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -401,4 +403,160 @@ func TestRecalculateRunPriorities(t *testing.T) {
 	runSix := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 535686})
 	assert.Equal(t, actions_model.DefaultRunPriority, runSix.Priority)
 	assert.False(t, runSix.Prioritize)
+}
+
+func TestInitiateNextRunAttempt(t *testing.T) {
+	fixtures := []*actions_model.ActionRun{
+		{
+			ID:               535681,
+			Index:            1,
+			RepoID:           62,
+			OwnerID:          2,
+			Status:           actions_model.StatusSuccess,
+			Priority:         actions_model.MaxRunPriority,
+			Prioritize:       true,
+			Started:          1786976036,
+			Stopped:          1786976040,
+			PreviousDuration: 60 * time.Second,
+		},
+		{
+			ID:      535682,
+			Index:   2,
+			RepoID:  62,
+			OwnerID: 2,
+			Status:  actions_model.StatusRunning,
+		},
+	}
+
+	t.Run("Prepared if completed", func(t *testing.T) {
+		require.NoError(t, unittest.PrepareTestDatabase())
+		unittest.AssertSuccessfulInsert(t, fixtures)
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 535681})
+
+		err := InitiateNextRunAttempt(t.Context(), run)
+		require.NoError(t, err)
+
+		assert.Len(t, notifier.events, 1)
+		assert.Equal(t, notifier.events[0], actions_model.NewNewWorkflowRunAttempt(run))
+		assert.NotNil(t, notifier.events[0].GetRun().Repo) // Notifier requires that all attributes have been loaded.
+
+		// Verify that run has been written to database.
+		run = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 535681})
+
+		assert.Equal(t, time.Minute+4*time.Second, run.PreviousDuration)
+		assert.Equal(t, actions_model.StatusWaiting, run.Status)
+		assert.Zero(t, run.Started)
+		assert.Zero(t, run.Stopped)
+		assert.Equal(t, actions_model.DefaultRunPriority, run.Priority)
+		assert.False(t, run.Prioritize)
+	})
+
+	t.Run("Error if active", func(t *testing.T) {
+		require.NoError(t, unittest.PrepareTestDatabase())
+		unittest.AssertSuccessfulInsert(t, fixtures)
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 535682})
+
+		err := InitiateNextRunAttempt(t.Context(), run)
+
+		require.ErrorContains(t, err, "cannot prepare next attempt because run 535682 is active")
+		assert.Empty(t, notifier.events)
+	})
+}
+
+func TestRefreshAndPropagateRunStatus(t *testing.T) {
+	fixtures := []*actions_model.ActionRun{
+		{ID: 535681, Index: 1, RepoID: 62, OwnerID: 2, Status: actions_model.StatusWaiting},
+	}
+
+	t.Run("No notification without change", func(t *testing.T) {
+		require.NoError(t, unittest.PrepareTestDatabase())
+		unittest.AssertSuccessfulInsert(t, fixtures)
+
+		job := &actions_model.ActionRunJob{
+			ID:      748211,
+			RunID:   535681,
+			RepoID:  62,
+			OwnerID: 2,
+			Status:  actions_model.StatusWaiting,
+		}
+
+		unittest.AssertSuccessfulInsert(t, job)
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 535681})
+
+		require.NoError(t, RefreshAndPropagateRunStatus(t.Context(), run))
+
+		assert.Equal(t, actions_model.StatusWaiting, run.Status)
+		assert.Empty(t, notifier.events)
+	})
+
+	t.Run("Status change notification", func(t *testing.T) {
+		require.NoError(t, unittest.PrepareTestDatabase())
+		unittest.AssertSuccessfulInsert(t, fixtures)
+
+		job := &actions_model.ActionRunJob{
+			ID:      748211,
+			RunID:   535681,
+			RepoID:  62,
+			OwnerID: 2,
+			Status:  actions_model.StatusRunning,
+		}
+
+		unittest.AssertSuccessfulInsert(t, job)
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 535681})
+
+		require.NoError(t, RefreshAndPropagateRunStatus(t.Context(), run))
+
+		assert.Equal(t, actions_model.StatusRunning, run.Status)
+		assert.Len(t, notifier.events, 1)
+		assert.Equal(t, notifier.events[0], actions_model.NewWorkflowRunStatusChanged(run, actions_model.StatusWaiting))
+		assert.NotNil(t, notifier.events[0].GetRun().Repo) // Notifier requires that all attributes have been loaded.
+	})
+
+	t.Run("Completed notification upon completion", func(t *testing.T) {
+		require.NoError(t, unittest.PrepareTestDatabase())
+		unittest.AssertSuccessfulInsert(t, fixtures)
+
+		job := &actions_model.ActionRunJob{
+			ID:      748211,
+			RunID:   535681,
+			RepoID:  62,
+			OwnerID: 2,
+			Status:  actions_model.StatusSkipped,
+		}
+
+		unittest.AssertSuccessfulInsert(t, job)
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 535681})
+
+		require.NoError(t, RefreshAndPropagateRunStatus(t.Context(), run))
+
+		assert.Equal(t, actions_model.StatusSkipped, run.Status)
+		assert.Len(t, notifier.events, 1)
+		assert.Equal(t, notifier.events[0], actions_model.NewWorkflowRunCompleted(run, actions_model.StatusWaiting))
+		assert.NotNil(t, notifier.events[0].GetRun().Repo) // Notifier requires that all attributes have been loaded.
+	})
 }

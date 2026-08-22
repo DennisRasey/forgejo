@@ -50,6 +50,15 @@ func jobEmitterQueueHandler(items ...*jobUpdate) []*jobUpdate {
 			logger.Error("checkJobsOfRun failed for RunID = %d: %v", update.RunID, err)
 			ret = append(ret, update)
 		}
+
+		run, err := actions_model.GetRunByID(ctx, update.RunID)
+		if err != nil {
+			logger.Error("GetRunByID failed for run %d: %v", update.RunID, err)
+			continue
+		}
+		if err = RefreshAndPropagateRunStatus(ctx, run); err != nil {
+			logger.Error("RefreshAndPropagateRunStatus failed for run %d: %v", update.RunID, err)
+		}
 	}
 	return ret
 }
@@ -108,7 +117,7 @@ func checkJobsOfRun(ctx context.Context, runID int64, recursionCount int) error 
 					updateColumns = append(updateColumns, additionalColumns...)
 				}
 
-				if n, err := UpdateRunJob(ctx, job, builder.Eq{"status": actions_model.StatusBlocked}, updateColumns...); err != nil {
+				if n, err := actions_model.UpdateRunJobWithoutNotification(ctx, job, builder.Eq{"status": actions_model.StatusBlocked}, updateColumns...); err != nil {
 					return err
 				} else if n != 1 {
 					return fmt.Errorf("no affected for updating blocked job %v", job.ID)
@@ -448,17 +457,13 @@ func prepareJobForEmitting(ctx context.Context, blockedJob *actions_model.Action
 			return fmt.Errorf("unexpected record count in delete incomplete_matrix=true job with ID %d; count = %d", blockedJob.ID, count)
 		}
 
-		// If len(newJobWorkflows) is 0, and blockedJob was the last job in this run, then the job will be complete --
-		// ComputeRunStatus will check for that state.
-		run, columns, err := actions_model.ComputeRunStatus(ctx, blockedJob.RunID)
+		// After manipulating jobs, update the status of the run to prevent it from being out of sync.
+		run, err := actions_model.GetRunByID(ctx, blockedJob.RunID)
 		if err != nil {
-			return fmt.Errorf("compute run status: %w", err)
+			return fmt.Errorf("could not get run %d: %w", blockedJob.RunID, err)
 		}
-		if len(columns) != 0 {
-			err := UpdateRun(ctx, run, columns...)
-			if err != nil {
-				return fmt.Errorf("update run: %w", err)
-			}
+		if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
+			return fmt.Errorf("could not refresh and propagate the status of run %d: %w", run.ID, err)
 		}
 
 		return nil

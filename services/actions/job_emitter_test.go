@@ -377,18 +377,13 @@ jobs:
     steps: []
 `
 
-type callArgsActionRunNowDone struct {
-	run         *actions_model.ActionRun
-	priorStatus actions_model.Status
-}
-
 type mockNotifier struct {
 	notify_service.NullNotifier
-	calls []*callArgsActionRunNowDone
+	events []actions_model.ActionRunEvent
 }
 
-func (m *mockNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
-	m.calls = append(m.calls, &callArgsActionRunNowDone{run, priorStatus})
+func (m *mockNotifier) WorkflowRunEvent(_ context.Context, event actions_model.ActionRunEvent) {
+	m.events = append(m.events, event)
 }
 
 func Test_prepareJobForEmitting(t *testing.T) {
@@ -731,11 +726,13 @@ func Test_prepareJobForEmitting(t *testing.T) {
 					assert.EqualValues(t, 0, actionRun.PreExecutionErrorCode, "PreExecutionError Details: %#v", actionRun.PreExecutionErrorDetails)
 					if tt.actionRunStatusChange != 0 {
 						assert.Equal(t, tt.actionRunStatusChange, actionRun.Status)
-						require.Len(t, notifier.calls, 1)
-						call := notifier.calls[0]
-						assert.Equal(t, actionRun.ID, call.run.ID)
-						assert.Equal(t, actions_model.StatusRunning, call.priorStatus)
-						assert.Equal(t, tt.actionRunStatusChange, call.run.Status)
+						require.Len(t, notifier.events, 1)
+						require.IsType(t, &actions_model.WorkflowRunCompleted{}, notifier.events[0])
+
+						call := notifier.events[0].(*actions_model.WorkflowRunCompleted)
+						assert.Equal(t, actionRun.ID, call.GetRun().ID)
+						assert.Equal(t, actions_model.StatusRunning, call.GetPriorStatus())
+						assert.Equal(t, tt.actionRunStatusChange, call.GetRun().Status)
 					}
 
 					// compare jobs that exist with `runJobNames` to ensure new jobs are inserted:
@@ -903,6 +900,10 @@ jobs:
           echo "Argument: ${{ inputs.argument }}"
 `
 
+	notifier := &mockNotifier{}
+	notify_service.RegisterNotifier(notifier)
+	defer notify_service.UnregisterNotifier(notifier)
+
 	defer test.MockVariableValue(&lazyRepoExpandLocalReusableWorkflow,
 		func(ctx context.Context, repoID int64, commitSHA string) (jobparser.LocalWorkflowFetcher, CleanupFunc) {
 			fetcher := func(job *jobparser.Job, path string) ([]byte, error) {
@@ -937,6 +938,8 @@ jobs:
 
 	assert.Equal(t, "c.reusable", jobs[4].JobID)
 	assert.Equal(t, actions_model.StatusWaiting, jobs[4].Status)
+
+	require.Empty(t, notifier.events)
 }
 
 func Test_checkJobsOfRun_ExpandsMatrixWithCorrectOutputJobStatuses(t *testing.T) {

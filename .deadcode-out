@@ -286,6 +286,7 @@ forgejo.org/services/funding
 
 forgejo.org/services/notify
 	UnregisterNotifier
+	ActionRunNowDone
 
 forgejo.org/services/repository
 	IsErrForkAlreadyExist

@@ -13,6 +13,7 @@ import (
 	"forgejo.org/models/unittest"
 	"forgejo.org/modules/test"
 	"forgejo.org/modules/timeutil"
+	notify_service "forgejo.org/services/notify"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -59,6 +60,10 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunAllJobs")()
 		require.NoError(t, unittest.PrepareTestDatabase())
 
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
 		var recalculateRepoTarget *int64
 		defer test.MockVariableValue(&recalculateRunPriorities, func(_ context.Context, repoID int64) error {
 			recalculateRepoTarget = &repoID
@@ -102,11 +107,18 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 		unittest.AssertCount(t, &actions_model.ActionArtifact{
 			RunID: run.ID, Status: int64(actions_model.ArtifactStatusPendingDeletion),
 		}, 1)
+
+		assert.Len(t, notifier.events, 1)
+		assert.IsType(t, &actions_model.NewWorkflowRunAttempt{}, notifier.events[0])
 	})
 
 	t.Run("Error if workflow running", func(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunAllJobs")()
 		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 455630})
 
@@ -131,11 +143,17 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 		unittest.AssertCount(t, &actions_model.ActionArtifact{
 			RunID: run.ID, Status: int64(actions_model.ArtifactStatusPendingDeletion),
 		}, 0)
+
+		assert.Empty(t, notifier.events)
 	})
 
 	t.Run("Error if workflow invalid", func(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunAllJobs")()
 		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 455640})
 
@@ -150,11 +168,17 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 		assert.Equal(t, time.Duration(0), run.PreviousDuration)
 
 		assert.Empty(t, rerunJobs)
+
+		assert.Empty(t, notifier.events)
 	})
 
 	t.Run("Error if workflow disabled", func(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunAllJobs")()
 		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 455620})
 
@@ -174,6 +198,8 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 		assert.Equal(t, time.Duration(0), run.PreviousDuration)
 
 		assert.Empty(t, rerunJobs)
+
+		assert.Empty(t, notifier.events)
 	})
 }
 
@@ -181,6 +207,10 @@ func TestRerun_RerunJob(t *testing.T) {
 	t.Run("Rerun independent job", func(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunJob")()
 		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		var recalculateRepoTarget *int64
 		defer test.MockVariableValue(&recalculateRunPriorities, func(_ context.Context, repoID int64) error {
@@ -225,11 +255,18 @@ func TestRerun_RerunJob(t *testing.T) {
 		unittest.AssertCount(t, &actions_model.ActionArtifact{
 			RunID: job.RunID, Status: int64(actions_model.ArtifactStatusPendingDeletion),
 		}, 1)
+
+		assert.Len(t, notifier.events, 1)
+		assert.IsType(t, &actions_model.NewWorkflowRunAttempt{}, notifier.events[0])
 	})
 
 	t.Run("Rerun job needed by others", func(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunJob")()
 		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: 683911})
 
@@ -254,11 +291,18 @@ func TestRerun_RerunJob(t *testing.T) {
 		assert.Equal(t, actions_model.StatusBlocked, dependentJob.Status)
 		assert.Equal(t, timeutil.TimeStamp(0), dependentJob.Started)
 		assert.Equal(t, timeutil.TimeStamp(0), dependentJob.Stopped)
+
+		assert.Len(t, notifier.events, 1)
+		assert.IsType(t, &actions_model.NewWorkflowRunAttempt{}, notifier.events[0])
 	})
 
 	t.Run("Rerun job needed by others with cancellation", func(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunJob")()
 		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: 683911})
 
@@ -306,11 +350,18 @@ func TestRerun_RerunJob(t *testing.T) {
 		assert.Equal(t, actions_model.StatusBlocked, dependentJob.Status)
 		assert.Equal(t, timeutil.TimeStamp(0), dependentJob.Started)
 		assert.Equal(t, timeutil.TimeStamp(0), dependentJob.Stopped)
+
+		assert.Len(t, notifier.events, 1)
+		assert.IsType(t, &actions_model.NewWorkflowRunAttempt{}, notifier.events[0])
 	})
 
 	t.Run("Rerun job with needs", func(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunJob")()
 		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
 
 		job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: 683912})
 
@@ -328,6 +379,9 @@ func TestRerun_RerunJob(t *testing.T) {
 		assert.Equal(t, actions_model.StatusWaiting, job.Status)
 		assert.Equal(t, timeutil.TimeStamp(0), job.Started)
 		assert.Equal(t, timeutil.TimeStamp(0), job.Stopped)
+
+		assert.Len(t, notifier.events, 1)
+		assert.IsType(t, &actions_model.NewWorkflowRunAttempt{}, notifier.events[0])
 	})
 
 	t.Run("Error if workflow invalid", func(t *testing.T) {
@@ -406,6 +460,10 @@ func TestRerun_RerunJob(t *testing.T) {
 		defer unittest.OverrideFixtures("services/actions/TestRerun_RerunJob")()
 		require.NoError(t, unittest.PrepareTestDatabase())
 
+		notifier := &mockNotifier{}
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
 		job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: 683920})
 		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: job.RunID})
 
@@ -428,5 +486,7 @@ func TestRerun_RerunJob(t *testing.T) {
 		assert.Zero(t, run.PreviousDuration)
 		assert.Equal(t, actions_model.MaxRunPriority, run.Priority)
 		assert.True(t, run.Prioritize)
+
+		assert.Empty(t, notifier.events)
 	})
 }

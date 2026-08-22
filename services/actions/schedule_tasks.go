@@ -240,22 +240,29 @@ func CancelPreviousWithConcurrencyGroup(ctx context.Context, repoID int64, concu
 	// Find all runs in the concurrency group which have at least one job that is still pending; we can't use the run's
 	// status for this because runs are set to failed if a single job is marked as failed, even if other jobs are still
 	// running.
-	runs := make([]*actions_model.ActionRun, 0, 10)
+	runIDs := make([]int64, 0, 10)
 	if err := db.GetEngine(ctx).Table("action_run").
 		Join("INNER", "action_run_job", "action_run_job.run_id = action_run.id").
 		Where("action_run.repo_id = ? AND action_run.concurrency_group = ?", repoID, strings.ToLower(concurrencyGroup)).
 		In("action_run_job.status", actions_model.PendingStatuses()).
 		Distinct("action_run.id").
-		Select("action_run.id,action_run.need_approval").
-		Find(&runs); err != nil {
+		Select("action_run.id").
+		Find(&runIDs); err != nil {
 		return err
 	}
 
 	// Iterate over each found run and cancel its associated jobs.
 	errorSlice := []error{}
-	for _, run := range runs {
-		err := killRun(ctx, run, actions_model.StatusCancelled)
-		errorSlice = append(errorSlice, err)
+	for _, runID := range runIDs {
+		run, err := actions_model.GetRunByID(ctx, runID)
+		if err != nil {
+			errorSlice = append(errorSlice, err)
+			continue
+		}
+
+		if err = killRun(ctx, run, actions_model.StatusCancelled); err != nil {
+			errorSlice = append(errorSlice, err)
+		}
 	}
 	err := errors.Join(errorSlice...)
 	if err != nil {

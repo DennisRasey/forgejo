@@ -829,14 +829,22 @@ func TestActionsRunsEvaluateIf(t *testing.T) {
 			notifier.On("Run").Return()
 			notifier.On("PushCommits", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
 			notifier.On(
-				"ActionRunNowDone",
+				"WorkflowRunEvent",
 				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
-				mock.MatchedBy(func(run *actions_model.ActionRun) bool {
-					return run.Title == ".forgejo/workflows/serverside_if.yml" && run.Status == actions_model.StatusSkipped
+				mock.MatchedBy(func(event *actions_model.NewWorkflowRunAttempt) bool {
+					return event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
+						event.GetRun().Status == actions_model.StatusWaiting
 				}),
-				actions_model.StatusWaiting, // priorStatus
-			).
-				Return()
+			).Return()
+			notifier.On(
+				"WorkflowRunEvent",
+				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
+				mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
+					return event.GetPriorStatus() == actions_model.StatusWaiting &&
+						event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
+						event.GetRun().Status == actions_model.StatusSkipped
+				}),
+			).Return()
 			notify_service.RegisterNotifier(notifier)
 			defer notify_service.UnregisterNotifier(notifier)
 

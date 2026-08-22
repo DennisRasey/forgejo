@@ -217,17 +217,14 @@ func findTaskNeeds(ctx context.Context, taskJob *actions_model.ActionRunJob) (ma
 	return ret, nil
 }
 
-func StopTask(ctx context.Context, taskID int64, status actions_model.Status) error {
+func stopTask(ctx context.Context, taskID int64, status actions_model.Status) error {
 	if !status.IsDone() {
 		return fmt.Errorf("cannot stop task with status %v", status)
 	}
-	e := db.GetEngine(ctx)
 
-	task := &actions_model.ActionTask{}
-	if has, err := e.ID(taskID).Get(task); err != nil {
-		return err
-	} else if !has {
-		return util.ErrNotExist
+	task, err := actions_model.GetTaskByID(ctx, taskID)
+	if err != nil {
+		return fmt.Errorf("failed to get task %d: %w", taskID, err)
 	}
 	if task.Status.IsDone() {
 		return nil
@@ -236,28 +233,8 @@ func StopTask(ctx context.Context, taskID int64, status actions_model.Status) er
 	now := timeutil.TimeStampNow()
 	task.Status = status
 	task.Stopped = now
-	if _, err := UpdateRunJob(ctx, &actions_model.ActionRunJob{
-		ID:      task.JobID,
-		Status:  task.Status,
-		Stopped: task.Stopped,
-	}, nil); err != nil {
-		return err
-	}
-
 	if err := actions_model.UpdateTask(ctx, task, "status", "stopped"); err != nil {
-		return err
-	}
-
-	runner := &actions_model.ActionRunner{}
-	if _, err := e.ID(task.RunnerID).Get(runner); err != nil {
-		return fmt.Errorf("failed to find runner assigned to task")
-	}
-
-	if runner.Ephemeral {
-		err := actions_model.DeleteRunner(ctx, runner)
-		if err != nil {
-			return fmt.Errorf("failed to remove ephemeral runner from stopped task: %w", err)
-		}
+		return fmt.Errorf("failed to update task %d: %w", task.ID, err)
 	}
 
 	if err := task.LoadAttributes(ctx); err != nil {
@@ -272,9 +249,52 @@ func StopTask(ctx context.Context, taskID int64, status actions_model.Status) er
 			}
 			step.Stopped = now
 		}
+		e := db.GetEngine(ctx)
 		if _, err := e.ID(step.ID).Update(step); err != nil {
 			return err
 		}
+	}
+
+	if err = actions_model.DeleteEphemeralRunner(ctx, task.RunnerID); err != nil {
+		return fmt.Errorf("failed to remove ephemeral runner %d after task %d was stopped: %w", task.RunnerID, task.ID, err)
+	}
+
+	return nil
+}
+
+func StopTask(ctx context.Context, taskID int64, status actions_model.Status) error {
+	if !status.IsDone() {
+		return fmt.Errorf("cannot stop task with status %v", status)
+	}
+
+	if err := stopTask(ctx, taskID, status); err != nil {
+		return fmt.Errorf("failed to stop task %d: %w", taskID, err)
+	}
+
+	task, err := actions_model.GetTaskByID(ctx, taskID)
+	if err != nil {
+		return fmt.Errorf("failed to get task %d: %w", taskID, err)
+	}
+
+	job, err := actions_model.GetRunJobByID(ctx, task.JobID)
+	if err != nil {
+		return fmt.Errorf("could not load job %d: %w", task.JobID, err)
+	}
+
+	job.Status = task.Status
+	job.Stopped = task.Stopped
+
+	if _, err := actions_model.UpdateRunJobWithoutNotification(ctx, job, nil); err != nil {
+		return fmt.Errorf("failed to update job %d: %w", job.ID, err)
+	}
+
+	run, err := actions_model.GetRunByID(ctx, job.RunID)
+	if err != nil {
+		return fmt.Errorf("could not load run %d: %w", job.RunID, err)
+	}
+
+	if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
+		return fmt.Errorf("could not update status of run %d: %w", run.ID, err)
 	}
 
 	return nil
@@ -297,12 +317,11 @@ func UpdateTaskByState(ctx context.Context, runnerID int64, state *runnerv1.Task
 
 	e := db.GetEngine(ctx)
 
-	task := &actions_model.ActionTask{}
-	if has, err := e.ID(state.Id).Get(task); err != nil {
-		return nil, err
-	} else if !has {
-		return nil, util.ErrNotExist
-	} else if runnerID != task.RunnerID {
+	task, err := actions_model.GetTaskByID(ctx, state.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get task %d: %w", state.Id, err)
+	}
+	if runnerID != task.RunnerID {
 		return nil, errors.New("invalid runner for task")
 	}
 
@@ -316,14 +335,27 @@ func UpdateTaskByState(ctx context.Context, runnerID int64, state *runnerv1.Task
 		task.Status = actions_model.Status(state.Result)
 		task.Stopped = timeutil.TimeStamp(state.StoppedAt.AsTime().Unix())
 		if err := actions_model.UpdateTask(ctx, task, "status", "stopped"); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to update task %d: %w", task.ID, err)
 		}
-		if _, err := UpdateRunJob(ctx, &actions_model.ActionRunJob{
-			ID:      task.JobID,
-			Status:  task.Status,
-			Stopped: task.Stopped,
-		}, nil); err != nil {
-			return nil, err
+
+		job, err := actions_model.GetRunJobByID(ctx, task.JobID)
+		if err != nil {
+			return nil, fmt.Errorf("could not load job %d: %w", task.JobID, err)
+		}
+
+		job.Status = task.Status
+		job.Stopped = task.Stopped
+
+		if _, err := actions_model.UpdateRunJobWithoutNotification(ctx, job, nil); err != nil {
+			return nil, fmt.Errorf("failed to update job %d: %w", job.ID, err)
+		}
+
+		run, err := actions_model.GetRunByID(ctx, job.RunID)
+		if err != nil {
+			return nil, fmt.Errorf("could not load run %d: %w", job.RunID, err)
+		}
+		if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
+			return nil, fmt.Errorf("could not refresh and propagate status of run %d: %w", run.ID, err)
 		}
 	} else {
 		// Force update ActionTask.Updated to avoid the task being judged as a zombie task

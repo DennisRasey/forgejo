@@ -282,7 +282,7 @@ func (run *ActionRun) CanBeRerun() bool {
 }
 
 func (run *ActionRun) PrepareNextAttempt() error {
-	if run.Status != StatusUnknown && !run.Status.IsDone() {
+	if !run.Status.IsDone() {
 		return fmt.Errorf("cannot prepare next attempt because run %d is active: %s", run.ID, run.Status.String())
 	}
 
@@ -305,6 +305,23 @@ func (run *ActionRun) GetWorkflowSourceCommit() string {
 		return storedSourceCommit
 	}
 	return run.CommitSHA
+}
+
+// RefreshStatus recalculates this ActionRun's Status based on the status of the jobs passed as argument and updates it
+// if necessary. Returns true if the status has changed, false otherwise.
+func (run *ActionRun) RefreshStatus(jobs []*ActionRunJob) bool {
+	priorStatus := run.Status
+
+	run.Status = AggregateJobStatus(jobs)
+	if run.Status == priorStatus {
+		return false
+	}
+
+	if run.Status.IsDone() {
+		run.Stopped = timeutil.TimeStampNow()
+	}
+
+	return true
 }
 
 func actionsCountOpenCacheKey(repoID int64) string {
@@ -333,9 +350,9 @@ func RepoNumOpenActions(ctx context.Context, repoID int64) int {
 	return num
 }
 
-func clearRepoRunCountCache(ctx context.Context, repo *repo_model.Repository) {
+func clearRepoRunCountCache(ctx context.Context, repoID int64) {
 	db.AfterTx(ctx, func() {
-		cache.Remove(actionsCountOpenCacheKey(repo.ID))
+		cache.Remove(actionsCountOpenCacheKey(repoID))
 	})
 }
 
@@ -410,7 +427,7 @@ func InsertRunWithoutNotification(ctx context.Context, run *ActionRun, jobs []*j
 			run.Repo = repo
 		}
 
-		clearRepoRunCountCache(ctx, run.Repo)
+		clearRepoRunCountCache(ctx, run.RepoID)
 
 		return InsertRunJobs(ctx, run, jobs)
 	})
@@ -562,16 +579,15 @@ func GetQueuedRunsByRepoID(ctx context.Context, repoID int64) ([]*ActionRun, err
 // database by another session since it was loaded in-memory in this session.
 var ErrActionRunOutOfDate = errors.New("run has changed")
 
-// UpdateRun updates a run.
-// It requires the inputted run has Version set.
-// It will return error if the version is not matched (it means the run has been changed after loaded).
-// All calls to UpdateRunWithoutNotification that change run.Status from a not done status to a done status must call the ActionRunNowDone notification channel.
-// Use the wrapper function UpdateRun instead.
-func UpdateRunWithoutNotification(ctx context.Context, run *ActionRun, cols ...string) error {
+func UpdateRun(ctx context.Context, run *ActionRun, cols ...string) error {
 	sess := db.GetEngine(ctx).ID(run.ID)
+
 	if len(cols) > 0 {
 		sess.Cols(cols...)
+	} else {
+		sess.AllCols()
 	}
+
 	run.Title, _ = util.SplitStringAtByteN(run.Title, 255)
 	affected, err := sess.Update(run)
 	if err != nil {
@@ -583,63 +599,11 @@ func UpdateRunWithoutNotification(ctx context.Context, run *ActionRun, cols ...s
 		return ErrActionRunOutOfDate
 	}
 
-	if run.Status != 0 || slices.Contains(cols, "status") {
-		if run.RepoID == 0 {
-			run, err = GetRunByID(ctx, run.ID)
-			if err != nil {
-				return err
-			}
-		}
-		if run.Repo == nil {
-			repo, err := repo_model.GetRepositoryByID(ctx, run.RepoID)
-			if err != nil {
-				return err
-			}
-			run.Repo = repo
-		}
-		clearRepoRunCountCache(ctx, run.Repo)
+	if len(cols) == 0 /* AllCols() */ || slices.Contains(cols, "status") {
+		clearRepoRunCountCache(ctx, run.RepoID)
 	}
 
 	return nil
-}
-
-// Performs the same computation as [ComputeExistingRunStatus] from a run ID, and returning the run. The caller is
-// responsible for then invoking [actions_service.UpdateRun] for an update with notifications, or
-// [actions_model.UpdateRunWithoutNotification] if notifications are already handled.
-func ComputeRunStatus(ctx context.Context, runID int64) (run *ActionRun, columns []string, err error) {
-	run, err = GetRunByID(ctx, runID)
-	if err != nil {
-		return nil, nil, err
-	}
-	columns, err = ComputeExistingRunStatus(ctx, run)
-	return run, columns, err
-}
-
-// Compute the Status, Started, and Stopped fields of an ActionRun based upon the current job state within the run. The
-// provided [ActionRun] is modified in-memory, but not in the database. The caller is responsible for then invoking
-// [actions_service.UpdateRun] for an update with notifications, or [actions_model.UpdateRunWithoutNotification] if
-// notifications are already handled.
-func ComputeExistingRunStatus(ctx context.Context, run *ActionRun) (columns []string, err error) {
-	jobs, err := GetRunJobsByRunID(ctx, run.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	newStatus := AggregateJobStatus(jobs)
-	if run.Status != newStatus {
-		run.Status = newStatus
-		columns = append(columns, "status")
-	}
-	if run.Started.IsZero() && run.Status.IsRunning() {
-		run.Started = timeutil.TimeStampNow()
-		columns = append(columns, "started")
-	}
-	if run.Stopped.IsZero() && run.Status.IsDone() {
-		run.Stopped = timeutil.TimeStampNow()
-		columns = append(columns, "stopped")
-	}
-
-	return columns, nil
 }
 
 // DeleteRun removes the given run. It is the caller's responsibility to handle the run's dependencies like artifacts or

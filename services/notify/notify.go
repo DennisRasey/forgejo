@@ -403,3 +403,9 @@ func ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorSt
 		notifier.ActionRunNowDone(ctx, run, priorStatus)
 	}
 }
+
+func WorkflowRunEvent(ctx context.Context, event actions_model.ActionRunEvent) {
+	for _, notifier := range notifiers {
+		notifier.WorkflowRunEvent(ctx, event)
+	}
+}

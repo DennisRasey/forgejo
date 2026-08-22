@@ -61,12 +61,11 @@ type MockNotifier_ActionRunNowDone_Call struct {
 //   - ctx context.Context
 //   - run *actions.ActionRun
 //   - priorStatus actions.Status
-//   - lastRun *actions.ActionRun
-func (_e *MockNotifier_Expecter) ActionRunNowDone(ctx, run, priorStatus, lastRun any) *MockNotifier_ActionRunNowDone_Call {
-	return &MockNotifier_ActionRunNowDone_Call{Call: _e.mock.On("ActionRunNowDone", ctx, run, priorStatus, lastRun)}
+func (_e *MockNotifier_Expecter) ActionRunNowDone(ctx, run, priorStatus any) *MockNotifier_ActionRunNowDone_Call {
+	return &MockNotifier_ActionRunNowDone_Call{Call: _e.mock.On("ActionRunNowDone", ctx, run, priorStatus)}
 }
 
-func (_c *MockNotifier_ActionRunNowDone_Call) Run(run func(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status, lastRun *actions.ActionRun)) *MockNotifier_ActionRunNowDone_Call {
+func (_c *MockNotifier_ActionRunNowDone_Call) Run(run func(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status)) *MockNotifier_ActionRunNowDone_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -80,15 +79,10 @@ func (_c *MockNotifier_ActionRunNowDone_Call) Run(run func(ctx context.Context, 
 		if args[2] != nil {
 			arg2 = args[2].(actions.Status)
 		}
-		var arg3 *actions.ActionRun
-		if args[3] != nil {
-			arg3 = args[3].(*actions.ActionRun)
-		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -99,7 +93,7 @@ func (_c *MockNotifier_ActionRunNowDone_Call) Return() *MockNotifier_ActionRunNo
 	return _c
 }
 
-func (_c *MockNotifier_ActionRunNowDone_Call) RunAndReturn(run func(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status, lastRun *actions.ActionRun)) *MockNotifier_ActionRunNowDone_Call {
+func (_c *MockNotifier_ActionRunNowDone_Call) RunAndReturn(run func(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status)) *MockNotifier_ActionRunNowDone_Call {
 	_c.Run(run)
 	return _c
 }
@@ -2933,6 +2927,52 @@ func (_c *MockNotifier_UpdateRelease_Call) Return() *MockNotifier_UpdateRelease_
 }
 
 func (_c *MockNotifier_UpdateRelease_Call) RunAndReturn(run func(ctx context.Context, doer *user.User, rel *repo.Release)) *MockNotifier_UpdateRelease_Call {
+	_c.Run(run)
+	return _c
+}
+
+// WorkflowRunEvent provides a mock function for the type MockNotifier
+func (_mock *MockNotifier) WorkflowRunEvent(ctx context.Context, event actions.ActionRunEvent) {
+	_mock.Called(ctx, event)
+	return
+}
+
+// MockNotifier_WorkflowRunEvent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkflowRunEvent'
+type MockNotifier_WorkflowRunEvent_Call struct {
+	*mock.Call
+}
+
+// WorkflowRunEvent is a helper method to define mock.On call
+//   - ctx context.Context
+//   - event actions.ActionRunEvent
+func (_e *MockNotifier_Expecter) WorkflowRunEvent(ctx, event any) *MockNotifier_WorkflowRunEvent_Call {
+	return &MockNotifier_WorkflowRunEvent_Call{Call: _e.mock.On("WorkflowRunEvent", ctx, event)}
+}
+
+func (_c *MockNotifier_WorkflowRunEvent_Call) Run(run func(ctx context.Context, event actions.ActionRunEvent)) *MockNotifier_WorkflowRunEvent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 actions.ActionRunEvent
+		if args[1] != nil {
+			arg1 = args[1].(actions.ActionRunEvent)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotifier_WorkflowRunEvent_Call) Return() *MockNotifier_WorkflowRunEvent_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockNotifier_WorkflowRunEvent_Call) RunAndReturn(run func(ctx context.Context, event actions.ActionRunEvent)) *MockNotifier_WorkflowRunEvent_Call {
 	_c.Run(run)
 	return _c
 }

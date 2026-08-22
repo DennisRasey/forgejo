@@ -235,21 +235,6 @@ func UpdateRunJobWithoutNotification(ctx context.Context, job *ActionRunJob, con
 		}
 	}
 
-	if job.RunID == 0 {
-		var err error
-		if job, err = GetRunJobByID(ctx, job.ID); err != nil {
-			return 0, err
-		}
-	}
-
-	run, columns, err := ComputeRunStatus(ctx, job.RunID)
-	if err != nil {
-		return 0, fmt.Errorf("compute run status: %w", err)
-	}
-	if err := UpdateRunWithoutNotification(ctx, run, columns...); err != nil {
-		return 0, fmt.Errorf("update run %d: %w", run.ID, err)
-	}
-
 	return affected, nil
 }
 

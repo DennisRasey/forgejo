@@ -26,7 +26,6 @@ import (
 	notify_service "forgejo.org/services/notify"
 
 	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
-	"xorm.io/builder"
 )
 
 type actionsNotifier struct {
@@ -830,21 +829,6 @@ func (n *actionsNotifier) MigrateRepository(ctx context.Context, doer, u *user_m
 	}).Notify(ctx)
 }
 
-// Call this sendActionRunNowDoneNotificationIfNeeded when there has been an update for an ActionRun.
-// priorRun and updatedRun represent the very same ActionRun, just at different times:
-// priorRun before the update and updatedRun after.
-// The parameter lastRun in the ActionRunNowDone notification represents an entirely different ActionRun:
-// the ActionRun of the same workflow that finished before priorRun/updatedRun.
-func sendActionRunNowDoneNotificationIfNeeded(ctx context.Context, priorRun, updatedRun *actions_model.ActionRun) error {
-	if !priorRun.Status.IsDone() && updatedRun.Status.IsDone() {
-		if err := updatedRun.LoadAttributes(ctx); err != nil {
-			return err
-		}
-		notify_service.ActionRunNowDone(ctx, updatedRun, priorRun.Status)
-	}
-	return nil
-}
-
 func calculateWarnings(run *actions_model.ActionRun, swfs []*jobparser.SingleWorkflow) {
 	warnings := []actions_model.PreExecutionWarning{}
 	warningDetails := [][]any{}
@@ -872,21 +856,14 @@ func InsertRun(ctx context.Context, run *actions_model.ActionRun, jobs []*jobpar
 			return fmt.Errorf("InsertRunWithoutNotification: %w", err)
 		}
 
-		// Normally the status of a job is input to InsertRun as Waiting, and remains that way.  But InsertRunJobs can
-		// evaluate the 'if' clauses of each job, and if every job is skipped then the job status needs to be updated.
-		// ComputeRunStatus queries for the runs that we already have in-memory, so first do a quick check, then rely on
-		// that reusable code if needed.
-		columns, err := actions_model.ComputeExistingRunStatus(ctx, run)
-		if err != nil {
-			return fmt.Errorf("compute run status: %w", err)
-		}
-		if len(columns) != 0 {
-			if err := UpdateRun(ctx, run, columns...); err != nil {
-				return fmt.Errorf("update run: %w", err)
-			}
+		// WorkflowRunEvent expects a fully loaded run.
+		if err := run.LoadAttributes(ctx); err != nil {
+			return fmt.Errorf("could not load attributes of run %d: %w", run.ID, err)
 		}
 
-		// Some jobs might have been been immediately set to Skipped when they were inserted.  Other jobs may be
+		notify_service.WorkflowRunEvent(ctx, actions_model.NewNewWorkflowRunAttempt(run))
+
+		// Some jobs might have been immediately set to Skipped when they were inserted.  Other jobs may be
 		// dependent on those skipped jobs.  While we're still in this transaction and before these jobs are visible,
 		// run the job emitter which can recursively evaluate this state and update dependent runs status to either
 		// skipped or waiting, depending on their 'if':
@@ -896,54 +873,21 @@ func InsertRun(ctx context.Context, run *actions_model.ActionRun, jobs []*jobpar
 			}
 		}
 
+		// checkJobsOfRun() above can lead to an update of the run. But as it loads the run from
+		// the database, and might even write directly to the database, the changes are not
+		// reflected in the `run` variable. Therefore, we have to refresh it.
+		dbRun, err := actions_model.GetRunByID(ctx, run.ID)
+		if err != nil {
+			return fmt.Errorf("could not load run %d: %w", run.ID, err)
+		}
+		*run = *dbRun
+
+		// Normally, the status of a job is input to InsertRun as Waiting, and remains that way.  But InsertRunJobs can
+		// evaluate the 'if' clauses of each job, and if every job is skipped then the run status needs to be updated.
+		if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
+			return fmt.Errorf("could not refresh and propagate the status of run %d: %w", run.ID, err)
+		}
+
 		return nil
 	})
-}
-
-// wrapper of UpdateRunWithoutNotification with a call to the ActionRunNowDone notification channel
-func UpdateRun(ctx context.Context, run *actions_model.ActionRun, cols ...string) error {
-	// run.ID is the only thing that must be given
-	priorRun, err := actions_model.GetRunByID(ctx, run.ID)
-	if err != nil {
-		return err
-	}
-
-	if err = actions_model.UpdateRunWithoutNotification(ctx, run, cols...); err != nil {
-		return err
-	}
-
-	updatedRun, err := actions_model.GetRunByID(ctx, run.ID)
-	if err != nil {
-		return err
-	}
-	return sendActionRunNowDoneNotificationIfNeeded(ctx, priorRun, updatedRun)
-}
-
-// wrapper of UpdateRunJobWithoutNotification with a call to the ActionRunNowDone notification channel
-func UpdateRunJob(ctx context.Context, job *actions_model.ActionRunJob, cond builder.Cond, cols ...string) (int64, error) {
-	runID := job.RunID
-	if runID == 0 {
-		// job.ID is the only thing that must be given
-		// Don't overwrite job here, we'd loose the change we need to make.
-		oldJob, err := actions_model.GetRunJobByID(ctx, job.ID)
-		if err != nil {
-			return 0, err
-		}
-		runID = oldJob.RunID
-	}
-	priorRun, err := actions_model.GetRunByID(ctx, runID)
-	if err != nil {
-		return 0, err
-	}
-
-	affected, err := actions_model.UpdateRunJobWithoutNotification(ctx, job, cond, cols...)
-	if err != nil {
-		return affected, err
-	}
-
-	updatedRun, err := actions_model.GetRunByID(ctx, runID)
-	if err != nil {
-		return affected, err
-	}
-	return affected, sendActionRunNowDoneNotificationIfNeeded(ctx, priorRun, updatedRun)
 }

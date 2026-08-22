@@ -85,19 +85,31 @@ func CancelAbandonedJobs(ctx context.Context) error {
 		return err
 	}
 
-	now := timeutil.TimeStampNow()
-	for _, job := range jobs {
-		job.Status = actions_model.StatusCancelled
-		job.Stopped = now
-		if err := db.WithTx(ctx, func(ctx context.Context) error {
-			_, err := UpdateRunJob(ctx, job, nil, "status", "stopped")
-			return err
-		}); err != nil {
-			log.Warn("cancel abandoned job %v: %v", job.ID, err)
-			// go on
-		}
-		CreateCommitStatus(ctx, job)
-	}
+	return db.WithTx(ctx, func(ctx context.Context) error {
+		runsToUpdate := map[int64]*actions_model.ActionRun{}
+		now := timeutil.TimeStampNow()
+		for _, job := range jobs {
+			job.Stopped = now
+			job.Status = actions_model.StatusCancelled
+			if _, err = actions_model.UpdateRunJobWithoutNotification(ctx, job, nil, "status", "stopped"); err != nil {
+				// TODO: Change to error?
+				log.Warn("Could not cancel abandoned job %d: %v", job.ID, err)
+			}
 
-	return nil
+			if err = job.LoadRun(ctx); err != nil {
+				return fmt.Errorf("could not load run of job %d: %w", job.ID, err)
+			}
+			runsToUpdate[job.RunID] = job.Run
+
+			CreateCommitStatus(ctx, job)
+		}
+
+		for _, run := range runsToUpdate {
+			if err = RefreshAndPropagateRunStatus(ctx, run); err != nil {
+				return fmt.Errorf("could not refresh and propagate the status of run %d: %w", run.ID, err)
+			}
+		}
+
+		return nil
+	})
 }
