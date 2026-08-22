@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -51,13 +52,19 @@ func Teams(ctx *context.Context) {
 	ctx.Data["Title"] = org.FullName
 	ctx.Data["PageIsOrgTeams"] = true
 
+	doerIsMember := make(map[int64]bool)
 	for _, t := range ctx.Org.Teams {
 		if err := t.LoadMembers(ctx); err != nil {
 			ctx.ServerError("GetMembers", err)
 			return
 		}
+		// since LoadMembers above isn't paginated, we can compute whether
+		// the user is a member simply by looking for them in the returned members.
+		// TODO: compute this information via org.GetUserTeams once we limit the number of loaded users, for https://codeberg.org/forgejo/forgejo/issues/12448
+		doerIsMember[t.ID] = slices.IndexFunc(t.Members, func(u *user_model.User) bool { return u.ID == ctx.Doer.ID }) != -1
 	}
 	ctx.Data["Teams"] = ctx.Org.Teams
+	ctx.Data["DoerIsMember"] = doerIsMember
 
 	err := shared_user.LoadHeaderCount(ctx)
 	if err != nil {

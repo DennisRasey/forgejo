@@ -21,6 +21,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestVisibility(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// not logged in user
+	req := NewRequest(t, "GET", "/org/org3/teams/team12creators")
+	MakeRequest(t, req, http.StatusSeeOther)
+
+	// not org member
+	session := loginUser(t, "user5")
+	req = NewRequest(t, "GET", "/org/org3/teams/team12creators")
+	session.MakeRequest(t, req, http.StatusNotFound)
+
+	// org member, not part of the team
+	session = loginUser(t, "user4")
+	req = NewRequest(t, "GET", "/org/org3/teams/team12creators")
+	session.MakeRequest(t, req, http.StatusNotFound)
+
+	// org member, part of the team
+	session = loginUser(t, "user28")
+	req = NewRequest(t, "GET", "/org/org3/teams/team12creators")
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// org owner
+	session = loginUser(t, "user2")
+	req = NewRequest(t, "GET", "/org/org3/teams/team12creators")
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// site admin
+	session = loginUser(t, "user1")
+	req = NewRequest(t, "GET", "/org/org3/teams/team12creators")
+	session.MakeRequest(t, req, http.StatusOK)
+}
+
 func TestPaginatedMembers(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	// To make sure that pagination kicks in even though the test team has few members
