@@ -1765,10 +1765,11 @@ func GetActionJobLogs(ctx *context.APIContext) {
 	//   task). Pass `?attempt=N` to fetch the log for a specific historical
 	//   attempt; the value matches the `attempt` field returned by the job
 	//   listing endpoints. Pass `?step=N` to narrow to a single step (using
-	//   the `number` field from `GET /actions/jobs/{job_id}`). Pass
-	//   `?format=ndjson` for NDJSON output (one `{time, content}` object per
-	//   line); the NDJSON response drops `Accept-Ranges` and does not support
-	//   `Range:` since the total length isn't known until the scan finishes.
+	//   the `number` field from `GET /actions/jobs/{job_id}`), `?q=` to
+	//   substring-filter lines, and `?format=ndjson` for NDJSON output (one
+	//   `{time, content}` object per line). When `q` or `format=ndjson` is
+	//   set the response drops `Accept-Ranges` and does not support `Range:`
+	//   since the total length isn't known until the scan finishes.
 	// produces:
 	// - text/plain
 	// - application/x-ndjson
@@ -1805,6 +1806,20 @@ func GetActionJobLogs(ctx *context.APIContext) {
 	//     the log. Range requests still work over the slice.
 	//   type: integer
 	//   required: false
+	// - name: q
+	//   in: query
+	//   description: >
+	//     Substring filter applied to each line's content (the part after the
+	//     timestamp prefix). Plain string match — regex is not supported.
+	//     Setting `q` drops `Accept-Ranges` and disables `Range:` support;
+	//     the full filtered body is always returned.
+	//   type: string
+	//   required: false
+	// - name: qi
+	//   in: query
+	//   description: Case-insensitive substring match (only meaningful when `q` is set).
+	//   type: boolean
+	//   required: false
 	// - name: format
 	//   in: query
 	//   description: >
@@ -1822,7 +1837,7 @@ func GetActionJobLogs(ctx *context.APIContext) {
 	//     schema:
 	//       type: string
 	//   "206":
-	//     description: Partial log content (Range request; not returned when `format=ndjson` is set)
+	//     description: Partial log content (Range request; not returned when `q` or `format=ndjson` is set)
 	//     schema:
 	//       type: string
 	//   "401":
@@ -1844,6 +1859,8 @@ func GetActionJobLogs(ctx *context.APIContext) {
 		stepFilter = optional.Some(ctx.FormInt("step"))
 	}
 
+	q := ctx.FormString("q")
+	ignoreCase := ctx.FormBool("qi")
 	asJSON := ctx.FormString("format") == "ndjson"
 
 	reader, filename, modtime, err := actions_service.OpenJobLogReader(ctx, ctx.Repo().Repository, jobID, attempt, stepFilter)
@@ -1861,12 +1878,20 @@ func GetActionJobLogs(ctx *context.APIContext) {
 	}
 	defer reader.Close()
 
-	// JSON output: bypass http.ServeContent (no Range, no Content-Length)
-	// and stream NDJSON via WriteJobLogStream.
-	if asJSON {
-		ctx.Resp.Header().Set("Content-Type", "application/x-ndjson")
+	// Filtered or JSON output: bypass http.ServeContent (no Range, no
+	// Content-Length) and stream line-by-line via WriteJobLogStream.
+	if q != "" || asJSON {
+		contentType := "text/plain; charset=utf-8"
+		if asJSON {
+			contentType = "application/x-ndjson"
+		}
+		ctx.Resp.Header().Set("Content-Type", contentType)
 		ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", filename))
-		if err := actions_service.WriteJobLogStream(ctx.Resp, reader, actions_service.JobLogFilterOptions{JSON: true}); err != nil {
+		if err := actions_service.WriteJobLogStream(ctx.Resp, reader, actions_service.JobLogFilterOptions{
+			Query:      q,
+			IgnoreCase: ignoreCase,
+			JSON:       asJSON,
+		}); err != nil {
 			// Best-effort — headers may already be flushed, so we can only log.
 			log.Error("WriteJobLogStream job %d: %v", jobID, err)
 		}

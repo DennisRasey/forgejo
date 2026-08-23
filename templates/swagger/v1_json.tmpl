@@ -5863,7 +5863,7 @@
     },
     "/repos/{owner}/{repo}/actions/jobs/{job_id}/logs": {
       "get": {
-        "description": "Returns the plaintext log for the job. By default the log for the most recent attempt is returned (ActionRunJob.TaskID tracks the latest task). Pass `?attempt=N` to fetch the log for a specific historical attempt; the value matches the `attempt` field returned by the job listing endpoints. Pass `?step=N` to narrow to a single step (using the `number` field from `GET /actions/jobs/{job_id}`). Pass `?format=ndjson` for NDJSON output (one `{time, content}` object per line); the NDJSON response drops `Accept-Ranges` and does not support `Range:` since the total length isn't known until the scan finishes.\n",
+        "description": "Returns the plaintext log for the job. By default the log for the most recent attempt is returned (ActionRunJob.TaskID tracks the latest task). Pass `?attempt=N` to fetch the log for a specific historical attempt; the value matches the `attempt` field returned by the job listing endpoints. Pass `?step=N` to narrow to a single step (using the `number` field from `GET /actions/jobs/{job_id}`), `?q=` to substring-filter lines, and `?format=ndjson` for NDJSON output (one `{time, content}` object per line). When `q` or `format=ndjson` is set the response drops `Accept-Ranges` and does not support `Range:` since the total length isn't known until the scan finishes.\n",
         "produces": [
           "text/plain",
           "application/x-ndjson"
@@ -5910,6 +5910,18 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "description": "Substring filter applied to each line's content (the part after the timestamp prefix). Plain string match — regex is not supported. Setting `q` drops `Accept-Ranges` and disables `Range:` support; the full filtered body is always returned.\n",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Case-insensitive substring match (only meaningful when `q` is set).",
+            "name": "qi",
+            "in": "query"
+          },
+          {
             "enum": [
               "text",
               "ndjson"
@@ -5928,7 +5940,7 @@
             }
           },
           "206": {
-            "description": "Partial log content (Range request; not returned when `format=ndjson` is set)",
+            "description": "Partial log content (Range request; not returned when `q` or `format=ndjson` is set)",
             "schema": {
               "type": "string"
             }
