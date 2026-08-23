@@ -8,6 +8,6 @@
       devShells = builtins.mapAttrs (system: pkgs: {
         default = import ./shell.nix { inherit pkgs; };
       }) nixpkgs.legacyPackages;
-      formatter = builtins.mapAttrs (system: pkgs: pkgs.nixfmt-rfc-style) nixpkgs.legacyPackages;
+      formatter = builtins.mapAttrs (system: pkgs: pkgs.nixfmt) nixpkgs.legacyPackages;
     };
 }
