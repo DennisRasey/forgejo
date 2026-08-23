@@ -74,11 +74,6 @@ func GetRawFile(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	if ctx.Repo().Repository.IsEmpty {
-		ctx.NotFound()
-		return
-	}
-
 	blob, entry, lastModified := getBlobForEntry(ctx)
 	if ctx.Written() {
 		return
@@ -127,11 +122,6 @@ func GetRawFileOrLFS(ctx *context.APIContext) {
 	//       type: file
 	//   "404":
 	//     "$ref": "#/responses/notFound"
-
-	if ctx.Repo().Repository.IsEmpty {
-		ctx.NotFound()
-		return
-	}
 
 	blob, entry, lastModified := getBlobForEntry(ctx)
 	if ctx.Written() {

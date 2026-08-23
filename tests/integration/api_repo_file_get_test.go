@@ -18,6 +18,22 @@ import (
 
 func TestAPIGetRawFileOrLFS(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		t.Run("Empty repository (normal path)", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// /raw/ -> Normal path
+			req := NewRequest(t, "GET", "/api/v1/repos/user11/repo9/raw/README.md")
+			MakeRequest(t, req, http.StatusNotFound)
+		})
+
+		t.Run("Empty repository (LFS path)", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// /media/ -> LFS path
+			req := NewRequest(t, "GET", "/api/v1/repos/user11/repo9/media/README.md")
+			MakeRequest(t, req, http.StatusNotFound)
+		})
+
 		t.Run("Normal raw file", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
