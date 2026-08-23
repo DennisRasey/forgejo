@@ -1,0 +1,22 @@
+- id: 48021
+  run_id: 35021
+  repo_id: 1
+  owner_id: 2
+  job_id: failed
+  attempt: 1
+  status: 2 # StatusFailure
+
+- id: 48022
+  run_id: 35021
+  repo_id: 1
+  owner_id: 2
+  job_id: successful
+  attempt: 1
+  status: 1 # StatusSuccess
+
+- id: 48023
+  run_id: 35022
+  repo_id: 1
+  owner_id: 2
+  attempt: 1
+  status: 6 # StatusRunning

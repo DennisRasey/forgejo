@@ -1,0 +1,9 @@
+- id: 35021
+  repo_id: 1
+  owner_id: 2
+  status: 2 # StatusFailure
+
+- id: 35022
+  repo_id: 1
+  owner_id: 2
+  status: 6 # StatusRunning
