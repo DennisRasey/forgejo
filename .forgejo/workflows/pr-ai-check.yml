@@ -8,7 +8,7 @@ jobs:
   warn-user:
     runs-on: docker
     container:
-      image: data.forgejo.org/oci/ci:2
+      image: data.forgejo.org/oci/ci:3
     if: "!contains(forgejo.event.pull_request.body, '[x] I confirm that I make this contribution in accordance with [Forgejo''s AI Agreement]') && !contains(fromJSON('[\"viceice-bot\", \"translate\", \"forgejo-backport-action\", \"forgejo-cascading-pr\"]'), forgejo.actor)"
     steps:
       - run: |
