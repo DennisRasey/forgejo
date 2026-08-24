@@ -36,6 +36,12 @@
   }
 }
 
+@media (prefers-contrast: more) {
+  :is(form, .markup) input[type="checkbox"] {
+    appearance: auto;
+  }
+}
+
 form input[type="checkbox"] {
   vertical-align: center !important; /* override fomantic */
 
