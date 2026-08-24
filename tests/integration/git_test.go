@@ -125,6 +125,8 @@ func testGit(t *testing.T, u *url.URL) {
 			t.Run("BranchProtect", doBranchProtect(&httpContext, dstPath))
 			t.Run("AutoMerge", doAutoPRMerge(&httpContext, dstPath))
 			t.Run("CreatePRAndSetManuallyMerged", doCreatePRAndSetManuallyMerged(httpContext, httpContext, dstPath, "master", "test-manually-merge"))
+			t.Run("ManuallyMergePRWithShortSHA", doCreatePRAndSetManuallyMergedShortSHA(httpContext, httpContext, dstPath, "master", "test-manually-merge-short"))
+			t.Run("ManuallyMergePRRejectBadCommitIDs", doCreatePRAndRejectBadManualMergeCommitIDs(httpContext, httpContext, dstPath, "master", "test-manually-merge-reject"))
 			t.Run("MergeFork", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 				t.Run("CreatePRAndMerge", doMergeFork(httpContext, forkedUserCtx, "master", httpContext.Username+":master"))
@@ -607,6 +609,94 @@ func doCreatePRAndSetManuallyMerged(ctx, baseCtx APITestContext, dstPath, baseBr
 		})
 		lastCommitID = pr.Base.Sha
 		t.Run("ManuallyMergePR", doAPIManuallyMergePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, lastCommitID, pr.Index))
+	}
+}
+
+// doCreatePRAndSetManuallyMergedShortSHA covers the manual-merge happy path
+// for issue #13610: a 7-char short SHA (git's default --abbrev) resolves to
+// the full commit and the stored MergedCommitID is the resolved full form.
+func doCreatePRAndSetManuallyMergedShortSHA(ctx, baseCtx APITestContext, dstPath, baseBranch, headBranch string) func(t *testing.T) {
+	return func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		var (
+			pr  api.PullRequest
+			err error
+		)
+
+		trueBool := true
+		falseBool := false
+
+		// Re-assert the repo settings so this test can also stand alone.
+		t.Run("AllowSetManuallyMergedAndSwitchOffAutodetectManualMerge", doAPIEditRepository(baseCtx, &api.EditRepoOption{
+			HasPullRequests:       &trueBool,
+			AllowManualMerge:      &trueBool,
+			AutodetectManualMerge: &falseBool,
+		}))
+
+		t.Run("CreateHeadBranch", doGitCreateBranch(dstPath, headBranch))
+		t.Run("PushToHeadBranch", doGitPushTestRepository(dstPath, "origin", headBranch))
+		t.Run("CreateEmptyPullRequest", func(t *testing.T) {
+			pr, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, baseBranch, headBranch)(t)
+			require.NoError(t, err)
+		})
+
+		fullSHA := pr.Base.Sha
+		require.Greater(t, len(fullSHA), 7, "base SHA should be a full commit ID")
+
+		shortSHA := fullSHA[:7]
+		t.Run("ManuallyMergePRWithShortSHA", doAPIManuallyMergePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, shortSHA, pr.Index))
+
+		t.Run("VerifyStoredCommitIDIsFullLength", func(t *testing.T) {
+			merged := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{ID: pr.ID})
+			assert.Equal(t, issues_model.PullRequestStatusManuallyMerged, merged.Status)
+			assert.Equal(t, fullSHA, merged.MergedCommitID)
+		})
+	}
+}
+
+// doCreatePRAndRejectBadManualMergeCommitIDs covers the manual-merge input
+// validation path: bogus commit IDs 409 on each IsValid failure mode and on
+// GetCommit's not-found path, all surfacing "Wrong commit ID".
+func doCreatePRAndRejectBadManualMergeCommitIDs(ctx, baseCtx APITestContext, dstPath, baseBranch, headBranch string) func(t *testing.T) {
+	return func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		var (
+			pr  api.PullRequest
+			err error
+		)
+
+		trueBool := true
+		falseBool := false
+
+		// Re-assert the repo settings so this test can also stand alone.
+		t.Run("AllowSetManuallyMergedAndSwitchOffAutodetectManualMerge", doAPIEditRepository(baseCtx, &api.EditRepoOption{
+			HasPullRequests:       &trueBool,
+			AllowManualMerge:      &trueBool,
+			AutodetectManualMerge: &falseBool,
+		}))
+
+		t.Run("CreateHeadBranch", doGitCreateBranch(dstPath, headBranch))
+		t.Run("PushToHeadBranch", doGitPushTestRepository(dstPath, "origin", headBranch))
+		t.Run("CreateEmptyPullRequest", func(t *testing.T) {
+			pr, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, baseBranch, headBranch)(t)
+			require.NoError(t, err)
+		})
+
+		fullSHA := pr.Base.Sha
+		require.Greater(t, len(fullSHA), 7, "base SHA should be a full commit ID")
+
+		rejectCtx := ctx
+		rejectCtx.ExpectedCode = http.StatusConflict
+		rejectCases := []struct{ name, input string }{
+			{"Empty", ""},                                         // no ID at all
+			{"TooShort", fullSHA[:3]},                             // hex but under the 4-char minimum
+			{"TooLong", strings.Repeat("a", 41)},                  // hex but over sha1's 40-char max
+			{"NonHexCharacters", "not-hex"},                       // right-ish length but non-hex
+			{"WellFormedButNonexistent", strings.Repeat("0", 40)}, // passes IsValid, resolves to no object
+		}
+		for _, rc := range rejectCases {
+			t.Run("Reject/"+rc.name, doAPIManuallyMergePullRequest(rejectCtx, baseCtx.Username, baseCtx.Reponame, rc.input, pr.Index))
+		}
 	}
 }
 
