@@ -149,7 +149,12 @@ test.describe('repo collaboration settings', () => {
     const response = await page.goto('/user2/repo1/settings/collaboration');
     expect(response?.status()).toBe(200);
 
-    await expect(page.getByRole('group', {name: 'Change access mode'}).locator('summary')).toHaveText('Write');
+    const opener = page.getByRole('group', {name: 'Change access mode'}).locator('summary');
+    await expect(opener).toHaveText('Write');
+
+    // Check that opener and rmButton are same height
+    const rmButton = page.getByRole('button', {name: 'Remove'});
+    expect((await opener.boundingBox()).height).toBe((await rmButton.boundingBox()).height);
 
     const dropdownEl = page.getByRole('group', {name: 'Change access mode'});
     await dropdownEl.click();
