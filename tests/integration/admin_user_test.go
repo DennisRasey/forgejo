@@ -262,7 +262,13 @@ func TestSourceId(t *testing.T) {
 	resp = session.MakeRequest(t, req, http.StatusOK)
 	DecodeJSON(t, resp, &users)
 	assert.Len(t, users, 1)
-	assert.Equal(t, "imported", users[0].UserName)
+
+	// SQLite sorts uppercase strings differently to MYSQL and PostgreSQL
+	if setting.Database.Type.IsSQLite3() {
+		assert.Equal(t, "User44", users[0].UserName)
+	} else {
+		assert.Equal(t, "imported", users[0].UserName)
+	}
 
 	// Now our new user should be in the list, because we filter by source_id 23
 	req = NewRequest(t, "GET", "/api/v1/admin/users?limit=1&source_id=23").AddTokenAuth(token)
@@ -301,17 +307,26 @@ func TestAdminViewUsersSorted(t *testing.T) {
 	session := loginUser(t, "user1")
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadAdmin)
 
-	testCases := []struct {
+	type testCase struct {
 		loginSource   int64
 		sortType      string
 		expectedUsers []string
-	}{
-		{0, "alphabetically", []string{"imported", "the_34-user.with.all.allowedChars", "user1", "user10"}},
-		{0, "reversealphabetically", []string{"user9", "user8", "user5", "user40"}},
-		{0, "newest", []string{"imported", "user40", "user39", "user38"}},
+	}
+
+	testCases := []testCase{
+		{0, "newest", []string{"User44", "imported", "user40", "user39"}},
 		{0, "oldest", []string{"user1", "user2", "user4", "user5"}},
 		{44, "recentupdate", []string{"sorttest1", "sorttest2", "sorttest3", "sorttest4"}},
 		{44, "leastupdate", []string{"sorttest10", "sorttest9", "sorttest8", "sorttest7"}},
+	}
+
+	// SQLite sorts uppercase strings differently to MYSQL and PostgreSQL
+	if setting.Database.Type.IsSQLite3() {
+		testCases = append(testCases, testCase{0, "alphabetically", []string{"User44", "imported", "the_34-user.with.all.allowedChars", "user1"}})
+		testCases = append(testCases, testCase{0, "reversealphabetically", []string{"user9", "user8", "user5", "user40"}})
+	} else {
+		testCases = append(testCases, testCase{0, "alphabetically", []string{"imported", "the_34-user.with.all.allowedChars", "user1", "user10"}})
+		testCases = append(testCases, testCase{0, "reversealphabetically", []string{"user9", "user8", "user5", "User44"}})
 	}
 
 	for _, testCase := range testCases {

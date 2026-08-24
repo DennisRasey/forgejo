@@ -70,20 +70,34 @@ func TestListUnadoptedRepositories_ListOptions(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	username := "user2"
 	unadoptedList := []string{path.Join(username, "rendering-test"), path.Join(username, "unadopted1"), path.Join(username, "unadopted2")}
+
+	// uppercase search names
+	unadoptedList = append(unadoptedList, path.Join("user44", "not-uppercase"))
+
 	for _, unadopted := range unadoptedList {
-		_ = os.Mkdir(path.Join(setting.RepoRootPath, unadopted+".git"), 0o755)
+		_ = os.MkdirAll(path.Join(setting.RepoRootPath, unadopted+".git"), 0o755)
 	}
 
 	opts := db.ListOptions{Page: 1, PageSize: 1}
 	repoNames, count, err := ListUnadoptedRepositories(db.DefaultContext, "", &opts)
 	require.NoError(t, err)
-	assert.Equal(t, 3, count)
+	require.Equal(t, 4, count)
 	assert.Equal(t, unadoptedList[0], repoNames[0])
+
+	repoNames, count, err = ListUnadoptedRepositories(db.DefaultContext, "User44", &opts)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+	assert.Equal(t, unadoptedList[3], repoNames[0])
+
+	repoNames, count, err = ListUnadoptedRepositories(db.DefaultContext, "User44/Not-Uppercase", &opts)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+	assert.Equal(t, unadoptedList[3], repoNames[0])
 
 	opts = db.ListOptions{Page: 2, PageSize: 1}
 	repoNames, count, err = ListUnadoptedRepositories(db.DefaultContext, "", &opts)
 	require.NoError(t, err)
-	assert.Equal(t, 3, count)
+	require.Equal(t, 4, count)
 	assert.Equal(t, unadoptedList[1], repoNames[0])
 }
 

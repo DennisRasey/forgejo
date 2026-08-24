@@ -285,6 +285,9 @@ func ListUnadoptedRepositories(ctx context.Context, query string, opts *db.ListO
 	globUser, _ := glob.Compile("*")
 	globRepo, _ := glob.Compile("*")
 
+	// repositories are stored by the lower case user name and lower case repo
+	// name
+	query = strings.ToLower(query)
 	qsplit := strings.SplitN(query, "/", 2)
 	if len(qsplit) > 0 && len(query) > 0 {
 		var err error

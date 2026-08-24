@@ -152,7 +152,8 @@ func TestAPIListUsers(t *testing.T) {
 	adminUsername := "user1"
 	token := getUserToken(t, adminUsername, auth_model.AccessTokenScopeReadAdmin)
 
-	req := NewRequest(t, "GET", "/api/v1/admin/users").
+	// There are more than 30 users, which is the deafult page size
+	req := NewRequest(t, "GET", "/api/v1/admin/users?limit=50").
 		AddTokenAuth(token)
 	resp := MakeRequest(t, req, http.StatusOK)
 	var users []api.User
@@ -182,7 +183,7 @@ func TestAPIListUsersNo2FA(t *testing.T) {
 	resp := MakeRequest(t, req, http.StatusOK)
 	total := resp.Header().Get("X-Total-Count")
 
-	numberOfUsers := "28"
+	numberOfUsers := "29"
 
 	assert.Equal(t, numberOfUsers, total)
 }
