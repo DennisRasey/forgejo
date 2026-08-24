@@ -105,7 +105,7 @@ jobs:
     runs-on: docker
     needs: [backend-checks, frontend-checks]
     container:
-      image: 'data.forgejo.org/oci/playwright:latest'
+      image: 'data.forgejo.org/oci/ci:3'
       # options: --tmpfs /tmp:exec,noatime # Too much memory usage
     steps:
       - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -132,12 +132,16 @@ jobs:
         uses: https://data.forgejo.org/tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           separator: '\n'
+      - uses: https://data.forgejo.org/actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          key: playwright-${{ hashFiles('package-lock.json') }}
+          path: |
+            /home/forgejo/.cache/ms-playwright
       - run: |
           su forgejo -c 'make generate test-e2e-sqlite'
         timeout-minutes: 120
         env:
           USE_REPO_TEST_DIR: 1
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           CHANGED_FILES: ${{steps.changed-files.outputs.all_changed_files}}
           RUN_ALL: ${{steps.run-all.all}}
       - name: Upload test artifacts on failure
