@@ -1,0 +1,34 @@
+<dialog id="funding-modal" closedby="any" aria-labelledby="funding-modal-header">
+	<article>
+		<header>
+			<span role="heading" aria-level="1" id="funding-modal-header">{{ctx.Locale.Tr "funding.action.title" .FundingTarget}}</span>
+			<button type="button" command="close" commandfor="funding-modal" aria-label="{{ctx.Locale.Tr "funding.action.close"}}" class="toast-close">{{svg "octicon-x" 24}}</button>
+		</header>
+		<div class="content">
+			{{if .FundingHasErrors}}
+			<div class="ui error message">
+				{{ctx.Locale.Tr "funding.config_has_errors" .FundingConfig}}
+			</div>
+			{{end}}
+			<ul>
+				{{range .Funding}}
+				<li>
+					<div class="icon" role="img" aria-label="{{.ProviderName}}">
+					{{if eq .ProviderName "buy_me_a_coffee" "community_bridge" "github" "issuehunt" "ko_fi" "liberapay" "open_collective" "patreon" "thanks_dev" "tidelift"}}
+						{{$iconName := (print "brand-" .ProviderName)}}
+						{{svg $iconName 22 "brand-color"}}
+					{{else if eq .ProviderName "custom"}}
+						{{svg "octicon-link" 22}}
+					{{else}}
+						{{svg "octicon-heart" 22}}
+					{{end}}
+					</div>
+					<a rel="noopener" href="{{.Value}}">{{.Title}}</a>
+				</li>
+				{{end}}
+			</ul>
+			<hr />
+			<p>{{ctx.Locale.Tr "funding.docs" "https://forgejo.org/docs/latest/user/repository/funding/"}}</p>
+		</div>
+	</article>
+</dialog>

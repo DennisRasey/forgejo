@@ -1,0 +1,7 @@
+<button
+	type="button"
+	command="show-modal"
+	commandfor="funding-modal"
+	class="donation button {{if .Org}}secondary{{else}}ui compact small basic{{end}}"
+	aria-label="{{ctx.Locale.Tr "funding.action.title" .FundingTarget}}"
+>{{svg "octicon-heart" 16 "text pink light"}}<span class="text not-mobile">{{ctx.Locale.Tr "funding.action.button"}}</span></button>

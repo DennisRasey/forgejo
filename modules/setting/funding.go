@@ -122,7 +122,7 @@ func LoadBuiltInFundingProviders() {
 	// `polar` is intentionally omitted, see https://codeberg.org/forgejo/forgejo/pulls/13361#issuecomment-20078290
 	addFundingProvider(&FundingProviderConfig{
 		Name:         "community_bridge", // aka LFX Mentorship, but the config calls it community_bridge for compat
-		Title:        "funding.communitybridge.org/projects/%[1]s",
+		Title:        "crowdfunding.linuxfoundation.org/initiatives/%[1]s",
 		Template:     "https://crowdfunding.linuxfoundation.org/initiatives/%[1]s", // originally https://funding.communitybridge.org/projects/*
 		InputPattern: singleSegmentRegex,
 	})

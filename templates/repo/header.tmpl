@@ -58,6 +58,9 @@
 						{{svg "octicon-rss" 16}}
 					</a>
 					{{end}}
+					{{if $.Funding}}
+					{{template "shared/donation_button" $}}
+					{{end}}
 					{{template "repo/watch_unwatch" $}}
 					{{if not $.DisableStars}}
 					{{template "repo/star_unstar" $}}
@@ -206,3 +209,7 @@
 	</overflow-menu>
 	<div class="ui tabs divider"></div>
 </div>
+
+{{if .Funding}}
+	{{template "shared/funding" .}}
+{{end}}

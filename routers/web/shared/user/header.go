@@ -5,6 +5,7 @@
 package user
 
 import (
+	"errors"
 	"net/url"
 
 	"forgejo.org/models/db"
@@ -24,6 +25,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/routers/web/repo"
 	"forgejo.org/services/context"
+	funding_service "forgejo.org/services/funding"
 )
 
 // prepareContextForCommonProfile store some common data into context data for user's profile related pages (including the nav menu)
@@ -94,12 +96,12 @@ func PrepareContextForProfileBigAvatar(ctx *context.Context) {
 	}
 }
 
-func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profileDbRepo *repo_model.Repository, profileGitRepo *git.Repository, profileReadmeBlob *git.Blob, profileClose func()) {
-	profileDbRepo, err := repo_model.GetRepositoryByName(ctx, ctx.ContextUser.ID, ".profile")
+func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profileDbRepo *repo_model.Repository, profileGitRepo *git.Repository, profileReadmeBlob *git.Blob, profileFunding *funding_service.RepoFunding, profileClose func()) {
+	profileDbRepo, err := repo_model.GetRepositoryByName(ctx, ctx.ContextUser.ID, context.OwnerProfileRepositoryName)
 	if err == nil {
 		// Don't show profile content if .profile repository is a fork or private
 		if profileDbRepo.IsFork || profileDbRepo.IsPrivate {
-			return nil, nil, nil, func() {}
+			return nil, nil, nil, nil, func() {}
 		}
 		perm, err := access_model.GetUserRepoPermission(ctx, profileDbRepo, doer)
 		if err == nil && !profileDbRepo.IsEmpty && perm.CanRead(unit.TypeCode) {
@@ -109,6 +111,10 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 				if commit, err := profileGitRepo.GetBranchCommit(profileDbRepo.DefaultBranch); err != nil {
 					log.Error("FindUserProfileReadme failed to GetBranchCommit: %v", err)
 				} else {
+					profileFunding, err = funding_service.GetFundingFromCommit(profileDbRepo, commit)
+					if err != nil && !errors.Is(err, funding_service.ErrFundingNotExist{}) {
+						log.Error("FindUserProfileReadme failed to GetFundingFromCommit: %v", err)
+					}
 					tree, err := commit.SubTree("")
 					if err != nil {
 						log.Error("FindUserProfileReadme failed to get SubTree: %v", err)
@@ -131,7 +137,7 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 	} else if !repo_model.IsErrRepoNotExist(err) {
 		log.Error("FindUserProfileReadme failed to GetRepositoryByName: %v", err)
 	}
-	return profileDbRepo, profileGitRepo, profileReadmeBlob, func() {
+	return profileDbRepo, profileGitRepo, profileReadmeBlob, profileFunding, func() {
 		if profileGitRepo != nil {
 			_ = profileGitRepo.Close()
 		}
@@ -141,7 +147,7 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 func RenderUserHeader(ctx *context.Context) {
 	prepareContextForCommonProfile(ctx)
 
-	_, _, profileReadmeBlob, profileClose := FindUserProfileReadme(ctx, ctx.Doer)
+	_, _, profileReadmeBlob, _, profileClose := FindUserProfileReadme(ctx, ctx.Doer)
 	defer profileClose()
 	ctx.Data["HasProfileReadme"] = profileReadmeBlob != nil
 }

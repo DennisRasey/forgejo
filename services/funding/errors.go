@@ -63,7 +63,7 @@ type ErrDuplicateFundingEntry struct {
 }
 
 func (err ErrDuplicateFundingEntry) Error() string {
-	return fmt.Sprintf("Duplicate entry for key '%s': %s", err.Name, err.Value)
+	return fmt.Sprintf("Duplicate entry for key \"%s\": %s", err.Name, err.Value)
 }
 
 func (ErrDuplicateFundingEntry) Is(err error) bool {
@@ -79,7 +79,7 @@ type ErrBadInput struct {
 }
 
 func (err ErrBadInput) Error() string {
-	return fmt.Sprintf("Value for key '%s' does not match pattern /%s/", err.Name, err.Pattern.String())
+	return fmt.Sprintf("Value for key \"%s\" does not match pattern /%s/", err.Name, err.Pattern.String())
 }
 
 func (ErrBadInput) Is(err error) bool {
@@ -94,7 +94,7 @@ type ErrCannotParseURL struct {
 }
 
 func (err ErrCannotParseURL) Error() string {
-	return fmt.Sprintf("Invalid URL value for key '%s': %v", err.Name, err.Err.Error())
+	return fmt.Sprintf("Invalid URL value for key \"%s\": %v", err.Name, err.Err.Error())
 }
 
 func (ErrCannotParseURL) Is(err error) bool {
@@ -124,7 +124,7 @@ type ErrInvalidYamlType struct {
 }
 
 func (err ErrInvalidYamlType) Error() string {
-	return fmt.Sprintf("Invalid type for key '%s', expected a string or string array", err.Name)
+	return fmt.Sprintf("Invalid type for key \"%s\", expected a string or string array", err.Name)
 }
 
 func (ErrInvalidYamlType) Is(err error) bool {

@@ -11,3 +11,9 @@
 .markup [href$="#dark-mode-only"] {
   display: unset;
 }
+
+/* Some branded SVGs define their own dark-theme color variants through this variable. */
+svg.brand-color path,
+svg.brand-color rect {
+  fill: var(--brand-dark-fill, revert-rule);
+}

@@ -728,6 +728,10 @@ img.ui.avatar,
   color: var(--color-grey-light) !important;
 }
 
+.text.light.pink {
+  color: var(--color-pink-light) !important;
+}
+
 .text.gold {
   color: var(--color-gold) !important;
 }

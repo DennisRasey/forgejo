@@ -62,6 +62,49 @@ func TestUserProfile(t *testing.T) {
 		checkReadme(t, "readmee", "readmee", 0)
 		checkReadme(t, "test.md", "test.md", 0)
 
+		checkFunding := func(t *testing.T, title, fundingConfigFilename string, expectedCount int) {
+			t.Run(title, func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				// Prepare the test repository
+				files := forgery.MapFS{}
+				if fundingConfigFilename != "" {
+					files[fundingConfigFilename] = forgery.MapFile("custom: localhost\n")
+				}
+				_ = forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+					Name:  ".profile",
+					Files: files,
+				})
+
+				// Perform the test
+				req := NewRequest(t, "GET", "/"+user.Name)
+				resp := MakeRequest(t, req, http.StatusOK)
+
+				doc := NewHTMLParser(t, resp.Body)
+				donationButtonCount := doc.Find("button.donation").Length()
+				fundingModalCount := doc.Find("#funding-modal").Length()
+
+				assert.Equal(t, expectedCount, donationButtonCount)
+				assert.Equal(t, expectedCount, fundingModalCount)
+			})
+		}
+
+		checkFunding(t, "No funding config", "", 0)
+		checkFunding(t, "FUNDING.yml", "FUNDING.yml", 1)
+		checkFunding(t, "funding.yml", "funding.yml", 1)
+		checkFunding(t, "FundIng.Yml", "FundIng.Yml", 1)
+		checkFunding(t, ".forgejo/Funding.yml", ".forgejo/Funding.yml", 1)
+		checkFunding(t, ".github/funding.yml", ".github/funding.yml", 1)
+		checkFunding(t, ".gitea/funding.yml", ".gitea/funding.yml", 0)
+		checkFunding(t, "funding.org", "FUNDING.org", 0)
+		checkFunding(t, "FUNDING.en-us.yml", "FUNDING.en-us.yml", 0)
+		checkFunding(t, "README.txt", "README.txt", 0)
+		checkFunding(t, "FUNDING", "FUNDING", 0)
+		checkFunding(t, "FUNDING.yaml", "FUNDING.yaml", 1)
+		checkFunding(t, "README.i18n.md", "README.i18n.md", 0)
+		checkFunding(t, "funding.ymll", "funding.ymll", 0)
+		checkFunding(t, "test.yml", "test.yml", 0)
+
 		t.Run("readme-size", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 

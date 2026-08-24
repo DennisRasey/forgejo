@@ -1,0 +1,15 @@
+<svg x="0px" y="0px" viewBox="0 0 122.59 122.59" xml:space="preserve" width="122.59" height="122.59"
+  xmlns="http://www.w3.org/2000/svg">
+  <style>
+  .brand-community-bridge_a {
+    --brand-light-fill: #0094FF;
+    --brand-dark-fill: #FFF;
+  }
+  .brand-community-bridge_b {
+    --brand-light-fill: #003366;
+    --brand-dark-fill: #FFF;
+  }
+  </style>
+  <path d="M 24.48,98.19 V 49.39 H 0 V 122.6 H 73.3 V 98.2 H 24.48 Z" class="brand-community-bridge_a"/>
+  <path d="M 122.05,0.51 H 0 v 36.6 H 24.41 V 25.06 H 97.64 V 98.19 H 85.51 v 24.4 h 36.54 V 0.51 Z" class="brand-community-bridge_b"/>
+</svg>

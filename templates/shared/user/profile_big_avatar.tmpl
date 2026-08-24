@@ -94,6 +94,11 @@
 				{{svg "octicon-calendar"}}
 				<span>{{ctx.Locale.Tr "user.joined_on" (DateUtils.AbsoluteShort .ContextUser.CreatedUnix)}}</span>
 			</li>
+			{{if .Funding}}
+			<li>
+				{{template "shared/donation_button" .}}
+			</li>
+			{{end}}
 			{{if and .Orgs .HasOrgsVisible}}
 			<li>
 				<ul class="user-orgs">
@@ -123,3 +128,7 @@
 		</ul>
 	</div>
 </div>
+
+{{if .Funding}}
+	{{template "shared/funding" .}}
+{{end}}

@@ -87,7 +87,7 @@
   --color-green-light: #46de6a;
   --color-teal-light: #08fff4;
   --color-purple-light: #bb64d8;
-  --color-pink-light: #e86bb1;
+  --color-pink-light: #bf3989;
   --color-brown-light: #c58b66;
   --color-black-light: #525558;
   /* dark 1 variants - produced via Sass scale-color(color, $lightness: -10%) */

@@ -62,6 +62,17 @@ dialog header {
   border-bottom: 1px solid var(--color-secondary);
 }
 
+dialog header [role="heading"] {
+  /* keep long header text to at most two lines, and ellipses after */
+  display: inline-block;
+  display: -webkit-inline-box;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 dialog article {
   display: block;
   width: 100%;
@@ -135,4 +146,45 @@ dialog .actions .ui.button .svg {
       row-gap: 0.33rem;
     }
   }
+}
+
+dialog .toast-close {
+  margin-inline-start: auto;
+}
+
+dialog .content hr {
+  border-top: 1px solid var(--color-secondary);
+  margin: 10px 0;
+}
+
+#funding-modal article {
+  /* paragraphs etc. should not cause the modal to grow beyond reasonable width */
+  max-width: 424px;
+}
+
+#funding-modal ul {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0;
+  margin-top: 0;
+}
+
+#funding-modal ul > li {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+#funding-modal li > .icon {
+  position: relative;
+  flex-shrink: 0;
+  margin-inline-end: 0.5rem;
+  width: 22px;
+  height: 22px;
+}
+
+#funding-modal li > .icon > svg {
+  position: absolute;
 }

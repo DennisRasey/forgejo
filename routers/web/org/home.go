@@ -24,6 +24,7 @@ import (
 	"forgejo.org/modules/util"
 	shared_user "forgejo.org/routers/web/shared/user"
 	"forgejo.org/services/context"
+	funding_service "forgejo.org/services/funding"
 )
 
 const (
@@ -184,9 +185,10 @@ func Home(ctx *context.Context) {
 
 	ctx.Data["ShowMemberAndTeamTab"] = ctx.Org.IsMember || len(members) > 0
 
-	profileDbRepo, profileGitRepo, profileReadmeBlob, profileClose := shared_user.FindUserProfileReadme(ctx, ctx.Doer)
+	profileDbRepo, profileGitRepo, profileReadmeBlob, profileFunding, profileClose := shared_user.FindUserProfileReadme(ctx, ctx.Doer)
 	defer profileClose()
 	prepareOrgProfileReadme(ctx, profileGitRepo, profileDbRepo, profileReadmeBlob)
+	prepareOrgProfileFunding(ctx, profileFunding)
 
 	ctx.HTML(http.StatusOK, tplOrgHome)
 }
@@ -227,4 +229,15 @@ func prepareOrgProfileReadme(ctx *context.Context, profileGitRepo *git.Repositor
 			ctx.Data["IsProfileReadmePlain"] = true
 		}
 	}
+}
+
+func prepareOrgProfileFunding(ctx *context.Context, profileFunding *funding_service.RepoFunding) {
+	if profileFunding == nil || len(profileFunding.Entries) == 0 {
+		return
+	}
+
+	ctx.Data["Funding"] = profileFunding.Entries
+	ctx.Data["FundingConfig"] = profileFunding.ConfigPath
+	ctx.Data["FundingHasErrors"] = len(profileFunding.Errors) > 0
+	ctx.Data["FundingTarget"] = ctx.ContextUser.DisplayName()
 }
