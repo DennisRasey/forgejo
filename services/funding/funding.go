@@ -81,8 +81,8 @@ func getFundingEntry(provider *setting.FundingProviderConfig, input string) (*ap
 
 	// Expecting (for now) that the value is to be treated as a URL
 	if !strings.Contains(rawValue, "://") {
-		// assume HTTP before parsing (otherwise, url.Parse may think the *hostname* is the scheme!)
-		rawValue = "http://" + rawValue
+		// assume HTTPS before parsing (otherwise, url.Parse may think the *hostname* is the scheme!)
+		rawValue = "https://" + rawValue
 	}
 
 	urlValue, err := url.Parse(rawValue) // value should parse as a URL; interpolation should never result in something invalid
@@ -90,8 +90,7 @@ func getFundingEntry(provider *setting.FundingProviderConfig, input string) (*ap
 		return nil, ErrCannotParseURL{Name: provider.Name, Err: err}
 	}
 
-	// TODO: Look into whether this should also respect setting.Service.ValidSiteURLSchemes
-	validSchemes := []string{"http", "https"}
+	validSchemes := setting.Service.ValidSiteURLSchemes
 	if !slices.Contains(validSchemes, urlValue.Scheme) {
 		return nil, ErrCannotParseURL{Name: provider.Name, Err: &ErrBadURLScheme{
 			ValidSchemes: validSchemes,
@@ -106,8 +105,14 @@ func getFundingEntry(provider *setting.FundingProviderConfig, input string) (*ap
 
 	entry := new(api.RepoFundingEntry)
 	entry.ProviderName = provider.Name
-	entry.Title = fmt.Sprintf(provider.Title, input)
 	entry.Value = urlValue.String()
+	if provider.Name == "custom" {
+		// "custom" entries are distinct from other funding providers in that their URL value is always displayed in full, including scheme and punycode transformations
+		// (we ignore provider.Title here for "custom"'s special behavior)
+		entry.Title = urlValue.String()
+	} else {
+		entry.Title = fmt.Sprintf(provider.Title, input)
+	}
 
 	return entry, nil
 }

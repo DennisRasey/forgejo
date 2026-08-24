@@ -16,6 +16,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func defaultSettings(t *testing.T) func() {
+	t.Helper()
+
+	resetFundingProviders := test.MockProtect(&setting.FundingProviders)
+	resetMaxFundingEntries := test.MockProtect(&setting.MaxFundingEntriesPerConfig)
+	resetValidSiteURLSchemes := test.MockProtect(&setting.Service.ValidSiteURLSchemes)
+
+	// These should align with server defaults:
+	setting.LoadBuiltInFundingProviders()
+	setting.MaxFundingEntriesPerConfig = 15
+	setting.Service.ValidSiteURLSchemes = []string{"http", "https"}
+
+	return func() {
+		resetFundingProviders()
+		resetMaxFundingEntries()
+		resetValidSiteURLSchemes()
+	}
+}
+
 func getFundingFromConfig(t *testing.T, config string) ([]*api.RepoFundingEntry, []error) {
 	funding, errs, err := getFundingFromBlob([]byte(config))
 	require.NoError(t, err)
@@ -29,9 +48,10 @@ func assertEntry(t *testing.T, entry *api.RepoFundingEntry, expectedProvider, ex
 	assert.Equal(t, expectedValue, entry.Value)
 }
 
-func assertCustom(t *testing.T, entry *api.RepoFundingEntry, expectedTitle, expectedValue string) {
+func assertCustom(t *testing.T, entry *api.RepoFundingEntry, expectedURL string) {
 	t.Helper()
-	assertEntry(t, entry, "custom", expectedTitle, expectedValue)
+	// different from the others, "custom" entries display their URL value verbatim:
+	assertEntry(t, entry, "custom", expectedURL, expectedURL)
 }
 
 func assertGithub(t *testing.T, entry *api.RepoFundingEntry, expectedTitle, expectedValue string) {
@@ -102,9 +122,7 @@ func TestFundingConfigParseErrors(t *testing.T) {
 }
 
 func TestFundingEntriesFromConfig(t *testing.T) {
-	defer test.MockProtect(&setting.FundingProviders)()
-	setting.LoadBuiltInFundingProviders()
-	setting.MaxFundingEntriesPerConfig = 15
+	defer defaultSettings(t)()
 
 	t.Run("Empty config", func(t *testing.T) {
 		funding, errs := getFundingFromConfig(t, "")
@@ -113,41 +131,42 @@ func TestFundingEntriesFromConfig(t *testing.T) {
 	})
 
 	t.Run("Custom string value", func(t *testing.T) {
-		configs := [][3]string{
-			{`custom: "https://a.com"`, "https://a.com", "https://a.com"},
-			{`custom: https://a.com`, "https://a.com", "https://a.com"},
-			{`custom: b.com`, "b.com", "http://b.com"},
-			{`custom: "http://withquery.example.com?test=foo"`, "http://withquery.example.com?test=foo", "http://withquery.example.com?test=foo"},
-			{`custom: http://withquery.example.com?test=foo`, "http://withquery.example.com?test=foo", "http://withquery.example.com?test=foo"},
-			{`custom: "http://thistimewithhash#foo"`, "http://thistimewithhash#foo", "http://thistimewithhash#foo"},
-			{`custom: http://thistimewithhash#foo`, "http://thistimewithhash#foo", "http://thistimewithhash#foo"},
-			{`custom: https://a.com`, "https://a.com", "https://a.com"},
-			{`custom: http://withquery.example.com?test=foo`, "http://withquery.example.com?test=foo", "http://withquery.example.com?test=foo"},
-			{`custom: http://thistimewithhash#foo`, "http://thistimewithhash#foo", "http://thistimewithhash#foo"},
-			{`custom: 'localhost:1234'`, "localhost:1234", "http://localhost:1234"},
-			{`custom: localhost:1234`, "localhost:1234", "http://localhost:1234"},
-			{`custom: "https://localhost:8080/"`, "https://localhost:8080/", "https://localhost:8080/"},
-			{`custom: "https://[::]:8080/"`, "https://[::]:8080/", "https://[::]:8080/"},
-			{`custom: '😀.com'`, "😀.com", "http://xn--e28h.com"},
+		configs := [][2]string{
+			{`custom: "https://a.com"`, "https://a.com"},
+			{`custom: https://a.com`, "https://a.com"},
+			{`custom: b.com`, "https://b.com"},
+			{`custom: 'http://b.com'`, "http://b.com"},
+			{`custom: "http://withquery.example.com?test=foo"`, "http://withquery.example.com?test=foo"},
+			{`custom: http://withquery.example.com?test=foo`, "http://withquery.example.com?test=foo"},
+			{`custom: "http://thistimewithhash#foo"`, "http://thistimewithhash#foo"},
+			{`custom: http://thistimewithhash#foo`, "http://thistimewithhash#foo"},
+			{`custom: https://a.com`, "https://a.com"},
+			{`custom: http://withquery.example.com?test=foo`, "http://withquery.example.com?test=foo"},
+			{`custom: http://thistimewithhash#foo`, "http://thistimewithhash#foo"},
+			{`custom: 'localhost:1234'`, "https://localhost:1234"},
+			{`custom: localhost:1234`, "https://localhost:1234"},
+			{`custom: 'http://localhost:1234'`, "http://localhost:1234"},
+			{`custom: "https://localhost:8080/"`, "https://localhost:8080/"},
+			{`custom: "https://[::]:8080/"`, "https://[::]:8080/"},
+			{`custom: '😀.com'`, "https://xn--e28h.com"},
 			// adapted from the list at https://en.wikipedia.org/wiki/International_email:
-			{`custom: '例子.广告'`, "例子.广告", "http://xn--fsqu00a.xn--4rr70v"},
-			{`custom: 'ಡೇಟಾಮೇಲ್.ಭಾರತ'`, "ಡೇಟಾಮೇಲ್.ಭಾರತ", "http://xn--xscd4bq2d9bd3c.xn--2scrj9c"},
-			{`custom: 'डाटा.भारत'`, "डाटा.भारत", "http://xn--c2bd1gb.xn--h2brj9c"},
-			{`custom: 'пошта.укр'`, "пошта.укр", "http://xn--80a1acn3a.xn--j1amh"},
-			{`custom: 'παράδειγμα.ελ'`, "παράδειγμα.ελ", "http://xn--hxajbheg2az3al.xn--qxam"},
-			{`custom: 'Sörensen.example.com'`, "Sörensen.example.com", "http://xn--srensen-90a.example.com"},
-			{`custom: 'пример.рф'`, "пример.рф", "http://xn--e1afmkfd.xn--p1ai"},
-			{`custom: 'موقع.عر'`, "موقع.عر", "http://xn--4gbrim.xn--wgbp"},
+			{`custom: '例子.广告'`, "https://xn--fsqu00a.xn--4rr70v"},
+			{`custom: 'ಡೇಟಾಮೇಲ್.ಭಾರತ'`, "https://xn--xscd4bq2d9bd3c.xn--2scrj9c"},
+			{`custom: 'डाटा.भारत'`, "https://xn--c2bd1gb.xn--h2brj9c"},
+			{`custom: 'пошта.укр'`, "https://xn--80a1acn3a.xn--j1amh"},
+			{`custom: 'παράδειγμα.ελ'`, "https://xn--hxajbheg2az3al.xn--qxam"},
+			{`custom: 'Sörensen.example.com'`, "https://xn--srensen-90a.example.com"},
+			{`custom: 'пример.рф'`, "https://xn--e1afmkfd.xn--p1ai"},
+			{`custom: 'موقع.عر'`, "https://xn--4gbrim.xn--wgbp"},
 		}
 		for _, configCase := range configs {
 			config := configCase[0]
-			expectedTitle := configCase[1]
-			expectedValue := configCase[2]
+			expectedURL := configCase[1]
 
 			funding, errs := getFundingFromConfig(t, config)
 			assert.Empty(t, errs)
 			assert.Len(t, funding, 1)
-			assertCustom(t, funding[0], expectedTitle, expectedValue)
+			assertCustom(t, funding[0], expectedURL)
 		}
 	})
 
@@ -182,22 +201,21 @@ func TestFundingEntriesFromConfig(t *testing.T) {
 		assert.Empty(t, errs)
 
 		require.Len(t, funding, 4)
-		assertCustom(t, funding[0], "https://a.com", "https://a.com")
-		assertCustom(t, funding[1], "b.com", "http://b.com")
-		assertCustom(t, funding[2], "http://withquery.example.com?test=foo", "http://withquery.example.com?test=foo")
-		assertCustom(t, funding[3], "http://thistimewithhash#foo", "http://thistimewithhash#foo")
+		assertCustom(t, funding[0], "https://a.com")
+		assertCustom(t, funding[1], "https://b.com")
+		assertCustom(t, funding[2], "http://withquery.example.com?test=foo")
+		assertCustom(t, funding[3], "http://thistimewithhash#foo")
 	})
 }
 
 func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
-	defer test.MockProtect(&setting.FundingProviders)()
-	setting.LoadBuiltInFundingProviders()
+	defer defaultSettings(t)()
 
 	t.Run("Skips duplicate entries", func(t *testing.T) {
 		configs := [][3]any{
 			{`custom: ["https://a.com", "https://a.com", "https://b.com"]`, "https://a.com", []string{"https://a.com", "https://b.com"}},
-			{`custom: [test1, test1, test2]`, "http://test1", []string{"http://test1", "http://test2"}},
-			{`custom: [test1, "http://test1", test2]`, "http://test1", []string{"http://test1", "http://test2"}},
+			{`custom: [test1, test1, test2]`, "https://test1", []string{"https://test1", "https://test2"}},
+			{`custom: [test1, "https://test1", test2]`, "https://test1", []string{"https://test1", "https://test2"}},
 		}
 		for _, configCase := range configs {
 			config := configCase[0].(string)
@@ -224,14 +242,14 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 
 		assert.Len(t, errs, 3)
 		assert.Equal(t, "Invalid type for key 'ko_fi', expected a string or string array", errs[0].Error())
-		assert.Equal(t, `Invalid URL value for key 'custom': parse "http://Arbitrary: 4242": invalid port ": 4242" after host`, errs[1].Error())
+		assert.Equal(t, `Invalid URL value for key 'custom': parse "https://Arbitrary: 4242": invalid port ": 4242" after host`, errs[1].Error())
 		assert.Equal(t, `Invalid URL value for key 'custom': invalid scheme "h3", expected one of: http, https`, errs[2].Error())
 
 		assert.Len(t, funding, 4)
 		assertLiberapay(t, funding[0], "liberapay.com/test", "https://liberapay.com/test")
-		assertCustom(t, funding[1], "test", "http://test")
-		assertCustom(t, funding[2], "https://example.com", "https://example.com")
-		assertCustom(t, funding[3], "Arbitrary:4242", "http://arbitrary:4242")
+		assertCustom(t, funding[1], "https://test")
+		assertCustom(t, funding[2], "https://example.com")
+		assertCustom(t, funding[3], "https://arbitrary:4242")
 	})
 
 	t.Run("Partially invalid (unknown key omitted)", func(t *testing.T) {
@@ -247,8 +265,8 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 			assert.Equal(t, "Unknown funding provider: whatever", errs[0].Error())
 
 			assert.Len(t, funding, 2)
-			assertCustom(t, funding[0], "test", "http://test")
-			assertCustom(t, funding[1], "https://example.com", "https://example.com")
+			assertCustom(t, funding[0], "https://test")
+			assertCustom(t, funding[1], "https://example.com")
 		}
 	})
 
@@ -301,21 +319,21 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 		assert.Equal(t, "Expected up to 15 funding providers", errs[0].Error())
 
 		assert.Len(t, funding, 15)
-		assertCustom(t, funding[0], "test1", "http://test1")
-		assertCustom(t, funding[1], "https://example.com", "https://example.com")
-		assertCustom(t, funding[2], "test3", "http://test3")
-		assertCustom(t, funding[3], "test4", "http://test4")
-		assertCustom(t, funding[4], "test5", "http://test5")
-		assertCustom(t, funding[5], "test6", "http://test6")
-		assertCustom(t, funding[6], "test7", "http://test7")
-		assertCustom(t, funding[7], "test8", "http://test8")
-		assertCustom(t, funding[8], "test9", "http://test9")
-		assertCustom(t, funding[9], "test10", "http://test10")
-		assertCustom(t, funding[10], "test11", "http://test11")
-		assertCustom(t, funding[11], "test12", "http://test12")
-		assertCustom(t, funding[12], "test13", "http://test13")
-		assertCustom(t, funding[13], "test14", "http://test14")
-		assertCustom(t, funding[14], "test15", "http://test15")
+		assertCustom(t, funding[0], "https://test1")
+		assertCustom(t, funding[1], "https://example.com")
+		assertCustom(t, funding[2], "https://test3")
+		assertCustom(t, funding[3], "https://test4")
+		assertCustom(t, funding[4], "https://test5")
+		assertCustom(t, funding[5], "https://test6")
+		assertCustom(t, funding[6], "https://test7")
+		assertCustom(t, funding[7], "https://test8")
+		assertCustom(t, funding[8], "https://test9")
+		assertCustom(t, funding[9], "https://test10")
+		assertCustom(t, funding[10], "https://test11")
+		assertCustom(t, funding[11], "https://test12")
+		assertCustom(t, funding[12], "https://test13")
+		assertCustom(t, funding[13], "https://test14")
+		assertCustom(t, funding[14], "https://test15")
 	})
 
 	t.Run("Partially invalid (too many of two providers)", func(t *testing.T) {
@@ -344,19 +362,19 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 		assert.Len(t, funding, 15)
 		assertKoFi(t, funding[0], "ko-fi.com/test", "https://ko-fi.com/test")
 		assertTidelift(t, funding[1], "tidelift.com/funding/github/npm/example", "https://tidelift.com/funding/github/npm/example")
-		assertCustom(t, funding[2], "test1", "http://test1")
-		assertCustom(t, funding[3], "https://example.com", "https://example.com")
-		assertCustom(t, funding[4], "test3", "http://test3")
-		assertCustom(t, funding[5], "test4", "http://test4")
-		assertCustom(t, funding[6], "test5", "http://test5")
-		assertCustom(t, funding[7], "test6", "http://test6")
-		assertCustom(t, funding[8], "test7", "http://test7")
-		assertCustom(t, funding[9], "test8", "http://test8")
-		assertCustom(t, funding[10], "test9", "http://test9")
-		assertCustom(t, funding[11], "test10", "http://test10")
-		assertCustom(t, funding[12], "test11", "http://test11")
-		assertCustom(t, funding[13], "test12", "http://test12")
-		assertCustom(t, funding[14], "test13", "http://test13")
+		assertCustom(t, funding[2], "https://test1")
+		assertCustom(t, funding[3], "https://example.com")
+		assertCustom(t, funding[4], "https://test3")
+		assertCustom(t, funding[5], "https://test4")
+		assertCustom(t, funding[6], "https://test5")
+		assertCustom(t, funding[7], "https://test6")
+		assertCustom(t, funding[8], "https://test7")
+		assertCustom(t, funding[9], "https://test8")
+		assertCustom(t, funding[10], "https://test9")
+		assertCustom(t, funding[11], "https://test10")
+		assertCustom(t, funding[12], "https://test11")
+		assertCustom(t, funding[13], "https://test12")
+		assertCustom(t, funding[14], "https://test13")
 	})
 
 	t.Run("Partially invalid (too many of two providers with more following)", func(t *testing.T) {
@@ -386,19 +404,19 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 		assert.Len(t, funding, 15)
 		assertKoFi(t, funding[0], "ko-fi.com/test", "https://ko-fi.com/test")
 		assertTidelift(t, funding[1], "tidelift.com/funding/github/npm/example", "https://tidelift.com/funding/github/npm/example")
-		assertCustom(t, funding[2], "test1", "http://test1")
-		assertCustom(t, funding[3], "https://example.com", "https://example.com")
-		assertCustom(t, funding[4], "test3", "http://test3")
-		assertCustom(t, funding[5], "test4", "http://test4")
-		assertCustom(t, funding[6], "test5", "http://test5")
-		assertCustom(t, funding[7], "test6", "http://test6")
-		assertCustom(t, funding[8], "test7", "http://test7")
-		assertCustom(t, funding[9], "test8", "http://test8")
-		assertCustom(t, funding[10], "test9", "http://test9")
-		assertCustom(t, funding[11], "test10", "http://test10")
-		assertCustom(t, funding[12], "test11", "http://test11")
-		assertCustom(t, funding[13], "test12", "http://test12")
-		assertCustom(t, funding[14], "test13", "http://test13")
+		assertCustom(t, funding[2], "https://test1")
+		assertCustom(t, funding[3], "https://example.com")
+		assertCustom(t, funding[4], "https://test3")
+		assertCustom(t, funding[5], "https://test4")
+		assertCustom(t, funding[6], "https://test5")
+		assertCustom(t, funding[7], "https://test6")
+		assertCustom(t, funding[8], "https://test7")
+		assertCustom(t, funding[9], "https://test8")
+		assertCustom(t, funding[10], "https://test9")
+		assertCustom(t, funding[11], "https://test10")
+		assertCustom(t, funding[12], "https://test11")
+		assertCustom(t, funding[13], "https://test12")
+		assertCustom(t, funding[14], "https://test13")
 	})
 
 	t.Run("Partially invalid (too many of all providers)", func(t *testing.T) {
@@ -423,5 +441,51 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 		assertPatreon(t, funding[2], "patreon.com/example", "https://patreon.com/example")
 		assertLiberapay(t, funding[3], "liberapay.com/example", "https://liberapay.com/example")
 		assertGithub(t, funding[4], "github.com/sponsors/example", "https://github.com/sponsors/example")
+	})
+}
+
+func TestFundingEntriesWithCustomSchemes(t *testing.T) {
+	defer defaultSettings(t)()
+
+	t.Run("an HTTPS website under default schemes", func(t *testing.T) {
+		config := "custom: 'https://example.com'"
+		funding, errs := getFundingFromConfig(t, config)
+
+		assert.Empty(t, errs)
+		assert.Len(t, funding, 1)
+		assertCustom(t, funding[0], "https://example.com")
+	})
+
+	t.Run("an H3 website under default schemes", func(t *testing.T) {
+		config := "custom: 'h3://example.com'"
+		funding, errs := getFundingFromConfig(t, config)
+
+		assert.Empty(t, funding)
+		assert.Len(t, errs, 1)
+		assert.Equal(t, `Invalid URL value for key 'custom': invalid scheme "h3", expected one of: http, https`, errs[0].Error())
+	})
+
+	t.Run("an H3 website under custom schemes", func(t *testing.T) {
+		defer test.MockProtect(&setting.Service.ValidSiteURLSchemes)()
+		setting.Service.ValidSiteURLSchemes = append(setting.Service.ValidSiteURLSchemes, "h3")
+
+		config := "custom: 'h3://example.com'"
+		funding, errs := getFundingFromConfig(t, config)
+
+		assert.Empty(t, errs)
+		assert.Len(t, funding, 1)
+		assertCustom(t, funding[0], "h3://example.com")
+	})
+
+	t.Run("a Gemini website under custom schemes", func(t *testing.T) {
+		defer test.MockProtect(&setting.Service.ValidSiteURLSchemes)()
+		setting.Service.ValidSiteURLSchemes = append(setting.Service.ValidSiteURLSchemes, "h3")
+
+		config := "custom: 'gemini://example.com'"
+		funding, errs := getFundingFromConfig(t, config)
+
+		assert.Empty(t, funding)
+		assert.Len(t, errs, 1)
+		assert.Equal(t, `Invalid URL value for key 'custom': invalid scheme "gemini", expected one of: http, https, h3`, errs[0].Error())
 	})
 }
