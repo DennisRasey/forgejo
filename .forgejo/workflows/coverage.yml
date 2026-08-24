@@ -68,16 +68,18 @@ jobs:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.ref }}
       - uses: ./.forgejo/workflows-composite/setup-env
-      - name: install git >= 2.42
-        uses: ./.forgejo/workflows-composite/apt-install-from
+      - uses: https://data.forgejo.org/actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          packages: git
+          key: playwright-${{ hashFiles('package-lock.json') }}
+          path: |
+            /home/forgejo/.cache/ms-playwright
       - uses: ./.forgejo/workflows-composite/build-backend
       - run: |
           su forgejo -c '${{ inputs.unit-tests-env }} make coverage-run'
           su forgejo -c '${{ inputs.integration-tests-env }} make coverage-run-pgsql'
           su forgejo -c '${{ inputs.integration-tests-env }} make coverage-run-mysql'
           su forgejo -c '${{ inputs.integration-tests-env }} make coverage-run-sqlite'
+          su forgejo -c 'make coverage-run-e2e'
           su forgejo -c 'make coverage-merge'
         timeout-minutes: 180
         env:

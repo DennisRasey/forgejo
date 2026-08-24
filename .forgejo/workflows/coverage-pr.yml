@@ -38,14 +38,16 @@ jobs:
         with:
           ref: "refs/pull/${{ forgejo.event.issue.number }}/head"
       - uses: ./.forgejo/workflows-composite/setup-env
-      - name: install git >= 2.42
-        uses: ./.forgejo/workflows-composite/apt-install-from
+      - uses: https://data.forgejo.org/actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          packages: git
+          key: playwright-${{ hashFiles('package-lock.json') }}
+          path: |
+            /home/forgejo/.cache/ms-playwright
       - uses: ./.forgejo/workflows-composite/build-backend
       - run: |
           su forgejo -c 'make coverage-run'
           su forgejo -c 'make coverage-run-sqlite'
+          # performance note: oci/ci:3 has the playwright dependencies pre-loaded
           su forgejo -c 'make DEPS_PLAYWRIGHT=true coverage-run-e2e'
           su forgejo -c 'make coverage-merge coverage-show-percentage'
         timeout-minutes: 120
