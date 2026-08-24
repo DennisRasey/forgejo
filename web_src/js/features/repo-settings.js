@@ -4,44 +4,34 @@ import {onInputDebounce, toggleElem} from '../utils/dom.js';
 import {POST} from '../modules/fetch.js';
 import {createCodemirror} from './codemirror.ts';
 
-const {appSubUrl} = window.config;
+const {appSubUrl, i18n} = window.config;
 
 export function initRepoSettingsCollaboration() {
   // Change collaborator access mode
-  $('.page-content.repository .ui.dropdown.access-mode').each((_, el) => {
-    const $dropdown = $(el);
-    const $text = $dropdown.find('> .text');
-    $dropdown.dropdown({
-      async action(_text, value) {
-        const lastValue = el.getAttribute('data-last-value');
+  for (const dropdownEl of document.querySelectorAll('.page-content.repository details.dropdown.access-mode')) {
+    const url = dropdownEl.getAttribute('data-url');
+    const uid = dropdownEl.getAttribute('data-uid');
+    const textEl = dropdownEl.querySelector('.text');
+    for (const buttonEl of dropdownEl.querySelectorAll('button')) {
+      const mode = buttonEl.getAttribute('data-mode');
+      buttonEl.addEventListener('click', async () => {
+        dropdownEl.classList.add('is-loading');
+        dropdownEl.removeAttribute('open');
+
+        const data = new FormData();
+        data.append('uid', uid);
+        data.append('mode', mode);
+
         try {
-          el.setAttribute('data-last-value', value);
-          $dropdown.dropdown('hide');
-          const data = new FormData();
-          data.append('uid', el.getAttribute('data-uid'));
-          data.append('mode', value);
-          await POST(el.getAttribute('data-url'), {data});
+          await POST(url, {data});
+          textEl.textContent = buttonEl.textContent;
         } catch {
-          $text.text('(error)'); // prevent from misleading users when error occurs
-          el.setAttribute('data-last-value', lastValue);
+          showErrorToast(i18n.network_error);
         }
-      },
-      onChange(_value, text, _$choice) {
-        $text.text(text); // update the text when using keyboard navigating
-      },
-      onHide() {
-        // set to the really selected value, defer to next tick to make sure `action` has finished its work because the calling order might be onHide -> action
-        setTimeout(() => {
-          const $item = $dropdown.dropdown('get item', el.getAttribute('data-last-value'));
-          if ($item) {
-            $dropdown.dropdown('set selected', el.getAttribute('data-last-value'));
-          } else {
-            $text.text('(none)'); // prevent from misleading users when the access mode is undefined
-          }
-        }, 0);
-      },
-    });
-  });
+        dropdownEl.classList.remove('is-loading');
+      }, {passive: true});
+    }
+  }
 }
 
 export function initRepoSettingSearchTeamBox() {

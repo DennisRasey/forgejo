@@ -3,8 +3,8 @@
 		<h4 class="ui top attached header">
 			{{ctx.Locale.Tr "repo.settings.collaboration"}}
 		</h4>
-		{{if .Collaborators}}
 		<div class="ui attached segment">
+			{{if .Collaborators}}
 			<div class="flex-list">
 				{{range .Collaborators}}
 					<div class="flex-item tw-items-center">
@@ -18,16 +18,20 @@
 						</div>
 						<div class="flex-item-trailing">
 							<div class="flex-text-block">
-								{{svg "octicon-shield-lock"}}
-								<div class="ui inline dropdown access-mode" data-url="{{$.Link}}/access_mode" data-uid="{{.ID}}" data-last-value="{{printf "%d" .Collaboration.Mode}}">
-									<div class="text">{{if eq .Collaboration.Mode 1}}{{ctx.Locale.Tr "repo.settings.collaboration.read"}}{{else if eq .Collaboration.Mode 2}}{{ctx.Locale.Tr "repo.settings.collaboration.write"}}{{else if eq .Collaboration.Mode 3}}{{ctx.Locale.Tr "repo.settings.collaboration.admin"}}{{else}}{{ctx.Locale.Tr "repo.settings.collaboration.undefined"}}{{end}}</div>
-									{{svg "octicon-triangle-down" 14 "dropdown icon"}}
-									<div class="menu">
-										<div class="item" data-text="{{ctx.Locale.Tr "repo.settings.collaboration.admin"}}" data-value="3">{{ctx.Locale.Tr "repo.settings.collaboration.admin"}}</div>
-										<div class="item" data-text="{{ctx.Locale.Tr "repo.settings.collaboration.write"}}" data-value="2">{{ctx.Locale.Tr "repo.settings.collaboration.write"}}</div>
-										<div class="item" data-text="{{ctx.Locale.Tr "repo.settings.collaboration.read"}}" data-value="1">{{ctx.Locale.Tr "repo.settings.collaboration.read"}}</div>
+								<details class="dropdown dir-rtl access-mode" aria-label="{{ctx.Locale.Tr "repo.settings.collaboration.change_access"}}" data-url="{{$.Link}}/access_mode" data-uid="{{.ID}}">
+									<summary class="options">
+										{{svg "octicon-shield-lock"}}
+										<div class="text">{{if eq .Collaboration.Mode 1}}{{ctx.Locale.Tr "repo.settings.collaboration.read"}}{{else if eq .Collaboration.Mode 2}}{{ctx.Locale.Tr "repo.settings.collaboration.write"}}{{else if eq .Collaboration.Mode 3}}{{ctx.Locale.Tr "repo.settings.collaboration.admin"}}{{else}}{{ctx.Locale.Tr "repo.settings.collaboration.undefined"}}{{end}}</div>
+										{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+									</summary>
+									<div class="content">
+										<ul>
+											<li><button type="button" data-mode="3">{{ctx.Locale.Tr "repo.settings.collaboration.admin"}}</button></li>
+											<li><button type="button" data-mode="2">{{ctx.Locale.Tr "repo.settings.collaboration.write"}}</button></li>
+											<li><button type="button" data-mode="1">{{ctx.Locale.Tr "repo.settings.collaboration.read"}}</button></li>
+										</ul>
 									</div>
-								</div>
+								</details>
 							</div>
 							<button class="ui red tiny button inline delete-button" data-url="{{$.Link}}/delete" data-id="{{.ID}}" data-modal-id="delete-collaborator">
 								{{ctx.Locale.Tr "repo.settings.delete_collaborator"}}
@@ -36,8 +40,10 @@
 					</div>
 				{{end}}
 			</div>
+			{{else}}
+				{{ctx.Locale.Tr "repo.settings.collaboration.none"}}
+			{{end}}
 		</div>
-		{{end}}
 		<div class="ui bottom attached segment">
 			<form class="ui form" id="repo-collab-form" action="{{.Link}}" method="post">
 				<div id="search-user-box" class="ui search input tw-align-middle">
