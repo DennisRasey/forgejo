@@ -231,13 +231,29 @@ func loadServerFrom(rootCfg ConfigProvider) {
 	}
 	UseProxyProtocol = sec.Key("USE_PROXY_PROTOCOL").MustBool(false)
 	ProxyProtocolTLSBridging = sec.Key("PROXY_PROTOCOL_TLS_BRIDGING").MustBool(false)
-	ProxyProtocolHeaderTimeout = sec.Key("PROXY_PROTOCOL_HEADER_TIMEOUT").MustDuration(5 * time.Second)
+	var err error
+	ProxyProtocolHeaderTimeout, err = sec.Key("PROXY_PROTOCOL_HEADER_TIMEOUT").MustDuration(5 * time.Second)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [server].PROXY_PROTOCOL_HEADER_TIMEOUT: %v", err)
+	}
 	ProxyProtocolAcceptUnknown = sec.Key("PROXY_PROTOCOL_ACCEPT_UNKNOWN").MustBool(false)
 	GracefulRestartable = sec.Key("ALLOW_GRACEFUL_RESTARTS").MustBool(true)
-	GracefulHammerTime = sec.Key("GRACEFUL_HAMMER_TIME").MustDuration(60 * time.Second)
-	StartupTimeout = sec.Key("STARTUP_TIMEOUT").MustDuration(0 * time.Second)
-	PerWriteTimeout = sec.Key("PER_WRITE_TIMEOUT").MustDuration(PerWriteTimeout)
-	PerWritePerKbTimeout = sec.Key("PER_WRITE_PER_KB_TIMEOUT").MustDuration(PerWritePerKbTimeout)
+	GracefulHammerTime, err = sec.Key("GRACEFUL_HAMMER_TIME").MustDuration(60 * time.Second)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [server].GRACEFUL_HAMMER_TIME: %v", err)
+	}
+	StartupTimeout, err = sec.Key("STARTUP_TIMEOUT").MustDuration(0 * time.Second)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [server].STARTUP_TIMEOUT: %v", err)
+	}
+	PerWriteTimeout, err = sec.Key("PER_WRITE_TIMEOUT").MustDuration(PerWriteTimeout)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [server].PER_WRITE_TIMEOUT: %v", err)
+	}
+	PerWritePerKbTimeout, err = sec.Key("PER_WRITE_PER_KB_TIMEOUT").MustDuration(PerWritePerKbTimeout)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [server].PER_WRITE_PER_KB_TIMEOUT: %v", err)
+	}
 
 	defaultAppURL := string(Protocol) + "://" + Domain + ":" + HTTPPort
 	AppURL = sec.Key("ROOT_URL").MustString(defaultAppURL)
@@ -296,7 +312,10 @@ func loadServerFrom(rootCfg ConfigProvider) {
 		StaticRootPath = AppWorkPath
 	}
 	StaticRootPath = sec.Key("STATIC_ROOT_PATH").MustString(StaticRootPath)
-	StaticCacheTime = sec.Key("STATIC_CACHE_TIME").MustDuration(6 * time.Hour)
+	StaticCacheTime, err = sec.Key("STATIC_CACHE_TIME").MustDuration(6 * time.Hour)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [server].STATIC_CACHE_TIME: %v", err)
+	}
 	AppDataPath = sec.Key("APP_DATA_PATH").MustString(path.Join(AppWorkPath, "data"))
 	if !filepath.IsAbs(AppDataPath) {
 		AppDataPath = filepath.ToSlash(filepath.Join(AppWorkPath, AppDataPath))
@@ -323,5 +342,8 @@ func loadServerFrom(rootCfg ConfigProvider) {
 		LandingPageURL = LandingPage(landingPage)
 	}
 
-	process.TerminateGraceTimeout = sec.Key("SUBPROCESS_TERMINATE_GRACE").MustDuration(time.Duration(5) * time.Second)
+	process.TerminateGraceTimeout, err = sec.Key("SUBPROCESS_TERMINATE_GRACE").MustDuration(5 * time.Second)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [server].SUBPROCESS_TERMINATE_GRACE: %v", err)
+	}
 }

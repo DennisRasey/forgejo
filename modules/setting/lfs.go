@@ -71,7 +71,10 @@ func loadLFSFrom(rootCfg ConfigProvider) error {
 		LFSClient.BatchOperationConcurrency = 8
 	}
 
-	LFS.HTTPAuthExpiry = sec.Key("LFS_HTTP_AUTH_EXPIRY").MustDuration(24 * time.Hour)
+	LFS.HTTPAuthExpiry, err = sec.Key("LFS_HTTP_AUTH_EXPIRY").MustDuration(24 * time.Hour)
+	if err != nil {
+		return fmt.Errorf("failed to parse duration for [server].LFS_HTTP_AUTH_EXPIRY: %w", err)
+	}
 
 	if !LFS.StartServer || !InstallLock {
 		return nil

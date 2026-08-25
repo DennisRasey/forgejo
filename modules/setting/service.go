@@ -281,7 +281,11 @@ func loadServiceFrom(rootCfg ConfigProvider) {
 	Service.DefaultOrgVisibility = sec.Key("DEFAULT_ORG_VISIBILITY").In("public", structs.ExtractKeysFromMapString(structs.VisibilityModes))
 	Service.DefaultOrgVisibilityMode = structs.VisibilityModes[Service.DefaultOrgVisibility]
 	Service.DefaultOrgMemberVisible = sec.Key("DEFAULT_ORG_MEMBER_VISIBLE").MustBool()
-	Service.UserDeleteWithCommentsMaxTime = sec.Key("USER_DELETE_WITH_COMMENTS_MAX_TIME").MustDuration(0)
+	var err error
+	Service.UserDeleteWithCommentsMaxTime, err = sec.Key("USER_DELETE_WITH_COMMENTS_MAX_TIME").MustDuration(0)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [service].USER_DELETE_WITH_COMMENTS_MAX_TIME: %v", err)
+	}
 	sec.Key("VALID_SITE_URL_SCHEMES").MustString("http,https")
 	Service.ValidSiteURLSchemes = sec.Key("VALID_SITE_URL_SCHEMES").Strings(",")
 	schemes := make([]string, 0, len(Service.ValidSiteURLSchemes))

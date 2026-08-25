@@ -3,7 +3,11 @@
 
 package setting
 
-import "time"
+import (
+	"time"
+
+	"forgejo.org/modules/log"
+)
 
 // Migrations settings
 var Migrations = struct {
@@ -30,5 +34,10 @@ func loadMigrationsFrom(rootCfg ConfigProvider) {
 	Migrations.AllowLocalNetworks = sec.Key("ALLOW_LOCALNETWORKS").MustBool(false)
 	Migrations.SkipTLSVerify = sec.Key("SKIP_TLS_VERIFY").MustBool(false)
 	Migrations.AllowUnencrypted = sec.Key("ALLOW_UNENCRYPTED").MustBool(false)
-	Migrations.AvatarFetchTimeout = sec.Key("AVATAR_FETCH_TIMEOUT").MustDuration(60 * time.Second)
+
+	var err error
+	Migrations.AvatarFetchTimeout, err = sec.Key("AVATAR_FETCH_TIMEOUT").MustDuration(60 * time.Second)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [migrations].AVATAR_FETCH_TIMEOUT: %w", err)
+	}
 }

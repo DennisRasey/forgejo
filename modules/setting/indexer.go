@@ -102,7 +102,11 @@ func loadIndexerFrom(rootCfg ConfigProvider) {
 	Indexer.ExcludePatterns = IndexerGlobFromString(sec.Key("REPO_INDEXER_EXCLUDE").MustString(""))
 	Indexer.ExcludeVendored = sec.Key("REPO_INDEXER_EXCLUDE_VENDORED").MustBool(true)
 	Indexer.MaxIndexerFileSize = sec.Key("MAX_FILE_SIZE").MustInt64(1024 * 1024)
-	Indexer.StartupTimeout = sec.Key("STARTUP_TIMEOUT").MustDuration(30 * time.Second)
+	var err error
+	Indexer.StartupTimeout, err = sec.Key("STARTUP_TIMEOUT").MustDuration(30 * time.Second)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [indexer].STARTUP_TIMEOUT: %v", err)
+	}
 }
 
 // IndexerGlobFromString parses a comma separated list of patterns and returns a glob.Glob slice suited for repo indexing

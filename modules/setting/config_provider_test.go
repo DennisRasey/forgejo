@@ -6,6 +6,7 @@ package setting
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -175,4 +176,31 @@ func TestMustBytes(t *testing.T) {
 	assert.EqualValues(t, 1048576, test("1mib"))
 	assert.EqualValues(t, 1782579, test("1.7mib"))
 	assert.EqualValues(t, -1, test("1 yib")) // too large
+}
+
+func TestMustDuration(t *testing.T) {
+	test := func(value string, defaultValue time.Duration) (time.Duration, error) {
+		cfg, err := NewConfigProviderFromData("[test]")
+		require.NoError(t, err)
+		sec := cfg.Section("test")
+		sec.NewKey("VALUE", value)
+
+		return sec.Key("VALUE").MustDuration(defaultValue)
+	}
+
+	val, err := test("", time.Hour)
+	assert.Equal(t, time.Hour, val)
+	require.NoError(t, err)
+
+	val, err = test("1h", time.Hour)
+	assert.Equal(t, time.Hour, val)
+	require.NoError(t, err)
+
+	val, err = test("1.5d", time.Hour)
+	assert.Equal(t, 36*time.Hour, val)
+	require.NoError(t, err)
+
+	val, err = test("eep", time.Hour)
+	require.Error(t, err)
+	assert.Equal(t, 0*time.Nanosecond, val)
 }

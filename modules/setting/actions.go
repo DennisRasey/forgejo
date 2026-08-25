@@ -103,9 +103,20 @@ func loadActionsFrom(rootCfg ConfigProvider) error {
 		Actions.ArtifactRetentionDays = 90
 	}
 
-	Actions.ZombieTaskTimeout = sec.Key("ZOMBIE_TASK_TIMEOUT").MustDuration(10 * time.Minute)
-	Actions.EndlessTaskTimeout = sec.Key("ENDLESS_TASK_TIMEOUT").MustDuration(3 * time.Hour)
-	Actions.AbandonedJobTimeout = sec.Key("ABANDONED_JOB_TIMEOUT").MustDuration(24 * time.Hour)
+	Actions.ZombieTaskTimeout, err = sec.Key("ZOMBIE_TASK_TIMEOUT").MustDuration(10 * time.Minute)
+	if err != nil {
+		return fmt.Errorf("failed to parse duration for [actions].ZOMBIE_TASK_TIMEOUT: %w", err)
+	}
+
+	Actions.EndlessTaskTimeout, err = sec.Key("ENDLESS_TASK_TIMEOUT").MustDuration(3 * time.Hour)
+	if err != nil {
+		return fmt.Errorf("failed to parse duration for [actions].ENDLESS_TASK_TIMEOUT: %w", err)
+	}
+
+	Actions.AbandonedJobTimeout, err = sec.Key("ABANDONED_JOB_TIMEOUT").MustDuration(24 * time.Hour)
+	if err != nil {
+		return fmt.Errorf("failed to parse duration for [actions].ABANDONED_JOB_TIMEOUT: %w", err)
+	}
 
 	if !Actions.LogCompression.IsValid() {
 		return fmt.Errorf("invalid [actions] LOG_COMPRESSION: %q", Actions.LogCompression)

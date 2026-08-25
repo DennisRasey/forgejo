@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"forgejo.org/modules/log"
+
 	"code.forgejo.org/xorm/xorm"
 )
 
@@ -90,25 +92,41 @@ func loadDBSetting(rootCfg ConfigProvider) {
 	Database.SQLiteJournalMode = sec.Key("SQLITE_JOURNAL_MODE").MustString("WAL")
 
 	Database.MaxIdleConns = sec.Key("MAX_IDLE_CONNS").MustInt(2)
+	var err error
 	if Database.Type.IsMySQL() {
-		Database.ConnMaxLifetime = sec.Key("CONN_MAX_LIFETIME").MustDuration(3 * time.Second)
+		Database.ConnMaxLifetime, err = sec.Key("CONN_MAX_LIFETIME").MustDuration(3 * time.Second)
 	} else {
-		Database.ConnMaxLifetime = sec.Key("CONN_MAX_LIFETIME").MustDuration(0)
+		Database.ConnMaxLifetime, err = sec.Key("CONN_MAX_LIFETIME").MustDuration(0)
 	}
-	Database.ConnMaxIdleTime = sec.Key("CONN_MAX_IDLETIME").MustDuration(0)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [database].CONN_MAX_LIFETIME: %v", err)
+	}
+
+	Database.ConnMaxIdleTime, err = sec.Key("CONN_MAX_IDLETIME").MustDuration(0)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [database].CONN_MAX_IDLETIME: %v", err)
+	}
+
 	Database.MaxOpenConns = sec.Key("MAX_OPEN_CONNS").MustInt(30)
 
 	Database.IterateBufferSize = sec.Key("ITERATE_BUFFER_SIZE").MustInt(50)
 	Database.LogSQL = sec.Key("LOG_SQL").MustBool(false)
 	Database.DBConnectRetries = sec.Key("DB_RETRIES").MustInt(10)
-	Database.DBConnectBackoff = sec.Key("DB_RETRY_BACKOFF").MustDuration(3 * time.Second)
+	Database.DBConnectBackoff, err = sec.Key("DB_RETRY_BACKOFF").MustDuration(3 * time.Second)
+	if err != nil {
+		log.Fatal("Failed to parse duration for [database].DB_RETRY_BACKOFF: %v", err)
+	}
+
 	Database.AutoMigration = sec.Key("AUTO_MIGRATION").MustBool(true)
 
 	deprecatedSetting(rootCfg, "database", "SLOW_QUERY_TRESHOLD", "database", "SLOW_QUERY_THRESHOLD", "1.23")
 	if sec.HasKey("SLOW_QUERY_TRESHOLD") && !sec.HasKey("SLOW_QUERY_THRESHOLD") {
-		Database.SlowQueryThreshold = sec.Key("SLOW_QUERY_TRESHOLD").MustDuration(5 * time.Second)
+		Database.SlowQueryThreshold, err = sec.Key("SLOW_QUERY_TRESHOLD").MustDuration(5 * time.Second)
 	} else {
-		Database.SlowQueryThreshold = sec.Key("SLOW_QUERY_THRESHOLD").MustDuration(5 * time.Second)
+		Database.SlowQueryThreshold, err = sec.Key("SLOW_QUERY_THRESHOLD").MustDuration(5 * time.Second)
+	}
+	if err != nil {
+		log.Fatal("Failed to parse duration for [database].SLOW_QUERY_THRESHOLD: %v", err)
 	}
 }
 

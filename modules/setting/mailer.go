@@ -159,7 +159,9 @@ func loadMailerFrom(rootCfg ConfigProvider) {
 	sec.Key("FORCE_TRUST_SERVER_CERT").MustBool(false)
 	sec.Key("USE_CLIENT_CERT").MustBool(false)
 	sec.Key("SENDMAIL_PATH").MustString("sendmail")
-	sec.Key("SENDMAIL_TIMEOUT").MustDuration(5 * time.Minute)
+	if _, err := sec.Key("SENDMAIL_TIMEOUT").MustDuration(5 * time.Minute); err != nil {
+		log.Fatal("Failed to parse duration for [mailer].SENDMAIL_TIMEOUT: %v", err)
+	}
 	sec.Key("SENDMAIL_CONVERT_CRLF").MustBool(true)
 	sec.Key("FROM").MustString(sec.Key("USER").String())
 

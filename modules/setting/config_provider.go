@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"forgejo.org/modules/duration"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/util"
 
@@ -33,7 +34,7 @@ type ConfigKey interface {
 	MustBool(defaultVal ...bool) bool
 	MustInt(defaultVal ...int) int
 	MustInt64(defaultVal ...int64) int64
-	MustDuration(defaultVal ...time.Duration) time.Duration
+	MustDuration(defaultVal time.Duration) (time.Duration, error)
 }
 
 type ConfigSection interface {
@@ -73,10 +74,14 @@ type iniConfigSection struct {
 	sec *ini.Section
 }
 
+type iniConfigKey struct {
+	*ini.Key
+}
+
 var (
 	_ ConfigProvider = (*iniConfigProvider)(nil)
 	_ ConfigSection  = (*iniConfigSection)(nil)
-	_ ConfigKey      = (*ini.Key)(nil)
+	_ ConfigKey      = (*iniConfigKey)(nil)
 )
 
 // ConfigSectionKey only searches the keys in the given section, but it is O(n).
@@ -156,16 +161,20 @@ func (s *iniConfigSection) HasKey(key string) bool {
 }
 
 func (s *iniConfigSection) NewKey(name, value string) (ConfigKey, error) {
-	return s.sec.NewKey(name, value)
+	key, err := s.sec.NewKey(name, value)
+	if err != nil {
+		return nil, err
+	}
+	return &iniConfigKey{key}, nil
 }
 
 func (s *iniConfigSection) Key(key string) ConfigKey {
-	return s.sec.Key(key)
+	return &iniConfigKey{s.sec.Key(key)}
 }
 
 func (s *iniConfigSection) Keys() (keys []ConfigKey) {
 	for _, k := range s.sec.Keys() {
-		keys = append(keys, k)
+		keys = append(keys, &iniConfigKey{k})
 	}
 	return keys
 }
@@ -320,6 +329,17 @@ func mustMapSetting(rootCfg ConfigProvider, sectionName string, setting any) {
 	if err := rootCfg.Section(sectionName).MapTo(setting); err != nil {
 		log.Fatal("Failed to map %s settings: %v", sectionName, err)
 	}
+}
+
+// MustDuration will return a error if the value is non-zero and it cannot be
+// parsed as a duration, if the value is non-zero `defaultVal` is returned
+func (k *iniConfigKey) MustDuration(defaultVal time.Duration) (time.Duration, error) {
+	val := k.String()
+	if len(val) == 0 {
+		return defaultVal, nil
+	}
+
+	return duration.Parse(val)
 }
 
 // mustBytes returns -1 on parse error, or value out of range 0 to math.MaxInt64
