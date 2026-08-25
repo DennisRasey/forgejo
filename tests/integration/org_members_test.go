@@ -38,6 +38,17 @@ func TestOrgMembersPage(t *testing.T) {
 		doc.AssertElement(t, "#add-org-member-button", false)
 	})
 
+	t.Run("Guest PoV with empty members list", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// hide the visibility of all public members of org3
+		require.NoError(t, organization.ChangeOrgUserStatus(db.DefaultContext, 3, 2, false))
+		require.NoError(t, organization.ChangeOrgUserStatus(db.DefaultContext, 3, 28, false))
+
+		doc := NewHTMLParser(t, MakeRequest(t, NewRequest(t, "GET", "/org/org3/members"), http.StatusOK).Body)
+		doc.AssertElement(t, ".empty-placeholder", true)
+	})
+
 	t.Run("Member PoV", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 

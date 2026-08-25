@@ -1005,6 +1005,7 @@
 	"org.pending_invite_notification_single_team": "You are invited to join team %s in this organization.",
 	"org.pending_invite_notification_multiple_teams": "You are invited to join the following teams in this organization: %s.",
 	"org.view_invite": "View",
+	"org.members.no_public_members": "There are no public members yet.",
 	"markup.filepreview.line": "Line %[1]d in %[2]s",
 	"markup.filepreview.lines": "Lines %[1]d to %[2]d in %[3]s",
 	"markup.filepreview.truncated": "Preview has been truncated",
