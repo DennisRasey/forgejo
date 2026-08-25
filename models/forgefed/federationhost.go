@@ -43,10 +43,19 @@ func NewFederationHost(hostFqdn string, nodeInfo NodeInfo, port uint16, schema s
 	return result, nil
 }
 
+// / HasDefaultPort returns whether the FederationHost has a default port for the scheme.
+func (host FederationHost) HasDefaultPort() bool {
+	return host.HostPort == 0 || (host.HostSchema == "http" && host.HostPort == 80) || (host.HostSchema == "https" && host.HostPort == 443)
+}
+
 func (host FederationHost) AsURL() url.URL {
+	urlHost := host.HostFqdn
+	if !host.HasDefaultPort() {
+		urlHost = fmt.Sprintf("%v:%v", urlHost, host.HostPort)
+	}
 	return url.URL{
 		Scheme: host.HostSchema,
-		Host:   fmt.Sprintf("%v:%v", host.HostFqdn, host.HostPort),
+		Host:   urlHost,
 	}
 }
 

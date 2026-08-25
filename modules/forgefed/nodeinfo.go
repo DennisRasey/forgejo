@@ -10,7 +10,7 @@ import (
 func (id ActorID) AsWellKnownNodeInfoURI() string {
 	wellKnownPath := ".well-known/nodeinfo"
 	var result string
-	if id.HostPort == 0 {
+	if id.HostPort == 0 || id.IsPortSupplemented {
 		result = fmt.Sprintf("%s://%s/%s", id.HostSchema, id.Host, wellKnownPath)
 	} else {
 		result = fmt.Sprintf("%s://%s:%d/%s", id.HostSchema, id.Host, id.HostPort, wellKnownPath)

@@ -146,7 +146,7 @@ func (hl *HostMatchList) MatchHostName(host string) bool {
 	if err != nil {
 		hostname = host
 	}
-	if hl.checkPattern(hostname) {
+	if hl.checkPattern(hostname) || hl.checkPattern(host) {
 		return true
 	}
 	if ip := net.ParseIP(hostname); ip != nil {

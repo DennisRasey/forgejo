@@ -18,6 +18,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/activitypub"
+	"forgejo.org/modules/forgefed"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
@@ -195,4 +196,41 @@ func TestActivityPubRedirect(t *testing.T) {
 		_, err = c.Get(fmt.Sprintf("%s?code=%d", srv.URL, code))
 		require.Error(t, err)
 	}
+}
+
+func TestActivityPubMatchesList(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("OK"))
+	}))
+	defer srv.Close()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	pubID := "https://example.com/pubID"
+
+	defaultHTTP, err := url.Parse("http://example.com")
+	require.NoError(t, err)
+
+	cf, err := activitypub.NewClientFactory()
+	require.NoError(t, err)
+
+	c, err := cf.WithKeys(db.DefaultContext, user, pubID, []*url.URL{defaultHTTP})
+	require.NoError(t, err)
+
+	actorID, err := forgefed.NewActorID(pubID)
+	require.NoError(t, err)
+
+	_, err = c.Get(actorID.AsURI())
+	require.NoError(t, err)
+
+	_, err = c.Get(actorID.AsWellKnownNodeInfoURI())
+	require.NoError(t, err)
+
+	defaultHTTP.Host = "example.com:80"
+	_, err = c.Get(defaultHTTP.String())
+	require.NoError(t, err)
+
+	defaultHTTP.Host = "example.com:8080"
+	_, err = c.Get(defaultHTTP.String())
+	require.Error(t, err)
 }

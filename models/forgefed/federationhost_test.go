@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"forgejo.org/modules/validation"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_FederationHostValidation(t *testing.T) {
@@ -87,4 +89,70 @@ func Test_FederationHostValidation(t *testing.T) {
 	if res, _ := validation.IsValid(sut); res {
 		t.Error("sut should be invalid: HostFqdn lower case")
 	}
+}
+
+func Test_FederationHostDefaultPort(t *testing.T) {
+	// test default HTTPS port is not in the URI
+	sut := FederationHost{
+		HostFqdn: "host.do.main",
+		NodeInfo: NodeInfo{
+			SoftwareName: "forgejo",
+		},
+		LatestActivity: time.Now(),
+		HostPort:       443,
+		HostSchema:     "https",
+	}
+	if res, err := validation.IsValid(sut); !res {
+		t.Errorf("sut should be valid but was %q", err)
+	}
+	url := sut.AsURL()
+	require.Equal(t, "https://host.do.main", url.String())
+
+	// test default HTTP port is not in the URI
+	sut = FederationHost{
+		HostFqdn: "host.do.main",
+		NodeInfo: NodeInfo{
+			SoftwareName: "forgejo",
+		},
+		LatestActivity: time.Now(),
+		HostPort:       80,
+		HostSchema:     "http",
+	}
+	if res, err := validation.IsValid(sut); !res {
+		t.Errorf("sut should be valid but was %q", err)
+	}
+	url = sut.AsURL()
+	require.Equal(t, "http://host.do.main", url.String())
+
+	// test custom ports are present in the URI
+	sut = FederationHost{
+		HostFqdn: "host.do.main",
+		NodeInfo: NodeInfo{
+			SoftwareName: "forgejo",
+		},
+		LatestActivity: time.Now(),
+		HostPort:       8443,
+		HostSchema:     "https",
+	}
+	if res, err := validation.IsValid(sut); !res {
+		t.Errorf("sut should be valid but was %q", err)
+	}
+	url = sut.AsURL()
+	require.Equal(t, "https://host.do.main:8443", url.String())
+
+	// test zero port (currently invalid, but possible to manually construct)
+	sut = FederationHost{
+		HostFqdn: "host.do.main",
+		NodeInfo: NodeInfo{
+			SoftwareName: "forgejo",
+		},
+		LatestActivity: time.Now(),
+		HostPort:       0,
+		HostSchema:     "https",
+	}
+	if res, _ := validation.IsValid(sut); res {
+		t.Errorf("sut should be invalid")
+	}
+	url = sut.AsURL()
+	require.Equal(t, "https://host.do.main", url.String())
 }
