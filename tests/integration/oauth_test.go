@@ -28,6 +28,7 @@ import (
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
 	"forgejo.org/routers/web/auth"
+	oauth2_source "forgejo.org/services/auth/source/oauth2"
 	app_context "forgejo.org/services/context"
 	"forgejo.org/tests"
 
@@ -864,6 +865,61 @@ func TestSignInOAuthCallbackPKCE(t *testing.T) {
 		// Setup authentication source
 		sourceName := "oidc"
 		authSource := addAuthSource(t, authSourcePayloadOpenIDConnect(sourceName, u.String()))
+		// Create a user as if it had been previously been created by the authentication source.
+		userID := "5678"
+		user := &user_model.User{
+			Name:        "oidc.user",
+			Email:       "oidc.user@example.com",
+			Passwd:      "oidc.userpassword",
+			Type:        user_model.UserTypeIndividual,
+			LoginType:   auth_model.OAuth2,
+			LoginSource: authSource.ID,
+			LoginName:   userID,
+		}
+		defer createUser(t.Context(), t, user)()
+
+		// initial redirection (to generate the code_challenge)
+		session := emptyTestSession(t)
+		req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s", sourceName))
+		resp := session.MakeRequest(t, req, http.StatusTemporaryRedirect)
+		dest, err := url.Parse(resp.Header().Get("Location"))
+		require.NoError(t, err)
+		assert.Equal(t, "S256", dest.Query().Get("code_challenge_method"))
+		codeChallenge := dest.Query().Get("code_challenge")
+		assert.NotEmpty(t, codeChallenge)
+
+		// callback (to check the initial code_challenge)
+		defer mockCompleteUserAuth(func(res http.ResponseWriter, req *http.Request) (goth.User, error) {
+			codeVerifier := req.URL.Query().Get("code_verifier")
+			assert.NotEmpty(t, codeVerifier)
+			assert.Greater(t, len(codeVerifier), 40, codeVerifier)
+
+			sha2 := sha256.New()
+			io.WriteString(sha2, codeVerifier)
+			assert.Equal(t, codeChallenge, base64.RawURLEncoding.EncodeToString(sha2.Sum(nil)))
+
+			return goth.User{
+				Provider: sourceName,
+				UserID:   userID,
+				Email:    user.Email,
+			}, nil
+		})()
+		req = NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", sourceName))
+		resp = session.MakeRequest(t, req, http.StatusSeeOther)
+		assert.Equal(t, "/", test.RedirectURL(resp))
+		unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: user.ID})
+	})
+}
+
+func TestSignInOAuthCallbackPKCENewProvider(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		// Setup authentication source
+		sourceName := "oidc"
+		authSource := addAuthSource(t, authSourcePayloadOpenIDConnect(sourceName, u.String()))
+		// Simulate a provider that could not be registered during startup, before its
+		// OpenID Connect discovery endpoint became available.
+		oauth2_source.RemoveProviderFromGothic(sourceName)
+		require.NotContains(t, goth.GetProviders(), sourceName)
 		// Create a user as if it had been previously been created by the authentication source.
 		userID := "5678"
 		user := &user_model.User{
