@@ -6,7 +6,7 @@ package v1_14
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // OAuth2Grant here is a snapshot of models.OAuth2Grant for this version

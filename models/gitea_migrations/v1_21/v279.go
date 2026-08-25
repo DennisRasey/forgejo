@@ -4,7 +4,7 @@
 package v1_21
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddIndexToActionUserID(x *xorm.Engine) error {

@@ -16,7 +16,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/util"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // PullRequestsOptions holds the options for PRs

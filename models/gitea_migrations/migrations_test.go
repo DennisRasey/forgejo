@@ -51,13 +51,13 @@ func TestMigrateFailWithCorruption(t *testing.T) {
 	require.NotNil(t, x)
 
 	// ID != 1
-	_, err := x.InsertOne(&Version{ID: 100, Version: 100})
+	_, err := x.Insert(&Version{ID: 100, Version: 100})
 	require.NoError(t, err)
 	err = Migrate(x)
 	require.ErrorContains(t, err, "corrupted records in the table `version`")
 
 	// Two versions...
-	_, err = x.InsertOne(&Version{ID: 1, Version: 1000})
+	_, err = x.Insert(&Version{ID: 1, Version: 1000})
 	require.NoError(t, err)
 	err = Migrate(x)
 	require.ErrorContains(t, err, "unexpected records in the table `version`")

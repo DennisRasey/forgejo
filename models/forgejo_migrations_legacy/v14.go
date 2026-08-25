@@ -6,7 +6,7 @@ package forgejo_migrations_legacy
 import (
 	"forgejo.org/models/gitea_migrations/base"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func RemoveGiteaSpecificColumnsFromRepositoryAndBadge(x *xorm.Engine) error {

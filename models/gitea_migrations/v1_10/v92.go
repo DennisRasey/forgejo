@@ -4,8 +4,8 @@
 package v1_10
 
 import (
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func RemoveLingeringIndexStatus(x *xorm.Engine) error {

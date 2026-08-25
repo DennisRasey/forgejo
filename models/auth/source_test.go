@@ -12,9 +12,9 @@ import (
 	"forgejo.org/models/unittest"
 	"forgejo.org/modules/json"
 
+	"code.forgejo.org/xorm/xorm/schemas"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/schemas"
 )
 
 type TestSource struct {

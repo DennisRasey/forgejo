@@ -15,8 +15,8 @@ import (
 	"forgejo.org/modules/secret"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func MigrateTwoFactorToKeying(x *xorm.Engine) error {

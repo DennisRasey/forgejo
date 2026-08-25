@@ -3,7 +3,7 @@
 
 package v1_22
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 func AddCommitStatusSummary2(x *xorm.Engine) error {
 	type CommitStatusSummary struct {

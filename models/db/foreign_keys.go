@@ -11,7 +11,7 @@ import (
 
 	"forgejo.org/modules/container"
 
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 type schemaWithDefaultBean struct {

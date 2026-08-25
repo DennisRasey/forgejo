@@ -10,9 +10,9 @@ import (
 	"forgejo.org/models/unittest"
 	"forgejo.org/modules/optional"
 
+	"code.forgejo.org/xorm/xorm/schemas"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/schemas"
 )
 
 func TestOptionFieldInt(t *testing.T) {

@@ -11,17 +11,17 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func RenameCredentialIDBytes(x *xorm.Engine) error {
 	// This migration maybe rerun so that we should check if it has been run
-	credentialIDExist, err := x.Dialect().IsColumnExist(x.DB(), context.Background(), "webauthn_credential", "credential_id")
+	credentialIDExist, err := x.Dialect().IsColumnExist(context.Background(), x.DB(), "webauthn_credential", "credential_id")
 	if err != nil {
 		return err
 	}
 	if credentialIDExist {
-		credentialIDBytesExists, err := x.Dialect().IsColumnExist(x.DB(), context.Background(), "webauthn_credential", "credential_id_bytes")
+		credentialIDBytesExists, err := x.Dialect().IsColumnExist(context.Background(), x.DB(), "webauthn_credential", "credential_id_bytes")
 		if err != nil {
 			return err
 		}

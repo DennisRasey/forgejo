@@ -6,8 +6,8 @@ package v1_13
 import (
 	"forgejo.org/modules/log"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func UpdateMatrixWebhookHTTPMethod(x *xorm.Engine) error {

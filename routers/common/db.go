@@ -15,7 +15,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/setting/config"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // InitDBEngine In case of problems connecting to DB, retry connection. Eg, PGSQL in Docker Container on Synology

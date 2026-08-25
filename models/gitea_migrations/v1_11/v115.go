@@ -17,7 +17,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func RenameExistingUserAvatarName(x *xorm.Engine) error {

@@ -4,8 +4,8 @@
 package v1_11
 
 import (
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func ChangeReviewContentToText(x *xorm.Engine) error {

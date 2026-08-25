@@ -24,8 +24,8 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/translation"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // CommitStatus holds a single Status of a single Commit

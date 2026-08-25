@@ -6,7 +6,7 @@ package v1_19
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func CreateSecretsTable(x *xorm.Engine) error {

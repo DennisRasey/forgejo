@@ -6,7 +6,7 @@ package v1_14
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddSortingColToProjectBoard(x *xorm.Engine) error {

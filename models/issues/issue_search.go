@@ -17,8 +17,8 @@ import (
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/optional"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // IssuesOptions represents options of an issue.

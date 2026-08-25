@@ -6,7 +6,7 @@ package forgejo_migrations_legacy
 import (
 	"database/sql"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddPublicKeyInformationForFederation(x *xorm.Engine) error {

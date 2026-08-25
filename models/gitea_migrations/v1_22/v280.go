@@ -4,7 +4,7 @@
 package v1_22
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func RenameUserThemes(x *xorm.Engine) error {

@@ -14,8 +14,8 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func init() {

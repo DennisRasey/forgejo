@@ -11,7 +11,7 @@ import (
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func FixReleaseSha1OnReleaseTable(x *xorm.Engine) error {

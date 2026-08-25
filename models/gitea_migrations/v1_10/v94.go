@@ -3,7 +3,7 @@
 
 package v1_10
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 func AddStatusCheckColumnsForProtectedBranches(x *xorm.Engine) error {
 	type ProtectedBranch struct {

@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"slices"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // DefaultContext is the default context to run xorm queries in

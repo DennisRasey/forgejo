@@ -10,7 +10,7 @@ import (
 	"forgejo.org/models/gitea_migrations/base"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func RenameTaskErrorsToMessage(x *xorm.Engine) error {
@@ -21,13 +21,13 @@ func RenameTaskErrorsToMessage(x *xorm.Engine) error {
 	}
 
 	// This migration maybe rerun so that we should check if it has been run
-	messageExist, err := x.Dialect().IsColumnExist(x.DB(), context.Background(), "task", "message")
+	messageExist, err := x.Dialect().IsColumnExist(context.Background(), x.DB(), "task", "message")
 	if err != nil {
 		return err
 	}
 
 	if messageExist {
-		errorsExist, err := x.Dialect().IsColumnExist(x.DB(), context.Background(), "task", "errors")
+		errorsExist, err := x.Dialect().IsColumnExist(context.Background(), x.DB(), "task", "errors")
 		if err != nil {
 			return err
 		}

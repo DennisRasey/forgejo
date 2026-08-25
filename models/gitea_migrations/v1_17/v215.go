@@ -7,7 +7,7 @@ import (
 	"forgejo.org/models/pull"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddReviewViewedFiles(x *xorm.Engine) error {

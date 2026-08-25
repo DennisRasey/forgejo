@@ -3,7 +3,7 @@
 
 package v1_10
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 func AddOriginalMigrationInfo(x *xorm.Engine) error {
 	// Issue see models/issue.go

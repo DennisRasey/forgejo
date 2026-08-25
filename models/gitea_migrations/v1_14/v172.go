@@ -6,7 +6,7 @@ package v1_14
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddSessionTable(x *xorm.Engine) error {

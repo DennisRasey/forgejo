@@ -32,8 +32,8 @@ import (
 	"forgejo.org/modules/structs"
 	"forgejo.org/modules/timeutil"
 
+	"code.forgejo.org/xorm/xorm/schemas"
 	"xorm.io/builder"
-	"xorm.io/xorm/schemas"
 )
 
 // ActionType represents the type of an action.

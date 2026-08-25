@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 
-	"xorm.io/xorm/contexts"
+	"code.forgejo.org/xorm/xorm/contexts"
 )
 
 var (

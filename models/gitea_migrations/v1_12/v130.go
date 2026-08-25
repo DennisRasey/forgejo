@@ -7,7 +7,7 @@ import (
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func ExpandWebhooks(x *xorm.Engine) error {

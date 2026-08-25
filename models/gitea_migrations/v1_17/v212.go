@@ -6,7 +6,7 @@ package v1_17
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddPackageTables(x *xorm.Engine) error {

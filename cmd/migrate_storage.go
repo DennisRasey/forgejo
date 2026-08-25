@@ -22,8 +22,8 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/storage"
 
+	"code.forgejo.org/xorm/xorm"
 	"github.com/urfave/cli/v3"
-	"xorm.io/xorm"
 )
 
 // CmdMigrateStorage represents the available migrate storage sub-command.

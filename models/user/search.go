@@ -13,8 +13,8 @@ import (
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/structs"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // SearchUserOptions contains the options for searching

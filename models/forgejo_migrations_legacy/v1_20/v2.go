@@ -3,7 +3,7 @@
 package forgejo_v1_20
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func CreateSemVerTable(x *xorm.Engine) error {

@@ -8,8 +8,8 @@ import (
 
 	"forgejo.org/modules/setting"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 const (

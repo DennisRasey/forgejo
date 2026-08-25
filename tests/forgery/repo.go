@@ -15,8 +15,8 @@ import (
 	repo_service "forgejo.org/services/repository"
 	wiki_service "forgejo.org/services/wiki"
 
+	"code.forgejo.org/xorm/xorm/convert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/convert"
 )
 
 type CreateRepositoryOptions struct {

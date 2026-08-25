@@ -9,7 +9,7 @@ import (
 	"forgejo.org/models/repo"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddSyncOnCommitColForPushMirror(x *xorm.Engine) error {

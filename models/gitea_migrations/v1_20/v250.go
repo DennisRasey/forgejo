@@ -8,7 +8,7 @@ import (
 
 	"forgejo.org/modules/json"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func ChangeContainerMetadataMultiArch(x *xorm.Engine) error {

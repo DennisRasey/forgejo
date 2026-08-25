@@ -8,7 +8,7 @@ import (
 
 	"forgejo.org/models/gitea_migrations/base"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func ConvertTaskTypeToString(x *xorm.Engine) error {
@@ -46,7 +46,7 @@ func ConvertTaskTypeToString(x *xorm.Engine) error {
 	}
 
 	// to keep the migration could be rerun
-	exist, err := x.Dialect().IsColumnExist(x.DB(), context.Background(), "hook_task", "type")
+	exist, err := x.Dialect().IsColumnExist(context.Background(), x.DB(), "hook_task", "type")
 	if err != nil {
 		return err
 	}

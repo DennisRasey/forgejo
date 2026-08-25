@@ -4,7 +4,7 @@
 package v1_12
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func FixMigratedRepositoryServiceType(x *xorm.Engine) error {

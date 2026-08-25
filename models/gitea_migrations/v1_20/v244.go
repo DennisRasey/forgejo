@@ -4,7 +4,7 @@
 package v1_20
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddNeedApprovalToActionRun(x *xorm.Engine) error {

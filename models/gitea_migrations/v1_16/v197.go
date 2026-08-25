@@ -4,7 +4,7 @@
 package v1_16
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddRenamedBranchTable(x *xorm.Engine) error {

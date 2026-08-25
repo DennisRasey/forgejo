@@ -9,7 +9,7 @@ import (
 	migrations_tests "forgejo.org/models/gitea_migrations/test"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm/names"
+	"code.forgejo.org/xorm/xorm/names"
 )
 
 func Test_DropTableColumns(t *testing.T) {

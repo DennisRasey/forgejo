@@ -14,8 +14,8 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 // RecreateTables returns a function that will recreate the tables for the provided beans using the newly provided bean

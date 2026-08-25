@@ -4,8 +4,8 @@
 package forgejo_migrations_legacy
 
 import (
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func SetTopicsAsEmptySlice(x *xorm.Engine) error {

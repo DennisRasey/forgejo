@@ -11,8 +11,8 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func SetDefaultPasswordToArgon2(x *xorm.Engine) error {

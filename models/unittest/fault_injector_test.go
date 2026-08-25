@@ -5,8 +5,8 @@ package unittest
 import (
 	"testing"
 
+	"code.forgejo.org/xorm/xorm/contexts"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/contexts"
 )
 
 func TestFaultInjector(t *testing.T) {

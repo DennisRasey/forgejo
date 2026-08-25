@@ -8,7 +8,7 @@ import (
 
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddReview(x *xorm.Engine) error {

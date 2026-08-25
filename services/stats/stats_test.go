@@ -13,9 +13,9 @@ import (
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/timeutil"
 
+	"code.forgejo.org/xorm/xorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 )
 
 func TestQueueAndFlush(t *testing.T) {

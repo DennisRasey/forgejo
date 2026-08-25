@@ -18,8 +18,8 @@ import (
 	"forgejo.org/modules/structs"
 	"forgejo.org/modules/timeutil"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func init() {

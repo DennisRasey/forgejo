@@ -10,7 +10,7 @@ import (
 	"forgejo.org/models/db"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddBranchTable(x *xorm.Engine) error {

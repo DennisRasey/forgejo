@@ -8,7 +8,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func expandHashReferencesToSha256(x *xorm.Engine) error {

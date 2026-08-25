@@ -20,7 +20,7 @@ import (
 	"forgejo.org/modules/packages/maven"
 	packages_service "forgejo.org/services/packages"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 var getPackage = packages_service.GetPackageFileStream

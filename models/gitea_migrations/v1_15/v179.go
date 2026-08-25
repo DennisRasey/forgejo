@@ -6,8 +6,8 @@ package v1_15
 import (
 	"forgejo.org/models/gitea_migrations/base"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func ConvertAvatarURLToText(x *xorm.Engine) error {

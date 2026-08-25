@@ -9,9 +9,9 @@ import (
 	migration_tests "forgejo.org/models/gitea_migrations/test"
 	"forgejo.org/modules/test"
 
+	"code.forgejo.org/xorm/xorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 )
 
 // TestEnsureUpToDate tests the behavior of EnsureUpToDate.
@@ -31,7 +31,7 @@ func TestEnsureUpToDate(t *testing.T) {
 	require.Error(t, err)
 
 	// Insert 'good' Forgejo Version row.
-	_, err = x.InsertOne(&ForgejoVersion{ID: 1, Version: ExpectedVersion()})
+	_, err = x.Insert(&ForgejoVersion{ID: 1, Version: ExpectedVersion()})
 	require.NoError(t, err)
 
 	err = EnsureUpToDate(x)
@@ -68,13 +68,13 @@ func TestMigrateFailWithCorruption(t *testing.T) {
 	require.NotNil(t, x)
 
 	// ID != 1
-	_, err := x.InsertOne(&ForgejoVersion{ID: 100, Version: 100})
+	_, err := x.Insert(&ForgejoVersion{ID: 100, Version: 100})
 	require.NoError(t, err)
 	err = Migrate(x)
 	require.ErrorContains(t, err, "corrupted records in the table `forgejo_version`")
 
 	// Two versions...
-	_, err = x.InsertOne(&ForgejoVersion{ID: 1, Version: 1000})
+	_, err = x.Insert(&ForgejoVersion{ID: 1, Version: 1000})
 	require.NoError(t, err)
 	err = Migrate(x)
 	require.ErrorContains(t, err, "unexpected records in the table `forgejo_version`")

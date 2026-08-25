@@ -3,7 +3,7 @@
 
 package v1_12
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 func AddIsRestricted(x *xorm.Engine) error {
 	// User see models/user.go

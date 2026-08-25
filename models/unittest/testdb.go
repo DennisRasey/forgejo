@@ -24,9 +24,9 @@ import (
 	"forgejo.org/modules/util"
 	"forgejo.org/services/stats"
 
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/names"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
-	"xorm.io/xorm/names"
 )
 
 // giteaRoot a path to the gitea root

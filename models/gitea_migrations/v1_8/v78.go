@@ -6,7 +6,7 @@ package v1_8
 import (
 	"forgejo.org/models/gitea_migrations/base"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func RenameRepoIsBareToIsEmpty(x *xorm.Engine) error {

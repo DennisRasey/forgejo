@@ -25,9 +25,9 @@ import (
 	"forgejo.org/services/wiki"
 	"forgejo.org/tests/forgery"
 
+	"code.forgejo.org/xorm/xorm/convert"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/convert"
 )
 
 // first entry represents filename

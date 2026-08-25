@@ -25,7 +25,7 @@ import (
 	"forgejo.org/services/context"
 	"forgejo.org/services/forms"
 
-	"xorm.io/xorm/convert"
+	"code.forgejo.org/xorm/xorm/convert"
 )
 
 const (

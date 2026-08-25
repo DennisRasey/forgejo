@@ -6,7 +6,7 @@ package forgejo_migrations_legacy
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddResolvedUnixToAbuseReport(x *xorm.Engine) error {

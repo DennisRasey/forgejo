@@ -3,7 +3,7 @@
 
 package v1_15
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 func AddKeyIsVerified(x *xorm.Engine) error {
 	type GPGKey struct {

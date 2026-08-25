@@ -16,8 +16,8 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/names"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/names"
 )
 
 // ForgejoMigration table contains a record of migrations applied to the database.  (Note that there are older

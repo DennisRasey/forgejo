@@ -7,8 +7,8 @@ import (
 	packages_model "forgejo.org/models/packages"
 	container_module "forgejo.org/modules/packages/container"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func AddContainerRepositoryProperty(x *xorm.Engine) (err error) {

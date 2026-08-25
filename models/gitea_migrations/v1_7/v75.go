@@ -4,8 +4,8 @@
 package v1_7
 
 import (
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func ClearNonusedData(x *xorm.Engine) error {

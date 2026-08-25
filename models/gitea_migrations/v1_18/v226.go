@@ -4,8 +4,8 @@
 package v1_18
 
 import (
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func FixPackageSemverField(x *xorm.Engine) error {

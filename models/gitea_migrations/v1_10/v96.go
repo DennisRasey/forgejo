@@ -9,7 +9,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func DeleteOrphanedAttachments(x *xorm.Engine) error {

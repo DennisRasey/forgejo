@@ -4,7 +4,7 @@
 package v1_11
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // RepoWatchMode specifies what kind of watch the user has on a repository

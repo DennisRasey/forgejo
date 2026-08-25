@@ -10,8 +10,8 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/util"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func RemoveAttachmentMissedRepo(x *xorm.Engine) error {

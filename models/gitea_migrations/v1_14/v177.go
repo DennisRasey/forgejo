@@ -6,7 +6,7 @@ package v1_14
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // DeleteOrphanedIssueLabels looks through the database for issue_labels where the label no longer exists and deletes them.

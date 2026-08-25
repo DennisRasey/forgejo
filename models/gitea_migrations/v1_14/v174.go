@@ -6,7 +6,7 @@ package v1_14
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddRepoTransfer(x *xorm.Engine) error {

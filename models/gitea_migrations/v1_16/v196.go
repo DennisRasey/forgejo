@@ -6,7 +6,7 @@ package v1_16
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddColorColToProjectBoard(x *xorm.Engine) error {

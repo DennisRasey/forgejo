@@ -6,7 +6,7 @@ package v1_18
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 type SystemSetting struct {

@@ -17,9 +17,9 @@ import (
 
 	_ "forgejo.org/cmd" // for TestPrimaryKeys
 
+	"code.forgejo.org/xorm/xorm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 )
 
 func TestDumpDatabase(t *testing.T) {

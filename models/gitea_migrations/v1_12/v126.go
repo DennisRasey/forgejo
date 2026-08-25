@@ -4,8 +4,8 @@
 package v1_12
 
 import (
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func FixTopicRepositoryCount(x *xorm.Engine) error {

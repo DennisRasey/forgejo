@@ -11,8 +11,8 @@ import (
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func batchProcess[T any](x *xorm.Engine, buf []T, query func(limit, start int) *xorm.Session, process func(*xorm.Session, T) error) error {

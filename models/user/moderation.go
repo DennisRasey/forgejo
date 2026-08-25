@@ -13,7 +13,7 @@ import (
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm/names"
+	"code.forgejo.org/xorm/xorm/names"
 )
 
 // UserData represents a trimmed down user that is used for preserving

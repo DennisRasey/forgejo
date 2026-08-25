@@ -8,7 +8,7 @@ import (
 
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddCreatedAndUpdatedToMilestones(x *xorm.Engine) error {

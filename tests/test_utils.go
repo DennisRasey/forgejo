@@ -43,8 +43,8 @@ import (
 	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests/forgery"
 
+	"code.forgejo.org/xorm/xorm/convert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/convert"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Import pgx driver
 )

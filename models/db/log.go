@@ -9,7 +9,7 @@ import (
 
 	"forgejo.org/modules/log"
 
-	xormlog "xorm.io/xorm/log"
+	xormlog "code.forgejo.org/xorm/xorm/log"
 )
 
 // XORMLogBridge a logger bridge from Logger to xorm

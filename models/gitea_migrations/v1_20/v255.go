@@ -6,7 +6,7 @@ package v1_20
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddArchivedUnixToRepository(x *xorm.Engine) error {

@@ -7,7 +7,7 @@ import (
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddRemoteAddressToMirrors(x *xorm.Engine) error {

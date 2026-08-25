@@ -21,10 +21,10 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
+	"code.forgejo.org/xorm/xorm"
 	uuid "github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // OAuth2Application represents an OAuth2 client (RFC 6749)

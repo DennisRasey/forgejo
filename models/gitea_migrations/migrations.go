@@ -34,8 +34,8 @@ import (
 	"forgejo.org/modules/setting"
 	forgejo_service "forgejo.org/services/forgejo"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/names"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/names"
 )
 
 const minDBVersion = 70 // Gitea 1.5.3
@@ -457,7 +457,7 @@ func Migrate(x *xorm.Engine) error {
 		// If the version record does not exist we think it is a fresh installation and we can skip all migrations;
 		// engine init calls `SyncAllTables` which will create the fresh database.
 		upToDate := &Version{ID: 1, Version: maxDBVer}
-		if _, err := x.InsertOne(upToDate); err != nil {
+		if _, err := x.Insert(upToDate); err != nil {
 			return fmt.Errorf("insert: %w", err)
 		}
 		// continue with the migration routine, but nothing will be applied; this allows transition into the newer

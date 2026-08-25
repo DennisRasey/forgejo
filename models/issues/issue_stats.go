@@ -9,8 +9,8 @@ import (
 
 	"forgejo.org/models/db"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // IssueStats represents issue statistic information.

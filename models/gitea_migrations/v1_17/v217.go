@@ -6,7 +6,7 @@ package v1_17
 import (
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AlterHookTaskTextFieldsToLongText(x *xorm.Engine) error {

@@ -3,7 +3,7 @@
 
 package forgejo_migrations_legacy
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 // AddDeleteBranchAfterMergeToAutoMerge: add DeleteBranchAfterMerge column, setting existing rows to false
 func AddDeleteBranchAfterMergeToAutoMerge(x *xorm.Engine) error {

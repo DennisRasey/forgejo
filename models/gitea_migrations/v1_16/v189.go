@@ -10,7 +10,7 @@ import (
 	"forgejo.org/models/gitea_migrations/base"
 	"forgejo.org/modules/json"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func UnwrapLDAPSourceCfg(x *xorm.Engine) error {

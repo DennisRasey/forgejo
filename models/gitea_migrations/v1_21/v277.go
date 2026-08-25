@@ -4,7 +4,7 @@
 package v1_21
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddIndexToIssueUserIssueID(x *xorm.Engine) error {

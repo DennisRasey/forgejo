@@ -6,7 +6,7 @@ package v1_18
 import (
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AlterPublicGPGKeyContentFieldsToMediumText(x *xorm.Engine) error {

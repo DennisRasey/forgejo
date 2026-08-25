@@ -4,7 +4,7 @@
 package v1_15
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddIssueResourceIndexTable(x *xorm.Engine) error {

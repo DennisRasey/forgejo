@@ -3,7 +3,7 @@
 
 package forgejo_migrations_legacy
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 type FederatedUser struct {
 	ID               int64  `xorm:"pk autoincr"`

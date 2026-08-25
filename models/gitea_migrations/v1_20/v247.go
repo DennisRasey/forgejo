@@ -6,7 +6,7 @@ package v1_20
 import (
 	"forgejo.org/modules/log"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // FixIncorrectProjectType: set individual project's type from 3(TypeOrganization) to 1(TypeIndividual)

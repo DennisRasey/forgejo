@@ -3,7 +3,7 @@
 
 package forgejo_migrations_legacy
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 func AddHideArchiveLinksToRelease(x *xorm.Engine) error {
 	type Release struct {

@@ -12,8 +12,8 @@ import (
 
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func parseU2FRegistration(raw []byte) (pubKey *ecdh.PublicKey, keyHandle []byte, err error) {

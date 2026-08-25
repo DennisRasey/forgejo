@@ -6,7 +6,7 @@ package v1_13
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddTimeStamps(x *xorm.Engine) error {

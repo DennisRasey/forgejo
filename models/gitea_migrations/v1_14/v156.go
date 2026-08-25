@@ -12,7 +12,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // Copy paste from models/repo.go because we cannot import models package

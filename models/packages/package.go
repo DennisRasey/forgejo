@@ -12,8 +12,8 @@ import (
 	"forgejo.org/models/db"
 	"forgejo.org/modules/util"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func init() {

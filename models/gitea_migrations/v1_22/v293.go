@@ -7,7 +7,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // CheckProjectColumnsConsistency ensures there is exactly one default board per project present

@@ -9,9 +9,9 @@ import (
 
 	migration_tests "forgejo.org/models/gitea_migrations/test"
 
+	"code.forgejo.org/xorm/xorm/schemas"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm/schemas"
 )
 
 func Test_AddUniqueIndexForProjectIssue(t *testing.T) {

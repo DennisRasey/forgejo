@@ -15,8 +15,8 @@ import (
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 var fixturesLoader *loader

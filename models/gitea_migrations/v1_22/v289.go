@@ -3,7 +3,7 @@
 
 package v1_22
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 func AddDefaultWikiBranch(x *xorm.Engine) error {
 	type Repository struct {

@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 var (

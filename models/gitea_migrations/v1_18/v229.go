@@ -8,8 +8,8 @@ import (
 
 	"forgejo.org/models/issues"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func UpdateOpenMilestoneCounts(x *xorm.Engine) error {

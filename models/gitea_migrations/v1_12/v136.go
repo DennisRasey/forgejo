@@ -15,7 +15,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddCommitDivergenceToPulls(x *xorm.Engine) error {

@@ -15,9 +15,9 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/convert"
 	"xorm.io/builder"
-	"xorm.io/xorm"
-	"xorm.io/xorm/convert"
 )
 
 // Type represents an login type.

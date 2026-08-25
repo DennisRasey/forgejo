@@ -4,7 +4,7 @@
 package v1_19
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddIndexForAccessToken(x *xorm.Engine) error {

@@ -10,7 +10,7 @@ import (
 	"forgejo.org/models/gitea_migrations/base"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func RenameWebhookOrgToOwner(x *xorm.Engine) error {
@@ -19,13 +19,13 @@ func RenameWebhookOrgToOwner(x *xorm.Engine) error {
 	}
 
 	// This migration maybe rerun so that we should check if it has been run
-	ownerExist, err := x.Dialect().IsColumnExist(x.DB(), context.Background(), "webhook", "owner_id")
+	ownerExist, err := x.Dialect().IsColumnExist(context.Background(), x.DB(), "webhook", "owner_id")
 	if err != nil {
 		return err
 	}
 
 	if ownerExist {
-		orgExist, err := x.Dialect().IsColumnExist(x.DB(), context.Background(), "webhook", "org_id")
+		orgExist, err := x.Dialect().IsColumnExist(context.Background(), x.DB(), "webhook", "org_id")
 		if err != nil {
 			return err
 		}

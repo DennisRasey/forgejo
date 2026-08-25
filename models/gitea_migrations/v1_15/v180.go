@@ -7,8 +7,8 @@ import (
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/util"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func DeleteMigrationCredentials(x *xorm.Engine) (err error) {

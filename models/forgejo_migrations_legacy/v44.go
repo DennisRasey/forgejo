@@ -4,8 +4,8 @@
 package forgejo_migrations_legacy
 
 import (
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 func AddForeignKeysAccess(x *xorm.Engine) error {

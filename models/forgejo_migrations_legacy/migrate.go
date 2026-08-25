@@ -17,8 +17,8 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/names"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/names"
 )
 
 // ForgejoVersion describes the Forgejo version table. Should have only one row with id = 1.
@@ -191,7 +191,7 @@ func Migrate(x *xorm.Engine) error {
 		// If the version record does not exist we think it is a fresh installation and we can skip all migrations;
 		// engine init calls `SyncAllTables` which will create the fresh database.
 		upToDate := &ForgejoVersion{ID: 1, Version: ExpectedVersion()}
-		if _, err := x.InsertOne(upToDate); err != nil {
+		if _, err := x.Insert(upToDate); err != nil {
 			return fmt.Errorf("insert: %w", err)
 		}
 		// continue with the migration routine, but nothing will be applied; this allows transition into the newer

@@ -6,7 +6,7 @@ package v1_12
 import (
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func PrependRefsHeadsToIssueRefs(x *xorm.Engine) error {

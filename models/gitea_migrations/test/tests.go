@@ -24,8 +24,8 @@ import (
 	"forgejo.org/modules/testlogger"
 	"forgejo.org/modules/util"
 
+	"code.forgejo.org/xorm/xorm"
 	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Import pgx driver
 )

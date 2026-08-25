@@ -6,7 +6,7 @@ package v1_12
 import (
 	"fmt"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddOrgIDLabelColumn(x *xorm.Engine) error {

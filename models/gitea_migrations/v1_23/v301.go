@@ -3,7 +3,7 @@
 
 package v1_23
 
-import "xorm.io/xorm"
+import "code.forgejo.org/xorm/xorm"
 
 // AddSkipSeconderyAuthToOAuth2ApplicationTable: add SkipSecondaryAuthorization column, setting existing rows to false
 func AddSkipSecondaryAuthColumnToOAuth2ApplicationTable(x *xorm.Engine) error {

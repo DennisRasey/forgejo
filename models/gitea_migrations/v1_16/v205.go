@@ -6,8 +6,8 @@ package v1_16
 import (
 	"forgejo.org/models/gitea_migrations/base"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/schemas"
 )
 
 func MigrateUserPasswordSalt(x *xorm.Engine) error {

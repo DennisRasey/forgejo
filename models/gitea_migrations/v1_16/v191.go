@@ -6,7 +6,7 @@ package v1_16
 import (
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AlterIssueAndCommentTextFieldsToLongText(x *xorm.Engine) error {

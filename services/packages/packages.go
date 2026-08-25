@@ -24,7 +24,7 @@ import (
 	"forgejo.org/modules/storage"
 	notify_service "forgejo.org/services/notify"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 var (

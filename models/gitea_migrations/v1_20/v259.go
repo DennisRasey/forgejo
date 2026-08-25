@@ -9,7 +9,7 @@ import (
 
 	"forgejo.org/modules/log"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 // unknownAccessTokenScope represents the scope for an access token that isn't

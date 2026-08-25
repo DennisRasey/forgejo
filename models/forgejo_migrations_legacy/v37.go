@@ -4,7 +4,7 @@
 package forgejo_migrations_legacy
 
 import (
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func AddPushMirrorBranchFilter(x *xorm.Engine) error {

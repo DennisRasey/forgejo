@@ -8,8 +8,8 @@ import (
 
 	"forgejo.org/modules/log"
 
+	"code.forgejo.org/xorm/xorm"
 	"xorm.io/builder"
-	"xorm.io/xorm"
 )
 
 // syncForeignKeyWithDelete will delete any records that match `cond`, and if present, log and warn to the

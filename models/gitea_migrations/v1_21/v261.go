@@ -6,7 +6,7 @@ package v1_21
 import (
 	"forgejo.org/modules/timeutil"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func CreateVariableTable(x *xorm.Engine) error {

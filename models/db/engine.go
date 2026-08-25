@@ -19,10 +19,10 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/contexts"
-	"xorm.io/xorm/names"
-	"xorm.io/xorm/schemas"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/contexts"
+	"code.forgejo.org/xorm/xorm/names"
+	"code.forgejo.org/xorm/xorm/schemas"
 
 	_ "github.com/go-sql-driver/mysql" // Needed for the MySQL driver
 )

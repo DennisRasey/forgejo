@@ -19,7 +19,7 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/validation"
 
-	"xorm.io/xorm"
+	"code.forgejo.org/xorm/xorm"
 )
 
 func init() {

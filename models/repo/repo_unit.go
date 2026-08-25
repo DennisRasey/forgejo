@@ -17,8 +17,8 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
-	"xorm.io/xorm"
-	"xorm.io/xorm/convert"
+	"code.forgejo.org/xorm/xorm"
+	"code.forgejo.org/xorm/xorm/convert"
 )
 
 // ErrUnitTypeNotExist represents a "UnitTypeNotExist" kind of error.
