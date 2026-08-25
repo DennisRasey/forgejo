@@ -124,10 +124,11 @@ jobs:
           su forgejo -c 'make deps-frontend frontend'
       - name: Decide to run all tests
         id: run-all
-        if: contains(github.event.pull_request.labels.*.name, 'run-all-playwright-tests') || contains(github.event.pull_request.title, 'playwright')
+        if: forgejo.event_name == 'push' || contains(forgejo.event.pull_request.labels.*.name, 'run-all-playwright-tests') || contains(forgejo.event.pull_request.title, 'playwright')
         run: |
           echo "all=1" >> "$GITHUB_OUTPUT"
       - name: Get changed files
+        if: forgejo.event_name == 'pull_request'
         id: changed-files
         uses: https://data.forgejo.org/tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
