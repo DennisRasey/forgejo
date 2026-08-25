@@ -1214,6 +1214,7 @@ func parseCompareInfo(ctx *context.APIContext, form api.CreatePullRequestOption)
 	headIsBranch := headGitRepo.IsBranchExist(headBranch)
 	headIsTag := headGitRepo.IsTagExist(headBranch)
 	if !headIsCommit && !headIsBranch && !headIsTag {
+		headGitRepo.Close()
 		ctx.NotFound(fmt.Errorf("could not find '%s' to be a commit, branch or tag in the head repository %s/%s", headBranch, headRepo.Owner.Name, headRepo.Name))
 		return nil, nil, nil, "", ""
 	}
