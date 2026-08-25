@@ -995,6 +995,11 @@ func SignInOAuth(ctx *context.Context) {
 				ctx.ServerError("SignIn", err)
 				return
 			}
+			codeChallenge, err = generateCodeChallenge(ctx, provider)
+			if err != nil {
+				ctx.ServerError("SignIn", fmt.Errorf("could not generate code_challenge: %w", err))
+				return
+			}
 			if err = authSource.Cfg.(*oauth2.Source).Callout(ctx.Req, ctx.Resp, codeChallenge, promptParam); err != nil {
 				ctx.ServerError("SignIn", err)
 			}
