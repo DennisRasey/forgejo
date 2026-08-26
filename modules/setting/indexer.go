@@ -4,6 +4,8 @@
 package setting
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -65,15 +67,74 @@ func (g *Glob) Pattern() string {
 	return g.pattern
 }
 
+func requiresConnectionString(indexerType string) bool {
+	return (indexerType == "elasticsearch") || (indexerType == "meilisearch")
+}
+
+func buildConnectionString(sec ConfigSection) string {
+	connURL := &url.URL{}
+	connURL.Scheme = sec.Key("ISSUE_INDEXER_PROTOCOL").String()
+	connURL.Host = sec.Key("ISSUE_INDEXER_HOST").String()
+	connURL.Path = sec.Key("ISSUE_INDEXER_PATH").String()
+
+	username := sec.Key("ISSUE_INDEXER_USER").String()
+	passwd := loadSecret(sec, "ISSUE_INDEXER_PASSWD_URI", "ISSUE_INDEXER_PASSWD")
+	if passwd != "" {
+		// If password is set we need to generate the user info part of the URL, the username being empty/unset is a feature (for instance with meilisearch)
+		connURL.User = url.UserPassword(username, passwd)
+	} else if username != "" {
+		// If password is not set but the username is we'll include the username in the URL
+		connURL.User = url.User(username)
+	} else {
+		// Neither auth configs were set so don't generate that part of the connection string
+		connURL.User = nil
+	}
+
+	return connURL.String()
+}
+
+func getIndexerConnStr(sec ConfigSection) (string, error) {
+	hasConnString := sec.HasKey("ISSUE_INDEXER_CONN_STR")
+	hasBuilderConfigs := sec.HasKey("ISSUE_INDEXER_HOST") && sec.HasKey("ISSUE_INDEXER_PROTOCOL")
+
+	if hasConnString && hasBuilderConfigs {
+		return "", errors.New("cannot define both ISSUE_INDEXER_CONN_STR and builder configs")
+	} else if hasConnString {
+		return sec.Key("ISSUE_INDEXER_CONN_STR").MustString(""), nil
+	} else if hasBuilderConfigs {
+		return buildConnectionString(sec), nil
+	}
+	return "", fmt.Errorf("must define either ISSUE_INDEXER_CONN_STR or builder configs for %q", Indexer.IssueType)
+}
+
+// Bleve requires a default path but meilisearch and elastic search should default to an empty path, db doesn't use path so doesn't care
+func getIssueIndexerPath(sec ConfigSection) string {
+	switch Indexer.IssueType {
+	case "bleve":
+		issuePath := filepath.ToSlash(sec.Key("ISSUE_INDEXER_PATH").MustString(filepath.ToSlash(filepath.Join(AppDataPath, "indexers/issues.bleve"))))
+		if !filepath.IsAbs(issuePath) {
+			issuePath = filepath.ToSlash(filepath.Join(AppWorkPath, Indexer.IssuePath))
+		}
+		return issuePath
+	case "meilisearch", "elasticsearch":
+		return sec.Key("ISSUE_INDEXER_PATH").MustString("")
+	default:
+		return ""
+	}
+}
+
 func loadIndexerFrom(rootCfg ConfigProvider) {
 	sec := rootCfg.Section("indexer")
 	Indexer.IssueType = sec.Key("ISSUE_INDEXER_TYPE").MustString("bleve")
-	Indexer.IssuePath = filepath.ToSlash(sec.Key("ISSUE_INDEXER_PATH").MustString(filepath.ToSlash(filepath.Join(AppDataPath, "indexers/issues.bleve"))))
-	if !filepath.IsAbs(Indexer.IssuePath) {
-		Indexer.IssuePath = filepath.ToSlash(filepath.Join(AppWorkPath, Indexer.IssuePath))
-	}
-	Indexer.IssueConnStr = sec.Key("ISSUE_INDEXER_CONN_STR").MustString(Indexer.IssueConnStr)
+	Indexer.IssuePath = getIssueIndexerPath(sec)
 
+	if requiresConnectionString(Indexer.IssueType) {
+		connStr, err := getIndexerConnStr(sec)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		Indexer.IssueConnStr = connStr
+	}
 	if Indexer.IssueType == "meilisearch" {
 		u, err := url.Parse(Indexer.IssueConnStr)
 		if err != nil {

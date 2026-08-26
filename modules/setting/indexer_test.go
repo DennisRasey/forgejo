@@ -4,9 +4,13 @@
 package setting
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type indexerMatchList struct {
@@ -68,4 +72,67 @@ func checkGlobMatch(t *testing.T, globstr string, list []indexerMatchList) {
 			assert.Equal(t, -1, m.position, "Test string `%s` doesn't match `%s` anywhere; expected @%d", m.value, globstr, m.position)
 		}
 	}
+}
+
+// Possible cases:
+// [http|https]://[[user]:pass@]host[:port][/[path]]
+func Test_indexerURLConstruction(t *testing.T) {
+	makeBaseConfig := func() (ConfigProvider, ConfigSection) {
+		cfg, _ := NewConfigProviderFromData("")
+		sec := cfg.Section("indexer")
+		sec.NewKey("ISSUE_INDEXER_TYPE", "meilisearch")
+
+		return cfg, sec
+	}
+	setConfigValues := func(sec ConfigSection, host, username, password, path, protocol string) {
+		sec.NewKey("ISSUE_INDEXER_HOST", host)
+		sec.NewKey("ISSUE_INDEXER_USER", username)
+		sec.NewKey("ISSUE_INDEXER_PASSWD", password)
+		sec.NewKey("ISSUE_INDEXER_PATH", path)
+		sec.NewKey("ISSUE_INDEXER_PROTOCOL", protocol)
+	}
+	testCases := []struct {
+		host     string
+		username string
+		password string
+		path     string
+		protocol string
+		expected string
+	}{
+		{"host:80", "", "", "", "http", "http://host:80"},
+		{"host", "", "", "/path", "http", "http://host/path"},
+		{"host", "", "pass", "", "https", "https://:pass@host"},
+		{"host", "user", "", "", "http", "http://user@host"},
+		{"host:8080", "user", "pass", "/path", "http", "http://user:pass@host:8080/path"},
+	}
+	for _, test := range testCases {
+		_, section := makeBaseConfig()
+		setConfigValues(section, test.host, test.username, test.password, test.path, test.protocol)
+		actual := buildConnectionString(section)
+		assert.Equal(t, test.expected, actual)
+	}
+
+	t.Run("Uses ISSUE_INDEXER_PASSWD_URI", func(t *testing.T) {
+		_, section := makeBaseConfig()
+
+		password := "password"
+
+		passwdURI := filepath.Join(t.TempDir(), "indexer_passwd")
+		require.NoError(t, os.WriteFile(passwdURI, []byte(password), 0o644))
+
+		section.NewKey("ISSUE_INDEXER_PROTOCOL", "http")
+		section.NewKey("ISSUE_INDEXER_HOST", "host")
+		section.NewKey("ISSUE_INDEXER_PASSWD_URI", fmt.Sprintf("file:%s", passwdURI))
+
+		actual := buildConnectionString(section)
+
+		assert.Equal(t, fmt.Sprintf("http://:%s@host", password), actual)
+	})
+	t.Run("Errors with connection string", func(t *testing.T) {
+		_, section := makeBaseConfig()
+		section.NewKey("ISSUE_INDEXER_CONN_STR", "http://user:pass@host:8080/path")
+		setConfigValues(section, "newHost", "newUser", "pass", "/path", "http")
+		_, err := getIndexerConnStr(section)
+		assert.Error(t, err)
+	})
 }
