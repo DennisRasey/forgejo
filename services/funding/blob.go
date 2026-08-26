@@ -13,16 +13,16 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// Parses the given file data for funding entries. Fails if the data could not
-// be understood as a funding config documenet.
-func getFundingFromBlob(content []byte) (entries []*api.RepoFundingEntry, lineErrors []error, parseErr error) {
+// Parses the given file data for funding entries.
+func getFundingFromBlob(content []byte) (entries []*api.RepoFundingEntry, errs []error) {
 	config := make(rawRepoFundingConfig, 0)
-	if parseErr := yaml.Unmarshal(content, &config); parseErr != nil {
-		return nil, nil, parseErr
+	if err := yaml.Unmarshal(content, &config); err != nil {
+		errs = append(errs, err)
+		return entries, errs
 	}
 
 	entryList, errs := processFundingConfig(config)
-	return entryList, errs, nil
+	return entryList, errs
 }
 
 // Sorts the raw config data into distinct funding entries, listing both valid

@@ -4,6 +4,8 @@
 package funding
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,20 +74,27 @@ func TestFundingConfigParse(t *testing.T) {
 	})
 
 	t.Run("bad data", func(t *testing.T) {
-		badConfigs := []string{
-			"42",
-			"[42]",
-			"['42']",
-			"['']",
-			"[]",
-			"foo:bar",
-			"あ",
+		badConfigs := [][2]string{
+			{"42", "int"},
+			{"[42]", "seq"},
+			{"['42']", "seq"},
+			{"['']", "seq"},
+			{"[]", "seq"},
+			{"foo:bar", "str"},
+			{"あ", "str"},
 		}
 
-		for _, configContent := range badConfigs {
+		for _, c := range badConfigs {
+			configContent := c[0]
+			tag := c[1]
+
 			config := make(rawRepoFundingConfig, 0)
 			err := yaml.Unmarshal([]byte(configContent), &config)
-			assert.Error(t, err, "config content: %v", configContent)
+			errString := fmt.Sprintf("Expected YAML mapping, got %v", tag)
+			require.EqualError(t, err, errString, "config content: %v", configContent)
+			typeErr, ok := errors.AsType[*NotYAMLMappingError](err)
+			require.True(t, ok)
+			assert.Equal(t, tag, typeErr.ShortTag)
 		}
 	})
 
@@ -93,7 +102,10 @@ func TestFundingConfigParse(t *testing.T) {
 		configContent := "a: b\nfoo: bar\nfoo: baz"
 		config := make(rawRepoFundingConfig, 0)
 		err := yaml.Unmarshal([]byte(configContent), &config)
-		assert.Error(t, err, "Duplicate YAML key: foo")
+		require.EqualError(t, err, "Duplicate YAML key: foo")
+		dupErr, ok := errors.AsType[*DuplicateYAMLKeyError](err)
+		require.True(t, ok)
+		assert.Equal(t, "foo", dupErr.Key)
 	})
 
 	t.Run("dummy single data row", func(t *testing.T) {

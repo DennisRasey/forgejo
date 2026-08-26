@@ -4,7 +4,6 @@
 package funding
 
 import (
-	"fmt"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
@@ -36,7 +35,8 @@ type rawRepoFundingConfig []rawRepoFundingConfigEntry
 // called by `yaml.Unmarshal` when decoding file data
 func (c *rawRepoFundingConfig) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
-		return fmt.Errorf("Expected YAML mapping, got %v", value.Kind)
+		tag := strings.TrimPrefix(value.ShortTag(), "!!")
+		return &NotYAMLMappingError{ShortTag: tag}
 	}
 
 	// in a mapping, Content contains pairs of nodes, so we iterate two at a time
@@ -51,7 +51,7 @@ func (c *rawRepoFundingConfig) UnmarshalYAML(value *yaml.Node) error {
 		key := value.Content[i].Value
 		for _, alreadyEntry := range *c {
 			if alreadyEntry.Key == key {
-				return fmt.Errorf("Duplicate YAML key: %s", key)
+				return &DuplicateYAMLKeyError{Key: key}
 			}
 		}
 

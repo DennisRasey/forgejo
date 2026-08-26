@@ -131,3 +131,21 @@ func (ErrInvalidYamlType) Is(err error) bool {
 	_, ok := err.(ErrInvalidYamlType)
 	return ok
 }
+
+// Occurs when unmarshaling a YAML file with duplicate map keys.
+type DuplicateYAMLKeyError struct {
+	Key string
+}
+
+func (err DuplicateYAMLKeyError) Error() string {
+	return fmt.Sprintf("Duplicate YAML key: %s", err.Key)
+}
+
+// Occurs when unmarshaling a YAML file and finding an unexpected non-map node.
+type NotYAMLMappingError struct {
+	ShortTag string
+}
+
+func (err NotYAMLMappingError) Error() string {
+	return fmt.Sprintf("Expected YAML mapping, got %s", err.ShortTag)
+}

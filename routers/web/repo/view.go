@@ -749,8 +749,12 @@ func renderFundingError(locale translation.Locale, err error) template.HTML {
 		return locale.Tr("funding.yaml_error.duplicate_entry", duplicateEntryErr.Name, duplicateEntryErr.Value)
 	} else if badInputErr, ok := errors.AsType[funding_service.ErrBadInput](err); ok {
 		return locale.Tr("funding.yaml_error.bad_input", badInputErr.Name, badInputErr.Pattern.String())
-	} else if invalidYamlErr, ok := errors.AsType[funding_service.ErrInvalidYamlType](err); ok {
-		return locale.Tr("funding.yaml_error.invalid_yaml_type", invalidYamlErr.Name)
+	} else if duplicateYamlKeyErr, ok := errors.AsType[*funding_service.DuplicateYAMLKeyError](err); ok {
+		return locale.Tr("funding.yaml_error.duplicate_yaml_key", duplicateYamlKeyErr.Key)
+	} else if invalidYAMLErr, ok := errors.AsType[funding_service.ErrInvalidYamlType](err); ok {
+		return locale.Tr("funding.yaml_error.invalid_yaml_type", invalidYAMLErr.Name)
+	} else if notMappingErr, ok := errors.AsType[*funding_service.NotYAMLMappingError](err); ok {
+		return locale.Tr("funding.yaml_error.not_yaml_mapping", notMappingErr.ShortTag)
 	} else if parseErr, ok := errors.AsType[funding_service.ErrCannotParseURL](err); ok {
 		return locale.Tr("funding.yaml_error.parse_url", parseErr.Name, parseErr.Err.Error())
 	}

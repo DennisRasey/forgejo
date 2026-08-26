@@ -35,12 +35,6 @@ func defaultSettings(t *testing.T) func() {
 	}
 }
 
-func getFundingFromConfig(t *testing.T, config string) ([]*api.RepoFundingEntry, []error) {
-	funding, errs, err := getFundingFromBlob([]byte(config))
-	require.NoError(t, err)
-	return funding, errs
-}
-
 func assertEntry(t *testing.T, entry *api.RepoFundingEntry, expectedProvider, expectedTitle, expectedValue string) {
 	t.Helper()
 	assert.Equal(t, expectedProvider, entry.ProviderName)
@@ -112,10 +106,9 @@ func TestFundingConfigParseErrors(t *testing.T) {
 	}
 
 	for _, config := range configs {
-		data, lineErrors, err := getFundingFromBlob([]byte(config))
-		require.Error(t, err)
-		require.Nil(t, data)
-		require.Nil(t, lineErrors)
+		data, errs := getFundingFromBlob([]byte(config))
+		require.Empty(t, data)
+		require.Len(t, errs, 1)
 		// there's a huge variety of possible YAML parse errors, so we won't bother testing that they're exact.
 		// what's important here is that we get an error instead of data.
 	}
@@ -125,7 +118,7 @@ func TestFundingEntriesFromConfig(t *testing.T) {
 	defer defaultSettings(t)()
 
 	t.Run("Empty config", func(t *testing.T) {
-		funding, errs := getFundingFromConfig(t, "")
+		funding, errs := getFundingFromBlob([]byte(""))
 		assert.Empty(t, errs)
 		assert.Empty(t, funding)
 	})
@@ -163,7 +156,7 @@ func TestFundingEntriesFromConfig(t *testing.T) {
 			config := configCase[0]
 			expectedURL := configCase[1]
 
-			funding, errs := getFundingFromConfig(t, config)
+			funding, errs := getFundingFromBlob([]byte(config))
 			assert.Empty(t, errs)
 			assert.Len(t, funding, 1)
 			assertCustom(t, funding[0], expectedURL)
@@ -185,7 +178,7 @@ func TestFundingEntriesFromConfig(t *testing.T) {
 			"custom: 42\nwhatever:",
 		}
 		for _, config := range configs {
-			funding, errs := getFundingFromConfig(t, config)
+			funding, errs := getFundingFromBlob([]byte(config))
 			assert.NotEmpty(t, errs)
 			assert.Empty(t, funding)
 		}
@@ -197,7 +190,7 @@ func TestFundingEntriesFromConfig(t *testing.T) {
 			"- b.com\n" +
 			`- "http://withquery.example.com?test=foo"` + "\n" +
 			`- "http://thistimewithhash#foo"` + "\n"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 		assert.Empty(t, errs)
 
 		require.Len(t, funding, 4)
@@ -221,7 +214,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 			config := configCase[0].(string)
 			expectedDuplicate := configCase[1].(string)
 			expectedRemainder := configCase[2].([]string)
-			funding, errs := getFundingFromConfig(t, config)
+			funding, errs := getFundingFromBlob([]byte(config))
 
 			assert.Len(t, errs, 1)
 			assert.Equal(t, fmt.Sprintf("Duplicate entry for key \"custom\": %s", expectedDuplicate), errs[0].Error())
@@ -238,7 +231,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 		config := "liberapay: test\n" +
 			"ko_fi:\n" +
 			`custom: [test, "https://example.com", 'Arbitrary:4242', 'Arbitrary: 4242', 'h3://localhost']`
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Len(t, errs, 3)
 		assert.Equal(t, "Invalid type for key \"ko_fi\", expected a string or string array", errs[0].Error())
@@ -259,7 +252,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 		}
 
 		for _, config := range configs {
-			funding, errs := getFundingFromConfig(t, config)
+			funding, errs := getFundingFromBlob([]byte(config))
 
 			assert.Len(t, errs, 1)
 			assert.Equal(t, "Unknown funding provider: whatever", errs[0].Error())
@@ -273,7 +266,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 	t.Run("Partially invalid (bad known keys omitted)", func(t *testing.T) {
 		config := "whatever: test\n" +
 			`ko_fi: [42, test, "https://example.com"]`
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Len(t, errs, 3)
 		assert.Equal(t, "Unknown funding provider: whatever", errs[0].Error())
@@ -286,7 +279,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 
 	t.Run("Partially invalid (one element of list is bad type)", func(t *testing.T) {
 		config := `patreon: [42, "example"]`
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Len(t, errs, 1)
 		assert.Equal(t, "Invalid type for key \"patreon\", expected a string or string array", errs[0].Error())
@@ -313,7 +306,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 			"- test14\n" +
 			"- test15\n" +
 			"- too_many"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Len(t, errs, 1)
 		assert.Equal(t, "Expected up to 15 funding providers", errs[0].Error())
@@ -354,7 +347,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 			"- test12\n" +
 			"- test13\n" +
 			"- too_many"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Len(t, errs, 1)
 		assert.Equal(t, "Expected up to 15 funding providers", errs[0].Error())
@@ -396,7 +389,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 			"- test13\n" +
 			"- too_many\n" +
 			"liberapay: still_too_many"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Len(t, errs, 1)
 		assert.Equal(t, "Expected up to 15 funding providers", errs[0].Error())
@@ -430,7 +423,7 @@ func TestFundingEntriesWithErrorsFromConfig(t *testing.T) {
 			"github: example\n" +
 			"issuehunt: too_many\n" +
 			"open_collective: still_too_many\n"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Len(t, errs, 1)
 		assert.Equal(t, "Expected up to 5 funding providers", errs[0].Error()) // error message reflects config
@@ -449,7 +442,7 @@ func TestFundingEntriesWithCustomSchemes(t *testing.T) {
 
 	t.Run("an HTTPS website under default schemes", func(t *testing.T) {
 		config := "custom: 'https://example.com'"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Empty(t, errs)
 		assert.Len(t, funding, 1)
@@ -458,7 +451,7 @@ func TestFundingEntriesWithCustomSchemes(t *testing.T) {
 
 	t.Run("an H3 website under default schemes", func(t *testing.T) {
 		config := "custom: 'h3://example.com'"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Empty(t, funding)
 		assert.Len(t, errs, 1)
@@ -470,7 +463,7 @@ func TestFundingEntriesWithCustomSchemes(t *testing.T) {
 		setting.Service.ValidSiteURLSchemes = append(setting.Service.ValidSiteURLSchemes, "h3")
 
 		config := "custom: 'h3://example.com'"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Empty(t, errs)
 		assert.Len(t, funding, 1)
@@ -482,7 +475,7 @@ func TestFundingEntriesWithCustomSchemes(t *testing.T) {
 		setting.Service.ValidSiteURLSchemes = append(setting.Service.ValidSiteURLSchemes, "h3")
 
 		config := "custom: 'gemini://example.com'"
-		funding, errs := getFundingFromConfig(t, config)
+		funding, errs := getFundingFromBlob([]byte(config))
 
 		assert.Empty(t, funding)
 		assert.Len(t, errs, 1)
