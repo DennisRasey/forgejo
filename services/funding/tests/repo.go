@@ -59,7 +59,7 @@ func FromDefaultBranch(t *testing.T) {
 		fnd, err := funding.GetFundingFromDefaultBranch(t.Context(), repo)
 		require.Nil(t, fnd)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, funding.ErrFundingNotExist{})
+		assert.True(t, funding.IsNotExistError(err))
 	})
 
 	t.Run("init repo", func(t *testing.T) {
@@ -70,7 +70,7 @@ func FromDefaultBranch(t *testing.T) {
 		fnd, err := funding.GetFundingFromDefaultBranch(t.Context(), repo)
 		require.Nil(t, fnd)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, funding.ErrFundingNotExist{})
+		assert.True(t, funding.IsNotExistError(err))
 	})
 
 	for _, subURL := range subURLs {

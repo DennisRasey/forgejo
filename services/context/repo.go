@@ -725,7 +725,7 @@ func RepoAssignment(ctx *Context) context.CancelFunc {
 	}
 
 	funding, err := funding_service.GetFundingFromDefaultBranch(ctx, ctx.Repo.Repository)
-	if err != nil && !errors.Is(err, funding_service.ErrFundingNotExist{}) {
+	if err != nil && !funding_service.IsNotExistError(err) {
 		ctx.ServerError("GetFundingFromDefaultBranch", err)
 		return cancel
 	}

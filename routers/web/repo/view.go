@@ -741,21 +741,21 @@ func renderFundingErrors(locale translation.Locale, fundingErrs []error) (headin
 
 // Returns an appropriate user-facing message for the given funding error.
 func renderFundingError(locale translation.Locale, err error) template.HTML {
-	if unknownProviderErr, ok := errors.AsType[funding_service.ErrUnknownFundingProvider](err); ok {
+	if unknownProviderErr, ok := errors.AsType[funding_service.UnknownProviderError](err); ok {
 		return locale.Tr("funding.yaml_error.unknown_provider", unknownProviderErr.Name)
-	} else if tooManyErr, ok := errors.AsType[funding_service.ErrTooManyFundingProviders](err); ok {
+	} else if tooManyErr, ok := errors.AsType[funding_service.TooManyProvidersError](err); ok {
 		return locale.Tr("funding.yaml_error.n_too_many_providers", tooManyErr.TotalLimit)
-	} else if duplicateEntryErr, ok := errors.AsType[funding_service.ErrDuplicateFundingEntry](err); ok {
+	} else if duplicateEntryErr, ok := errors.AsType[funding_service.DuplicateEntryError](err); ok {
 		return locale.Tr("funding.yaml_error.duplicate_entry", duplicateEntryErr.Name, duplicateEntryErr.Value)
-	} else if badInputErr, ok := errors.AsType[funding_service.ErrBadInput](err); ok {
+	} else if badInputErr, ok := errors.AsType[funding_service.BadInputError](err); ok {
 		return locale.Tr("funding.yaml_error.bad_input", badInputErr.Name, badInputErr.Pattern.String())
 	} else if duplicateYamlKeyErr, ok := errors.AsType[*funding_service.DuplicateYAMLKeyError](err); ok {
 		return locale.Tr("funding.yaml_error.duplicate_yaml_key", duplicateYamlKeyErr.Key)
-	} else if invalidYAMLErr, ok := errors.AsType[funding_service.ErrInvalidYamlType](err); ok {
+	} else if invalidYAMLErr, ok := errors.AsType[funding_service.InvalidYamlTypeError](err); ok {
 		return locale.Tr("funding.yaml_error.invalid_yaml_type", invalidYAMLErr.Name)
 	} else if notMappingErr, ok := errors.AsType[*funding_service.NotYAMLMappingError](err); ok {
 		return locale.Tr("funding.yaml_error.not_yaml_mapping", notMappingErr.ShortTag)
-	} else if parseErr, ok := errors.AsType[funding_service.ErrCannotParseURL](err); ok {
+	} else if parseErr, ok := errors.AsType[funding_service.CannotParseURLError](err); ok {
 		return locale.Tr("funding.yaml_error.parse_url", parseErr.Name, parseErr.Err.Error())
 	}
 	return locale.Tr("funding.yaml_error.unknown", strings.TrimSpace(err.Error()))

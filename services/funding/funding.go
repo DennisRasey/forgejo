@@ -73,7 +73,7 @@ func getFundingEntry(provider *setting.FundingProviderConfig, input string) (*ap
 	input = strings.TrimSpace(input)
 
 	if !provider.InputPattern.Match([]byte(input)) {
-		return nil, ErrBadInput{Name: provider.Name, Pattern: provider.InputPattern}
+		return nil, BadInputError{Name: provider.Name, Pattern: provider.InputPattern}
 	}
 
 	// user input + provider.Template = funding entry value!
@@ -87,12 +87,12 @@ func getFundingEntry(provider *setting.FundingProviderConfig, input string) (*ap
 
 	urlValue, err := url.Parse(rawValue) // value should parse as a URL; interpolation should never result in something invalid
 	if err != nil {
-		return nil, ErrCannotParseURL{Name: provider.Name, Err: err}
+		return nil, CannotParseURLError{Name: provider.Name, Err: err}
 	}
 
 	validSchemes := setting.Service.ValidSiteURLSchemes
 	if !slices.Contains(validSchemes, urlValue.Scheme) {
-		return nil, ErrCannotParseURL{Name: provider.Name, Err: &ErrBadURLScheme{
+		return nil, CannotParseURLError{Name: provider.Name, Err: &BadURLSchemeError{
 			ValidSchemes: validSchemes,
 			GivenScheme:  urlValue.Scheme,
 		}}
@@ -100,7 +100,7 @@ func getFundingEntry(provider *setting.FundingProviderConfig, input string) (*ap
 
 	urlValue, err = withASCIIHostname(urlValue)
 	if err != nil {
-		return nil, ErrCannotParseURL{Name: provider.Name, Err: err}
+		return nil, CannotParseURLError{Name: provider.Name, Err: err}
 	}
 
 	entry := new(api.RepoFundingEntry)
@@ -173,13 +173,13 @@ func GetFundingFromCommit(r *repo_model.Repository, commit *git.Commit) (*RepoFu
 		}
 	}
 
-	return nil, ErrFundingNotExist{Repo: r}
+	return nil, NotExistError{Repo: r}
 }
 
 // GetFundingFromDefaultBranch returns the funding for this repo.
 func GetFundingFromDefaultBranch(ctx context.Context, r *repo_model.Repository) (*RepoFunding, error) {
 	if r.IsEmpty {
-		return nil, ErrFundingNotExist{Repo: r}
+		return nil, NotExistError{Repo: r}
 	}
 
 	gitRepo, err := git.OpenRepository(ctx, r.RepoPath())
@@ -191,7 +191,7 @@ func GetFundingFromDefaultBranch(ctx context.Context, r *repo_model.Repository) 
 	commit, err := gitRepo.GetBranchCommit(r.DefaultBranch)
 	if err != nil {
 		if git.IsErrNotExist(err) {
-			return nil, ErrFundingNotExist{Repo: r}
+			return nil, NotExistError{Repo: r}
 		}
 		return nil, err
 	}

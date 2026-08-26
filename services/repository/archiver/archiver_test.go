@@ -126,8 +126,3 @@ func TestArchive_Basic(t *testing.T) {
 	assert.NotEqual(t, zipReq.GetArchiveName(), tgzReq.GetArchiveName())
 	assert.NotEqual(t, zipReq.GetArchiveName(), secondReq.GetArchiveName())
 }
-
-func TestErrUnknownArchiveFormat(t *testing.T) {
-	err := ErrUnknownArchiveFormat{RequestFormat: "master"}
-	assert.ErrorIs(t, err, ErrUnknownArchiveFormat{})
-}

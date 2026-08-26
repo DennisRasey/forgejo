@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"testing"
 
-	"forgejo.org/models/repo"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
@@ -71,28 +70,6 @@ func assertPatreon(t *testing.T, entry *api.RepoFundingEntry, expectedTitle, exp
 func assertTidelift(t *testing.T, entry *api.RepoFundingEntry, expectedTitle, expectedValue string) {
 	t.Helper()
 	assertEntry(t, entry, "tidelift", expectedTitle, expectedValue)
-}
-
-func TestFundingErrorIdentityPrimitives(t *testing.T) {
-	cases := [][2]error{
-		// {<error case>, <expected type>}
-		{ErrFundingNotExist{Repo: &repo.Repository{}}, ErrFundingNotExist{}},
-		{ErrUnknownFundingProvider{Name: "SomeName"}, ErrUnknownFundingProvider{}},
-		{ErrTooManyFundingProviders{TotalLimit: 50}, ErrTooManyFundingProviders{}},
-		{ErrDuplicateFundingEntry{Name: "SomeName", Value: "SomeValue"}, ErrDuplicateFundingEntry{}},
-		{ErrBadInput{Name: "SomeName"}, ErrBadInput{}},
-		{ErrCannotParseURL{Name: "SomeName", Err: fmt.Errorf("test")}, ErrCannotParseURL{}},
-		{ErrBadURLScheme{GivenScheme: "gemini", ValidSchemes: []string{"http", "https"}}, ErrBadURLScheme{}},
-		{ErrInvalidYamlType{Name: "SomeName"}, ErrInvalidYamlType{}},
-	}
-	for _, c := range cases {
-		err := c[0]
-		kind := c[1]
-		require.ErrorIs(t, err, kind) // e.g. errors.Is(err, ErrFundingNotExist{})
-
-		wrappedErr := fmt.Errorf("wrapped: %w", err)
-		require.ErrorIs(t, wrappedErr, kind)
-	}
 }
 
 func TestFundingConfigParseErrors(t *testing.T) {

@@ -451,6 +451,17 @@ func TestDownloadReleaseAttachment(t *testing.T) {
 	session.MakeRequest(t, req, http.StatusOK)
 }
 
+func TestReleaseAttachmentDownload(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	tests.PrepareAttachmentsStorage(t)
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+
+	MakeRequest(t, NewRequest(t, "GET", fmt.Sprintf("%s/archive/v1.1.zip", repo.Link())), http.StatusOK)
+	resp := MakeRequest(t, NewRequest(t, "GET", fmt.Sprintf("%s/archive/invalidref.zip", repo.Link())), http.StatusNotFound)
+	assert.Contains(t, resp.Body.String(), "invalidref")
+}
+
 func TestReleaseAttachmentDownloadCounter(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	tests.PrepareAttachmentsStorage(t)

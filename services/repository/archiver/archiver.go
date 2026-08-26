@@ -37,19 +37,18 @@ type ArchiveRequest struct {
 	ReleaseID int64
 }
 
-// ErrUnknownArchiveFormat request archive format is not supported
-type ErrUnknownArchiveFormat struct {
+// UnknownArchiveFormatError request archive format is not supported
+type UnknownArchiveFormatError struct {
 	RequestFormat string
 }
 
 // Error implements error
-func (err ErrUnknownArchiveFormat) Error() string {
+func (err UnknownArchiveFormatError) Error() string {
 	return fmt.Sprintf("unknown format: %s", err.RequestFormat)
 }
 
-// Is implements error
-func (ErrUnknownArchiveFormat) Is(err error) bool {
-	_, ok := err.(ErrUnknownArchiveFormat)
+func IsUnknownArchiveFormatError(err error) bool {
+	_, ok := errors.AsType[UnknownArchiveFormatError](err)
 	return ok
 }
 
@@ -63,8 +62,8 @@ func (e RepoRefNotFoundError) Error() string {
 	return fmt.Sprintf("unrecognized repository reference: %s", e.RefName)
 }
 
-func (e RepoRefNotFoundError) Is(err error) bool {
-	_, ok := err.(RepoRefNotFoundError)
+func IsRepoRefNotFoundError(err error) bool {
+	_, ok := errors.AsType[RepoRefNotFoundError](err)
 	return ok
 }
 
@@ -80,7 +79,7 @@ func ParseFileName(uri string) (ext string, tp git.ArchiveType, err error) {
 		ext = ".bundle"
 		tp = git.BUNDLE
 	default:
-		return "", 0, ErrUnknownArchiveFormat{RequestFormat: uri}
+		return "", 0, UnknownArchiveFormatError{RequestFormat: uri}
 	}
 	return ext, tp, nil
 }
@@ -90,7 +89,7 @@ func ParseFileName(uri string) (ext string, tp git.ArchiveType, err error) {
 // if it's determined that the request still needs to be satisfied.
 func NewRequest(ctx context.Context, repoID int64, repo *git.Repository, refName string, fileType git.ArchiveType) (*ArchiveRequest, error) {
 	if fileType < git.ZIP || fileType > git.BUNDLE {
-		return nil, ErrUnknownArchiveFormat{RequestFormat: fileType.String()}
+		return nil, UnknownArchiveFormatError{RequestFormat: fileType.String()}
 	}
 
 	r := &ArchiveRequest{

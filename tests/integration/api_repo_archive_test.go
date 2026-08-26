@@ -67,6 +67,10 @@ func TestAPIDownloadArchive(t *testing.T) {
 
 	link, _ = url.Parse(fmt.Sprintf("/api/v1/repos/%s/%s/archive/master", user2.Name, repo.Name))
 	MakeRequest(t, NewRequest(t, "GET", link.String()).AddTokenAuth(token), http.StatusBadRequest)
+
+	link, _ = url.Parse(fmt.Sprintf("/api/v1/repos/%s/%s/archive/invalid.zip", user2.Name, repo.Name))
+	resp = MakeRequest(t, NewRequest(t, "GET", link.String()).AddTokenAuth(token), http.StatusNotFound)
+	assert.Contains(t, resp.Body.String(), "unrecognized repository reference")
 }
 
 func TestAPIDownloadArchive2(t *testing.T) {

@@ -5,7 +5,6 @@
 package user
 
 import (
-	"errors"
 	"net/url"
 
 	"forgejo.org/models/db"
@@ -112,7 +111,7 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 					log.Error("FindUserProfileReadme failed to GetBranchCommit: %v", err)
 				} else {
 					profileFunding, err = funding_service.GetFundingFromCommit(profileDbRepo, commit)
-					if err != nil && !errors.Is(err, funding_service.ErrFundingNotExist{}) {
+					if err != nil && !funding_service.IsNotExistError(err) {
 						log.Error("FindUserProfileReadme failed to GetFundingFromCommit: %v", err)
 					}
 					tree, err := commit.SubTree("")
