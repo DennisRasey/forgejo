@@ -3,8 +3,6 @@ body:has(dialog[open]) {
 }
 
 dialog {
-  align-items: center;
-  justify-content: center;
   position: fixed;
   text-align: start;
   border: none;
@@ -27,11 +25,6 @@ dialog {
 
   /* Suppress default <dialog> padding */
   padding: 0;
-}
-
-dialog[open],
-dialog:target {
-  display: flex;
 }
 
 dialog::backdrop {

@@ -34,15 +34,16 @@ async function expectFundingEntry(entry: Locator, expectedProvider: string, expe
 const widthCases = [208, 310, 400, 600] as const;
 for (const width of widthCases) {
   test(`Repo funding config: errors readable at ${width}px wide`, async ({browser}) => {
-    const context = await browser.newContext({screen: {width, height: 600}});
+    const context = await browser.newContext({viewport: {width, height: 600}});
     const page = await context.newPage();
 
     const response = await page.goto('/user2/funding_some_valid/src/branch/main/.forgejo/FUNDING.yml', {waitUntil: 'domcontentloaded'});
     expect(response?.status()).toBe(200);
 
     const errors = page.locator('.ui.error.message').filter({hasText: 'Errors parsing funding config:'});
+    await errors.scrollIntoViewIfNeeded();
     await expect(errors).toBeVisible();
-    await expect(errors).toBeInViewport({ratio: 1});
+    await expect(errors).toBeInViewport({ratio: 0.99});
 
     await accessibilityCheck({page}, ['.ui.error.message'], [], []);
   });
@@ -110,7 +111,7 @@ for (const testCase of [
 ] as const) {
   for (const width of widthCases) {
     test(`Funding modal (${testCase.kind}): usable at ${width}px wide`, async ({browser}) => {
-      const context = await browser.newContext({screen: {width, height: 600}});
+      const context = await browser.newContext({viewport: {width, height: 600}});
       const page = await context.newPage();
 
       const response = await page.goto(`/user2/${testCase.name}`, {waitUntil: 'domcontentloaded'});

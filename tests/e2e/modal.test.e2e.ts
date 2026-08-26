@@ -50,7 +50,6 @@ test('Dialog modal', async ({page}) => {
 });
 
 test('Dialog modal: width', async ({page, isMobile}) => {
-  // This test doesn't need JS and runs a little faster without it
   await page.goto('/-/demo/modal');
 
   // Open modal with short content
@@ -104,3 +103,31 @@ test('Dialog modal: width', async ({page, isMobile}) => {
     expect(width).toBe(800);
   }
 });
+
+const sizeCases = [208, 310, 400, 600] as const;
+for (const width of sizeCases) {
+  for (const height of sizeCases) {
+    test(`Dialog modal: all content scrollable in ${width}x${height} px viewport`, async ({page}) => {
+      await page.setViewportSize({width, height});
+      await page.goto('/-/demo/modal');
+
+      // Open modal with long content
+      const longModal = page.locator('#long-modal');
+      await expect(longModal).toBeHidden();
+      await page.locator('button[data-modal="#long-modal"]').click();
+      await expect(longModal).toBeVisible();
+
+      // Make sure the heading is reachable
+      const header = page.locator('header').filter({hasText: 'Long modal'});
+      await header.scrollIntoViewIfNeeded();
+      await expect(header).toBeVisible();
+      await expect(header).toBeInViewport({ratio: 1});
+
+      // Make sure the Cancel button is reachable
+      const cancelButton = longModal.locator('button.cancel');
+      await longModal.evaluate((v) => v.scrollTo(0, v.scrollHeight)); // scroll to bottom, even if button is partly visible
+      await expect(header).toBeVisible();
+      await expect(cancelButton).toBeInViewport({ratio: 1});
+    });
+  }
+}
