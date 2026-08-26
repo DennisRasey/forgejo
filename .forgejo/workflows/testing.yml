@@ -312,6 +312,9 @@ jobs:
       - run: apk add nodejs # required for actions/checkout
       - uses: https://data.forgejo.org/actions/checkout@v6
       - name: self-check semgrep rules
-        run: semgrep --test .semgrep/tests/ --config .semgrep/config/
+        run: |
+          set -x
+          semgrep validate .semgrep/config
+          semgrep --test .semgrep/tests/ --config .semgrep/config/
       - name: semgrep ci
         run: semgrep ci --config .semgrep/config/ --metrics=off
