@@ -28,6 +28,7 @@ var _ = registerFunctionTest(apiv1_permissions.APIAuthorization, functionTest{
 		if data.shared.DoerActions() {
 			data.shared.SetRepositoryDefault()
 		}
+		data.shared.SetDoerCanCreateOrganizationDefault(true)
 		data.shared.SetDoerScopeDefault("read:repository")
 		data.shared.SetTokenLevelDefault("read")
 	},

@@ -249,10 +249,6 @@ func Create(ctx *context.APIContext) {
 	//   "422":
 	//     "$ref": "#/responses/validationError"
 	form := web.GetForm(ctx).(*api.CreateOrgOption)
-	if !ctx.Doer().CanCreateOrganization() {
-		ctx.Error(http.StatusForbidden, "Create organization not allowed", nil)
-		return
-	}
 
 	visibility := api.VisibleTypePublic
 	if form.Visibility != "" {

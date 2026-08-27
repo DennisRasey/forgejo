@@ -367,6 +367,10 @@ func reqOrgMembership() func(ctx *context.APIContext) {
 	return checkPermission(apiv1_permissions.ReqOrgMembership)
 }
 
+func doerCanCreateOrganization() func(ctx *context.APIContext) {
+	return checkPermission(apiv1_permissions.DoerCanCreateOrganization)
+}
+
 func reqGitHook() func(ctx *context.APIContext) {
 	return checkPermission(apiv1_permissions.ReqGitHook)
 }
@@ -1244,7 +1248,7 @@ func Routes() *web.Route {
 			m.Get("", reqToken(), org.ListUserOrgs)
 			m.Get("/{org}/permissions", reqToken(), org.GetUserOrgsPermissions)
 		}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryUser, auth_model.AccessTokenScopeCategoryOrganization), context.UserAssignmentAPI(), checkTokenPublicOnly())
-		m.Post("/orgs", tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization), reqToken(), bind(api.CreateOrgOption{}), org.Create)
+		m.Post("/orgs", doerCanCreateOrganization(), tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization), reqToken(), bind(api.CreateOrgOption{}), org.Create)
 		m.Get("/orgs", org.GetAll, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryOrganization))
 		m.Group("/orgs/{org}", func() {
 			m.Combo("").Get(org.Get).

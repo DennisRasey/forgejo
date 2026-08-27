@@ -232,7 +232,7 @@ func (o *Permissions) Strings() []string {
 		s = append(s, fmt.Sprintf("%T(ID=%d Token=%s)", o.token, o.token.ID, o.token.Token))
 	}
 	if o.doer != nil {
-		s = append(s, fmt.Sprintf("doer=%T(Name=%s, Private=%v, Admin=%v)", o.doer, o.doer.Name, o.doer.Visibility != api.VisibleTypePublic, o.doer.IsAdmin))
+		s = append(s, fmt.Sprintf("doer=%T(Name=%s, Private=%v, Admin=%v, AllowCreateOrganization=%v)", o.doer, o.doer.Name, o.doer.Visibility != api.VisibleTypePublic, o.doer.IsAdmin, o.doer.AllowCreateOrganization))
 	}
 	if o.user != nil {
 		s = append(s, fmt.Sprintf("user=%T(Name=%s, Private=%v, Admin=%v)", o.user, o.user.Name, o.user.Visibility != api.VisibleTypePublic, o.user.IsAdmin))

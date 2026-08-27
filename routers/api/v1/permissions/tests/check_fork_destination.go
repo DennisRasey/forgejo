@@ -86,7 +86,7 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.CheckForkDestination, fun
 		require.True(t, data.Has("forkOrgOwner"))
 		name := data.Get("forkOrg")
 		owner := data.Get("forkOrgOwner")
-		org := fixtureCreateOrg(t, &org_model.Organization{Name: name}, &user_model.User{Name: owner})
+		org := fixtureCreateOrg(t, &org_model.Organization{Name: name}, &user_model.User{Name: owner, AllowCreateOrganization: true})
 
 		if data.Has("team") {
 			fixtureCreateTeam(t, org, data.shared.DoerName(), &forgery.CreateTeamOptions{

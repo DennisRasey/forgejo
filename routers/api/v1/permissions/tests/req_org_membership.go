@@ -91,7 +91,7 @@ var _ = registerFunctionTest(apiv1_permissions.ReqOrgMembership, functionTest{
 		}
 		var org *org_model.Organization
 		if data.Has("org") {
-			fixtureCreateUser(t, &user_model.User{Name: orgOwner})
+			fixtureCreateUser(t, &user_model.User{Name: orgOwner, AllowCreateOrganization: true})
 			org = fixtureCreateOrg(t, &org_model.Organization{Name: data.Get("org")}, &user_model.User{Name: orgOwner})
 		}
 

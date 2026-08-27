@@ -101,7 +101,10 @@ func fixtureCreateUser(t *testing.T, user *user_model.User) *user_model.User {
 	overwriteDefault := &user_model.CreateUserOverwriteOptions{}
 	visibility := user.Visibility
 	overwriteDefault.Visibility = &visibility
+	allowCreateOrganization := user.AllowCreateOrganization
+	overwriteDefault.AllowCreateOrganization = optional.Some(allowCreateOrganization)
 	require.NoError(t, user_model.CreateUser(t.Context(), user, overwriteDefault))
+	user.AllowCreateOrganization = allowCreateOrganization
 	return user
 }
 
@@ -111,7 +114,7 @@ func fixtureCreateOrg(t *testing.T, org *org_model.Organization, owner *user_mod
 		return existing
 	}
 	owner = fixtureCreateUser(t, owner)
-	require.NoError(t, org_model.CreateOrganization(t.Context(), org, owner))
+	require.NoError(t, org_model.CreateOrganization(t.Context(), org, owner), "owner: %+v", owner)
 	return org
 }
 
@@ -276,8 +279,9 @@ func fixtureSetDoerRegularUser(t *testing.T, permissions *apiv1_permissions.Perm
 	}
 	if !data.Anonymous() {
 		user := &user_model.User{
-			Name:    data.DoerName(),
-			IsAdmin: data.DoerAdmin(),
+			Name:                    data.DoerName(),
+			IsAdmin:                 data.DoerAdmin(),
+			AllowCreateOrganization: data.DoerCanCreateOrganization(),
 		}
 		fixtureCreateUser(t, user)
 		permissions.SetDoer(user)

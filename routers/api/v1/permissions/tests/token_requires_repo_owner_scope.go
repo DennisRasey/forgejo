@@ -75,7 +75,7 @@ var _ = registerFunctionTestWithCall(apiv1_permissions.TokenRequiresRepoOwnerSco
 	interpret: func(t *testing.T, permissions *apiv1_permissions.Permissions, data *testData) {
 		if data.Has("org") {
 			orgName := data.Get("org")
-			fixtureCreateOrg(t, &org_model.Organization{Name: orgName}, &user_model.User{Name: "orgOwner" + orgName})
+			fixtureCreateOrg(t, &org_model.Organization{Name: orgName}, &user_model.User{Name: "orgOwner" + orgName, AllowCreateOrganization: true})
 			require.NotNil(t, fixtureGetUser(t, orgName))
 		} else if data.Has("user") {
 			fixtureCreateUser(t, &user_model.User{Name: data.Get("user")})
