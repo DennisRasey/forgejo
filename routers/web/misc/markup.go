@@ -24,5 +24,5 @@ func Markup(ctx *context.Context) {
 		IsWiki:     form.Wiki,
 	}
 
-	re.RenderMarkup(ctx.Base, ctx.Repo)
+	re.RenderMarkupWebContext(ctx, ctx.Repo)
 }
