@@ -214,9 +214,9 @@
 	"webauthn.sign_in": "Presione el botón en su clave de seguridad. Si su clave de seguridad no tiene ningún botón, vuelva a insertarla.",
 	"webauthn.insert_key": "Introduzca su clave de seguridad",
 	"counters.n_commits": {
-		"one": "% confirmación de cambios",
-		"many": "% confirmaciones de cambios",
-		"other": "% confirmaciones de cambios"
+		"one": "%s confirmación de cambios",
+		"many": "%s confirmaciones de cambios",
+		"other": "%s confirmaciones de cambios"
 	},
 	"counters.n_branches": {
 		"one": "%s rama",
@@ -1039,5 +1039,25 @@
 	"repo.settings.lfs.no_pointers": "Sin punteros blob en este repositorio.",
 	"org.pending_invite_notification_single_team": "Te invitamos a integrar el equipo %s de esta organización.",
 	"org.pending_invite_notification_multiple_teams": "Te invitamos a unirte a los siguientes equipos de esta organización: %s.",
-	"org.view_invite": "Ver"
+	"org.view_invite": "Ver",
+	"funding.yaml_error.heading_one": "Se produjo un error al interpretar los ajustes de financiación: %[1]s",
+	"funding.yaml_error.heading_few": "Errores al analizar la configuración de financiación:",
+	"funding.yaml_error.unknown_provider": "Proveedor de financiación desconocido: %[1]s",
+	"funding.yaml_error.duplicate_entry": "Entrada duplicada para la clave \"%[1]s\": %[2]s",
+	"funding.yaml_error.n_too_many_providers": "El límite es de hasta %[1]d servicios de donación",
+	"funding.yaml_error.bad_input": "Valor de clave \"%[1]s\" no coincide con el patrón /%[2]s/",
+	"funding.yaml_error.parse_url": "URL no válida en clave \"%[1]s\": %[2]v",
+	"funding.yaml_error.invalid_yaml_type": "Se esperaba una cadena de texto o un vector de cadenas para la clave \"%[1]s\"",
+	"funding.yaml_error.unknown": "Error desconocido: %[1]s",
+	"keys.ssh.disabled": "Un administrador ha desactivado la gestión de claves SSH en esta instancia.",
+	"repo.settings.collaboration.change_access": "Cambiar modo de acceso",
+	"repo.settings.collaboration.none": " Todavía no hay colaboradores.",
+	"funding.action.button": "Donar",
+	"funding.action.title": "Apoya a %[1]s",
+	"funding.action.close": "Cerrar",
+	"funding.config_has_errors": "La <a href=\"%[1]s\">configuración del presupuesto</a> contiene errores.",
+	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Consulta los manuales</a> para más detalles sobre los enlaces de donación.",
+	"org.members.no_public_members": "Sin miembros públicos.",
+	"funding.yaml_error.duplicate_yaml_key": "Clave YAML duplicada: %[1]s",
+	"funding.yaml_error.not_yaml_mapping": "Valor esperado: mapeo YAML. Valor recibido: %s"
 }

@@ -202,9 +202,9 @@
 		"other": "Publicacions %s"
 	},
 	"fork.n_forks": {
-		"one": "%s fork",
-		"many": "%s forks",
-		"other": "%s forks"
+		"one": "%s bifurcació",
+		"many": "%s bifurcacions",
+		"other": "%s bifurcacions"
 	},
 	"stars.n_stars": {
 		"one": "%s estrella",
@@ -272,7 +272,7 @@
 	"migrate.items.milestones": "Fites",
 	"migrate.items.labels": "Etiquetes",
 	"migrate.items.issues": "Problemes",
-	"migrate.items.pull_requests": "Pull requests",
+	"migrate.items.pull_requests": "Sol·licituds d'extracció",
 	"migrate.items.merge_requests": "Sol·licituds de fusió",
 	"migrate.items.releases": "Publicacions",
 	"migrate.in_progress.git": "Migrant dades Git",
@@ -992,7 +992,7 @@
 	"editor.toggle_whole_word": "Commuta coincidir amb paraules senceres",
 	"repo.watching": "Vigilant",
 	"repo.watch.issues": "Incidències",
-	"repo.watch.pull_requests": "Pull requests",
+	"repo.watch.pull_requests": "Sol·licituds d'extracció",
 	"repo.watch.releases": "Publicacions",
 	"repo.watch.releases.hint": "(Només correu electrònic)",
 	"form.RunnerName": "Nom",
@@ -1007,5 +1007,47 @@
 	"admin.auths.oauth2_dyn_group_maps_removal": "Elimina usuaris dinàmicament de tots els grups en què no se l'ha afegit basant-se en mapejats de grup.",
 	"admin.auths.oauth2_quota_group_map": "Mapeja els grups reclamats als grups de quota. (Opcional - requereix el nom de reclamació anterior)",
 	"form.website.valid_url_schemes": "Els esquema d'URL permesos inclouen: %s",
-	"admin.auths.oauth2_quota_group_claim_name": "Nom de reclamació que proveeix noms de grup per aquesta font, que s'usarà per la gestió de quota. (Opcional)"
+	"admin.auths.oauth2_quota_group_claim_name": "Nom de reclamació que proveeix noms de grup per aquesta font, que s'usarà per la gestió de quota. (Opcional)",
+	"repo.settings.lfs.size": "Mida",
+	"repo.settings.lfs.last_update": "Últim canvi",
+	"repo.settings.lfs.no_pointers": "No s'ha trobat cap punter a un blob en aquest repositori.",
+	"mail.team_invite.expiration": {
+		"one": "Aquesta invitació caducarà d'aquí a %d dia.",
+		"many": "Aquesta invitació caducarà d'aquí a %d dies.",
+		"other": "Aquesta invitació caducarà d'aquí a %d dies."
+	},
+	"repo.commit": "Commit",
+	"actions.status.info.blocked": "Bloquejada durant %[1]s",
+	"actions.status.info.cancelled": "S'ha canceŀlat %[1]s després de %[2]s",
+	"actions.status.info.failure": "Ha fallat %[1]s després de %[2]s",
+	"actions.status.info.running": "En execució des de fa",
+	"actions.status.info.success": "Ha acabat amb èxit %[1]s després de %[2]s",
+	"actions.status.info.waiting": {
+		"one": "S'està esperant un runner per a %[1]s amb l'etiqueta %[2]s",
+		"many": "S'està esperant un runner per a %[1]s amb les etiquetes %[2]s",
+		"other": "S'està esperant un runner per a %[1]s amb les etiquetes %[2]s"
+	},
+	"actions.status.info.assigned_runner_link": "S'ha assignat l'executor <a href=\"%[1]s\">%[2]s</a> (%[3]s)",
+	"actions.status.info.assigned_runner_no_link": "S'ha assignat a l'executor %[1]s (%[2]s)",
+	"members.successfully_invited": "S'ha convidat l'usuari/a a l'organització.",
+	"org.teams.hide_membership_to_org": "Amaga la meva pertinença de %s",
+	"repo.size_format.no_lfs": "%[1]s: %[2]s",
+	"repo.branch": "Branca",
+	"org.teams.invite_team_member.expired_list": "Invitacions caducades",
+	"org.teams.invite_expires_on": "caduca a %[1]s",
+	"org.teams.invited_on": "convidat/da a",
+	"org.teams.renew_invite": "Renova",
+	"org.pending_invite_notification_single_team": "Tens una invitació per unir-te a l'equip %s d'aquesta organització.",
+	"org.pending_invite_notification_multiple_teams": "Tens invitacions per unir-te als equips següents d'aquesta organització: %s.",
+	"org.view_invite": "Mostra",
+	"keys.ssh.disabled": "La gestió de claus SSH en aquesta instància ha sigut deshabilitada per un administrador.",
+	"funding.yaml_error.duplicate_entry": "Entrada duplicada per la clau '%s': %s",
+	"funding.yaml_error.n_too_many_providers": "S'esperaven fins a %d proveïdors de finançament",
+	"funding.yaml_error.bad_input": "El valor per la clau '%s' no coincideix amb el patró /%s/",
+	"funding.yaml_error.parse_url": "URL incorrecta per la clau '%s': %v",
+	"funding.yaml_error.invalid_yaml_type": "Tipus incorrecte per la clau '%s', s'esperava una cadena o una llista de cadenes",
+	"funding.yaml_error.unknown": "Error desconegut: %s",
+	"funding.yaml_error.heading_one": "Error en analitzar la configuració del finançament: %s",
+	"funding.yaml_error.heading_few": "Errors analitzant la configuració del finançament:",
+	"funding.yaml_error.unknown_provider": "Proveïdor de finançament desconegut: %s"
 }
