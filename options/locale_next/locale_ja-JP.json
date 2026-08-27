@@ -494,7 +494,7 @@
 	"relativetime.duration.weeks": "%d週間",
 	"relativetime.duration.months": "%dヶ月",
 	"relativetime.duration.years": "%d年",
-	"relativetime.1day": "機能",
+	"relativetime.1day": "昨日",
 	"issues.updated": "%sに更新",
 	"issues.filters.labels.exclude": "ラベルを除外する",
 	"issues.filters.labels.unexclude": "除外をクリア",

@@ -455,7 +455,7 @@
 	"alert.asset_load_failed": "Не удалось получить ресурсы из {path}. Убедитесь, что файлы ресурсов доступны.",
 	"install.invalid_lfs_path": "Не удалось расположить корень LFS по указанному пути: %[1]s",
 	"alert.range_error": " - число должно быть в диапазоне от %[1]s-%[2]s.",
-	"meta.last_line": "This magic string will cause Codeberg Translate to create a new pull request in **the** Forgejo (!) repository. Hi.",
+	"meta.last_line": "This magic string will cause Codeberg Translate to create a new pull request in *the* Forgejo (!) repository. Hi.",
 	"mail.actions.not_successful_run_subject": "Провал раб. потока %[1]s в репозитории %[2]s",
 	"mail.actions.successful_run_after_failure_subject": "Возобновление раб. потока %[1]s в репозитории %[2]s",
 	"mail.actions.run_info_trigger": "Причина срабатывания: %[1]s by: %[2]s",
@@ -999,5 +999,10 @@
 	"org.pending_invite_notification_multiple_teams": "Вы приглашены в следующие команды в этой организации: %s.",
 	"org.view_invite": "Просмотреть",
 	"repo.settings.lfs.no_pointers": "Указатели blob'ов не найдены в репозитории.",
-	"actions.runs.prioritize_run": "Приоритизировать выполнение"
+	"actions.runs.prioritize_run": "Приоритизировать выполнение",
+	"actions.runs.delete.confirm_action": "Вы точно хотите удалить это выполнение?",
+	"actions.runs.deprioritize_run": "Деприоритизировать",
+	"actions.runs.options": "Опции",
+	"actions.runs.prioritization_success": "Выполнение #%d теперь приоритизовано.",
+	"actions.runs.deprioritization_success": "Выполнение #%d теперь не приоритизовано."
 }

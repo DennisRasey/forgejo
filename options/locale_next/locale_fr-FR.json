@@ -881,5 +881,51 @@
 	"actions.runs.options": "Options",
 	"actions.runs.prioritization_success": "L'exécution du workflow #%d est maintenant priorisée.",
 	"actions.runs.deprioritization_success": "L'exécution du workflow #%d ne sera plus priorisée.",
-	"actions.jobs.not_started": "pas commencé"
+	"actions.jobs.not_started": "pas commencé",
+	"relativetime.duration.secs": {
+		"one": "%d seconde",
+		"many": "%d secondes",
+		"other": "%d secondes"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minute",
+		"many": "%d minutes",
+		"other": "%d minutes"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d heure",
+		"many": "%d heures",
+		"other": "%d heures"
+	},
+	"relativetime.duration.days": {
+		"one": "%d jour",
+		"many": "%d jours",
+		"other": "%d jours"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d semaine",
+		"many": "%d semaines",
+		"other": "%d semaines"
+	},
+	"relativetime.duration.months": {
+		"one": "%d mois",
+		"many": "%d mois",
+		"other": "%d mois"
+	},
+	"relativetime.duration.years": {
+		"one": "%d année",
+		"many": "%d ans",
+		"other": "%d ans"
+	},
+	"repo.files.caption": "Fichiers du dépôt (dernière modification en premier)",
+	"repo.empty_commit_message": "Message de commit vide",
+	"repo.issues.context.copy_markdown": "Copier le Markdown",
+	"repo.settings.lfs.size": "Taille",
+	"repo.settings.lfs.last_update": "Dernière mise à jour",
+	"repo.settings.lfs.no_pointers": "Aucun pointeur « blob » n'a été trouvé dans ce référentiel.",
+	"repo.settings.units.more_units_disable_hint": "L'astuce « En savoir plus » peut être désactivée dans <a href=\"%s\">Paramètres utilisateur > Apparence</a>.",
+	"repo.settings.collaboration.change_access": "Modifier le mode d'accès",
+	"repo.settings.collaboration.none": " Il n'y a pas encore de collaborateurs.",
+	"keys.ssh.disabled": "La gestion des clés SSH a été désactivée sur cette instance par un administrateur.",
+	"admin.federation.hosts.title": "La Fédération accueille"
 }
