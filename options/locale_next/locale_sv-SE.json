@@ -1158,7 +1158,7 @@
 	"repo.settings.collaboration.none": " Det finns inga medarbetare än.",
 	"funding.action.button": "Donera",
 	"funding.action.title": "Donera till %[1]s",
-	"funding.action.close": "Stäng",
+	"modal.close": "Stäng",
 	"funding.config_has_errors": "<a href=\"%[1]s\">Finansieringskonfigurationen</a> innehåller fel.",
 	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Se dokumentationen</a> för mer information om donationslänkar."
 }

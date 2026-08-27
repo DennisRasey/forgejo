@@ -1189,7 +1189,7 @@
 	"org.members.no_public_members": "Zatím zde nejsou žádní veřejní členové.",
 	"funding.action.button": "Finančně přispět",
 	"funding.action.title": "Finančně přispět %[1]s",
-	"funding.action.close": "Zavřít",
+	"modal.close": "Zavřít",
 	"funding.config_has_errors": "<a href=\"%[1]s\">Konfigurace financování</a> obsahuje chyby.",
 	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Podívejte se do dokumentace</a> pro více podrobností o darovacích odkazech.",
 	"funding.yaml_error.duplicate_yaml_key": "Duplicitní klíč YAML: %[1]s",

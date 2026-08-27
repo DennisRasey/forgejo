@@ -1188,7 +1188,7 @@
 	"repo.settings.collaboration.none": " Todavía no hay colaboradores.",
 	"funding.action.button": "Donar",
 	"funding.action.title": "Apoya a %[1]s",
-	"funding.action.close": "Cerrar",
+	"modal.close": "Cerrar",
 	"funding.config_has_errors": "La <a href=\"%[1]s\">configuración del presupuesto</a> contiene errores.",
 	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Consulta los manuales</a> para más detalles sobre los enlaces de donación.",
 	"org.members.no_public_members": "Sin miembros públicos.",

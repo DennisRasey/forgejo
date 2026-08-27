@@ -1158,7 +1158,7 @@
 	"repo.settings.collaboration.none": " Derzeit gibt es keine Mitarbeiter.",
 	"funding.action.button": "Spende",
 	"funding.action.title": "Spende an %[1]s",
-	"funding.action.close": "Schließen",
+	"modal.close": "Schließen",
 	"funding.config_has_errors": "Die <a href=\"%[1]s\">Spendenkonfiguration</a> enthält Fehler.",
 	"funding.docs": "Weitere Informationen zu Spendenlinks finden Sie <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">in der Dokumentation</a>.",
 	"org.members.no_public_members": "Es gibt noch keine öffentlichen Mitglieder.",

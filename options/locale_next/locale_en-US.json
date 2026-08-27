@@ -1080,10 +1080,8 @@
 	"funding.yaml_error.unknown": "Unknown error: %[1]s",
 	"funding.action.button": "Donate",
 	"funding.action.title": "Donate to %[1]s",
-	"funding.action.close": "Close",
 	"funding.config_has_errors": "The <a href=\"%[1]s\">funding config</a> contains errors.",
 	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">See the documentation</a> for more details on donation links.",
-	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it.",
 	"mde.buttons.heading.tooltip": "Add heading",
 	"mde.buttons.bold.tooltip": "Add bold text (Ctrl+B / ⌘B)",
 	"mde.buttons.italic.tooltip": "Add italic text (Ctrl+I / ⌘I)",
@@ -1165,5 +1163,7 @@
 		"one": "This branch is %[1]d commit behind %[2]s",
 		"other": "This branch is %[1]d commits behind %[2]s"
 	},
-	"sync_fork.sync.button": "Sync"
+	"sync_fork.sync.button": "Sync",
+	"modal.close": "Close",
+	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it."
 }

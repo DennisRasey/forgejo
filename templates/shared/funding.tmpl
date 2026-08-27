@@ -2,7 +2,7 @@
 	<article>
 		<header>
 			<span role="heading" aria-level="1" id="funding-modal-header">{{ctx.Locale.Tr "funding.action.title" .FundingTarget}}</span>
-			<button type="button" command="close" commandfor="funding-modal" aria-label="{{ctx.Locale.Tr "funding.action.close"}}" class="toast-close">{{svg "octicon-x" 24}}</button>
+			<button type="button" command="close" commandfor="funding-modal" aria-label="{{ctx.Locale.Tr "modal.close"}}" class="toast-close">{{svg "octicon-x" 24}}</button>
 		</header>
 		<div class="content">
 			{{if .FundingHasErrors}}

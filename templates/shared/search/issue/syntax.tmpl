@@ -1,5 +1,5 @@
-<a class="ui icon tw-px-4 tw-py-2 show-modal" data-modal="#search-syntax-modal">{{svg "octicon-question"}}</a>
-<dialog id="search-syntax-modal">
+<button type="button" class="ui text primary btn tw-px-4 tw-py-2" command="show-modal" commandfor="search-syntax-modal" aria-label="{{ctx.Locale.Tr "search.syntax"}}">{{svg "octicon-question"}}</button>
+<dialog id="search-syntax-modal" closedby="any">
 	<article>
 		<header>{{ctx.Locale.Tr "search.syntax"}}</header>
 		<div class="content">
@@ -25,7 +25,7 @@
 			</dl>
 		</div>
 		<footer class="actions">
-			<button class="secondary button cancel">{{ctx.Locale.Tr "settings.cancel"}}</button>
+			<button type="button" class="secondary button" command="close" commandfor="search-syntax-modal">{{ctx.Locale.Tr "modal.close"}}</button>
 		</footer>
 	</article>
 </dialog>

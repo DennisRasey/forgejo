@@ -1186,7 +1186,7 @@
 	"keys.ssh.disabled": "Керування ключами SSH вимкнено адміністрацією екземпляра.",
 	"repo.settings.collaboration.none": " Співавторів ще немає.",
 	"repo.settings.collaboration.change_access": "Змінити режим доступу",
-	"funding.action.close": "Закрити",
+	"modal.close": "Закрити",
 	"funding.action.title": "Пожертвувати %[1]s",
 	"funding.action.button": "Пожертвувати",
 	"funding.config_has_errors": "У <a href=\"%[1]s\">конфігурації фінансування</a> є помилки.",

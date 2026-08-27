@@ -49,85 +49,140 @@ test('Dialog modal', async ({page}) => {
   await expect(page).toHaveURL(`/user2/repo1/src/branch/master/${filename}`);
 });
 
-test('Dialog modal: width', async ({page, isMobile}) => {
-  await page.goto('/-/demo/modal');
+for (const run of [
+  {title: 'JS off', useJs: false},
+  {title: 'JS on', useJs: true},
+]) {
+  test.describe(`Dialog modal (${run.title})`, () => {
+    test.use({javaScriptEnabled: run.useJs});
 
-  // Open modal with short content
-  const shortModal = page.locator('#short-modal');
-  await expect(shortModal).toBeHidden();
-  await page.locator('button[data-modal="#short-modal"]').click();
-  await expect(shortModal).toBeVisible();
-
-  // Check it's width
-  let width = Math.round((await shortModal.boundingBox()).width);
-  if (isMobile) {
-    // Bound by viewport width
-    expect(width).toBeLessThan(400);
-  } else {
-    // Bound by min-width
-    expect(width).toBe(400);
-  }
-
-  // Open modal with medium sized content
-  await shortModal.locator('button.cancel').click();
-  const mediumModal = page.locator('#medium-modal');
-  await expect(mediumModal).toBeHidden();
-  await page.locator('button[data-modal="#medium-modal"]').click();
-  await expect(mediumModal).toBeVisible();
-
-  // Check it's width
-  width = Math.round((await mediumModal.boundingBox()).width);
-  if (isMobile) {
-    // Bound by viewport width
-    expect(width).toBeLessThan(400);
-  } else {
-    // Not bound by min-width or max-width
-    expect(width).toBeLessThan(800);
-    expect(width).toBeGreaterThan(400);
-  }
-
-  // Open modal with long content
-  await mediumModal.locator('button.cancel').click();
-  const longModal = page.locator('#long-modal');
-  await expect(longModal).toBeHidden();
-  await page.locator('button[data-modal="#long-modal"]').click();
-  await expect(longModal).toBeVisible();
-
-  // Check it's width
-  width = Math.round((await longModal.boundingBox()).width);
-  if (isMobile) {
-    // Bound by viewport width
-    expect(width).toBeLessThan(400);
-  } else {
-    // Bound by max-width
-    expect(width).toBe(800);
-  }
-});
-
-const sizeCases = [208, 310, 400, 600] as const;
-for (const width of sizeCases) {
-  for (const height of sizeCases) {
-    test(`Dialog modal: all content scrollable in ${width}x${height} px viewport`, async ({page}) => {
-      await page.setViewportSize({width, height});
+    test('width', async ({page, isMobile}) => {
       await page.goto('/-/demo/modal');
 
+      // Open modal with short content
+      const shortModal = page.locator('#short-modal');
+      await expect(shortModal).toBeHidden();
+      await page.locator('button[command="show-modal"][commandfor="short-modal"]').click();
+      await expect(shortModal).toBeVisible();
+
+      // Check it's width
+      let width = Math.round((await shortModal.boundingBox()).width);
+      if (isMobile) {
+        // Bound by viewport width
+        expect(width).toBeLessThan(400);
+      } else {
+        // Bound by min-width
+        expect(width).toBe(400);
+      }
+
+      // Open modal with medium sized content
+      await shortModal.locator('button[command="close"]').click();
+      const mediumModal = page.locator('#medium-modal');
+      await expect(mediumModal).toBeHidden();
+      await page.locator('button[command="show-modal"][commandfor="medium-modal"]').click();
+      await expect(mediumModal).toBeVisible();
+
+      // Check it's width
+      width = Math.round((await mediumModal.boundingBox()).width);
+      if (isMobile) {
+        // Bound by viewport width
+        expect(width).toBeLessThan(400);
+      } else {
+        // Not bound by min-width or max-width
+        expect(width).toBeLessThan(800);
+        expect(width).toBeGreaterThan(400);
+      }
+
       // Open modal with long content
+      await mediumModal.locator('button[command="close"]').click();
       const longModal = page.locator('#long-modal');
       await expect(longModal).toBeHidden();
-      await page.locator('button[data-modal="#long-modal"]').click();
+      await page.locator('button[command="show-modal"][commandfor="long-modal"]').click();
       await expect(longModal).toBeVisible();
 
-      // Make sure the heading is reachable
-      const header = page.locator('header').filter({hasText: 'Long modal'});
-      await header.scrollIntoViewIfNeeded();
-      await expect(header).toBeVisible();
-      await expect(header).toBeInViewport({ratio: 1});
-
-      // Make sure the Cancel button is reachable
-      const cancelButton = longModal.locator('button.cancel');
-      await longModal.evaluate((v) => v.scrollTo(0, v.scrollHeight)); // scroll to bottom, even if button is partly visible
-      await expect(header).toBeVisible();
-      await expect(cancelButton).toBeInViewport({ratio: 1});
+      // Check it's width
+      width = Math.round((await longModal.boundingBox()).width);
+      if (isMobile) {
+        // Bound by viewport width
+        expect(width).toBeLessThan(400);
+      } else {
+        // Bound by max-width
+        expect(width).toBe(800);
+      }
     });
-  }
+
+    for (const size of ['short', 'medium', 'long']) {
+      test.describe(`${size}-modal`, () => {
+        const id = `${size}-modal`;
+        const sel = `#${id}`;
+
+        test('disappears on Esc', async ({page}) => {
+          await page.goto('/-/demo/modal');
+
+          const modal = page.locator(sel);
+          await expect(modal).toBeHidden();
+          await page.locator(`button[command="show-modal"][commandfor="${id}"]`).click();
+          await expect(modal).toBeVisible();
+
+          await page.keyboard.press('Escape');
+          await expect(modal).toBeHidden();
+        });
+
+        test('disappears on Cancel button', async ({page}) => {
+          await page.goto('/-/demo/modal');
+
+          const modal = page.locator(sel);
+          await expect(modal).toBeHidden();
+          await page.locator(`button[command="show-modal"][commandfor="${id}"]`).click();
+          await expect(modal).toBeVisible();
+
+          await modal.locator('button[command="close"]').click();
+          await expect(modal).toBeHidden();
+        });
+
+        test('disappears on click outside', async ({page}) => {
+          await page.goto('/-/demo/modal');
+
+          const modal = page.locator(sel);
+          await expect(modal).toBeHidden();
+          await page.locator(`button[command="show-modal"][commandfor="${id}"]`).click();
+          await expect(modal).toBeVisible();
+
+          const box = await modal.boundingBox();
+          await page.mouse.click(box.x + 2, box.y + 2); // clicking the modal itself does nothing
+          await expect(modal).toBeVisible();
+          await page.mouse.click(box.x - 1, box.y);
+          await expect(modal).toBeHidden();
+        });
+      });
+    }
+
+    const sizeCases = [208, 310, 400, 600] as const;
+    for (const width of sizeCases) {
+      for (const height of sizeCases) {
+        test(`all content scrollable in ${width}x${height} px viewport`, async ({page}) => {
+          await page.setViewportSize({width, height});
+          await page.goto('/-/demo/modal');
+
+          // Open modal with long content
+          const longModal = page.locator('#long-modal');
+          await expect(longModal).toBeHidden();
+          await page.locator('button[command="show-modal"][commandfor="long-modal"]').click();
+          await expect(longModal).toBeVisible();
+
+          // Make sure the heading is reachable
+          const header = page.locator('header').filter({hasText: 'Long modal'});
+          await header.scrollIntoViewIfNeeded();
+          await expect(header).toBeVisible();
+          await expect(header).toBeInViewport({ratio: 1});
+
+          // Make sure the Cancel button is reachable
+          const cancelButton = longModal.locator('button[command="close"]');
+          await longModal.evaluate((v) => v.scrollTo(0, v.scrollHeight)); // scroll to bottom, even if button is partly visible
+          await expect(header).toBeVisible();
+          await expect(cancelButton).toBeInViewport({ratio: 1});
+        });
+      }
+    }
+  });
 }

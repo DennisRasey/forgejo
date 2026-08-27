@@ -1158,7 +1158,7 @@
 	"repo.settings.collaboration.none": " Dat gifft noch keene Mitarbeiders.",
 	"funding.action.button": "Spenden",
 	"funding.action.title": "An %[1]s spenden",
-	"funding.action.close": "Dichtmaken",
+	"modal.close": "Dichtmaken",
 	"funding.config_has_errors": "De <a href=\"%[1]s\">Finanzerens-Instellen</a> enthollt Fehlers.",
 	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Bekiek de Dokumenteren</a> för mehr Informatioonen över Spenden-Verwiesen.",
 	"org.members.no_public_members": "Dat gifft noch keene publiken Liddmatens.",
