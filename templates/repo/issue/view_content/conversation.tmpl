@@ -20,17 +20,17 @@
 				<button id="show-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="{{if not $resolved}}tw-hidden {{end}}show-outdated">
 					{{svg "octicon-unfold" 16 "tw-mr-2"}}
 					{{if $resolved}}
-						{{ctx.Locale.Tr "repo.issues.review.show_resolved"}}
+						{{ctx.Locale.Tr "review.resolved.show"}}
 					{{else}}
-						{{ctx.Locale.Tr "repo.issues.review.show_outdated"}}
+						{{ctx.Locale.Tr "review.outdated.show"}}
 					{{end}}
 				</button>
 				<button id="hide-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="{{if $resolved}}tw-hidden {{end}}hide-outdated">
 					{{svg "octicon-fold" 16 "tw-mr-2"}}
 					{{if $resolved}}
-						{{ctx.Locale.Tr "repo.issues.review.hide_resolved"}}
+						{{ctx.Locale.Tr "review.resolved.hide"}}
 					{{else}}
-						{{ctx.Locale.Tr "repo.issues.review.hide_outdated"}}
+						{{ctx.Locale.Tr "review.outdated.hide"}}
 					{{end}}
 				</button>
 			{{end}}

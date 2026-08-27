@@ -1,4 +1,20 @@
 {
+	"mirror_settings.header": "Подешавања огледала",
+	"file_editor.preview_changes": "Преглед промена",
+	"counters.n_following": {
+		"one": "%d пратим",
+		"many": "%d пратим"
+	},
+	"counters.n_followers": {
+		"one": "%d пратилац",
+		"many": "%d пратиоца"
+	},
+	"issues.search.sort.leastcomment": "Најмање коментара",
+	"issues.search.sort.mostcomment": "Највише коментара",
+	"issues.search.sort.leastupdate": "Давно ажуриано",
+	"issues.search.sort.recentupdate": "Недавно ажурирано",
+	"issues.search.sort.oldest": "Најстарије",
+	"issues.search.sort.latest": "Најновије",
 	"admin.config.db.path": "Пут",
 	"admin.config.db.name": "Име",
 	"admin.config.db.host": "Хост",

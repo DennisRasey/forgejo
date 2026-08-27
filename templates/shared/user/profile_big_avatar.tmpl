@@ -22,7 +22,7 @@
 		<span class="username">{{.ContextUser.Name}} {{if .ContextUser.GetPronouns .IsSigned}} · {{.ContextUser.GetPronouns .IsSigned}}{{end}}</span>
 		<div class="tw-mt-2 tw-flex tw-items-center tw-gap-2 tw-justify-center">
 			<span>
-				<a class="muted" href="{{.ContextUser.HomeLink}}?tab=followers">{{svg "octicon-people" 18 "tw-mr-1"}}{{ctx.Locale.TrN .NumFollowers "user.followers_one" "user.followers_few" .NumFollowers}}</a> · <a class="muted" href="{{.ContextUser.HomeLink}}?tab=following">{{ctx.Locale.TrN .NumFollowing "user.following_one" "user.following_few" .NumFollowing}}</a>
+				<a class="muted" href="{{.ContextUser.HomeLink}}?tab=followers">{{svg "octicon-people" 18 "tw-mr-1"}}{{ctx.Locale.TrPluralString .NumFollowers "counters.n_followers" .NumFollowers}}</a> · <a class="muted" href="{{.ContextUser.HomeLink}}?tab=following">{{ctx.Locale.TrPluralString .NumFollowing "counters.n_following" .NumFollowing}}</a>
 			</span>
 			{{if not $showFollow}}
 				{{template "shared/user/actions_menu" .}}

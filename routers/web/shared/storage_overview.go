@@ -30,31 +30,31 @@ func StorageOverview(ctx *context.Context, userID int64, tpl base.TplName) {
 	ctx.Data["PrettySubject"] = func(subject quota_model.LimitSubject) template.HTML {
 		switch subject {
 		case quota_model.LimitSubjectSizeAll:
-			return ctx.Locale.Tr("settings.quota.sizes.all")
+			return ctx.Locale.Tr("quota.sizes.all")
 		case quota_model.LimitSubjectSizeReposAll:
-			return ctx.Locale.Tr("settings.quota.sizes.repos.all")
+			return ctx.Locale.Tr("quota.sizes.repos.all")
 		case quota_model.LimitSubjectSizeReposPublic:
-			return ctx.Locale.Tr("settings.quota.sizes.repos.public")
+			return ctx.Locale.Tr("quota.sizes.repos.public")
 		case quota_model.LimitSubjectSizeReposPrivate:
-			return ctx.Locale.Tr("settings.quota.sizes.repos.private")
+			return ctx.Locale.Tr("quota.sizes.repos.private")
 		case quota_model.LimitSubjectSizeGitAll:
-			return ctx.Locale.Tr("settings.quota.sizes.git.all")
+			return ctx.Locale.Tr("quota.sizes.git.all")
 		case quota_model.LimitSubjectSizeGitLFS:
-			return ctx.Locale.Tr("settings.quota.sizes.git.lfs")
+			return ctx.Locale.Tr("quota.sizes.git.lfs")
 		case quota_model.LimitSubjectSizeAssetsAll:
-			return ctx.Locale.Tr("settings.quota.sizes.assets.all")
+			return ctx.Locale.Tr("quota.sizes.assets.all")
 		case quota_model.LimitSubjectSizeAssetsAttachmentsAll:
-			return ctx.Locale.Tr("settings.quota.sizes.assets.attachments.all")
+			return ctx.Locale.Tr("quota.sizes.assets.attachments.all")
 		case quota_model.LimitSubjectSizeAssetsAttachmentsIssues:
-			return ctx.Locale.Tr("settings.quota.sizes.assets.attachments.issues")
+			return ctx.Locale.Tr("quota.sizes.assets.attachments.issues")
 		case quota_model.LimitSubjectSizeAssetsAttachmentsReleases:
-			return ctx.Locale.Tr("settings.quota.sizes.assets.attachments.releases")
+			return ctx.Locale.Tr("quota.sizes.assets.attachments.releases")
 		case quota_model.LimitSubjectSizeAssetsArtifacts:
-			return ctx.Locale.Tr("settings.quota.sizes.assets.artifacts")
+			return ctx.Locale.Tr("quota.sizes.assets.artifacts")
 		case quota_model.LimitSubjectSizeAssetsPackagesAll:
-			return ctx.Locale.Tr("settings.quota.sizes.assets.packages.all")
+			return ctx.Locale.Tr("quota.sizes.assets.packages.all")
 		case quota_model.LimitSubjectSizeWiki:
-			return ctx.Locale.Tr("settings.quota.sizes.wiki")
+			return ctx.Locale.Tr("quota.sizes.wiki")
 		default:
 			panic("unrecognized subject: " + subject.String())
 		}

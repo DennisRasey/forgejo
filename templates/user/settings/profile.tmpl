@@ -61,25 +61,25 @@
 					<legend id="privacy-user-settings">{{ctx.Locale.Tr "settings.privacy"}}</legend>
 
 					<label id="visibility-setting" {{if .Err_Visibility}}class="field error"{{end}}>
-						{{ctx.Locale.Tr "settings.visibility"}}
+						{{ctx.Locale.Tr "user.visibility.label"}}
 						<div class="ui selection type dropdown" aria-labelledby="visibility-setting">
 							{{if .SignedUser.Visibility.IsPublic}}<input type="hidden" id="visibility" name="visibility" value="0">{{end}}
 							{{if .SignedUser.Visibility.IsLimited}}<input type="hidden" id="visibility" name="visibility" value="1">{{end}}
 							{{if .SignedUser.Visibility.IsPrivate}}<input type="hidden" id="visibility" name="visibility" value="2">{{end}}
 							<div class="text">
-								{{if .SignedUser.Visibility.IsPublic}}{{ctx.Locale.Tr "settings.visibility.public"}}{{end}}
-								{{if .SignedUser.Visibility.IsLimited}}{{ctx.Locale.Tr "settings.visibility.limited"}}{{end}}
-								{{if .SignedUser.Visibility.IsPrivate}}{{ctx.Locale.Tr "settings.visibility.private"}}{{end}}
+								{{if .SignedUser.Visibility.IsPublic}}{{ctx.Locale.Tr "user.visibility.public.title"}}{{end}}
+								{{if .SignedUser.Visibility.IsLimited}}{{ctx.Locale.Tr "user.visibility.limited.title"}}{{end}}
+								{{if .SignedUser.Visibility.IsPrivate}}{{ctx.Locale.Tr "user.visibility.private.title"}}{{end}}
 							</div>
 							{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 							<div class="menu">
 								{{range $mode := .AllowedUserVisibilityModes}}
 									{{if $mode.IsPublic}}
-										<div class="item" data-tooltip-content="{{ctx.Locale.Tr "settings.visibility.public_tooltip"}}" data-value="0">{{ctx.Locale.Tr "settings.visibility.public"}}</div>
+										<div class="item" data-tooltip-content="{{ctx.Locale.Tr "user.visibility.public.tooltip"}}" data-value="0">{{ctx.Locale.Tr "user.visibility.public.title"}}</div>
 									{{else if $mode.IsLimited}}
-										<div class="item" data-tooltip-content="{{ctx.Locale.Tr "settings.visibility.limited_tooltip"}}" data-value="1">{{ctx.Locale.Tr "settings.visibility.limited"}}</div>
+										<div class="item" data-tooltip-content="{{ctx.Locale.Tr "user.visibility.limited.tooltip"}}" data-value="1">{{ctx.Locale.Tr "user.visibility.limited.title"}}</div>
 									{{else if $mode.IsPrivate}}
-										<div class="item" data-tooltip-content="{{ctx.Locale.Tr "settings.visibility.private_tooltip"}}" data-value="2">{{ctx.Locale.Tr "settings.visibility.private"}}</div>
+										<div class="item" data-tooltip-content="{{ctx.Locale.Tr "user.visibility.private.tooltip"}}" data-value="2">{{ctx.Locale.Tr "user.visibility.private.title"}}</div>
 									{{end}}
 								{{end}}
 							</div>

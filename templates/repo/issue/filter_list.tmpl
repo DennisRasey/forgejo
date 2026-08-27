@@ -154,7 +154,7 @@
 		{{end}}
 
 		{{range $opt := StringUtils.Make "relevance" "latest" "oldest" "recentupdate" "leastupdate" "mostcomment" "leastcomment" "nearduedate" "farduedate"}}
-			{{$text := ctx.Locale.Tr (printf "repo.issues.filter_sort.%s" $opt)}}
+			{{$text := ctx.Locale.Tr (printf "issues.search.sort.%s" $opt)}}
 			<a rel="nofollow" class="{{if eq $sortType $opt}}active {{end}}item" href="?q={{$keyword}}&type={{$.ViewType}}&sort={{$opt}}&state={{$.State}}&labels={{$.SelectLabels}}&milestone={{$.MilestoneID}}&project={{$.ProjectID}}&assignee={{$.AssigneeID}}&poster={{$.PosterID}}{{if $.ShowArchivedLabels}}&archived=true{{end}}">{{$text}}</a>
 		{{end}}
 	</div>

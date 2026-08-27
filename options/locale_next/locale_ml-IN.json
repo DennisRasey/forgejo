@@ -1,4 +1,10 @@
 {
+	"milestone.filter_sort.least_issues": "കുറഞ്ഞ ഇഷ്യൂകളെങ്കിലും",
+	"milestone.filter_sort.most_issues": "മിക്ക ഇഷ്യൂകളും",
+	"file_editor.preview_changes": "മാറ്റങ്ങൾ കാണുക",
+	"file_editor.edit_file": "ഫയൽ തിരുത്തുക",
+	"file_editor.upload_file": "ഫയൽ അപ്‌ലോഡ്",
+	"file_editor.new_file": "പുതിയ ഫയൽ",
 	"admin.repos.issues": "ഇഷ്യൂകള്‍",
 	"migrate.items.label": "മൈഗ്രേഷൻ ഇനങ്ങൾ",
 	"migrate.items.wiki": "വിക്കി",

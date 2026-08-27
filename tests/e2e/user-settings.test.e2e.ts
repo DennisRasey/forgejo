@@ -31,7 +31,7 @@ test('User: Profile settings', async ({browser}, workerInfo) => {
   await page.getByPlaceholder('Tell others a little bit').press('Tab');
   await page.getByLabel('Website').fill('https://forgejo.org');
   await page.getByPlaceholder('Share your approximate').fill('on a computer chip');
-  await page.getByLabel('User visibility').click();
+  await page.getByLabel('Profile visibility').click();
   await page.getByLabel('Visible only to signed-in').click();
   await page.getByLabel('Hide email address Email address will').uncheck();
   await page.getByLabel('Hide activity from profile').check();
@@ -54,7 +54,7 @@ test('User: Profile settings', async ({browser}, workerInfo) => {
 
   await page.goto('/user/settings');
   await page.locator('input[list="pronouns"]').fill('rob/ot');
-  await page.getByLabel('User visibility').click();
+  await page.getByLabel('Profile visibility').click();
   await page.getByLabel('Visible to everyone').click();
   await page.getByLabel('Hide email address Email address will').check();
   await page.getByLabel('Hide activity from profile').uncheck();

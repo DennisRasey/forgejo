@@ -98,7 +98,7 @@
 
 		{{if $showMirrorSettings}}
 			<h4 class="ui top attached header">
-				{{ctx.Locale.Tr "repo.settings.mirror_settings"}}
+				{{ctx.Locale.Tr "mirror_settings.header"}}
 			</h4>
 			<div class="ui attached segment">
 				{{if .Repository.IsArchived}}
@@ -107,34 +107,34 @@
 					</div>
 				{{else}}
 					{{if $newMirrorsEntirelyEnabled}}
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pushing-to-a-remote-repository">{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.doc_link_title"}}</a><br><br>
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.pull_mirror_instructions"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.doc_link_pull_section"}}</a><br>
+						{{ctx.Locale.Tr "mirror_settings.docs.summary"}}
+						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pushing-to-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br><br>
+						{{ctx.Locale.Tr "mirror_settings.docs.pull_mirror_instructions"}}
+						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_pull_section"}}</a><br>
 					{{else if $onlyNewPushMirrorsEnabled}}
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.disabled_pull_mirror.instructions"}}
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.more_information_if_disabled"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.doc_link_title"}}</a><br>
+						{{ctx.Locale.Tr "mirror_settings.docs.disabled_pull_mirror.instructions"}}
+						{{ctx.Locale.Tr "mirror_settings.docs.more_information_if_disabled"}}
+						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br>
 					{{else if $onlyNewPullMirrorsEnabled}}
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.disabled_push_mirror.instructions"}}
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.disabled_push_mirror.pull_mirror_warning"}}
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.more_information_if_disabled"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.doc_link_title"}}</a><br><br>
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.disabled_push_mirror.info"}}
+						{{ctx.Locale.Tr "mirror_settings.docs.disabled_push_mirror.instructions"}}
+						{{ctx.Locale.Tr "mirror_settings.docs.disabled_push_mirror.pull_mirror_warning"}}
+						{{ctx.Locale.Tr "mirror_settings.docs.more_information_if_disabled"}}
+						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br><br>
+						{{ctx.Locale.Tr "mirror_settings.docs.disabled_push_mirror.info"}}
 						{{if $existingPushMirror}}
-							{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.can_still_use"}}
+							{{ctx.Locale.Tr "mirror_settings.docs.can_still_use"}}
 						{{end}}
 					{{else}}
-						{{ctx.Locale.Tr "repo.settings.mirror_settings.docs.no_new_mirrors"}} {{ctx.Locale.Tr "repo.settings.mirror_settings.docs.can_still_use"}}<br>
+						{{ctx.Locale.Tr "mirror_settings.docs.no_new_mirrors"}} {{ctx.Locale.Tr "mirror_settings.docs.can_still_use"}}<br>
 					{{end}}
 
 					{{if .Repository.IsMirror}}
 					<table class="ui table">
 						<thead>
 							<tr>
-								<th class="tw-w-2/5">{{ctx.Locale.Tr "repo.settings.mirror_settings.mirrored_repository"}}</th>
-								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.direction"}}</th>
-								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.last_update"}}</th>
+								<th class="tw-w-2/5">{{ctx.Locale.Tr "mirror_settings.mirrored_repository"}}</th>
+								<th>{{ctx.Locale.Tr "mirror_settings.direction.header"}}</th>
+								<th>{{ctx.Locale.Tr "mirror_settings.last_update"}}</th>
 								<th>{{ctx.Locale.Tr "repo.mirror_public_key"}}</th>
 								<th></th>
 							</tr>
@@ -144,7 +144,7 @@
 							<tbody>
 								<tr>
 									<td colspan="4">
-										<div class="text red tw-py-4">{{ctx.Locale.Tr "repo.settings.mirror_settings.direction.pull"}}: {{ctx.Locale.Tr "error.occurred"}}</div>
+										<div class="text red tw-py-4">{{ctx.Locale.Tr "mirror_settings.direction.pull"}}: {{ctx.Locale.Tr "error.occurred"}}</div>
 									</td>
 								</tr>
 							</tbody>
@@ -153,7 +153,7 @@
 						<tbody>
 							<tr>
 								<td>{{$address.Address}}</td>
-								<td>{{ctx.Locale.Tr "repo.settings.mirror_settings.direction.pull"}}</td>
+								<td>{{ctx.Locale.Tr "mirror_settings.direction.pull"}}</td>
 								<td>{{DateUtils.FullTime .PullMirror.UpdatedUnix}}</td>
 								<td class="right aligned">
 									<form method="post" class="tw-inline-block">
@@ -228,9 +228,9 @@
 					<table class="ui table">
 						<thead>
 							<tr>
-								<th class="tw-w-2/5">{{ctx.Locale.Tr "repo.settings.mirror_settings.pushed_repository"}}</th>
-								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.direction"}}</th>
-								<th>{{ctx.Locale.Tr "repo.settings.mirror_settings.last_update"}}</th>
+								<th class="tw-w-2/5">{{ctx.Locale.Tr "mirror_settings.pushed_repository"}}</th>
+								<th>{{ctx.Locale.Tr "mirror_settings.direction.header"}}</th>
+								<th>{{ctx.Locale.Tr "mirror_settings.last_update"}}</th>
 								<th>{{ctx.Locale.Tr "repo.mirror_public_key"}}</th>
 								<th></th>
 							</tr>
@@ -239,14 +239,14 @@
 							{{range .PushMirrors}}
 							<tr>
 								<td class="tw-break-anywhere">{{.RemoteAddress}}</td>
-								<td>{{ctx.Locale.Tr "repo.settings.mirror_settings.direction.push"}}</td>
+								<td>{{ctx.Locale.Tr "mirror_settings.direction.push"}}</td>
 								<td>{{if .LastUpdateUnix}}{{DateUtils.FullTime .LastUpdateUnix}}{{else}}{{ctx.Locale.Tr "never"}}{{end}} {{if .LastError}}<div class="ui red label" data-tooltip-content="{{.LastError}}">{{ctx.Locale.Tr "error"}}</div>{{end}}</td>
-								<td>{{if not (eq (len .GetPublicKey) 0)}}<a data-clipboard-text="{{.GetPublicKey}}">{{ctx.Locale.Tr "repo.settings.mirror_settings.push_mirror.copy_public_key"}}</a>{{else}}{{ctx.Locale.Tr "repo.settings.mirror_settings.push_mirror.none_ssh"}}{{end}}</td>
+								<td>{{if not (eq (len .GetPublicKey) 0)}}<a data-clipboard-text="{{.GetPublicKey}}">{{ctx.Locale.Tr "mirror_settings.push_mirror.copy_public_key"}}</a>{{else}}{{ctx.Locale.Tr "mirror_settings.push_mirror.none_ssh"}}{{end}}</td>
 								<td class="right aligned">
 									<button
 										class="ui tiny button show-modal"
 										data-modal="#push-mirror-edit-modal"
-										data-tooltip-content="{{ctx.Locale.Tr "repo.settings.mirror_settings.push_mirror.edit_sync_time"}}"
+										data-tooltip-content="{{ctx.Locale.Tr "mirror_settings.push_mirror.edit_sync_time"}}"
 										data-modal-push-mirror-edit-id="{{.ID}}"
 										data-modal-push-mirror-edit-interval="{{.Interval}}"
 										data-modal-push-mirror-edit-address="{{.RemoteAddress}}"
@@ -268,7 +268,7 @@
 							</tr>
 							{{else}}
 							<tr>
-								<td>{{ctx.Locale.Tr "repo.settings.mirror_settings.push_mirror.none"}}</td>
+								<td>{{ctx.Locale.Tr "mirror_settings.push_mirror.none"}}</td>
 							</tr>
 							{{end}}
 							{{if (not .DisableNewPushMirrors)}}
@@ -278,7 +278,7 @@
 											{{template "base/disable_form_autofill"}}
 											<input type="hidden" name="action" value="push-mirror-add">
 											<div class="field {{if .Err_PushMirrorAddress}}error{{end}}">
-												<label for="push_mirror_address">{{ctx.Locale.Tr "repo.settings.mirror_settings.push_mirror.remote_url"}}</label>
+												<label for="push_mirror_address">{{ctx.Locale.Tr "mirror_settings.push_mirror.remote_url"}}</label>
 												<input id="push_mirror_address" name="push_mirror_address" value="{{.push_mirror_address}}" required>
 												<p class="help">{{ctx.Locale.Tr "repo.mirror_address_desc"}}</p>
 											</div>
@@ -322,7 +322,7 @@
 												<input id="push_mirror_interval" name="push_mirror_interval" value="{{if .push_mirror_interval}}{{.push_mirror_interval}}{{else}}{{.DefaultMirrorInterval}}{{end}}">
 											</div>
 											<div class="field">
-												<button class="ui primary button">{{ctx.Locale.Tr "repo.settings.mirror_settings.push_mirror.add"}}</button>
+												<button class="ui primary button">{{ctx.Locale.Tr "mirror_settings.push_mirror.add"}}</button>
 											</div>
 										</form>
 									</td>

@@ -11,11 +11,11 @@
 			<input type="hidden" name="sort" value="{{$.SortType}}">
 		{{end}}
 		{{if .PageIsPullList}}
-			{{template "shared/search/combo" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.pull_kind") "Tooltip" (ctx.Locale.Tr "explore.go_to")}}
+			{{template "shared/search/combo" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.pull_kind") "Tooltip" (ctx.Locale.Tr "search.verb")}}
 		{{else if .PageIsMilestones}}
-			{{template "shared/search/combo" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.milestone_kind") "Tooltip" (ctx.Locale.Tr "explore.go_to")}}
+			{{template "shared/search/combo" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.milestone_kind") "Tooltip" (ctx.Locale.Tr "search.verb")}}
 		{{else}}
-			{{template "shared/search/combo" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.issue_kind") "Tooltip" (ctx.Locale.Tr "explore.go_to")}}
+			{{template "shared/search/combo" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.issue_kind") "Tooltip" (ctx.Locale.Tr "search.verb")}}
 		{{end}}
 	</div>
 	{{if not .PageIsMilestones}}

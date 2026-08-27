@@ -29,7 +29,7 @@
 						dict
 							"Value" $.Keyword
 							"Placeholder" $placeholder
-							"Tooltip" (ctx.Locale.Tr "explore.go_to")}}
+							"Tooltip" (ctx.Locale.Tr "search.verb")}}
 				</div>
 				{{template "shared/search/issue/syntax"}}
 			</form>
@@ -105,7 +105,7 @@
 						{{$keyword := StringUtils.RemoveAllPrefix $.Keyword "sort:"}}
 						{{$o := .}}
 						{{range $opt := StringUtils.Make "recentupdate" "leastupdate" "latest" "oldest" "mostcomment" "leastcomment" "nearduedate" "farduedate"}}
-							{{$text := ctx.Locale.Tr (printf "repo.issues.filter_sort.%s" $opt)}}
+							{{$text := ctx.Locale.Tr (printf "issues.search.sort.%s" $opt)}}
 							<a class="{{if or (eq $o.SortType $opt) (and (eq $opt "latest") (not $o.SortType))}}active {{end}}item" href="?type={{$.ViewType}}&sort={{$opt}}&project={{$.ProjectID}}&state={{$.State}}&labels={{$o.SelectLabels}}&q={{$keyword}}">{{
 								$text
 							}}</a>

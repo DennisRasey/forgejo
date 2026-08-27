@@ -29,11 +29,11 @@
 							<div class="repo-button-row">
 								{{if and .CanWriteCode (not .Repository.IsArchived)}}
 									<a class="ui small button" href="{{.RepoLink}}/_new/{{.BranchName | PathEscapeSegments}}/">
-										{{ctx.Locale.Tr "repo.editor.new_file"}}
+										{{ctx.Locale.Tr "file_editor.new_file"}}
 									</a>
 									{{if .RepositoryUploadEnabled}}
 									<a class="ui small button" href="{{.RepoLink}}/_upload/{{.BranchName | PathEscapeSegments}}/">
-										{{ctx.Locale.Tr "repo.editor.upload_file"}}
+										{{ctx.Locale.Tr "file_editor.upload_file"}}
 									</a>
 									{{end}}
 								{{end}}

@@ -22,11 +22,11 @@
 			<div class="tw-flex tw-items-center tw-gap-2">
 				<button id="show-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="show-outdated">
 					{{svg "octicon-unfold" 16 "tw-mr-2"}}
-					{{ctx.Locale.Tr "repo.issues.review.show_resolved"}}
+					{{ctx.Locale.Tr "review.resolved.show"}}
 				</button>
 				<button id="hide-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="hide-outdated tw-hidden">
 					{{svg "octicon-fold" 16 "tw-mr-2"}}
-					{{ctx.Locale.Tr "repo.issues.review.hide_resolved"}}
+					{{ctx.Locale.Tr "review.resolved.hide"}}
 				</button>
 			</div>
 		</div>

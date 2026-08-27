@@ -70,7 +70,7 @@ func TestLFSFileRender(t *testing.T) {
 
 		// Find the 'Git LFS' label.
 		fileNameDiffBar := doc.Find(".diff-file-name").Last().Text()
-		assert.Contains(t, fileNameDiffBar, locale.TrString("settings.quota.sizes.git.lfs"))
+		assert.Contains(t, fileNameDiffBar, locale.TrString("quota.sizes.git.lfs"))
 	})
 
 	// check that an image is flagged with the appropriate Git LFS label
@@ -104,7 +104,7 @@ func TestLFSFileRender(t *testing.T) {
 
 		// Find the 'Git LFS' label.
 		fileNameDiffBar := doc.Find(".diff-file-name").Last().Text()
-		assert.Contains(t, fileNameDiffBar, locale.TrString("settings.quota.sizes.git.lfs"))
+		assert.Contains(t, fileNameDiffBar, locale.TrString("quota.sizes.git.lfs"))
 	})
 
 	// check that a binary file is flagged with "Stored in Git LFS" and renders a
@@ -139,7 +139,7 @@ func TestLFSFileRender(t *testing.T) {
 
 		// Find the 'Git LFS' label.
 		fileNameDiffBar := doc.Find(".diff-file-name").Last().Text()
-		assert.Contains(t, fileNameDiffBar, locale.TrString("settings.quota.sizes.git.lfs"))
+		assert.Contains(t, fileNameDiffBar, locale.TrString("quota.sizes.git.lfs"))
 	})
 
 	// check that a directory with a README file shows its text and that the diff
@@ -169,7 +169,7 @@ func TestLFSFileRender(t *testing.T) {
 
 		// Find the 'Git LFS' label.
 		fileNameDiffBar := doc.Find(".diff-file-name").Last().Text()
-		assert.Contains(t, fileNameDiffBar, locale.TrString("settings.quota.sizes.git.lfs"))
+		assert.Contains(t, fileNameDiffBar, locale.TrString("quota.sizes.git.lfs"))
 	})
 
 	// check that an invalid lfs entry defaults to plaintext

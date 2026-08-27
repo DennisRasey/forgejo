@@ -72,7 +72,7 @@ func TestIssueSorting(t *testing.T) {
 
 				sort := values.Get("sort")
 				assert.Contains(t, keys, sort)
-				assert.Contains(t, element.Text(), locale.Tr("repo.issues.filter_sort."+sort))
+				assert.Contains(t, element.Text(), locale.Tr("issues.search.sort."+sort))
 				return sort
 			})
 
