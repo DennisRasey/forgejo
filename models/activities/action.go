@@ -536,6 +536,7 @@ type GetFeedsOptions struct {
 	RequestedUser        *user_model.User       // the user we want activity for
 	RequestedTeam        *organization.Team     // the team we want activity for
 	RequestedRepo        *repo_model.Repository // the repo we want activity for
+	RequestedIssue       *issues_model.Issue    // the issue we want activity for
 	Actor                *user_model.User       // the user viewing the activity
 	IncludePrivate       bool                   // include private actions
 	OnlyPerformedBy      bool                   // only actions performed by requested user
@@ -545,8 +546,8 @@ type GetFeedsOptions struct {
 
 // GetFeeds returns actions according to the provided options
 func GetFeeds(ctx context.Context, opts GetFeedsOptions) (ActionList, int64, error) {
-	if opts.RequestedUser == nil && opts.RequestedTeam == nil && opts.RequestedRepo == nil {
-		return nil, 0, errors.New("need at least one of these filters: RequestedUser, RequestedTeam, RequestedRepo")
+	if opts.RequestedUser == nil && opts.RequestedTeam == nil && opts.RequestedRepo == nil && opts.RequestedIssue == nil {
+		return nil, 0, errors.New("need at least one of these filters: RequestedUser, RequestedTeam, RequestedRepo, RequestedIssue")
 	}
 
 	cond, err := activityQueryCondition(ctx, opts)
@@ -651,6 +652,20 @@ func activityQueryCondition(ctx context.Context, opts GetFeedsOptions) (builder.
 		if opts.OnlyPerformedBy {
 			cond = cond.And(builder.Eq{"act_user_id": opts.RequestedUser.ID})
 		}
+	}
+
+	if opts.RequestedIssue != nil {
+		if opts.RequestedRepo != nil && opts.RequestedRepo.ID != opts.RequestedIssue.RepoID {
+			return nil, errors.New("requested repository id does not match requested issue repository id")
+		}
+
+		cond = cond.And(
+			builder.Eq{"repo_id": opts.RequestedIssue.RepoID},
+			builder.Or(
+				builder.Like{"content", "[\"" + strconv.FormatInt(opts.RequestedIssue.Index, 10) + "\"%"}, // JSON, ["IssueIndex"...
+				builder.Like{"content", strconv.FormatInt(opts.RequestedIssue.Index, 10) + "|%"},          // "IssueIndex|content..."
+			),
+		)
 	}
 
 	if !opts.IncludePrivate {

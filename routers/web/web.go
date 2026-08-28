@@ -1379,6 +1379,14 @@ func registerRoutes(m *web.Route) {
 				m.Get("/summary-card", repo.DrawIssueSummaryCard)
 			})
 		})
+		m.Group("/pulls/{index}", func() {
+			m.Get(".rss", feedEnabled, repo.IssueFeedRSS)
+			m.Get(".atom", feedEnabled, repo.IssueFeedAtom)
+		}, ctxDataSet("EnableFeed", setting.Other.EnableFeed))
+		m.Group("/issues/{index}", func() {
+			m.Get(".rss", feedEnabled, repo.IssueFeedRSS)
+			m.Get(".atom", feedEnabled, repo.IssueFeedAtom)
+		}, ctxDataSet("EnableFeed", setting.Other.EnableFeed))
 		m.Get("/-/summary-card", repo.DrawRepoSummaryCard)
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes()) // for "/{username}/{reponame}" which doesn't require authentication
 

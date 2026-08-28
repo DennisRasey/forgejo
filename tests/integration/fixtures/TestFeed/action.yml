@@ -27,3 +27,22 @@
   is_private: false
   created_unix: 1680454041
   content: '{"Commits":[{"Sha1":"412413fd409fc0cab446e7b59702596e1bde1816","Message":"fourth commit","AuthorEmail":"git@example.com","AuthorName":"dummy","CommitterEmail":"git@example.com","CommitterName":"dummy","Signature":null,"Verification":null,"Timestamp":"2026-01-19T22:07:22+01:00"},{"Sha1":"00a01802439eb2c0391fdfaa2c344b5e25d0b9d4","Message":"third commit","AuthorEmail":"git@example.com","AuthorName":"dummy","CommitterEmail":"git@example.com","CommitterName":"dummy","Signature":null,"Verification":null,"Timestamp":"2026-01-19T22:07:18+01:00"}],"HeadCommit":{"Sha1":"412413fd409fc0cab446e7b59702596e1bde1816","Message":"fourth commit","AuthorEmail":"git@example.com","AuthorName":"dummy","CommitterEmail":"git@example.com","CommitterName":"dummy","Signature":null,"Verification":null,"Timestamp":"2026-01-19T22:07:22+01:00"},"CompareURL":"user2/repo1/compare/ed4090ecc2d9dd16b184763cc476ea1b28afa560...412413fd409fc0cab446e7b59702596e1bde1816","Len":2}'
+
+- id: 1004
+  user_id: 3
+  op_type: 7 # create pull request
+  act_user_id: 3
+  comment_id: 0
+  repo_id: 1 # public
+  is_private: false
+  created_unix: 1680454042
+  content: '["2","This is a pull request"]'
+- id: 1005
+  user_id: 3
+  op_type: 23 # pull request comment
+  act_user_id: 3
+  comment_id: 1
+  repo_id: 1 # public
+  is_private: false
+  created_unix: 1680454043
+  content: '["2","This is a comment"]'
