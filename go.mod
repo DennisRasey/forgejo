@@ -14,7 +14,7 @@ require (
 	code.forgejo.org/go-chi/binding v1.0.1
 	code.forgejo.org/go-chi/cache v1.0.1
 	code.forgejo.org/go-chi/captcha v1.0.3
-	code.forgejo.org/go-chi/session v1.0.4
+	code.forgejo.org/go-chi/session v1.1.0
 	code.forgejo.org/xorm/xorm v1.4.1
 	code.gitea.io/sdk/gitea v0.21.0
 	codeberg.org/gusted/mcaptcha v0.0.0-20220723083913-4f3072e1d570
@@ -43,7 +43,7 @@ require (
 	github.com/gliderlabs/ssh v0.3.8
 	github.com/go-ap/activitypub v0.0.0-20260208110334-902f6cf8c2cc
 	github.com/go-ap/jsonld v0.0.0-20251216162253-e38fa664ea77
-	github.com/go-chi/chi/v5 v5.3.1
+	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-chi/cors v1.2.2
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-enry/go-enry/v2 v2.9.6
@@ -151,7 +151,7 @@ require (
 	github.com/bodgit/sevenzip v1.6.1 // indirect
 	github.com/bodgit/windows v1.0.1 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
-	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // indirect
+	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c // indirect
 	github.com/caddyserver/zerossl v0.1.5 // indirect
 	github.com/cention-sany/utf7 v0.0.0-20170124080048-26cad61bd60a // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
