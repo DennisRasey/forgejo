@@ -1,0 +1,14 @@
+Cache-Control: no-cache, no-transform
+Connection: keep-alive
+Content-Type: application/json;charset=UTF-8
+Strict-Transport-Security: max-age=31536000
+Vary: x-ausername,x-auserid,cookie,accept-encoding
+X-Arequestid: @1JS3VVGx741x1058730x0
+X-Auserid: 160
+X-Ausername: test-author
+X-Content-Type-Options: nosniff
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Xss-Protection: 1; mode=block
+
+{"size":2,"limit":100,"isLastPage":true,"values":[{"id":26289,"createdDate":1784197259588,"user":{"name":"test-author","emailAddress":"user@example.com","active":true,"displayName":"Test User","id":160,"slug":"test-author","type":"NORMAL","links":{"self":[{"href":"https://bitbucket.example.com/users/test-author"}]}},"action":"MERGED","commit":{"id":"f0fd5a75ab07dcd86e9aa849bf0f99380555c751","displayId":"f0fd5a75ab0","author":{"name":"test-author","emailAddress":"user@example.com","active":true,"displayName":"Test User","id":160,"slug":"test-author","type":"NORMAL","links":{"self":[{"href":"https://bitbucket.example.com/users/test-author"}]}},"authorTimestamp":1784197259000,"committer":{"name":"test-author","emailAddress":"user@example.com","active":true,"displayName":"Test User","id":160,"slug":"test-author","type":"NORMAL","links":{"self":[{"href":"https://bitbucket.example.com/users/test-author"}]}},"committerTimestamp":1784197259000,"message":"Merge pull request #2 in MIGR/test-repo from feature/two to main\n\n* commit '2c55b63bd3674b9d07665061d556ceffb2d8e627':\n  Second feature","parents":[{"id":"5a23469c47147ceff6b45dcbbcf57620690a8614","displayId":"5a23469c471","author":{"name":"test-author","emailAddress":"user@example.com"},"authorTimestamp":1784197252000,"committer":{"name":"test-author","emailAddress":"user@example.com"},"committerTimestamp":1784197252000,"message":"Initial content","parents":[]},{"id":"2c55b63bd3674b9d07665061d556ceffb2d8e627","displayId":"2c55b63bd36","author":{"name":"test-author","emailAddress":"user@example.com"},"authorTimestamp":1784197256000,"committer":{"name":"test-author","emailAddress":"user@example.com"},"committerTimestamp":1784197256000,"message":"Second feature","parents":[{"id":"5a23469c47147ceff6b45dcbbcf57620690a8614","displayId":"5a23469c471"}]}],"properties":{"signature":{"isVerified":true,"owner":"bitbucket.system-user","isSystemSigned":"true","fingerprint":"4603 FA40 B0D5 B3F7","type":"GPG"}}},"autoMerge":false},{"id":26288,"createdDate":1784197259363,"user":{"name":"test-author","emailAddress":"user@example.com","active":true,"displayName":"Test User","id":160,"slug":"test-author","type":"NORMAL","links":{"self":[{"href":"https://bitbucket.example.com/users/test-author"}]}},"action":"OPENED"}],"start":0}

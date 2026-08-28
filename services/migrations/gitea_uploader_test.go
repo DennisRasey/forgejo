@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -178,6 +179,305 @@ func TestUpload(t *testing.T) {
 		require.NoError(t, issues[1].LoadDiscussComments(db.DefaultContext))
 		assert.Len(t, issues[0].Comments, 1)
 		assert.Len(t, issues[1].Comments, 1)
+	})
+
+	t.Run("CommentReplies", func(t *testing.T) {
+		find := func(issueIndex int64, suffix string) *issues_model.Comment {
+			comments, err := issues_model.FindComments(db.DefaultContext, &issues_model.FindCommentsOptions{
+				IssueID: uploader.issues[issueIndex].ID,
+				Type:    issues_model.CommentTypeComment,
+			})
+			require.NoError(t, err)
+			for _, comment := range comments {
+				if strings.HasSuffix(comment.Content, suffix) {
+					return comment
+				}
+			}
+			require.FailNowf(t, "comment not found", "no comment of issue %d ends with %q", issueIndex, suffix)
+			return nil
+		}
+
+		// Until EnableCommentReplyTo is called, Meta["ReplyTo"] is ignored: replies are
+		// inserted untouched and no comment is tracked for later resolution.
+		rawParent := &base.Comment{
+			IssueIndex:  1,
+			Index:       20,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 13, 58, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 13, 58, 0, 0, time.UTC),
+			Content:     "Raw parent",
+		}
+		rawReply := &base.Comment{
+			IssueIndex:  1,
+			Index:       21,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 13, 59, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 13, 59, 0, 0, time.UTC),
+			Content:     "Raw reply",
+			Meta:        map[string]any{"ReplyTo": int64(20)},
+		}
+		require.NoError(t, uploader.CreateComments(rawParent, rawReply))
+		assert.Equal(t, "Raw reply", find(1, "Raw reply").Content)
+		assert.Nil(t, uploader.commentMap)
+
+		uploader.EnableCommentReplyTo()
+
+		// Once enabled, each reply gets a quote-reply header pointing to its own parent,
+		// whether same or earlier batch; comments inserted before enabling stay untracked.
+		parentA := &base.Comment{
+			IssueIndex:  0,
+			Index:       10,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 14, 0, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 0, 0, 0, time.UTC),
+			Content:     "Same batch parent",
+		}
+		sameBatchReply := &base.Comment{
+			IssueIndex:  0,
+			Index:       11,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 14, 1, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 1, 0, 0, time.UTC),
+			Content:     "Same batch reply",
+			Meta:        map[string]any{"ReplyTo": int64(10)},
+		}
+		parentB := &base.Comment{
+			IssueIndex:  1,
+			Index:       12,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 14, 2, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 2, 0, 0, time.UTC),
+			Content:     "Cross batch parent",
+		}
+		require.NoError(t, uploader.CreateComments(parentA, sameBatchReply, parentB))
+
+		crossBatchReply := &base.Comment{
+			IssueIndex:  1,
+			Index:       13,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 14, 3, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 3, 0, 0, time.UTC),
+			Content:     "Cross batch reply",
+			Meta:        map[string]any{"ReplyTo": int64(12)}, // "Cross batch parent", inserted by the previous batch
+		}
+		lateReply := &base.Comment{
+			IssueIndex:  1,
+			Index:       14,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 14, 4, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 4, 0, 0, time.UTC),
+			Content:     "Late reply",
+			Meta:        map[string]any{"ReplyTo": int64(20)}, // "Raw parent", inserted before enabling, untracked
+		}
+		require.NoError(t, uploader.CreateComments(crossBatchReply, lateReply))
+
+		parentCommentA := find(0, "Same batch parent")
+		assert.Equal(t, "Same batch parent", parentCommentA.Content)
+		assert.Equal(t,
+			fmt.Sprintf("@PatDyn wrote in %s/issues/%d#issuecomment-%d:\n> Same batch parent\n\nSame batch reply", repo.HTMLURL(), uploader.issues[0].Index, parentCommentA.ID),
+			find(0, "Same batch reply").Content)
+
+		parentCommentB := find(1, "Cross batch parent")
+		assert.Equal(t, "Cross batch parent", parentCommentB.Content)
+		assert.Equal(t,
+			fmt.Sprintf("@PatDyn wrote in %s/issues/%d#issuecomment-%d:\n> Cross batch parent\n\nCross batch reply", repo.HTMLURL(), uploader.issues[1].Index, parentCommentB.ID),
+			find(1, "Cross batch reply").Content)
+
+		assert.Equal(t, "Late reply", find(1, "Late reply").Content)
+
+		// A parent posted by a linked user (no OriginalAuthor) is attributed via its local
+		// account; a mapping to a since-deleted user falls back to the Ghost user.
+		uploader.userMap[601] = 2
+		uploader.userMap[602] = unittest.NonexistentID
+		linkedParent := &base.Comment{
+			IssueIndex:  0,
+			Index:       15,
+			CommentType: "comment",
+			PosterID:    601,
+			PosterName:  "linked.user",
+			Created:     time.Date(2025, 8, 7, 14, 5, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 5, 0, 0, time.UTC),
+			Content:     "Linked parent",
+		}
+		ghostParent := &base.Comment{
+			IssueIndex:  0,
+			Index:       16,
+			CommentType: "comment",
+			PosterID:    602,
+			PosterName:  "vanished.user",
+			Created:     time.Date(2025, 8, 7, 14, 6, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 6, 0, 0, time.UTC),
+			Content:     "Ghost parent",
+		}
+		linkedReply := &base.Comment{
+			IssueIndex:  0,
+			Index:       17,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 14, 7, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 7, 0, 0, time.UTC),
+			Content:     "Linked reply",
+			Meta:        map[string]any{"ReplyTo": int64(15)},
+		}
+		ghostReply := &base.Comment{
+			IssueIndex:  0,
+			Index:       18,
+			CommentType: "comment",
+			PosterID:    37243484,
+			PosterName:  "PatDyn",
+			Created:     time.Date(2025, 8, 7, 14, 8, 0, 0, time.UTC),
+			Updated:     time.Date(2025, 8, 7, 14, 8, 0, 0, time.UTC),
+			Content:     "Ghost reply",
+			Meta:        map[string]any{"ReplyTo": int64(16)},
+		}
+		require.NoError(t, uploader.CreateComments(linkedParent, ghostParent, linkedReply, ghostReply))
+
+		linkedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		assert.Equal(t,
+			fmt.Sprintf("@%s wrote in %s/issues/%d#issuecomment-%d:\n> Linked parent\n\nLinked reply", linkedUser.Name, repo.HTMLURL(), uploader.issues[0].Index, find(0, "Linked parent").ID),
+			find(0, "Linked reply").Content)
+		assert.Equal(t,
+			fmt.Sprintf("@%s wrote in %s/issues/%d#issuecomment-%d:\n> Ghost parent\n\nGhost reply", user_model.GhostUserName, repo.HTMLURL(), uploader.issues[0].Index, find(0, "Ghost parent").ID),
+			find(0, "Ghost reply").Content)
+	})
+
+	// The mock server does not serve a clonable repository, so the migrated repository is
+	// empty: craft the commit the pull request and its review will anchor to.
+	var commit string
+	t.Run("PullRequests", func(t *testing.T) {
+		repoPath := repo.RepoPath()
+		gitEnv := append(os.Environ(),
+			"GIT_AUTHOR_NAME=Test", "GIT_AUTHOR_EMAIL=test@example.com",
+			"GIT_COMMITTER_NAME=Test", "GIT_COMMITTER_EMAIL=test@example.com")
+		blob, _, gitErr := git.NewCommand(t.Context(), "hash-object", "-w", "--stdin").RunStdString(&git.RunOpts{Dir: repoPath, Stdin: strings.NewReader("line 1\n")})
+		require.NoError(t, gitErr)
+		tree, _, gitErr := git.NewCommand(t.Context(), "mktree").RunStdString(&git.RunOpts{Dir: repoPath, Stdin: strings.NewReader("100644 blob " + strings.TrimSpace(blob) + "\treadme.md\n")})
+		require.NoError(t, gitErr)
+		commitOut, _, gitErr := git.NewCommand(t.Context(), "commit-tree", "-m", "Initial content").AddDynamicArguments(strings.TrimSpace(tree)).RunStdString(&git.RunOpts{Dir: repoPath, Env: gitEnv})
+		require.NoError(t, gitErr)
+		commit = strings.TrimSpace(commitOut)
+		_, _, gitErr = git.NewCommand(t.Context(), "update-ref", "refs/heads/main").AddDynamicArguments(commit).RunStdString(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, gitErr)
+
+		created := time.Date(2025, 8, 8, 10, 0, 0, 0, time.UTC)
+		closed := time.Date(2025, 8, 8, 11, 0, 0, 0, time.UTC)
+		pr := &base.PullRequest{
+			Number:     3,
+			Title:      "Mock PR",
+			Content:    "Mock Content",
+			PosterID:   37243484,
+			PosterName: "PatDyn",
+			State:      "closed",
+			Created:    created,
+			Updated:    closed,
+			Closed:     &closed,
+			Head: base.PullRequestBranch{
+				Ref:       "pr-branch",
+				SHA:       commit,
+				RepoName:  repoName,
+				OwnerName: user.Name,
+			},
+			Base: base.PullRequestBranch{
+				Ref:       "main",
+				RepoName:  repoName,
+				OwnerName: user.Name,
+			},
+			EnsuredSafe: true,
+		}
+		// CreatePullRequests ends by enqueueing a patch-checking task, but the queue does not
+		// exist in unit tests: go through its internals and skip the queue notification.
+		gpr, err := uploader.newPullRequest(pr)
+		require.NoError(t, err)
+		require.NoError(t, uploader.remapUser(pr, gpr.Issue))
+		require.NoError(t, issues_model.InsertPullRequests(db.DefaultContext, gpr))
+		uploader.issues[gpr.Issue.Index] = gpr.Issue
+
+		issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repo.ID, Index: 3})
+		assert.True(t, issue.IsPull)
+		dbPR := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{IssueID: issue.ID})
+		// The merge base and the pull reference are the prerequisites of code review comments.
+		assert.Equal(t, commit, dbPR.MergeBase)
+		headCommitID, err := uploader.gitRepo.GetRefCommitID("refs/pull/3/head")
+		require.NoError(t, err)
+		assert.Equal(t, commit, headCommitID)
+	})
+
+	t.Run("Reviews", func(t *testing.T) {
+		review := &base.Review{
+			IssueIndex:   3,
+			ReviewerID:   37243484,
+			ReviewerName: "PatDyn",
+			State:        base.ReviewStateCommented,
+			CreatedAt:    time.Date(2025, 8, 8, 12, 0, 0, 0, time.UTC),
+			Comments: []*base.ReviewComment{
+				{
+					// Shaped like the comments of the pre-existing downloaders: no PosterName
+					// and no ExtraLinesCount.
+					Content:   "Single line comment",
+					TreePath:  "readme.md",
+					Line:      1,
+					DiffHunk:  "@@ -1 +1 @@",
+					PosterID:  37243484,
+					CreatedAt: time.Date(2025, 8, 8, 12, 0, 0, 0, time.UTC),
+					UpdatedAt: time.Date(2025, 8, 8, 12, 0, 0, 0, time.UTC),
+				},
+				{
+					// A comment spanning lines 1-3, written by someone else than the review author.
+					Content:         "Range comment",
+					TreePath:        "readme.md",
+					Line:            1,
+					ExtraLinesCount: 2,
+					DiffHunk:        "@@ -1 +1 @@",
+					PosterID:        1234,
+					PosterName:      "OtherContributor",
+					CreatedAt:       time.Date(2025, 8, 8, 12, 5, 0, 0, time.UTC),
+					UpdatedAt:       time.Date(2025, 8, 8, 12, 5, 0, 0, time.UTC),
+				},
+			},
+		}
+		require.NoError(t, uploader.CreateReviews(review))
+
+		issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repo.ID, Index: 3})
+		comments, err := issues_model.FindComments(db.DefaultContext, &issues_model.FindCommentsOptions{
+			IssueID: issue.ID,
+			Type:    issues_model.CommentTypeCode,
+		})
+		require.NoError(t, err)
+		require.Len(t, comments, 2)
+		byContent := map[string]*issues_model.Comment{}
+		for _, comment := range comments {
+			byContent[comment.Content] = comment
+		}
+
+		// A comment without a poster of its own keeps the review author and a single line,
+		// like before ReviewComment carried PosterName and ExtraLinesCount.
+		single := byContent["Single line comment"]
+		require.NotNil(t, single)
+		assert.Equal(t, "PatDyn", single.OriginalAuthor)
+		assert.EqualValues(t, 1, single.Line)
+		assert.EqualValues(t, 0, single.ExtraLinesCount)
+
+		// A comment carrying its own poster and a range keeps both.
+		ranged := byContent["Range comment"]
+		require.NotNil(t, ranged)
+		assert.Equal(t, "OtherContributor", ranged.OriginalAuthor)
+		assert.EqualValues(t, 1, ranged.Line)
+		assert.EqualValues(t, 2, ranged.ExtraLinesCount)
 	})
 }
 

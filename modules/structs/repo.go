@@ -322,17 +322,18 @@ type GitServiceType int
 
 // enumerate all GitServiceType
 const (
-	NotMigrated      GitServiceType = iota // 0 not migrated from external sites
-	PlainGitService                        // 1 plain git service
-	GithubService                          // 2 github.com
-	GiteaService                           // 3 gitea service
-	GitlabService                          // 4 gitlab service
-	GogsService                            // 5 gogs service
-	OneDevService                          // 6 onedev service
-	GitBucketService                       // 7 gitbucket service
-	CodebaseService                        // 8 codebase service
-	ForgejoService                         // 9 forgejo service
-	PagureService                          // 10 pagure service
+	NotMigrated                GitServiceType = iota // 0 not migrated from external sites
+	PlainGitService                                  // 1 plain git service
+	GithubService                                    // 2 github.com
+	GiteaService                                     // 3 gitea service
+	GitlabService                                    // 4 gitlab service
+	GogsService                                      // 5 gogs service
+	OneDevService                                    // 6 onedev service
+	GitBucketService                                 // 7 gitbucket service
+	CodebaseService                                  // 8 codebase service
+	ForgejoService                                   // 9 forgejo service
+	PagureService                                    // 10 pagure service
+	BitbucketDataCenterService                       // 11 bitbucket data center / server service
 )
 
 // Name represents the service type's name
@@ -362,6 +363,8 @@ func (gt GitServiceType) Title() string {
 		return "Forgejo"
 	case PagureService:
 		return "Pagure"
+	case BitbucketDataCenterService:
+		return "BitbucketDC"
 	case PlainGitService:
 		return "Git"
 	}
@@ -380,7 +383,7 @@ type MigrateRepoOptions struct {
 	// required: true
 	RepoName string `json:"repo_name" binding:"Required;AlphaDashDot;MaxSize(100)"`
 
-	// enum: ["git", "github", "gitea", "gitlab", "gogs", "onedev", "gitbucket", "codebase", "forgejo", "pagure"]
+	// enum: ["git", "github", "gitea", "gitlab", "gogs", "onedev", "gitbucket", "codebase", "forgejo", "pagure", "bitbucketdc"]
 	Service      string `json:"service"`
 	AuthUsername string `json:"auth_username"`
 	AuthPassword string `json:"auth_password"`
@@ -403,7 +406,7 @@ type MigrateRepoOptions struct {
 // TokenAuth represents whether a service type supports token-based auth
 func (gt GitServiceType) TokenAuth() bool {
 	switch gt {
-	case GithubService, GiteaService, GitlabService, ForgejoService:
+	case GithubService, GiteaService, GitlabService, ForgejoService, BitbucketDataCenterService:
 		return true
 	}
 	return false
@@ -421,6 +424,7 @@ var SupportedFullGitService = []GitServiceType{
 	GitBucketService,
 	CodebaseService,
 	PagureService,
+	BitbucketDataCenterService,
 }
 
 // RepoTransfer represents a pending repo transfer

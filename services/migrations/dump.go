@@ -422,6 +422,10 @@ func (g *RepositoryDumper) CreateComments(comments ...*base.Comment) error {
 	return g.createItems(g.commentDir(), g.commentFiles, commentsMap)
 }
 
+// EnableCommentReplyTo is a no-op: comments are dumped with their raw content and
+// their Meta["ReplyTo"] untouched.
+func (g *RepositoryDumper) EnableCommentReplyTo() {}
+
 func (g *RepositoryDumper) handlePullRequest(pr *base.PullRequest) error {
 	// SECURITY: this pr must have been ensured safe
 	if !pr.EnsuredSafe {

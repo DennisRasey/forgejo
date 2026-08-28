@@ -59,9 +59,19 @@ type ReviewComment struct {
 	DiffHunk  string `yaml:"diff_hunk"`
 	Position  int
 	Line      int
-	CommitID  string `yaml:"commit_id"`
-	PosterID  int64  `yaml:"poster_id"`
-	Reactions []*Reaction
-	CreatedAt time.Time `yaml:"created_at"`
-	UpdatedAt time.Time `yaml:"updated_at"`
+	// ExtraLinesCount is the number of additional lines after Line when the comment spans a range (0 = single line)
+	ExtraLinesCount int64  `yaml:"extra_lines_count"`
+	CommitID        string `yaml:"commit_id"`
+	PosterID        int64  `yaml:"poster_id"`
+	// PosterName is the author of this specific comment; when set it overrides the review comment author for attribution
+	PosterName string `yaml:"poster_name"`
+	Reactions  []*Reaction
+	CreatedAt  time.Time `yaml:"created_at"`
+	UpdatedAt  time.Time `yaml:"updated_at"`
 }
+
+// GetExternalName ExternalUserMigrated interface
+func (c *ReviewComment) GetExternalName() string { return c.PosterName }
+
+// GetExternalID ExternalUserMigrated interface
+func (c *ReviewComment) GetExternalID() int64 { return c.PosterID }

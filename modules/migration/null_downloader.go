@@ -86,3 +86,8 @@ func (n NullDownloader) FormatCloneURL(opts MigrateOptions, remoteAddr string) (
 func (n NullDownloader) SupportGetRepoComments() bool {
 	return false
 }
+
+// SupportCommentReplyTo return true if comments carry their parent id in Meta["ReplyTo"]
+func (n NullDownloader) SupportCommentReplyTo() bool {
+	return false
+}

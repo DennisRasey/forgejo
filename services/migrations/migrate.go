@@ -252,6 +252,10 @@ func migrateRepository(_ context.Context, doer *user_model.User, downloader base
 
 	supportAllComments := downloader.SupportGetRepoComments()
 
+	if downloader.SupportCommentReplyTo() {
+		uploader.EnableCommentReplyTo()
+	}
+
 	if opts.Issues {
 		log.Trace("migrating issues and comments")
 		messenger("migrate.in_progress.issues")

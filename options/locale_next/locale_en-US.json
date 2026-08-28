@@ -167,6 +167,8 @@
 	"migrate.gitbucket.description": "Migrate data from GitBucket instances.",
 	"migrate.codebase.description": "Migrate data from codebasehq.com.",
 	"migrate.forgejo.description": "Migrate data from codeberg.org or other Forgejo instances.",
+	"migrate.bitbucketdc.description": "Migrate data from a Bitbucket Data Center instance.",
+	"migrate.bitbucketdc.auth_username_helper": "Required with a user token (the token owner's username). Leave empty with a project or repository token.",
 	"migrate.items.label": "Migration items",
 	"migrate.items.wiki": "Wiki",
 	"migrate.items.milestones": "Milestones",

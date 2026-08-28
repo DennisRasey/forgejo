@@ -1,0 +1,17 @@
+Cache-Control: no-cache, no-transform
+Connection: keep-alive
+Content-Type: application/json;charset=UTF-8
+Strict-Transport-Security: max-age=31536000
+Vary: Accept-Encoding
+Vary: X-AUSERNAME
+Vary: X-AUSERID
+Vary: Cookie
+X-Arequestid: @1JS3VVGx741x1058717x0
+X-Auserid: 160
+X-Ausername: test-author
+X-Content-Type-Options: nosniff
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+X-Xss-Protection: 1; mode=block
+
+{"slug":"test-repo","id":395,"name":"test-repo","hierarchyId":"8bdb4c06cc52ee1288a4","scmId":"git","state":"AVAILABLE","statusMessage":"Available","forkable":true,"project":{"key":"MIGR","id":642,"name":"Forgejo-Migration-Test","public":false,"type":"NORMAL","links":{"self":[{"href":"https://bitbucket.example.com/projects/MIGR"}]}},"public":false,"archived":false,"links":{"clone":[{"href":"https://bitbucket.example.com/scm/migr/test-repo.git","name":"http"},{"href":"ssh://git@bitbucket.example.com:7999/migr/test-repo.git","name":"ssh"}],"self":[{"href":"https://bitbucket.example.com/projects/MIGR/repos/test-repo/browse"}]}}

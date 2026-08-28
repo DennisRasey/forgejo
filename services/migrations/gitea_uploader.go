@@ -55,6 +55,7 @@ type GiteaLocalUploader struct {
 	sameApp        bool
 	userMap        map[int64]int64 // external user id mapping to user id
 	prCache        map[int64]*issues_model.PullRequest
+	commentMap     map[commentKey]migratedComment // foreign comment index to inserted comment, to resolve reply links
 	gitServiceType structs.GitServiceType
 }
 
@@ -72,6 +73,27 @@ func NewGiteaLocalUploader(ctx context.Context, doer *user_model.User, repoOwner
 		userMap:     make(map[int64]int64),
 		prCache:     make(map[int64]*issues_model.PullRequest),
 	}
+}
+
+// EnableCommentReplyTo allocates commentMap, enabling resolveReplyLinks: replies are only
+// resolved when the downloader announces comments carrying Meta["ReplyTo"].
+func (g *GiteaLocalUploader) EnableCommentReplyTo() {
+	g.commentMap = make(map[commentKey]migratedComment)
+}
+
+// commentKey identifies a migrated comment by the issue it belongs to and its index on the
+// source forge.
+type commentKey struct {
+	issueID      int64
+	foreignIndex int64
+}
+
+// migratedComment retains what a reply needs to quote its parent comment.
+type migratedComment struct {
+	id             int64
+	posterID       int64
+	originalAuthor string
+	firstLine      string
 }
 
 // MaxBatchInsertSize returns the table's max batch insert size
@@ -541,7 +563,82 @@ func (g *GiteaLocalUploader) CreateComments(comments ...*base.Comment) error {
 	if len(cms) == 0 {
 		return nil
 	}
-	return issues_model.InsertIssueComments(g.ctx, cms)
+	if err := issues_model.InsertIssueComments(g.ctx, cms); err != nil {
+		return err
+	}
+	return g.resolveReplyLinks(comments, cms)
+}
+
+// resolveReplyLinks prepends to each reply (Meta["ReplyTo"] = parent comment Index) the
+// header the quote-reply button produces. Parent ids only exist once inserted, hence the
+// content update after the fact; commentMap spans batches to find earlier-inserted parents.
+func (g *GiteaLocalUploader) resolveReplyLinks(comments []*base.Comment, cms []*issues_model.Comment) error {
+	if g.commentMap == nil {
+		return nil
+	}
+	for i, cm := range cms {
+		g.commentMap[commentKey{cm.IssueID, comments[i].Index}] = migratedComment{
+			id:             cm.ID,
+			posterID:       cm.PosterID,
+			originalAuthor: cm.OriginalAuthor,
+			firstLine:      strings.TrimSuffix(strings.SplitN(cm.Content, "\n", 2)[0], "\r"),
+		}
+	}
+	for i, cm := range cms {
+		// Check ReplyTo
+		replyTo, ok := replyToIndex(comments[i].Meta)
+		if !ok {
+			continue
+		}
+
+		// Check parent
+		parent, ok := g.commentMap[commentKey{cm.IssueID, replyTo}]
+		if !ok {
+			continue
+		}
+
+		// Resolve author
+		author := parent.originalAuthor
+		if author == "" {
+			switch poster, err := user_model.GetUserByID(g.ctx, parent.posterID); {
+			case err == nil:
+				author = poster.Name
+			case user_model.IsErrUserNotExist(err):
+				author = user_model.GhostUserName
+			default:
+				return err
+			}
+		}
+
+		// Build comment reply header
+		issue := g.issues[comments[i].IssueIndex]
+		path := "issues"
+		if issue.IsPull {
+			path = "pulls"
+		}
+		cm.Content = fmt.Sprintf("@%s wrote in %s/%s/%d#issuecomment-%d:\n> %s\n\n%s",
+			author, g.repo.HTMLURL(), path, issue.Index, parent.id, parent.firstLine, cm.Content)
+		if _, err := db.GetEngine(g.ctx).ID(cm.ID).Cols("content").Update(cm); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// replyToIndex extracts Meta["ReplyTo"], tolerating the integer types a yaml or json
+// round-trip may produce.
+func replyToIndex(meta map[string]any) (int64, bool) {
+	switch v := meta["ReplyTo"].(type) {
+	case int64:
+		return v, true
+	case int:
+		return int64(v), true
+	case uint64:
+		return int64(v), true
+	case float64:
+		return int64(v), true
+	}
+	return 0, false
 }
 
 // CreatePullRequests creates pull requests
@@ -890,7 +987,9 @@ func (g *GiteaLocalUploader) CreateReviews(reviews ...*base.Review) error {
 				_ = writer.Close()
 			}(comment)
 
-			patch, _ = git.CutDiffAroundLine(reader, int64((&issues_model.Comment{Line: int64(line + comment.Position - 1)}).UnsignedLine()), line < 0, setting.UI.CodeCommentLines)
+			// For multi-line comments, center the patch on the last line and expand context to include the full range
+			cutLine := int64((&issues_model.Comment{Line: int64(line + comment.Position - 1), ExtraLinesCount: comment.ExtraLinesCount}).UnsignedDisplayLine())
+			patch, _ = git.CutDiffAroundLine(reader, cutLine, line < 0, setting.UI.CodeCommentLines+int(comment.ExtraLinesCount))
 
 			if comment.CreatedAt.IsZero() {
 				comment.CreatedAt = review.CreatedAt
@@ -906,18 +1005,24 @@ func (g *GiteaLocalUploader) CreateReviews(reviews ...*base.Review) error {
 			}
 
 			c := issues_model.Comment{
-				Type:        issues_model.CommentTypeCode,
-				IssueID:     issue.ID,
-				Content:     comment.Content,
-				Line:        int64(line + comment.Position - 1),
-				TreePath:    comment.TreePath,
-				CommitSHA:   comment.CommitID,
-				Patch:       patch,
-				CreatedUnix: timeutil.TimeStamp(comment.CreatedAt.Unix()),
-				UpdatedUnix: timeutil.TimeStamp(comment.UpdatedAt.Unix()),
+				Type:            issues_model.CommentTypeCode,
+				IssueID:         issue.ID,
+				Content:         comment.Content,
+				Line:            int64(line + comment.Position - 1),
+				ExtraLinesCount: comment.ExtraLinesCount,
+				TreePath:        comment.TreePath,
+				CommitSHA:       comment.CommitID,
+				Patch:           patch,
+				CreatedUnix:     timeutil.TimeStamp(comment.CreatedAt.Unix()),
+				UpdatedUnix:     timeutil.TimeStamp(comment.UpdatedAt.Unix()),
 			}
 
-			if err := g.remapUser(review, &c); err != nil {
+			// A comment without its own author (e.g. a reply in a thread) inherits the review author.
+			if comment.PosterName == "" {
+				comment.PosterName = review.ReviewerName
+				comment.PosterID = review.ReviewerID
+			}
+			if err := g.remapUser(comment, &c); err != nil {
 				return err
 			}
 

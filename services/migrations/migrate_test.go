@@ -48,6 +48,8 @@ func (nullUploader) CreateLabels(...*migration.Label) error {
 	return nil
 }
 
+func (nullUploader) EnableCommentReplyTo() {}
+
 func (nullUploader) CreateIssues(...*migration.Issue) error {
 	return nil
 }
