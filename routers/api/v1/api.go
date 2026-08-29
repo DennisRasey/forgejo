@@ -655,33 +655,11 @@ func Routes() *web.Route {
 				Post(bind(api.CreateEmailOption{}), user.AddEmail).
 				Delete(bind(api.DeleteEmailOption{}), user.DeleteEmail)
 
-			// manage user-level actions features
-			m.Group("/actions", func() {
-				m.Group("/secrets", func() {
-					m.Combo("/{secretname}").
-						Put(bind(api.CreateOrUpdateSecretOption{}), user.CreateOrUpdateSecret).
-						Delete(user.DeleteSecret)
-				})
-
-				m.Group("/variables", func() {
-					m.Get("", user.ListVariables)
-					m.Combo("/{variablename}").
-						Get(user.GetVariable).
-						Delete(user.DeleteVariable).
-						Post(bind(api.CreateVariableOption{}), user.CreateVariable).
-						Put(bind(api.UpdateVariableOption{}), user.UpdateVariable)
-				})
-
-				m.Group("/runners", func() {
-					m.Combo("").
-						Get(reqToken(), user.ListRunners).
-						Post(bind(api.RegisterRunnerOptions{}), user.RegisterRunner)
-					m.Get("/registration-token", reqToken(), user.GetRegistrationToken) //nolint:staticcheck
-					m.Get("/{runner_id}", reqToken(), user.GetRunner)
-					m.Delete("/{runner_id}", reqToken(), user.DeleteRunner)
-					m.Get("/jobs", reqToken(), user.SearchActionRunJobs)
-				})
-			})
+			addActionsRoutes(
+				m,
+				func(ctx *context.APIContext) {},
+				user.NewAction(),
+			)
 
 			m.Get("/followers", user.ListMyFollowers)
 			m.Group("/following", func() {

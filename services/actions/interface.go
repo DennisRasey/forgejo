@@ -5,7 +5,7 @@ package actions
 
 import "forgejo.org/services/context"
 
-// API for actions of a repository or organization
+// API for actions of a user, repository or organization
 type API interface {
 	// ListActionsSecrets list secrets
 	ListActionsSecrets(*context.APIContext)

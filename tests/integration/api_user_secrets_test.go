@@ -28,6 +28,43 @@ func TestAPIUserSecrets(t *testing.T) {
 	session := loginUser(t, user.Name)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser)
 
+	t.Run("List", func(t *testing.T) {
+		listURL := "/api/v1/user/actions/secrets"
+		req := NewRequest(t, "GET", listURL).AddTokenAuth(token)
+		res := MakeRequest(t, req, http.StatusOK)
+		secrets := []*api.Secret{}
+		DecodeJSON(t, res, &secrets)
+		assert.Empty(t, secrets)
+
+		createData := api.CreateOrUpdateSecretOption{Data: "a secret to create"}
+		req = NewRequestWithJSON(t, "PUT", listURL+"/first", createData).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusCreated)
+		req = NewRequestWithJSON(t, "PUT", listURL+"/sec2", createData).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusCreated)
+		req = NewRequestWithJSON(t, "PUT", listURL+"/last", createData).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusCreated)
+
+		req = NewRequest(t, "GET", listURL).AddTokenAuth(token)
+		res = MakeRequest(t, req, http.StatusOK)
+		DecodeJSON(t, res, &secrets)
+		assert.Len(t, secrets, 3)
+		expectedValues := []string{"FIRST", "LAST", "SEC2"}
+		for i := range expectedValues {
+			assert.Equal(t, expectedValues[i], secrets[i].Name)
+		}
+		assert.NotContains(t, res.Body.String(), "a secret to create")
+
+		readToken := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadUser)
+		req = NewRequest(t, "GET", listURL).AddTokenAuth(readToken)
+		res = MakeRequest(t, req, http.StatusOK)
+		secrets = []*api.Secret{}
+		DecodeJSON(t, res, &secrets)
+		assert.Len(t, secrets, 3)
+		for i := range expectedValues {
+			assert.Equal(t, expectedValues[i], secrets[i].Name)
+		}
+	})
+
 	t.Run("Create", func(t *testing.T) {
 		cases := []struct {
 			Name           string
@@ -35,7 +72,7 @@ func TestAPIUserSecrets(t *testing.T) {
 		}{
 			{
 				Name:           "",
-				ExpectedStatus: http.StatusNotFound,
+				ExpectedStatus: http.StatusMethodNotAllowed,
 			},
 			{
 				Name:           "-",
