@@ -198,7 +198,7 @@ func deleteDB() error {
 		}
 		defer db.Close()
 
-		databaseName := strings.SplitN(setting.Database.Name, "?", 2)[0]
+		databaseName, _, _ := strings.Cut(setting.Database.Name, "?")
 
 		if _, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", databaseName)); err != nil {
 			return err

@@ -542,8 +542,7 @@ func UploadManifest(ctx *context.Context) {
 
 	digest, err := container_service.ProcessManifest(ctx, *mci, buf)
 	if err != nil {
-		var namedError *container_service.NamedError
-		if errors.As(err, &namedError) {
+		if namedError, ok := errors.AsType[*container_service.NamedError](err); ok {
 			apiErrorDefined(ctx, namedError)
 		} else if errors.Is(err, container_model.ErrContainerBlobNotExist) {
 			apiErrorDefined(ctx, container_service.ErrBlobUnknown)

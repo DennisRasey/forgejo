@@ -26,7 +26,7 @@ func ConvertDatabaseTable() error {
 		return err
 	}
 
-	databaseName := strings.SplitN(setting.Database.Name, "?", 2)[0]
+	databaseName, _, _ := strings.Cut(setting.Database.Name, "?")
 	_, err = x.Exec(fmt.Sprintf("ALTER DATABASE `%s` CHARACTER SET utf8mb4 COLLATE %s", databaseName, r.ExpectedCollation))
 	if err != nil {
 		return err

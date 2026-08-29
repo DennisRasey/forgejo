@@ -395,8 +395,7 @@ func (r *runStdError) Stderr() string {
 }
 
 func IsErrorExitCode(err error, code int) bool {
-	var exitError *exec.ExitError
-	if errors.As(err, &exitError) {
+	if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 		return exitError.ExitCode() == code
 	}
 	return false

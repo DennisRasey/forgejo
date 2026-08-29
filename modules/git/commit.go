@@ -215,8 +215,7 @@ func (c *Commit) HasPreviousCommit(objectID ObjectID) (bool, error) {
 	if err == nil {
 		return true, nil
 	}
-	var exitError *exec.ExitError
-	if errors.As(err, &exitError) {
+	if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 		if exitError.ExitCode() == 1 && len(exitError.Stderr) == 0 {
 			return false, nil
 		}

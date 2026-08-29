@@ -544,7 +544,7 @@ func encodeContent(params ...string) string {
 // Given a comment of arbitrary-length Markdown text, create an abbreviated Markdown text appropriate for the
 // activity feed.
 func abbreviatedComment(comment string) string {
-	firstLine := strings.Split(comment, "\n")[0]
+	firstLine, _, _ := strings.Cut(comment, "\n")
 
 	if strings.HasPrefix(firstLine, "```") {
 		// First line is is a fenced code block... with no special abbreviate we would display a blank block, or in the

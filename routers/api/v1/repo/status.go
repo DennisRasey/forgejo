@@ -68,8 +68,7 @@ func NewCommitStatus(ctx *context.APIContext) {
 	}
 	if err := commitstatus_service.CreateCommitStatus(ctx, ctx.Repo().Repository, ctx.Doer(), sha, status); err != nil {
 		// TODO: replace with git.IsErrNotExist(err) once #12583 is resolved
-		var errNotExist git.ErrNotExist
-		if errors.As(err, &errNotExist) {
+		if _, ok := errors.AsType[git.ErrNotExist](err); ok {
 			ctx.NotFound("sha", sha)
 		} else {
 			ctx.Error(http.StatusInternalServerError, "CreateCommitStatus", err)

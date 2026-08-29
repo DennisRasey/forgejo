@@ -1309,7 +1309,7 @@ func TestOAuth_GrantScopesReadUser(t *testing.T) {
 	authorizeReq := NewRequest(t, "GET", authorizeURL)
 	authorizeResp := ctx.MakeRequest(t, authorizeReq, http.StatusSeeOther)
 
-	authcode := strings.Split(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")[0]
+	authcode, _, _ := strings.Cut(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")
 	grantReq := NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
 		"client_id":    app.ClientID,
 		"redirect_uri": "a",
@@ -1386,7 +1386,7 @@ func TestOAuth_GrantScopesFailReadRepository(t *testing.T) {
 	authorizeReq := NewRequest(t, "GET", authorizeURL)
 	authorizeResp := ctx.MakeRequest(t, authorizeReq, http.StatusSeeOther)
 
-	authcode := strings.Split(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")[0]
+	authcode, _, _ := strings.Cut(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")
 	grantReq := NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
 		"client_id":    app.ClientID,
 		"redirect_uri": "a",
@@ -1461,7 +1461,7 @@ func TestOAuth_GrantScopesReadRepository(t *testing.T) {
 	authorizeReq := NewRequest(t, "GET", authorizeURL)
 	authorizeResp := ctx.MakeRequest(t, authorizeReq, http.StatusSeeOther)
 
-	authcode := strings.Split(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")[0]
+	authcode, _, _ := strings.Cut(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")
 	grantReq := NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
 		"client_id":    app.ClientID,
 		"redirect_uri": "a",
@@ -1539,7 +1539,7 @@ func TestOAuth_GrantScopesReadPrivateGroups(t *testing.T) {
 	authorizeReq := NewRequest(t, "GET", authorizeURL)
 	authorizeResp := ctx.MakeRequest(t, authorizeReq, http.StatusSeeOther)
 
-	authcode := strings.Split(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")[0]
+	authcode, _, _ := strings.Cut(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")
 	grantReq := NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
 		"client_id":    app.ClientID,
 		"redirect_uri": "a",
@@ -1617,7 +1617,7 @@ func TestOAuth_GrantScopesReadOnlyPublicGroups(t *testing.T) {
 	authorizeReq := NewRequest(t, "GET", authorizeURL)
 	authorizeResp := ctx.MakeRequest(t, authorizeReq, http.StatusSeeOther)
 
-	authcode := strings.Split(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")[0]
+	authcode, _, _ := strings.Cut(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")
 	grantReq := NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
 		"client_id":    app.ClientID,
 		"redirect_uri": "a",
@@ -1709,7 +1709,7 @@ func TestOAuth_GrantScopesReadPublicGroupsWithTheReadScope(t *testing.T) {
 	authorizeReq := NewRequest(t, "GET", authorizeURL)
 	authorizeResp := ctx.MakeRequest(t, authorizeReq, http.StatusSeeOther)
 
-	authcode := strings.Split(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")[0]
+	authcode, _, _ := strings.Cut(strings.Split(authorizeResp.Body.String(), "?code=")[1], "&amp")
 	grantReq := NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
 		"client_id":    app.ClientID,
 		"redirect_uri": "a",

@@ -658,7 +658,7 @@ func tryAutolinkByLabel(ctx context.Context, p *packages_model.Package, labels m
 // Tries to link a package to a repository by its name (using {owner}/{repo}[/...]).
 // If it fails, it returns false, nil. Only actual errors are returned, so don't use the err return to determine if the linking was performed.
 func tryAutolinkByImageName(ctx context.Context, p *packages_model.Package, imageOwner, imageName string, doer *user_model.User) (linked bool, err error) {
-	repoName := strings.SplitN(imageName, "/", 2)[0] // [0] = repo; [1] = remainer (no need to check length since SplitN always returns at least one element)
+	repoName, _, _ := strings.Cut(imageName, "/")
 	repository, err := repo_model.GetRepositoryByOwnerAndName(ctx, imageOwner, repoName)
 	if err != nil {
 		if !repo_model.IsErrRepoNotExist(err) {
