@@ -117,7 +117,7 @@ function initRepoDiffConversationForm() {
       for (const el of document.querySelectorAll(selector)) {
         el.classList.add('tw-invisible');
       }
-      $newConversationHolder.find('.dropdown').dropdown();
+      $newConversationHolder.find('.ui.dropdown').dropdown();
       initCompReactionSelector($newConversationHolder);
     } catch { // here the caught error might be a jQuery AJAX error (thrown by await $.post), which is not good to use for error message handling
       console.error('error when submitting conversation', e);
@@ -141,7 +141,7 @@ function initRepoDiffConversationForm() {
       if ($(this).closest('.conversation-holder').length) {
         const $conversation = $(data);
         $(this).closest('.conversation-holder').replaceWith($conversation);
-        $conversation.find('.dropdown').dropdown();
+        $conversation.find('.ui.dropdown').dropdown();
         initCompReactionSelector($conversation);
       } else {
         window.location.reload();
