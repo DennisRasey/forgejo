@@ -3,6 +3,7 @@
 
 // @watch start
 // templates/repo/diff/new_review.tmpl
+// web_src/js/features/repo-diff.js
 // web_src/js/features/repo-issue.js
 // @watch end
 
@@ -11,6 +12,16 @@ import {test} from './utils_e2e.ts';
 import {screenshot} from './shared/screenshots.ts';
 
 test.use({user: 'user2'});
+
+// The comment context menu is a JS-less <details>; it must keep working on conversations
+// inserted via AJAX, which must not be initialized as Fomantic dropdowns.
+async function expectCommentMenuToOpen(page) {
+  const menu = page.locator('.conversation-holder .comment-header-right.actions details.dropdown');
+  await menu.locator('summary').click();
+  await expect(menu.locator('.content').getByText(/Copy link.*/)).toBeVisible();
+  await menu.locator('summary').click();
+  await expect(menu.locator('.content')).toBeHidden();
+}
 
 test('PR: Create review from files', async ({page}) => {
   const response = await page.goto('/user2/repo1/pulls/5/files');
@@ -52,6 +63,7 @@ test('PR: Create review from commit', async ({page}) => {
   }
 
   await expect(page.locator('.comment-list .comment-container')).toBeVisible();
+  await expectCommentMenuToOpen(page);
 
   // We need to wait for the review to be processed. Checking the comment counter
   // conveniently does that.
@@ -93,6 +105,7 @@ test('PR: Create review from commit', async ({page}) => {
   // We're back to where we started
   await expect(page.locator('.comment-content')).toBeVisible();
   await expect(page.getByText('Resolve conversation')).toBeVisible();
+  await expectCommentMenuToOpen(page);
   // #endregion
 
   // In addition to testing the ability to delete comments, this also
