@@ -13,7 +13,6 @@ import (
 	"forgejo.org/models/db"
 	"forgejo.org/models/organization"
 	"forgejo.org/models/perm"
-	"forgejo.org/models/repo"
 	"forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
@@ -385,29 +384,100 @@ func TestAPIGetTeamReposAccessTokenResources(t *testing.T) {
 	})
 }
 
-func TestAPIGetTeamRepo(t *testing.T) {
+func TestAPITeamRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 15})
-	teamRepo := unittest.AssertExistsAndLoadBean(t, &repo.Repository{ID: 24})
-	team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 5})
+	createSessionAndToken := func(username string) (*TestSession, string) {
+		session := loginUser(t, username)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteOrganization)
+		return session, token
+	}
+	ownerName := "user2"
+	ownerSession, ownerToken := createSessionAndToken(ownerName)
+	nonMemberName := "user5"
+	nonMemberSession, nonMemberToken := createSessionAndToken(nonMemberName)
+	memberName := "user4"
+	memberSession, memberToken := createSessionAndToken(memberName)
 
-	var results api.Repository
+	orgName := "testOrg"
+	req := NewRequestWithJSON(t, "POST", "/api/v1/orgs", &api.CreateOrgOption{
+		UserName:   orgName,
+		Visibility: "public",
+	}).
+		AddTokenAuth(ownerToken)
+	ownerSession.MakeRequest(t, req, http.StatusCreated)
 
-	token := getUserToken(t, user.Name, auth_model.AccessTokenScopeReadOrganization)
-	req := NewRequestf(t, "GET", "/api/v1/teams/%d/repos/%s/", team.ID, teamRepo.FullName()).
-		AddTokenAuth(token)
-	resp := MakeRequest(t, req, http.StatusOK)
-	DecodeJSON(t, resp, &results)
-	assert.Equal(t, "big_test_private_4", teamRepo.Name)
+	req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/orgs/%s/teams", orgName), &api.CreateTeamOption{
+		Name:             "test",
+		Permission:       "read",
+		Units:            []string{"repo.code", "repo.issues", "repo.wiki", "repo.pulls", "repo.releases"},
+		CanCreateOrgRepo: true,
+	}).
+		AddTokenAuth(ownerToken)
+	resp := ownerSession.MakeRequest(t, req, http.StatusCreated)
+	var team api.Team
+	DecodeJSON(t, resp, &team)
 
-	// no access if not organization member
-	user5 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
-	token5 := getUserToken(t, user5.Name, auth_model.AccessTokenScopeReadOrganization)
+	req = NewRequest(t, "PUT", fmt.Sprintf("/api/v1/teams/%d/members/%s", team.ID, memberName)).
+		AddTokenAuth(ownerToken)
+	ownerSession.MakeRequest(t, req, http.StatusNoContent)
 
-	req = NewRequestf(t, "GET", "/api/v1/teams/%d/repos/%s/", team.ID, teamRepo.FullName()).
-		AddTokenAuth(token5)
-	MakeRequest(t, req, http.StatusNotFound)
+	repoName := "repoName"
+	req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/orgs/%s/repos", orgName), &api.CreateRepoOption{
+		Name: repoName,
+	}).AddTokenAuth(ownerToken)
+	ownerSession.MakeRequest(t, req, http.StatusCreated)
+
+	url := fmt.Sprintf("/api/v1/teams/%d/repos/%s/%s", team.ID, orgName, repoName)
+
+	t.Run("AddTeamRepo", func(t *testing.T) {
+		method := http.MethodPut
+
+		req := NewRequest(t, method, url).AddTokenAuth(memberToken)
+		resp := memberSession.MakeRequest(t, req, http.StatusForbidden)
+		var err api.APIError
+		DecodeJSON(t, resp, &err)
+		assert.Equal(t, "user should be an owner or a collaborator with admin write of a repository", err.Message)
+
+		req = NewRequest(t, method, url).AddTokenAuth(nonMemberToken)
+		nonMemberSession.MakeRequest(t, req, http.StatusNotFound)
+
+		req = NewRequest(t, method, url).AddTokenAuth(ownerToken)
+		ownerSession.MakeRequest(t, req, http.StatusNoContent)
+	})
+
+	t.Run("GetTeamRepo", func(t *testing.T) {
+		method := http.MethodGet
+
+		req := NewRequest(t, method, url).AddTokenAuth(memberToken)
+		memberSession.MakeRequest(t, req, http.StatusOK)
+
+		req = NewRequest(t, method, url).AddTokenAuth(nonMemberToken)
+		nonMemberSession.MakeRequest(t, req, http.StatusNotFound)
+
+		req = NewRequest(t, method, url).AddTokenAuth(ownerToken)
+		ownerSession.MakeRequest(t, req, http.StatusOK)
+	})
+
+	t.Run("RemoveTeamRepo", func(t *testing.T) {
+		method := http.MethodDelete
+
+		req := NewRequest(t, method, url).AddTokenAuth(memberToken)
+		resp := memberSession.MakeRequest(t, req, http.StatusForbidden)
+		var err api.APIError
+		DecodeJSON(t, resp, &err)
+		assert.Equal(t, "user should be an owner or a collaborator with admin write of a repository", err.Message)
+
+		req = NewRequest(t, method, url).AddTokenAuth(nonMemberToken)
+		nonMemberSession.MakeRequest(t, req, http.StatusNotFound)
+
+		req = NewRequest(t, method, url).AddTokenAuth(ownerToken)
+		ownerSession.MakeRequest(t, req, http.StatusNoContent)
+
+		// verify the deletion is effective
+		req = NewRequest(t, http.MethodGet, url).AddTokenAuth(ownerToken)
+		ownerSession.MakeRequest(t, req, http.StatusNotFound)
+	})
 }
 
 func TestAPIGetTeamRepoAccessTokenResources(t *testing.T) {

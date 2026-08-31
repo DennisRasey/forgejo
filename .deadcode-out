@@ -45,6 +45,7 @@ forgejo.org/models/issues
 	IsErrIssueWasClosed
 
 forgejo.org/models/perm/access
+	AccessLevel
 	GetRepoWriters
 
 forgejo.org/models/user
