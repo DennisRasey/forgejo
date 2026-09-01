@@ -441,6 +441,7 @@ func handleWorkflows(
 				jobparser.ExpandLocalReusableWorkflows(expandLocalReusableWorkflows(workflowSourceCommit)),
 				jobparser.ExpandInstanceReusableWorkflows(expandInstanceReusableWorkflows(ctx)),
 				jobparser.WithGitContext(generateGiteaContextForRun(run)),
+				jobparser.EnableNamespaces(),
 			)
 			if err != nil {
 				log.Info("jobparser.Parse: invalid workflow, setting job status to failed: %v", err)

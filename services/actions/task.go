@@ -213,7 +213,7 @@ func findTaskNeeds(ctx context.Context, taskJob *actions_model.ActionRunJob) (ma
 	}
 	ret := make(map[string]*runnerv1.TaskNeed, len(taskNeeds))
 	for jobID, taskNeed := range taskNeeds {
-		ret[jobID] = &runnerv1.TaskNeed{
+		ret[string(jobID.ToLocal(taskJob.JobNamespace))] = &runnerv1.TaskNeed{
 			Outputs: taskNeed.Outputs,
 			Result:  runnerv1.Result(taskNeed.Result),
 		}

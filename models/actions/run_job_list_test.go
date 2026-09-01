@@ -13,9 +13,16 @@ import (
 
 func TestActionJobList_GetJobIDs(t *testing.T) {
 	jobs := ActionJobList{
-		&ActionRunJob{JobID: "job 1"},
-		&ActionRunJob{JobID: "job 2"},
+		&ActionRunJob{JobNamespace: "ns1", JobID: "job 1"},
+		&ActionRunJob{JobNamespace: "ns1", JobID: "job 2"},
+		&ActionRunJob{JobNamespace: "ns2", JobID: "job 1"},
+		&ActionRunJob{JobNamespace: "ns2", JobID: "job 2"},
 	}
 
-	assert.Equal(t, container.SetOf("job 2", "job 1"), jobs.GetJobIDs())
+	assert.Equal(t, container.SetOf(
+		NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job 2"},
+		NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job 1"},
+		NamespacedJobIdentifier{Namespace: "ns2", Identifier: "job 2"},
+		NamespacedJobIdentifier{Namespace: "ns2", Identifier: "job 1"},
+	), jobs.GetJobIDs())
 }

@@ -10,6 +10,7 @@ import (
 	access_model "forgejo.org/models/perm/access"
 	user_model "forgejo.org/models/user"
 	api "forgejo.org/modules/structs"
+	"forgejo.org/modules/util"
 )
 
 // ToActionRun convert actions_model.User to api.ActionRun
@@ -82,7 +83,7 @@ func ToActionRunJob(job *actions_model.ActionRunJob, steps []*actions_model.Acti
 		RepoID:  job.RepoID,
 		OwnerID: job.OwnerID,
 		Name:    job.Name,
-		Needs:   job.Needs,
+		Needs:   util.ConvertSlice[actions_model.LocalJobIdentifier, string](job.Needs),
 		RunsOn:  job.RunsOn,
 		TaskID:  job.TaskID,
 		Status:  job.Status.String(),

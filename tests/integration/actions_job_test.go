@@ -18,6 +18,7 @@ import (
 	actions_model "forgejo.org/models/actions"
 	auth_model "forgejo.org/models/auth"
 	repo_model "forgejo.org/models/repo"
+	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
@@ -28,6 +29,7 @@ import (
 	actions_service "forgejo.org/services/actions"
 	notify_service "forgejo.org/services/notify"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	runnerv1 "code.forgejo.org/forgejo/actions-proto/runner/v1"
 	"connectrpc.com/connect"
@@ -35,6 +37,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 )
 
 func TestActionsJobWithNeeds(t *testing.T) {
@@ -462,7 +465,7 @@ jobs:
 				assert.True(t, reflect.DeepEqual(gtCtx["event"].GetStructValue().AsMap(), runEvent))
 				assert.Equal(t, actionRun.TriggerEvent, gtCtx["event_name"].GetStringValue())
 				assert.Equal(t, apiPull.Head.Ref, gtCtx["head_ref"].GetStringValue())
-				assert.Equal(t, actionRunJob.JobID, gtCtx["job"].GetStringValue())
+				assert.Equal(t, string(actionRunJob.JobID), gtCtx["job"].GetStringValue())
 				assert.Equal(t, actionRun.Ref, gtCtx["ref"].GetStringValue())
 				assert.Equal(t, git.RefName(actionRun.Ref).ShortName(), gtCtx["ref_name"].GetStringValue())
 				assert.False(t, gtCtx["ref_protected"].GetBoolValue())
@@ -1756,4 +1759,148 @@ func (tester *ActionsRunIfTester) mockRunTaskAndFail() *runnerv1.Task {
 		result: runnerv1.Result_RESULT_FAILURE,
 	})
 	return task
+}
+
+func TestActionsJobReusableWorkflowWithMatrix(t *testing.T) {
+	if !setting.Database.Type.IsSQLite3() {
+		t.Skip()
+	}
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		// The entrypoint to this workflow will have a starting job (entry-pre-req), a reusable workflow with a matrix
+		// strategy, and an ending job (entry-follow-up). Within the reusable workflow, two jobs (inner-job-1,
+		// inner-job-2) will be run in two independent sequences.
+
+		entry := `name: job-with-needs
+on:
+  push:
+jobs:
+  entry-pre-req:
+    runs-on: docker
+    steps: []
+  entry:
+    needs: entry-pre-req
+    strategy:
+      matrix:
+        dimension: [value1, value2]
+    uses: ./.forgejo/workflows/reusable.yml
+    with:
+      test-dimension: ${{ matrix.dimension }}
+  entry-follow-up:
+    needs: entry
+    runs-on: docker
+    steps: []
+`
+
+		reusable := `
+on:
+  workflow_call:
+    inputs:
+      test-dimension:
+    outputs:
+      job1-output:
+        value: ${{ jobs.inner-job-1.outputs.job-output }}
+      job2-output:
+        value: ${{ jobs.inner-job-2.outputs.job-output }}
+jobs:
+  inner-job-1:
+    runs-on: docker
+    steps: []
+  inner-job-2:
+    needs: inner-job-1
+    runs-on: docker
+    steps: []
+`
+
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Files: forgery.MapFS{
+				".forgejo/workflows/entry.yml":    forgery.MapFile(entry),
+				".forgejo/workflows/reusable.yml": forgery.MapFile(reusable),
+			},
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
+
+		runner := newMockRunner()
+		runner.registerAsRepoRunner(t, user2.Name, repo.Name, "mock-runner", []string{"docker"})
+
+		entryPreReqTask := runner.fetchTask(t)
+		entryPreReqJob := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{TaskID: entryPreReqTask.GetId()})
+		assert.Equal(t, actions_model.JobIdentifier("entry-pre-req"), entryPreReqJob.JobID)
+		// inner-job-1 (x2) must not start until entry-pre-req is complete.
+		require.Nil(t, runner.maybeFetchTask(t))
+		runner.succeedAtTask(t, entryPreReqTask)
+
+		// There are two inner-job-1's, and two inner-job-2's, created with different inputs from the entry job's
+		// matrix.  Tested by fetching the two jobs and validating they have the same identifiers, but independent
+		// namespaces:
+		matrix1InnerJob1Task := runner.fetchTask(t)
+		matrix1InnerJob1 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{TaskID: matrix1InnerJob1Task.GetId()})
+		assert.Equal(t, actions_model.JobIdentifier("inner-job-1"), matrix1InnerJob1.JobID)
+		matrix2InnerJob1Task := runner.fetchTask(t)
+		matrix2InnerJob1 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{TaskID: matrix2InnerJob1Task.GetId()})
+		assert.Equal(t, actions_model.JobIdentifier("inner-job-1"), matrix2InnerJob1.JobID)
+		assert.NotEqual(t, matrix1InnerJob1.JobNamespace, matrix2InnerJob1.JobNamespace)
+		// Decode the workflow tasks, validating that each has the corect and distinct input:
+		var matrix1InnerJob1Workflow map[string]any
+		var matrix2InnerJob1Workflow map[string]any
+		require.NoError(t, yaml.Unmarshal(matrix1InnerJob1Task.WorkflowPayload, &matrix1InnerJob1Workflow))
+		require.NoError(t, yaml.Unmarshal(matrix2InnerJob1Task.WorkflowPayload, &matrix2InnerJob1Workflow))
+		assert.Equal(t, "value1", matrix1InnerJob1Workflow["on"].(map[string]any)["workflow_call"].(map[string]any)["inputs"].(map[string]any)["test-dimension"].(map[string]any)["default"])
+		assert.Equal(t, "value2", matrix2InnerJob1Workflow["on"].(map[string]any)["workflow_call"].(map[string]any)["inputs"].(map[string]any)["test-dimension"].(map[string]any)["default"])
+
+		// These form independent chains of jobs; when inner-job-1{value1} is complete, inner-job-2{value1} can be
+		// started, but neither has an impact on the jobs from the value2 matrix.  Tested by finishing
+		// inner-job-1{value1}, ensuring inner-job-2{value1} can be started, and no other job can be started.
+		runner.execTask(t, matrix1InnerJob1Task, &mockTaskOutcome{
+			outputs: map[string]string{"job-output": "output from matrix1InnerJob1Task"},
+			result:  runnerv1.Result_RESULT_SUCCESS,
+		})
+		matrix1InnerJob2Task := runner.fetchTask(t)
+		matrix1InnerJob2 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{TaskID: matrix1InnerJob2Task.GetId()})
+		assert.Equal(t, actions_model.JobIdentifier("inner-job-2"), matrix1InnerJob2.JobID)
+		assert.Equal(t, matrix1InnerJob1.JobNamespace, matrix1InnerJob2.JobNamespace)
+		assert.Nil(t, runner.maybeFetchTask(t)) // no other job available yet
+
+		// Outputs provided by inner-job-1 can be read from inner-job-2, but only from within the same independent chain
+		// of jobs, and not across the matrix.  Tested by validating the inputs to inner-job-2 from both matrix jobs,
+		// which requires finishing inner-job-1:
+		matrix1InnerJob2Needs := matrix1InnerJob2Task.GetNeeds()
+		require.Contains(t, matrix1InnerJob2Needs, "inner-job-1")
+		assert.Equal(t, map[string]string{"job-output": "output from matrix1InnerJob1Task"}, matrix1InnerJob2Needs["inner-job-1"].Outputs)
+		// Finish the other inner-job-1 with it's own unique output so we can confirm the outputs aren't mixed:
+		runner.execTask(t, matrix2InnerJob1Task, &mockTaskOutcome{
+			outputs: map[string]string{"job-output": "the other output from matrix2InnerJob1Task"},
+			result:  runnerv1.Result_RESULT_SUCCESS,
+		})
+		matrix2InnerJob2Task := runner.fetchTask(t)
+		matrix2InnerJob2 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{TaskID: matrix2InnerJob2Task.GetId()})
+		assert.Equal(t, actions_model.JobIdentifier("inner-job-2"), matrix2InnerJob2.JobID)
+		assert.Equal(t, matrix2InnerJob1.JobNamespace, matrix2InnerJob2.JobNamespace)
+		matrix2InnerJob2Needs := matrix2InnerJob2Task.GetNeeds()
+		require.Contains(t, matrix2InnerJob2Needs, "inner-job-1")
+		assert.Equal(t, map[string]string{"job-output": "the other output from matrix2InnerJob1Task"}, matrix2InnerJob2Needs["inner-job-1"].Outputs)
+
+		// All of the matrix jobs from entry will need to be completed before entry-follow-up can start.  Tested by
+		// confirming that no jobs are available yet, and then finishing the two outstanding inner-job-2 instances one
+		// by one.
+		assert.Nil(t, runner.maybeFetchTask(t))
+		runner.succeedAtTask(t, matrix1InnerJob2Task)
+		assert.Nil(t, runner.maybeFetchTask(t))
+		runner.succeedAtTask(t, matrix2InnerJob2Task)
+		entryFollowUpTask := runner.fetchTask(t)
+		entryFollowUpJob := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{TaskID: entryFollowUpTask.GetId()})
+		assert.Equal(t, actions_model.JobIdentifier("entry-follow-up"), entryFollowUpJob.JobID)
+		assert.Empty(t, entryFollowUpJob.JobNamespace)
+
+		// The entry will have outputs which come the inner jobs.  As with all matrix jobs, the outputs from each job
+		// are combined... but a reusable workflow can't have optional outputs like a job can.  Therefore the resulting
+		// outputs of the entry job, which can be read from the entry-follow-up job, are just the outputs of the last
+		// job to complete.
+		entryFollowUpNeeds := entryFollowUpTask.GetNeeds()
+		require.Contains(t, entryFollowUpNeeds, "entry")
+		assert.Equal(t, map[string]string{
+			"job1-output": "the other output from matrix2InnerJob1Task",
+			"job2-output": "",
+		}, entryFollowUpNeeds["entry"].Outputs)
+	})
 }

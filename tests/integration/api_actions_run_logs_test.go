@@ -118,9 +118,9 @@ jobs:
 		actionTask3 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: task3.Id})
 		actionRunJob3 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: actionTask3.JobID})
 
-		require.Equal(t, "job1", actionRunJob1.JobID, "first fetched task should be job1")
-		require.Equal(t, "job2", actionRunJob2.JobID, "second fetched task should be job2 (needs: [job1])")
-		require.Equal(t, "utf8-job", actionRunJob3.JobID, "third fetched task should be utf8-job (needs: [job2])")
+		require.Equal(t, actions_model.JobIdentifier("job1"), actionRunJob1.JobID, "first fetched task should be job1")
+		require.Equal(t, actions_model.JobIdentifier("job2"), actionRunJob2.JobID, "second fetched task should be job2 (needs: [job1])")
+		require.Equal(t, actions_model.JobIdentifier("utf8-job"), actionRunJob3.JobID, "third fetched task should be utf8-job (needs: [job2])")
 		require.Equal(t, utf8JobDisplayName, actionRunJob3.Name,
 			"DB should store the YAML `name:` field verbatim, including UTF-8")
 		require.Equal(t, actionRunJob1.RunID, actionRunJob2.RunID, "both jobs should belong to the same run")

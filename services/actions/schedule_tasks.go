@@ -184,6 +184,7 @@ func CreateScheduleTask(ctx context.Context, cron *actions_model.ActionSchedule)
 		jobparser.ExpandLocalReusableWorkflows(expandLocalReusableWorkflow),
 		jobparser.ExpandInstanceReusableWorkflows(expandInstanceReusableWorkflows(ctx)),
 		jobparser.WithGitContext(generateGiteaContextForRun(run)),
+		jobparser.EnableNamespaces(),
 	)
 	if err != nil {
 		return err

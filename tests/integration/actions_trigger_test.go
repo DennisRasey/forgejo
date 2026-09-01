@@ -1429,7 +1429,7 @@ func TestActionsWorkflowDispatchReusableWorkflow(t *testing.T) {
 			switch j.JobID {
 			case "test":
 				parentJob = j
-			case "test.inner":
+			case "inner":
 				childJob = j
 			}
 		}

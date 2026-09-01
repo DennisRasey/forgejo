@@ -28,10 +28,11 @@ func TestFindTaskNeeds(t *testing.T) {
 	ret, err := FindTaskNeeds(t.Context(), job)
 	require.NoError(t, err)
 	assert.Len(t, ret, 1)
-	assert.Contains(t, ret, "job1")
-	assert.Len(t, ret["job1"].Outputs, 2)
-	assert.Equal(t, "abc", ret["job1"].Outputs["output_a"])
-	assert.Equal(t, "bbb", ret["job1"].Outputs["output_b"])
+	idJob1 := actions_model.NamespacedJobIdentifier{Identifier: "job1"}
+	assert.Contains(t, ret, idJob1)
+	assert.Len(t, ret[idJob1].Outputs, 2)
+	assert.Equal(t, "abc", ret[idJob1].Outputs["output_a"])
+	assert.Equal(t, "bbb", ret[idJob1].Outputs["output_b"])
 }
 
 func TestGenerateGiteaContext(t *testing.T) {

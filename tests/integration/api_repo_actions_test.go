@@ -20,6 +20,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	api "forgejo.org/modules/structs"
+	"forgejo.org/modules/util"
 	"forgejo.org/modules/webhook"
 	"forgejo.org/routers/api/v1/shared"
 	repo_service "forgejo.org/services/repository"
@@ -1223,7 +1224,7 @@ func TestActionsAPIListActionRunJobs(t *testing.T) {
 				assert.Equal(t, expected.RepoID, actual.RepoID)
 				assert.Equal(t, expected.OwnerID, actual.OwnerID)
 				assert.Equal(t, expected.Name, actual.Name)
-				assert.Equal(t, expected.Needs, actual.Needs)
+				assert.Equal(t, util.ConvertSlice[actions_model.LocalJobIdentifier, string](expected.Needs), actual.Needs)
 				assert.Equal(t, expected.RunsOn, actual.RunsOn)
 				assert.Equal(t, expected.TaskID, actual.TaskID)
 				assert.Equal(t, expected.Status.String(), actual.Status)

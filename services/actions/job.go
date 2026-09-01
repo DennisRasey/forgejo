@@ -11,6 +11,7 @@ import (
 	actions_model "forgejo.org/models/actions"
 	"forgejo.org/models/db"
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/util"
 	notify_service "forgejo.org/services/notify"
 
 	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
@@ -189,8 +190,9 @@ func convertSingleWorkflowToJobs(run *actions_model.ActionRun, jobs []*jobparser
 			IsForkPullRequest: run.IsForkPullRequest,
 			Name:              name,
 			WorkflowPayload:   payload,
-			JobID:             id,
-			Needs:             needs,
+			JobID:             actions_model.JobIdentifier(id),
+			JobNamespace:      actions_model.JobNamespace(v.Metadata.Namespace),
+			Needs:             util.ConvertSlice[string, actions_model.LocalJobIdentifier](needs),
 			RunsOn:            runsOn,
 			Status:            status,
 			Attempt:           1,

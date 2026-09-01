@@ -12,6 +12,7 @@ import (
 
 	actions_model "forgejo.org/models/actions"
 	"forgejo.org/models/db"
+	"forgejo.org/modules/util"
 	notify_service "forgejo.org/services/notify"
 
 	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
@@ -169,7 +170,7 @@ func consistencyCheckRun(ctx context.Context, run *actions_model.ActionRun) erro
 	for _, job := range jobs {
 		if unknownJobIDs, ok := job.AllNeedsExist(validJobIDs); !ok {
 			return FailRunPreExecutionError(ctx, run, actions_model.ErrorCodeUnknownJobInNeeds,
-				[]any{job.JobID, strings.Join(unknownJobIDs, ", ")})
+				[]any{job.JobID, strings.Join(util.ConvertSlice[actions_model.JobIdentifier, string](unknownJobIDs), ", ")})
 		}
 		if stop, err := checkJobWillRevisit(ctx, job); err != nil {
 			return err
@@ -206,7 +207,7 @@ func checkJobWillRevisit(ctx context.Context, job *actions_model.ActionRunJob) (
 		return false, nil
 	}
 
-	requiredJob := matrixNeeds.Job
+	requiredJob := actions_model.LocalJobIdentifier(matrixNeeds.Job)
 	needs := job.Needs
 	if slices.Contains(needs, requiredJob) {
 		// Looks good, the needed job is listed in `needs`.  It's possible that the matrix may be incomplete by
@@ -223,7 +224,7 @@ func checkJobWillRevisit(ctx context.Context, job *actions_model.ActionRunJob) (
 	if err := FailRunPreExecutionError(ctx, job.Run, actions_model.ErrorCodeIncompleteMatrixMissingJob, []any{
 		job.JobID,
 		requiredJob,
-		strings.Join(needs, ", "),
+		strings.Join(util.ConvertSlice[actions_model.LocalJobIdentifier, string](needs), ", "),
 	}); err != nil {
 		return false, err
 	}

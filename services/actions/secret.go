@@ -103,9 +103,10 @@ func getSecretsOfInnerWorkflowCall(ctx context.Context, job *actions_model.Actio
 	jobResults := make(map[string]string, len(taskNeeds))
 	jobOutputs := make(map[string]map[string]string, len(taskNeeds))
 	for jobID, n := range taskNeeds {
-		needs = append(needs, jobID)
-		jobResults[jobID] = n.Result.String()
-		jobOutputs[jobID] = n.Outputs
+		qualified := string(jobID.ToLocal(job.JobNamespace))
+		needs = append(needs, qualified)
+		jobResults[qualified] = n.Result.String()
+		jobOutputs[qualified] = n.Outputs
 	}
 	vars, err := actions_model.GetVariablesOfRun(ctx, job.Run)
 	if err != nil {

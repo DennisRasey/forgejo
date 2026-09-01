@@ -22,9 +22,9 @@ import (
 
 func TestRerun_GetAllRerunJobs(t *testing.T) {
 	job1 := &actions_model.ActionRunJob{JobID: "job1"}
-	job2 := &actions_model.ActionRunJob{JobID: "job2", Needs: []string{"job1"}}
-	job3 := &actions_model.ActionRunJob{JobID: "job3", Needs: []string{"job2"}}
-	job4 := &actions_model.ActionRunJob{JobID: "job4", Needs: []string{"job2", "job3"}}
+	job2 := &actions_model.ActionRunJob{JobID: "job2", Needs: []actions_model.LocalJobIdentifier{"job1"}}
+	job3 := &actions_model.ActionRunJob{JobID: "job3", Needs: []actions_model.LocalJobIdentifier{"job2"}}
+	job4 := &actions_model.ActionRunJob{JobID: "job4", Needs: []actions_model.LocalJobIdentifier{"job2", "job3"}}
 
 	jobs := []*actions_model.ActionRunJob{job1, job2, job3, job4}
 

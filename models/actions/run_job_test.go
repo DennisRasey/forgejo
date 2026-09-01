@@ -375,43 +375,62 @@ func TestAllNeedsExist(t *testing.T) {
 	testCases := []struct {
 		name               string
 		job                ActionRunJob
-		existingJobIDs     container.Set[string]
-		expectedUnknownIDs []string
+		existingJobIDs     container.Set[NamespacedJobIdentifier]
+		expectedUnknownIDs []JobIdentifier
 		ok                 bool
 	}{
 		{
 			name:               "no needs",
 			job:                ActionRunJob{Needs: nil},
-			existingJobIDs:     container.Set[string]{},
-			expectedUnknownIDs: []string{},
+			existingJobIDs:     container.Set[NamespacedJobIdentifier]{},
+			expectedUnknownIDs: []JobIdentifier{},
 			ok:                 true,
 		},
 		{
 			name:               "empty needs",
-			job:                ActionRunJob{Needs: []string{}},
-			existingJobIDs:     container.Set[string]{},
-			expectedUnknownIDs: []string{},
+			job:                ActionRunJob{Needs: []LocalJobIdentifier{}},
+			existingJobIDs:     container.Set[NamespacedJobIdentifier]{},
+			expectedUnknownIDs: []JobIdentifier{},
 			ok:                 true,
 		},
 		{
-			name:               "satisfied needs",
-			job:                ActionRunJob{Needs: []string{"job1", "job2"}},
-			existingJobIDs:     container.SetOf("job2", "job1"),
-			expectedUnknownIDs: []string{},
+			name: "satisfied needs",
+			job:  ActionRunJob{JobNamespace: "ns1", Needs: []LocalJobIdentifier{"job1", "job2"}},
+			existingJobIDs: container.SetOf(
+				NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job2"},
+				NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job1"},
+			),
+			expectedUnknownIDs: []JobIdentifier{},
 			ok:                 true,
 		},
 		{
-			name:               "unsatisfied needs",
-			job:                ActionRunJob{Needs: []string{"unknown", "job2"}},
-			existingJobIDs:     container.SetOf("job2", "job1"),
-			expectedUnknownIDs: []string{"unknown"},
+			name: "unsatisfied needs",
+			job:  ActionRunJob{JobNamespace: "ns1", Needs: []LocalJobIdentifier{"unknown", "job2"}},
+			existingJobIDs: container.SetOf(
+				NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job2"},
+				NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job1"},
+			),
+			expectedUnknownIDs: []JobIdentifier{"unknown"},
 			ok:                 false,
 		},
 		{
-			name:               "comparison is case-sensitive",
-			job:                ActionRunJob{Needs: []string{"Job1", "job2"}},
-			existingJobIDs:     container.SetOf("job2", "job1"),
-			expectedUnknownIDs: []string{"Job1"},
+			name: "comparison is case-sensitive",
+			job:  ActionRunJob{JobNamespace: "ns1", Needs: []LocalJobIdentifier{"Job1", "job2"}},
+			existingJobIDs: container.SetOf(
+				NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job2"},
+				NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job1"},
+			),
+			expectedUnknownIDs: []JobIdentifier{"Job1"},
+			ok:                 false,
+		},
+		{
+			name: "unsatisfied needs different namespace",
+			job:  ActionRunJob{JobNamespace: "ns1", Needs: []LocalJobIdentifier{"job1", "job2"}},
+			existingJobIDs: container.SetOf(
+				NamespacedJobIdentifier{Namespace: "ns1", Identifier: "job1"},
+				NamespacedJobIdentifier{Namespace: "ns2", Identifier: "job2"},
+			),
+			expectedUnknownIDs: []JobIdentifier{"job2"},
 			ok:                 false,
 		},
 	}

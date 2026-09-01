@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"forgejo.org/models/db"
@@ -19,6 +20,29 @@ import (
 	"go.yaml.in/yaml/v3"
 	"xorm.io/builder"
 )
+
+// When an Actions job is defined in YAML as `jobs: { release: { runs-on: ... }}`, the mapping string `release` is
+// considered its "job identifier".  It is unique within the scope of the workflow and can be referenced by other jobs
+// with `needs: [ release ]`, and `${{ needs.release.[...] }}`
+type JobIdentifier string
+
+// When an Actions job has a reusable workflow, and the reusable workflow defines a matrix execution, it is possible for
+// jobs with the same `JobIdentifier` will exist within a run.  The job's "job namespace" combined with its "job
+// identifier" identify a unique job.  For example, when `${{ needs.release.outputs.x }}` is referenced, the job with
+// the identifier "release" in the *same job namespace* would be referenced.
+type JobNamespace string
+
+// A local job identifier refers to another job in the same job namespace with an unqualified name (e.g. `job2`), or to
+// a job in another namespace with a fully qualified name like `__namespace.ns1.job2`.
+type LocalJobIdentifier string
+
+// Combines JobNamespace & JobIdentifier into a distinct identity for this job in this run.  It is always a fully
+// qualified identity.  Note that this is not a unique identity -- if this job is a matrix job, then multiple jobs will
+// exist for this namespace and job identity.
+type NamespacedJobIdentifier struct {
+	Namespace  JobNamespace
+	Identifier JobIdentifier
+}
 
 // ActionRunJob represents a job of a run
 type ActionRunJob struct {
@@ -33,11 +57,12 @@ type ActionRunJob struct {
 	Attempt           int64
 	Handle            string `xorm:"unique"`
 	WorkflowPayload   []byte
-	JobID             string   `xorm:"VARCHAR(255)"` // job id in workflow, not job's id
-	Needs             []string `xorm:"JSON TEXT"`
-	RunsOn            []string `xorm:"JSON TEXT"`
-	TaskID            int64    // the latest task of the job
-	Status            Status   `xorm:"index"`
+	JobID             JobIdentifier        `xorm:"VARCHAR(255)"`      // job id in workflow, not job's id
+	JobNamespace      JobNamespace         `xorm:"VARCHAR(255) NULL"` // NULL is treated as an empty namespace ("")
+	Needs             []LocalJobIdentifier `xorm:"JSON TEXT"`
+	RunsOn            []string             `xorm:"JSON TEXT"`
+	TaskID            int64                // the latest task of the job
+	Status            Status               `xorm:"index"`
 	Started           timeutil.TimeStamp
 	Stopped           timeutil.TimeStamp
 	Created           timeutil.TimeStamp `xorm:"created"`
@@ -167,6 +192,24 @@ func (job *ActionRunJob) GetAllAttempts(ctx context.Context) ([]*ActionTask, err
 		return nil, err
 	}
 	return attempts, nil
+}
+
+// Interpret the job's `needs` array into a fully namespace-qualified set of jobs needed by this job.  Fully qualified
+// names are needed to find relevant jobs that have been completed, and their outputs, to unblock this job.
+func (job *ActionRunJob) NamespacedNeeds() []NamespacedJobIdentifier {
+	needs := make([]NamespacedJobIdentifier, len(job.Needs))
+	for i, need := range job.Needs {
+		needs[i] = need.ToQualified(job.JobNamespace)
+	}
+	return needs
+}
+
+// Interpret this job's name and namespace into a fully namespace-qualified identifier.
+func (job *ActionRunJob) NamespacedJobID() NamespacedJobIdentifier {
+	return NamespacedJobIdentifier{
+		Namespace:  job.JobNamespace,
+		Identifier: job.JobID,
+	}
 }
 
 func GetRunJobByID(ctx context.Context, id int64) (*ActionRunJob, error) {
@@ -367,14 +410,13 @@ func (job *ActionRunJob) EnableOpenIDConnect() (bool, error) {
 // AllNeedsExist checks whether this ActionRunJob's Needs can theoretically be met by comparing them with the supplied
 // list of all job IDs that part of a particular workflow run. Returns the list of unknown job IDs found in Needs
 // alongside an indicator whether the check was successful.
-func (job *ActionRunJob) AllNeedsExist(allExistingJobIDs container.Set[string]) ([]string, bool) {
-	unknownJobIDs := []string{}
-	for _, need := range job.Needs {
+func (job *ActionRunJob) AllNeedsExist(allExistingJobIDs container.Set[NamespacedJobIdentifier]) ([]JobIdentifier, bool) {
+	unknownJobIDs := []JobIdentifier{}
+	for _, need := range job.NamespacedNeeds() {
 		if !allExistingJobIDs.Contains(need) {
-			unknownJobIDs = append(unknownJobIDs, need)
+			unknownJobIDs = append(unknownJobIDs, need.Identifier)
 		}
 	}
-
 	return unknownJobIDs, len(unknownJobIDs) == 0
 }
 
@@ -383,4 +425,32 @@ func (job *ActionRunJob) AllNeedsExist(allExistingJobIDs container.Set[string]) 
 func DeleteJob(ctx context.Context, jobID int64) error {
 	_, err := db.GetEngine(ctx).Delete(&ActionRunJob{ID: jobID})
 	return err
+}
+
+// Convert a fully qualified job identifier to a local job identifier.  If it is in the same namespace as
+// relativeNamespace, it will just be its job id.  If it's in a different namespace, it will become fully qualified.
+func (id *NamespacedJobIdentifier) ToLocal(relativeNamespace JobNamespace) LocalJobIdentifier {
+	if id.Namespace == relativeNamespace {
+		return LocalJobIdentifier(id.Identifier)
+	}
+	return LocalJobIdentifier(fmt.Sprintf("__namespace.%s.%s", id.Namespace, id.Identifier))
+}
+
+// Convert an identifier, as interpreted in the scope of `relativeNamespace`, to a fully qualified name.  A fully
+// qualified name `__namespace.ns1.job1` will be interpreted as namespace "ns1" and job "job1".  A relative name "job2"
+// will be considered as namespace relativeNamespace and job "job2".
+func (id LocalJobIdentifier) ToQualified(relativeNamespace JobNamespace) NamespacedJobIdentifier {
+	if strings.HasPrefix(string(id), "__namespace.") {
+		split := strings.SplitN(string(id), ".", 3)
+		if len(split) == 3 {
+			return NamespacedJobIdentifier{
+				Namespace:  JobNamespace(split[1]),
+				Identifier: JobIdentifier(split[2]),
+			}
+		}
+	}
+	return NamespacedJobIdentifier{
+		Namespace:  relativeNamespace,
+		Identifier: JobIdentifier(id),
+	}
 }

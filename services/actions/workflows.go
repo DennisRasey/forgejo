@@ -192,6 +192,7 @@ func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGette
 		jobparser.ExpandLocalReusableWorkflows(expandLocalReusableWorkflows(entry.Commit)),
 		jobparser.ExpandInstanceReusableWorkflows(expandInstanceReusableWorkflows(ctx)),
 		jobparser.WithGitContext(generateGiteaContextForRun(run)),
+		jobparser.EnableNamespaces(),
 	)
 	if err != nil {
 		return nil, nil, err

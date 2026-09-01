@@ -141,6 +141,17 @@ func (r *mockRunner) registerAsEphemeralRepoRunner(t *testing.T, ownerName, repo
 	r.doRegisterEphemeral(t, runnerName, registrationToken.Token, labels)
 }
 
+func (r *mockRunner) updateLastTasksVersion(msg *runnerv1.FetchTaskResponse) {
+	r.lastTasksVersion = msg.TasksVersion
+	if msg.GetTask() != nil || len(msg.GetAdditionalTasks()) > 0 {
+		// After receiving a task, the correct client implementation is for the next invocation of FetchTask to have
+		// TasksVersion=0 and force a DB query.  This covers the case where 2 jobs are available for a runner, but only
+		// 1 is fetched -- if the next query had the same tasks version as the response, then it would never fetch the
+		// second task.
+		r.lastTasksVersion = 0
+	}
+}
+
 func (r *mockRunner) fetchTaskOrError(t *testing.T, taskCapacity int64) (*runnerv1.Task, []*runnerv1.Task, error) {
 	resp, err := r.client.runnerServiceClient.FetchTask(t.Context(), connect.NewRequest(&runnerv1.FetchTaskRequest{
 		TasksVersion: r.lastTasksVersion,
@@ -149,7 +160,7 @@ func (r *mockRunner) fetchTaskOrError(t *testing.T, taskCapacity int64) (*runner
 	if err != nil {
 		return nil, nil, err
 	}
-	r.lastTasksVersion = resp.Msg.TasksVersion
+	r.updateLastTasksVersion(resp.Msg)
 	return resp.Msg.Task, resp.Msg.AdditionalTasks, nil
 }
 
@@ -158,7 +169,7 @@ func (r *mockRunner) maybeFetchTask(t *testing.T) *runnerv1.Task {
 		TasksVersion: r.lastTasksVersion,
 	}))
 	require.NoError(t, err)
-	r.lastTasksVersion = resp.Msg.TasksVersion
+	r.updateLastTasksVersion(resp.Msg)
 	return resp.Msg.Task
 }
 
@@ -168,7 +179,7 @@ func (r *mockRunner) maybeFetchTaskWithTaskCapacity(t *testing.T, taskCapacity i
 		TaskCapacity: &taskCapacity,
 	}))
 	require.NoError(t, err)
-	r.lastTasksVersion = resp.Msg.TasksVersion
+	r.updateLastTasksVersion(resp.Msg)
 	return resp.Msg.Task, resp.Msg.AdditionalTasks
 }
 
@@ -179,6 +190,9 @@ func (r *mockRunner) maybeFetchSingleTask(t *testing.T, handle *string) *runnerv
 	}))
 	require.NoError(t, err)
 	r.lastTasksVersion = resp.Msg.TasksVersion
+	if resp.Msg.GetTask() != nil { // See comment in updateLastTasksVersion for explanation of this behaviour
+		r.lastTasksVersion = 0
+	}
 	return resp.Msg.Task
 }
 
