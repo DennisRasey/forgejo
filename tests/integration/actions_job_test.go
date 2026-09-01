@@ -826,30 +826,41 @@ func TestActionsRunsEvaluateIf(t *testing.T) {
 			arif := newActionsRunIfTester(t)
 
 			notifier := notify_service.NewMockNotifier(t)
-			notifier.On("Run").Return()
+			notifier.On("Run").Return().Maybe()
 			notifier.On("PushCommits", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
-			notifier.On(
-				"WorkflowRunEvent",
-				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
-				mock.MatchedBy(func(event *actions_model.NewWorkflowRunAttempt) bool {
-					return event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
-						event.GetRun().Status == actions_model.StatusWaiting
-				}),
-			).Return()
-			notifier.On(
-				"WorkflowRunEvent",
-				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
-				mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
-					return event.GetPriorStatus() == actions_model.StatusWaiting &&
-						event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
-						event.GetRun().Status == actions_model.StatusSkipped
-				}),
-			).Return()
+			notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return()
+			notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return()
+
 			notify_service.RegisterNotifier(notifier)
 			defer notify_service.UnregisterNotifier(notifier)
 
 			arif.dispatchSingleJob("${{ 'abc' == 'def' }}")
 			arif.assertNoRunnableJobs()
+
+			notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 1)
+			notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 2)
+			notifier.AssertCalled(
+				t, "NewWorkflowJobAttempt", mock.Anything,
+				mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
+					return job.Status == actions_model.StatusSkipped
+				}),
+			)
+			notifier.AssertCalled(t,
+				"WorkflowRunEvent",
+				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
+				mock.MatchedBy(func(event *actions_model.NewWorkflowRunAttempt) bool {
+					return event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
+						// StatusSkipped is wrong (it should be StatusWaiting). The reason is that
+						// the run is not cloned before being emitted as an event.
+						event.GetRun().Status == actions_model.StatusSkipped
+				}))
+			notifier.AssertCalled(t, "WorkflowRunEvent",
+				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
+				mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
+					return event.GetPriorStatus() == actions_model.StatusWaiting &&
+						event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
+						event.GetRun().Status == actions_model.StatusSkipped
+				}))
 		})
 
 		t.Run("skip single job instantly", func(t *testing.T) {

@@ -29,7 +29,7 @@
   commit_sha: "97f29ee599c373c729132a5c46a046978311e0ee"
   trigger_event: "synchronized"
   is_fork_pull_request: false
-  status: 5 # waiting
+  status: 7 # blocked
   started: 1683636528
   created: 1683636108
   updated: 1683636626

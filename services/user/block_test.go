@@ -13,8 +13,8 @@ import (
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
-	actions_module "forgejo.org/modules/actions"
 
+	gouuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -127,22 +127,15 @@ func TestBlockUser(t *testing.T) {
 		defer user_model.UnblockUser(db.DefaultContext, doer.ID, blockedUser.ID)
 
 		pullRequestPosterID := blockedUser.ID
-		singleWorkflows, err := actions_module.JobParser([]byte(`
-jobs:
-  job:
-    runs-on: docker
-    steps:
-      - run: echo OK
-`))
-		require.NoError(t, err)
-		require.Len(t, singleWorkflows, 1)
 		runWaiting := &actions_model.ActionRun{
 			TriggerUserID:       2,
 			RepoID:              repo.ID,
 			Status:              actions_model.StatusWaiting,
 			PullRequestPosterID: pullRequestPosterID,
 		}
-		require.NoError(t, actions_model.InsertRunWithoutNotification(t.Context(), runWaiting, singleWorkflows))
+		job := &actions_model.ActionRunJob{Status: actions_model.StatusWaiting, Handle: gouuid.New().String()}
+		jobs := []*actions_model.ActionRunJob{job}
+		require.NoError(t, actions_model.InsertRunWithoutNotification(t.Context(), runWaiting, jobs))
 
 		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: runWaiting.ID})
 		require.Equal(t, actions_model.StatusWaiting.String(), run.Status.String())

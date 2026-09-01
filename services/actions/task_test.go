@@ -9,9 +9,11 @@ import (
 	"forgejo.org/models/unittest"
 	"forgejo.org/models/user"
 	"forgejo.org/modules/actions"
+	notify_service "forgejo.org/services/notify"
 
 	runnerv1 "code.forgejo.org/forgejo/actions-proto/runner/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -202,5 +204,128 @@ func TestDeleteTask(t *testing.T) {
 		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: task.ID})
 		unittest.AssertCount(t, &actions_model.ActionTaskOutput{TaskID: task.ID}, 1)
 		unittest.AssertCount(t, &actions_model.ActionTaskStep{TaskID: task.ID}, 1)
+	})
+}
+
+func TestStopTask(t *testing.T) {
+	t.Run("Invalid status", func(t *testing.T) {
+		defer unittest.OverrideFixtures("services/actions/TestStopTask")()
+		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := notify_service.NewMockNotifier(t)
+		notifier.On("Run").Return().Maybe()
+
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		task := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: 87601})
+
+		err := StopTask(t.Context(), task.ID, actions_model.StatusRunning)
+		require.ErrorContains(t, err, "new task status running is not acceptable")
+	})
+
+	t.Run("Completed task", func(t *testing.T) {
+		defer unittest.OverrideFixtures("services/actions/TestStopTask")()
+		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := notify_service.NewMockNotifier(t)
+		notifier.On("Run").Return().Maybe()
+
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		task := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: 87601})
+		assert.Equal(t, actions_model.StatusFailure, task.Status)
+
+		require.NoError(t, StopTask(t.Context(), task.ID, actions_model.StatusCancelled))
+
+		task = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: 87601})
+		assert.Equal(t, actions_model.StatusFailure, task.Status)
+	})
+
+	t.Run("Task stopped and runner removed", func(t *testing.T) {
+		defer unittest.OverrideFixtures("services/actions/TestStopTask")()
+		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := notify_service.NewMockNotifier(t)
+		notifier.On("Run").Return().Maybe()
+		notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		task := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: 87602})
+		job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: task.JobID})
+		runner := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunner{ID: task.RunnerID})
+
+		require.NoError(t, StopTask(t.Context(), task.ID, actions_model.StatusCancelled))
+
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: job.RunID, Status: actions_model.StatusCancelled})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: job.ID, Status: actions_model.StatusCancelled})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: task.ID, Status: actions_model.StatusCancelled})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTaskStep{TaskID: task.ID, Status: actions_model.StatusCancelled})
+		unittest.AssertNotExistsBean(t, &actions_model.ActionRunner{ID: runner.ID})
+
+		notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 1)
+		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertCalled(
+			t, "WorkflowJobCompleted", mock.Anything,
+			mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
+				return job.ID == task.JobID && job.Status == actions_model.StatusCancelled
+			}),
+			actions_model.StatusWaiting,
+		)
+		notifier.AssertCalled(
+			t, "WorkflowRunEvent", mock.Anything,
+			mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
+				return event.GetRun().ID == 34902 &&
+					event.GetRun().Status == actions_model.StatusCancelled &&
+					event.GetPriorStatus() == actions_model.StatusWaiting
+			}),
+		)
+	})
+
+	t.Run("Task stopped and runner retained", func(t *testing.T) {
+		defer unittest.OverrideFixtures("services/actions/TestStopTask")()
+		require.NoError(t, unittest.PrepareTestDatabase())
+
+		notifier := notify_service.NewMockNotifier(t)
+		notifier.On("Run").Return().Maybe()
+		notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+
+		notify_service.RegisterNotifier(notifier)
+		defer notify_service.UnregisterNotifier(notifier)
+
+		task := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: 87603})
+		job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: task.JobID})
+		runner := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunner{ID: task.RunnerID})
+
+		require.NoError(t, StopTask(t.Context(), task.ID, actions_model.StatusCancelled))
+
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: job.RunID, Status: actions_model.StatusCancelled})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: job.ID, Status: actions_model.StatusCancelled})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTask{ID: task.ID, Status: actions_model.StatusCancelled})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionTaskStep{TaskID: task.ID, Status: actions_model.StatusCancelled})
+		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunner{ID: runner.ID})
+
+		notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 1)
+		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertCalled(
+			t, "WorkflowJobCompleted", mock.Anything,
+			mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
+				return job.ID == task.JobID && job.Status == actions_model.StatusCancelled
+			}),
+			actions_model.StatusRunning,
+		)
+		notifier.AssertCalled(
+			t, "WorkflowRunEvent", mock.Anything,
+			mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
+				return event.GetRun().ID == job.RunID &&
+					event.GetRun().Status == actions_model.StatusCancelled &&
+					event.GetPriorStatus() == actions_model.StatusRunning
+			}),
+		)
 	})
 }

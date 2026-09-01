@@ -18,6 +18,7 @@ import (
 	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
 	"code.forgejo.org/forgejo/runner/v13/act/model"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 )
@@ -411,6 +412,7 @@ func Test_prepareJobForEmitting(t *testing.T) {
 		expectIncompleteJob           []string
 		localReusableWorkflowCallArgs *localReusableWorkflowCallArgs
 		actionRunStatusChange         actions_model.Status
+		notificationsVerifier         func(notifier *notify_service.MockNotifier)
 	}{
 		{
 			name:        "matrix expanded to 3 new jobs",
@@ -627,6 +629,19 @@ func Test_prepareJobForEmitting(t *testing.T) {
 			runJobID:                 634,
 			preExecutionError:        actions_model.ErrorCodeIncompleteWithMissingJob,
 			preExecutionErrorDetails: []any{"perform-workflow-call", "oops-i-misspelt-the-job-id", "define-workflow-call"},
+			notificationsVerifier: func(notifier *notify_service.MockNotifier) {
+				notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowJobStatusChanged", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+
+				notifier.AssertCalled(
+					t, "WorkflowRunEvent", mock.Anything,
+					mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
+						return event.GetRun().Status == actions_model.StatusFailure
+					}),
+				)
+			},
 		},
 		{
 			name:                     "missing needs output for workflow call evaluation",
@@ -664,6 +679,18 @@ func Test_prepareJobForEmitting(t *testing.T) {
 				// job2 which expanded into an empty matrix is gone
 			},
 			actionRunStatusChange: actions_model.StatusSuccess,
+			notificationsVerifier: func(notifier *notify_service.MockNotifier) {
+				notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowJobStatusChanged", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+				notifier.AssertCalled(
+					t, "WorkflowRunEvent", mock.Anything,
+					mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
+						return event.GetRun().Status == actions_model.StatusSuccess
+					}),
+				)
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -671,7 +698,13 @@ func Test_prepareJobForEmitting(t *testing.T) {
 			defer unittest.OverrideFixtures("services/actions/Test_prepareJobForEmitting")()
 			require.NoError(t, unittest.PrepareTestDatabase())
 
-			notifier := &mockNotifier{}
+			notifier := notify_service.NewMockNotifier(t)
+			notifier.On("Run").Return().Maybe()
+			notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil).Maybe()
+			notifier.On("WorkflowJobStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil).Maybe()
+
 			notify_service.RegisterNotifier(notifier)
 			defer notify_service.UnregisterNotifier(notifier)
 
@@ -726,13 +759,6 @@ func Test_prepareJobForEmitting(t *testing.T) {
 					assert.EqualValues(t, 0, actionRun.PreExecutionErrorCode, "PreExecutionError Details: %#v", actionRun.PreExecutionErrorDetails)
 					if tt.actionRunStatusChange != 0 {
 						assert.Equal(t, tt.actionRunStatusChange, actionRun.Status)
-						require.Len(t, notifier.events, 1)
-						require.IsType(t, &actions_model.WorkflowRunCompleted{}, notifier.events[0])
-
-						call := notifier.events[0].(*actions_model.WorkflowRunCompleted)
-						assert.Equal(t, actionRun.ID, call.GetRun().ID)
-						assert.Equal(t, actions_model.StatusRunning, call.GetPriorStatus())
-						assert.Equal(t, tt.actionRunStatusChange, call.GetRun().Status)
 					}
 
 					// compare jobs that exist with `runJobNames` to ensure new jobs are inserted:
@@ -803,6 +829,10 @@ func Test_prepareJobForEmitting(t *testing.T) {
 				} else {
 					assert.Equal(t, behaviourExecuteJob, behaviour)
 				}
+			}
+
+			if tt.notificationsVerifier != nil {
+				tt.notificationsVerifier(notifier)
 			}
 		})
 	}
@@ -900,7 +930,12 @@ jobs:
           echo "Argument: ${{ inputs.argument }}"
 `
 
-	notifier := &mockNotifier{}
+	notifier := notify_service.NewMockNotifier(t)
+	notifier.On("Run").Return().Maybe()
+	notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
+	notifier.On("WorkflowJobStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
 	notify_service.RegisterNotifier(notifier)
 	defer notify_service.UnregisterNotifier(notifier)
 
@@ -939,12 +974,49 @@ jobs:
 	assert.Equal(t, "c.reusable", jobs[4].JobID)
 	assert.Equal(t, actions_model.StatusWaiting, jobs[4].Status)
 
-	require.Empty(t, notifier.events)
+	notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 2)
+	notifier.AssertNumberOfCalls(t, "WorkflowJobStatusChanged", 1)
+	notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 1)
+	notifier.AssertCalled(
+		t, "NewWorkflowJobAttempt", mock.Anything,
+		mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
+			return job.ID == jobs[3].ID && job.JobID == "c" && job.Status == actions_model.StatusBlocked
+		}),
+	)
+	notifier.AssertCalled(
+		t, "NewWorkflowJobAttempt", mock.Anything,
+		mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
+			return job.ID == jobs[4].ID && job.JobID == "c.reusable" && job.Status == actions_model.StatusBlocked
+		}),
+	)
+	notifier.AssertCalled(
+		t, "WorkflowJobStatusChanged", mock.Anything,
+		mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
+			return job.ID == jobs[4].ID && job.JobID == "c.reusable" && job.Status == actions_model.StatusWaiting
+		}),
+		actions_model.StatusBlocked,
+	)
+	notifier.AssertCalled(
+		t, "WorkflowJobCompleted", mock.Anything,
+		mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
+			return job.ID == jobs[1].ID && job.JobID == "b" && job.Status == actions_model.StatusSuccess
+		}),
+		actions_model.StatusBlocked,
+	)
 }
 
 func Test_checkJobsOfRun_ExpandsMatrixWithCorrectOutputJobStatuses(t *testing.T) {
 	defer unittest.OverrideFixtures("services/actions/Test_checkJobsOfRun")()
 	require.NoError(t, unittest.PrepareTestDatabase())
+
+	notifier := notify_service.NewMockNotifier(t)
+	notifier.On("Run").Return().Maybe()
+	notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
+	notifier.On("WorkflowJobStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+
+	notify_service.RegisterNotifier(notifier)
+	defer notify_service.UnregisterNotifier(notifier)
 
 	jobs, err := actions_model.GetRunJobsByRunID(t.Context(), 900)
 	require.NoError(t, err)
@@ -969,4 +1041,8 @@ func Test_checkJobsOfRun_ExpandsMatrixWithCorrectOutputJobStatuses(t *testing.T)
 			assert.Fail(t, "unexpected job name")
 		}
 	}
+
+	notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 3)
+	notifier.AssertNumberOfCalls(t, "WorkflowJobStatusChanged", 3)
+	notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
 }

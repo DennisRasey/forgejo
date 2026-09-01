@@ -24,7 +24,7 @@ import (
 	"forgejo.org/modules/util"
 	webhook_module "forgejo.org/modules/webhook"
 
-	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
+	gouuid "github.com/google/uuid"
 	"xorm.io/builder"
 )
 
@@ -406,7 +406,7 @@ func GetRunsNotDoneByRepoIDAndPullRequestID(ctx context.Context, repoID, pullReq
 
 // Inserts a run and its jobs.
 // The title will be cut off at 255 characters if it's longer than 255 characters.
-func InsertRunWithoutNotification(ctx context.Context, run *ActionRun, jobs []*jobparser.SingleWorkflow) error {
+func InsertRunWithoutNotification(ctx context.Context, run *ActionRun, jobs []*ActionRunJob) error {
 	return db.WithTx(ctx, func(ctx context.Context) error {
 		index, err := db.GetNextResourceIndex(ctx, "action_run_index", run.RepoID)
 		if err != nil {
@@ -433,74 +433,47 @@ func InsertRunWithoutNotification(ctx context.Context, run *ActionRun, jobs []*j
 	})
 }
 
-// Adds `ActionRunJob` instances from `SingleWorkflows` to an existing ActionRun.
-func InsertRunJobs(ctx context.Context, run *ActionRun, jobs []*jobparser.SingleWorkflow) error {
-	runJobs := make([]*ActionRunJob, 0, len(jobs))
-	var hasWaiting bool
-	for _, v := range jobs {
-		id, job := v.Job()
-		status := StatusFailure
-		payload := []byte{}
-		needs := []string{}
-		name := run.Title
-		runsOn := []string{}
-		if job != nil {
-			needs = job.Needs()
-			if err := v.SetJob(id, job.EraseNeeds()); err != nil {
+// InsertRunJobs inserts the `ActionRunJob` instances and adds them to given ActionRun.
+func InsertRunJobs(ctx context.Context, run *ActionRun, jobs []*ActionRunJob) error {
+	if len(jobs) == 0 {
+		return nil
+	}
+
+	hasWaiting := false
+	for _, job := range jobs {
+		job.RunID = run.ID
+		job.Run = run
+		job.Name, _ = util.SplitStringAtByteN(job.Name, 255)
+
+		if job.Attempt == 0 {
+			job.Attempt = 1
+		}
+		if job.Handle == "" {
+			job.Handle = gouuid.New().String()
+		}
+
+		if job.Status.IsWaiting() {
+			hasWaiting = true
+		}
+	}
+
+	return db.WithTx(ctx, func(ctx context.Context) error {
+		// We have to insert every job individually. Otherwise, xorm won't populate the ID field.
+		for _, job := range jobs {
+			if err := db.Insert(ctx, job); err != nil {
 				return err
 			}
-			payload, _ = v.Marshal()
+		}
 
-			if len(needs) > 0 || run.NeedApproval || v.IncompleteMatrix || v.IncompleteRunsOn || v.IncompleteWith {
-				status = StatusBlocked
-			} else if ifPassed, err := job.EvaluateIf(); err == nil && !ifPassed {
-				log.Trace("job %q skipped by server-side 'if' evaluation", id)
-				status = StatusSkipped
-			} else {
-				if err != nil && !errors.Is(err, jobparser.ErrCannotEvaluateInJobParser) {
-					return fmt.Errorf("unable to evaluate job 'if' on server-side with unexpected error: %w", err)
-				}
-				status = StatusWaiting
-				hasWaiting = true
+		// if there is a job in the waiting status, increase tasks version.
+		if hasWaiting {
+			if err := IncreaseTaskVersion(ctx, run.OwnerID, run.RepoID); err != nil {
+				return err
 			}
-
-			name, _ = util.SplitStringAtByteN(job.Name, 255)
-			runsOn = job.RunsOn()
 		}
 
-		runJob := &ActionRunJob{
-			RunID:             run.ID,
-			RepoID:            run.RepoID,
-			OwnerID:           run.OwnerID,
-			CommitSHA:         run.CommitSHA,
-			IsForkPullRequest: run.IsForkPullRequest,
-			Name:              name,
-			WorkflowPayload:   payload,
-			JobID:             id,
-			Needs:             needs,
-			RunsOn:            runsOn,
-		}
-		if err := runJob.PrepareNextAttempt(status); err != nil {
-			return err
-		}
-
-		runJobs = append(runJobs, runJob)
-	}
-
-	if len(runJobs) > 0 {
-		if err := db.Insert(ctx, runJobs); err != nil {
-			return err
-		}
-	}
-
-	// if there is a job in the waiting status, increase tasks version.
-	if hasWaiting {
-		if err := IncreaseTaskVersion(ctx, run.OwnerID, run.RepoID); err != nil {
-			return err
-		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
 func GetLatestRun(ctx context.Context, repoID int64) (*ActionRun, error) {

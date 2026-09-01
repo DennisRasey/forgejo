@@ -89,11 +89,17 @@ func CancelAbandonedJobs(ctx context.Context) error {
 		runsToUpdate := map[int64]*actions_model.ActionRun{}
 		now := timeutil.TimeStampNow()
 		for _, job := range jobs {
+			// Capture the current status because it is required for sending notifications.
+			priorStatus := job.Status
+
 			job.Stopped = now
 			job.Status = actions_model.StatusCancelled
 			if _, err = actions_model.UpdateRunJobWithoutNotification(ctx, job, nil, "status", "stopped"); err != nil {
-				// TODO: Change to error?
-				log.Warn("Could not cancel abandoned job %d: %v", job.ID, err)
+				return fmt.Errorf("could not cancel abandoned job %d: %v", job.ID, err)
+			}
+
+			if err = PropagateJobStatus(ctx, job.ID, priorStatus); err != nil {
+				return fmt.Errorf("could not propagate the status of job %d: %w", job.ID, err)
 			}
 
 			if err = job.LoadRun(ctx); err != nil {

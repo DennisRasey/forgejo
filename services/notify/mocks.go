@@ -1842,6 +1842,52 @@ func (_c *MockNotifier_NewWikiPage_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// NewWorkflowJobAttempt provides a mock function for the type MockNotifier
+func (_mock *MockNotifier) NewWorkflowJobAttempt(ctx context.Context, job *actions.ActionRunJob) {
+	_mock.Called(ctx, job)
+	return
+}
+
+// MockNotifier_NewWorkflowJobAttempt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NewWorkflowJobAttempt'
+type MockNotifier_NewWorkflowJobAttempt_Call struct {
+	*mock.Call
+}
+
+// NewWorkflowJobAttempt is a helper method to define mock.On call
+//   - ctx context.Context
+//   - job *actions.ActionRunJob
+func (_e *MockNotifier_Expecter) NewWorkflowJobAttempt(ctx, job any) *MockNotifier_NewWorkflowJobAttempt_Call {
+	return &MockNotifier_NewWorkflowJobAttempt_Call{Call: _e.mock.On("NewWorkflowJobAttempt", ctx, job)}
+}
+
+func (_c *MockNotifier_NewWorkflowJobAttempt_Call) Run(run func(ctx context.Context, job *actions.ActionRunJob)) *MockNotifier_NewWorkflowJobAttempt_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *actions.ActionRunJob
+		if args[1] != nil {
+			arg1 = args[1].(*actions.ActionRunJob)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotifier_NewWorkflowJobAttempt_Call) Return() *MockNotifier_NewWorkflowJobAttempt_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockNotifier_NewWorkflowJobAttempt_Call) RunAndReturn(run func(ctx context.Context, job *actions.ActionRunJob)) *MockNotifier_NewWorkflowJobAttempt_Call {
+	_c.Run(run)
+	return _c
+}
+
 // PackageCreate provides a mock function for the type MockNotifier
 func (_mock *MockNotifier) PackageCreate(ctx context.Context, doer *user.User, pd *packages.PackageDescriptor) {
 	_mock.Called(ctx, doer, pd)
@@ -2927,6 +2973,110 @@ func (_c *MockNotifier_UpdateRelease_Call) Return() *MockNotifier_UpdateRelease_
 }
 
 func (_c *MockNotifier_UpdateRelease_Call) RunAndReturn(run func(ctx context.Context, doer *user.User, rel *repo.Release)) *MockNotifier_UpdateRelease_Call {
+	_c.Run(run)
+	return _c
+}
+
+// WorkflowJobCompleted provides a mock function for the type MockNotifier
+func (_mock *MockNotifier) WorkflowJobCompleted(ctx context.Context, job *actions.ActionRunJob, priorStatus actions.Status) {
+	_mock.Called(ctx, job, priorStatus)
+	return
+}
+
+// MockNotifier_WorkflowJobCompleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkflowJobCompleted'
+type MockNotifier_WorkflowJobCompleted_Call struct {
+	*mock.Call
+}
+
+// WorkflowJobCompleted is a helper method to define mock.On call
+//   - ctx context.Context
+//   - job *actions.ActionRunJob
+//   - priorStatus actions.Status
+func (_e *MockNotifier_Expecter) WorkflowJobCompleted(ctx, job, priorStatus any) *MockNotifier_WorkflowJobCompleted_Call {
+	return &MockNotifier_WorkflowJobCompleted_Call{Call: _e.mock.On("WorkflowJobCompleted", ctx, job, priorStatus)}
+}
+
+func (_c *MockNotifier_WorkflowJobCompleted_Call) Run(run func(ctx context.Context, job *actions.ActionRunJob, priorStatus actions.Status)) *MockNotifier_WorkflowJobCompleted_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *actions.ActionRunJob
+		if args[1] != nil {
+			arg1 = args[1].(*actions.ActionRunJob)
+		}
+		var arg2 actions.Status
+		if args[2] != nil {
+			arg2 = args[2].(actions.Status)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotifier_WorkflowJobCompleted_Call) Return() *MockNotifier_WorkflowJobCompleted_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockNotifier_WorkflowJobCompleted_Call) RunAndReturn(run func(ctx context.Context, job *actions.ActionRunJob, priorStatus actions.Status)) *MockNotifier_WorkflowJobCompleted_Call {
+	_c.Run(run)
+	return _c
+}
+
+// WorkflowJobStatusChanged provides a mock function for the type MockNotifier
+func (_mock *MockNotifier) WorkflowJobStatusChanged(ctx context.Context, job *actions.ActionRunJob, priorStatus actions.Status) {
+	_mock.Called(ctx, job, priorStatus)
+	return
+}
+
+// MockNotifier_WorkflowJobStatusChanged_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkflowJobStatusChanged'
+type MockNotifier_WorkflowJobStatusChanged_Call struct {
+	*mock.Call
+}
+
+// WorkflowJobStatusChanged is a helper method to define mock.On call
+//   - ctx context.Context
+//   - job *actions.ActionRunJob
+//   - priorStatus actions.Status
+func (_e *MockNotifier_Expecter) WorkflowJobStatusChanged(ctx, job, priorStatus any) *MockNotifier_WorkflowJobStatusChanged_Call {
+	return &MockNotifier_WorkflowJobStatusChanged_Call{Call: _e.mock.On("WorkflowJobStatusChanged", ctx, job, priorStatus)}
+}
+
+func (_c *MockNotifier_WorkflowJobStatusChanged_Call) Run(run func(ctx context.Context, job *actions.ActionRunJob, priorStatus actions.Status)) *MockNotifier_WorkflowJobStatusChanged_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *actions.ActionRunJob
+		if args[1] != nil {
+			arg1 = args[1].(*actions.ActionRunJob)
+		}
+		var arg2 actions.Status
+		if args[2] != nil {
+			arg2 = args[2].(actions.Status)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotifier_WorkflowJobStatusChanged_Call) Return() *MockNotifier_WorkflowJobStatusChanged_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockNotifier_WorkflowJobStatusChanged_Call) RunAndReturn(run func(ctx context.Context, job *actions.ActionRunJob, priorStatus actions.Status)) *MockNotifier_WorkflowJobStatusChanged_Call {
 	_c.Run(run)
 	return _c
 }

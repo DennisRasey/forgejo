@@ -12,6 +12,7 @@ import (
 	actions_model "forgejo.org/models/actions"
 	"forgejo.org/models/unittest"
 	"forgejo.org/modules/setting"
+	"forgejo.org/services/actions"
 	"forgejo.org/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -24,7 +25,7 @@ func TestCreateTaskForRunnerNoMatchingJobFound(t *testing.T) {
 
 	runner := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunner{ID: 1004})
 
-	_, err := actions_model.CreateTaskForRunner(t.Context(), runner, nil, nil)
+	_, err := actions.CreateTaskForRunner(t.Context(), runner, nil, nil)
 	require.ErrorIs(t, err, actions_model.ErrNoMatchingJobFound)
 }
 
@@ -51,7 +52,7 @@ func TestCreateTaskForRunnerNoJobUpdated(t *testing.T) {
 			errs := make(chan error, 2)
 			for range 2 {
 				w.Go(func() {
-					_, err := actions_model.CreateTaskForRunner(t.Context(), runner, nil, nil)
+					_, err := actions.CreateTaskForRunner(t.Context(), runner, nil, nil)
 					errs <- err
 				})
 			}

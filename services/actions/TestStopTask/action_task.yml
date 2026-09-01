@@ -1,0 +1,25 @@
+- id: 87601
+  job_id: 47301
+  owner_id: 2
+  repo_id: 62 # test_workflows
+  log_filename: somebody/somerepo/15631/87601.log.zst
+  log_in_storage: false
+  status: 2 # StatusFailure
+
+- id: 87602
+  job_id: 47302
+  owner_id: 2
+  repo_id: 62 # test_workflows
+  log_filename: somebody/somerepo/15632/87602.log.zst
+  log_in_storage: false
+  status: 5 # StatusWaiting
+  runner_id: 41601
+
+- id: 87603
+  job_id: 47303
+  owner_id: 2
+  repo_id: 62 # test_workflows
+  log_filename: somebody/somerepo/15632/87603.log.zst
+  log_in_storage: false
+  status: 6 # StatusRunning
+  runner_id: 41602

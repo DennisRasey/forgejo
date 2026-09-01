@@ -531,3 +531,43 @@ func TestActionTask_GetAllAttempts(t *testing.T) {
 	assert.Equal(t, timeutil.TimeStamp(1683636521), allAttempts[0].Created)
 	assert.Equal(t, timeutil.TimeStamp(1683636635), allAttempts[0].Updated)
 }
+
+func TestActionRunJob_IsIncomplete(t *testing.T) {
+	testCases := []struct {
+		name       string
+		workflow   []byte
+		incomplete bool
+	}{
+		{
+			name:       "Incomplete matrix",
+			workflow:   []byte(`incomplete_matrix: true`),
+			incomplete: true,
+		},
+		{
+			name:       "Incomplete with",
+			workflow:   []byte(`incomplete_with: true`),
+			incomplete: true,
+		},
+		{
+			name:       "Incomplete runs_on",
+			workflow:   []byte(`incomplete_runs_on: true`),
+			incomplete: true,
+		},
+		{
+			name:       "Complete workflow",
+			workflow:   []byte(`name: complete`),
+			incomplete: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			job := &ActionRunJob{WorkflowPayload: testCase.workflow}
+
+			incomplete, err := job.IsIncomplete()
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.incomplete, incomplete)
+		})
+	}
+}

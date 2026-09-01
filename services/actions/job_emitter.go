@@ -83,6 +83,9 @@ func checkJobsOfRun(ctx context.Context, runID int64, recursionCount int) error 
 		updates = newJobStatusResolver(jobs).Resolve()
 		for _, job := range jobs {
 			if status, ok := updates[job.ID]; ok {
+				// Capture the current status of job which is required for emitting notifications.
+				priorStatus := job.Status
+
 				job.Status = status
 				updateColumns := []string{"status"}
 
@@ -121,6 +124,10 @@ func checkJobsOfRun(ctx context.Context, runID int64, recursionCount int) error 
 					return err
 				} else if n != 1 {
 					return fmt.Errorf("no affected for updating blocked job %v", job.ID)
+				}
+
+				if err = PropagateJobStatus(ctx, job.ID, priorStatus); err != nil {
+					return fmt.Errorf("could not propagate the changed status of job %d: %w", job.ID, err)
 				}
 			}
 		}
@@ -445,8 +452,20 @@ func prepareJobForEmitting(ctx context.Context, blockedJob *actions_model.Action
 	}
 
 	err = db.WithTx(ctx, func(ctx context.Context) error {
-		if err := actions_model.InsertRunJobs(ctx, blockedJob.Run, newJobWorkflows); err != nil {
+		jobs, err := convertSingleWorkflowToJobs(blockedJob.Run, newJobWorkflows)
+		if err != nil {
+			return fmt.Errorf("failed to convert parsed workflows to jobs of run %d: %w", blockedJob.RunID, err)
+		}
+		if err := actions_model.InsertRunJobs(ctx, blockedJob.Run, jobs); err != nil {
 			return fmt.Errorf("failure in InsertRunJobs: %w", err)
+		}
+
+		// Send notifications for the newly created jobs. But do not send notifications for
+		// blockedJob, because it is a placeholder and all previous notification were suppressed.
+		for _, job := range jobs {
+			if err := PropagateNextJobAttempt(ctx, job.ID); err != nil {
+				return fmt.Errorf("failed to propagate new attempt of job %d: %w", job.ID, err)
+			}
 		}
 
 		// Delete the blocked job which has been expanded into `newJobWorkflows`.

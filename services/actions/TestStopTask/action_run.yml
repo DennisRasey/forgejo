@@ -1,0 +1,14 @@
+- id: 34901
+  owner_id: 2
+  repo_id: 62 # test_workflows
+  status: 2 # StatusFailure
+
+- id: 34902
+  owner_id: 2
+  repo_id: 62 # test_workflows
+  status: 5 # StatusWaiting
+
+- id: 34903
+  owner_id: 2
+  repo_id: 62 # test_workflows
+  status: 6 # StatusRunning

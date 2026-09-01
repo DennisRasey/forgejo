@@ -18,7 +18,7 @@ import (
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
-	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
+	gouuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -334,180 +334,6 @@ func TestActionRun_NeedApproval(t *testing.T) {
 	})
 }
 
-func TestActionRun_IncompleteMatrix(t *testing.T) {
-	require.NoError(t, unittest.PrepareTestDatabase())
-
-	pullRequestPosterID := int64(4)
-	repoID := int64(10)
-	pullRequestID := int64(2)
-	runDoesNotNeedApproval := &ActionRun{
-		RepoID:              repoID,
-		PullRequestID:       pullRequestID,
-		PullRequestPosterID: pullRequestPosterID,
-	}
-
-	workflowRaw := []byte(`
-jobs:
-  job2:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dim1: "${{ fromJSON(needs.other-job.outputs.some-output) }}"
-    steps:
-      - run: true
-`)
-	workflows, err := jobparser.Parse(workflowRaw, false, jobparser.WithJobOutputs(map[string]map[string]string{}))
-	require.NoError(t, err)
-	require.True(t, workflows[0].IncompleteMatrix) // must be set for this test scenario to be valid
-
-	require.NoError(t, InsertRunWithoutNotification(t.Context(), runDoesNotNeedApproval, workflows))
-
-	jobs, err := db.Find[ActionRunJob](t.Context(), FindRunJobOptions{RunID: runDoesNotNeedApproval.ID})
-	require.NoError(t, err)
-	require.Len(t, jobs, 1)
-	job := jobs[0]
-
-	// Expect job with an incomplete matrix to be StatusBlocked:
-	assert.Equal(t, StatusBlocked, job.Status)
-}
-
-func TestActionRun_IncompleteRunsOn(t *testing.T) {
-	require.NoError(t, unittest.PrepareTestDatabase())
-
-	pullRequestPosterID := int64(4)
-	repoID := int64(10)
-	pullRequestID := int64(2)
-	runDoesNotNeedApproval := &ActionRun{
-		RepoID:              repoID,
-		PullRequestID:       pullRequestID,
-		PullRequestPosterID: pullRequestPosterID,
-	}
-
-	workflowRaw := []byte(`
-jobs:
-  job2:
-    runs-on: ${{ needs.other-job.outputs.some-output }}
-    steps:
-      - run: true
-`)
-	workflows, err := jobparser.Parse(workflowRaw, false, jobparser.WithJobOutputs(map[string]map[string]string{}), jobparser.SupportIncompleteRunsOn())
-	require.NoError(t, err)
-	require.True(t, workflows[0].IncompleteRunsOn) // must be set for this test scenario to be valid
-
-	require.NoError(t, InsertRunWithoutNotification(t.Context(), runDoesNotNeedApproval, workflows))
-
-	jobs, err := db.Find[ActionRunJob](t.Context(), FindRunJobOptions{RunID: runDoesNotNeedApproval.ID})
-	require.NoError(t, err)
-	require.Len(t, jobs, 1)
-	job := jobs[0]
-
-	// Expect job with an incomplete runs-on to be StatusBlocked:
-	assert.Equal(t, StatusBlocked, job.Status)
-}
-
-func TestActionRun_FindOuterWorkflowCall(t *testing.T) {
-	require.NoError(t, unittest.PrepareTestDatabase())
-
-	pullRequestPosterID := int64(4)
-	repoID := int64(10)
-	pullRequestID := int64(2)
-	run := &ActionRun{
-		RepoID:              repoID,
-		PullRequestID:       pullRequestID,
-		PullRequestPosterID: pullRequestPosterID,
-	}
-
-	workflowRaw := []byte(`
-jobs:
-  outer-job:
-    uses: ./.forgejo/workflows/reusable.yml
-`)
-	workflows, err := jobparser.Parse(workflowRaw, false,
-		jobparser.WithJobOutputs(map[string]map[string]string{}),
-		jobparser.ExpandLocalReusableWorkflows(func(job *jobparser.Job, path string) ([]byte, error) {
-			return []byte(`
-on:
-  workflow_call:
-jobs:
-  inner-job-1:
-    runs-on: debian
-    steps: []
-  inner-job-2:
-    runs-on: debian
-    steps: []
-`), nil
-		}))
-	require.NoError(t, err)
-	require.NoError(t, InsertRunWithoutNotification(t.Context(), run, workflows))
-
-	jobs, err := db.Find[ActionRunJob](t.Context(), FindRunJobOptions{RunID: run.ID})
-	require.NoError(t, err)
-	require.Len(t, jobs, 3)
-
-	for _, j := range jobs {
-		t.Run(j.Name, func(t *testing.T) {
-			_, err := j.DecodeWorkflowPayload()
-			require.NoError(t, err)
-			outer, err := run.FindOuterWorkflowCall(t.Context(), j)
-			if j.Name == "outer-job" {
-				require.ErrorContains(t, err, "invalid state for FindOuterWorkflowCall")
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, outer)
-				assert.Equal(t, "outer-job", outer.Name)
-			}
-		})
-	}
-}
-
-func TestActionRun_IncompleteWith(t *testing.T) {
-	require.NoError(t, unittest.PrepareTestDatabase())
-
-	pullRequestPosterID := int64(4)
-	repoID := int64(10)
-	pullRequestID := int64(2)
-	runDoesNotNeedApproval := &ActionRun{
-		RepoID:              repoID,
-		PullRequestID:       pullRequestID,
-		PullRequestPosterID: pullRequestPosterID,
-	}
-
-	workflowRaw := []byte(`
-jobs:
-  outer-job:
-    with:
-      some_input: ${{ needs.other-job.outputs.some-output }}
-    uses: ./.forgejo/workflows/reusable.yml
-`)
-	workflows, err := jobparser.Parse(workflowRaw, false,
-		jobparser.WithJobOutputs(map[string]map[string]string{}),
-		jobparser.ExpandLocalReusableWorkflows(func(job *jobparser.Job, path string) ([]byte, error) {
-			return []byte(`
-on:
-  workflow_call:
-    inputs:
-      some_input:
-        type: string
-jobs:
-  inner-job:
-    runs-on: debian
-    steps: []
-`), nil
-		}))
-	require.NoError(t, err)
-	require.True(t, workflows[0].IncompleteWith) // must be set for this test scenario to be valid
-
-	require.NoError(t, InsertRunWithoutNotification(t.Context(), runDoesNotNeedApproval, workflows))
-
-	jobs, err := db.Find[ActionRunJob](t.Context(), FindRunJobOptions{RunID: runDoesNotNeedApproval.ID})
-	require.NoError(t, err)
-	require.Len(t, jobs, 1)
-	job := jobs[0]
-
-	// Expect job with an incomplete with to be StatusBlocked:
-	assert.Equal(t, StatusBlocked, job.Status)
-}
-
 func TestInsertRunJobs(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
@@ -521,18 +347,32 @@ func TestInsertRunJobs(t *testing.T) {
 		CommitSHA:           "1421f75bc5474c69fdb1dc176bcb96d381f935dd",
 	}
 
-	workflowRaw := []byte(`
-jobs:
-  build:
-    runs-on: fedora
-  test:
-    runs-on: debian
-    steps: []
-`)
-	jobs, err := jobparser.Parse(workflowRaw, false)
-	require.NoError(t, err)
+	unittest.AssertSuccessfulInsert(t, actionRun)
 
-	require.NoError(t, InsertRunWithoutNotification(t.Context(), actionRun, jobs))
+	jobs := []*ActionRunJob{
+		{
+			RepoID:    actionRun.RepoID,
+			CommitSHA: actionRun.CommitSHA,
+			JobID:     "build",
+			Name:      "build",
+			RunsOn:    []string{"fedora"},
+			Status:    StatusWaiting,
+		},
+		{
+			RepoID:    actionRun.RepoID,
+			CommitSHA: actionRun.CommitSHA,
+			JobID:     "test",
+			Name:      "test",
+			RunsOn:    []string{"debian"},
+			Status:    StatusWaiting,
+			Handle:    gouuid.New().String(),
+		},
+	}
+
+	require.NoError(t, InsertRunJobs(t.Context(), actionRun, jobs))
+
+	assert.NotZero(t, jobs[0].ID)
+	assert.NotZero(t, jobs[1].ID)
 
 	insertedJobs, err := db.Find[ActionRunJob](t.Context(), FindRunJobOptions{RunID: actionRun.ID})
 	require.NoError(t, err)
@@ -552,6 +392,7 @@ jobs:
 	assert.Zero(t, insertedJobs[0].Stopped)
 	assert.Zero(t, insertedJobs[0].TaskID)
 	assert.Equal(t, StatusWaiting, insertedJobs[0].Status)
+	assert.Len(t, insertedJobs[0].Handle, 36)
 
 	assert.Equal(t, actionRun.ID, insertedJobs[1].RunID)
 	assert.Equal(t, actionRun.RepoID, insertedJobs[1].RepoID)
@@ -567,6 +408,7 @@ jobs:
 	assert.Zero(t, insertedJobs[1].Stopped)
 	assert.Zero(t, insertedJobs[1].TaskID)
 	assert.Equal(t, StatusWaiting, insertedJobs[1].Status)
+	assert.Equal(t, jobs[1].Handle, insertedJobs[1].Handle)
 }
 
 func TestActionRunLoadAttributes(t *testing.T) {

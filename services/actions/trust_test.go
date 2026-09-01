@@ -10,9 +10,9 @@ import (
 	issues_model "forgejo.org/models/issues"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
-	actions_module "forgejo.org/modules/actions"
 	webhook_module "forgejo.org/modules/webhook"
 
+	gouuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,22 +45,18 @@ func TestActionsTrust_ChangeStatus(t *testing.T) {
 	require.NoError(t, actions_model.InsertRunWithoutNotification(t.Context(), runNotInTheSameRepository, nil))
 
 	t.Run("RevokeTrust", func(t *testing.T) {
-		singleWorkflows, err := actions_module.JobParser([]byte(`
-jobs:
-  job:
-    runs-on: docker
-    steps:
-      - run: echo OK
-`))
-		require.NoError(t, err)
-		require.Len(t, singleWorkflows, 1)
 		runNotDone := &actions_model.ActionRun{
 			TriggerUserID:       2,
 			RepoID:              repoID,
 			Status:              actions_model.StatusWaiting,
 			PullRequestPosterID: pullRequestPosterID,
 		}
-		require.NoError(t, actions_model.InsertRunWithoutNotification(t.Context(), runNotDone, singleWorkflows))
+		waitingJob := &actions_model.ActionRunJob{
+			Status: actions_model.StatusWaiting,
+			Handle: gouuid.New().String(),
+		}
+		jobs := []*actions_model.ActionRunJob{waitingJob}
+		require.NoError(t, actions_model.InsertRunWithoutNotification(t.Context(), runNotDone, jobs))
 		require.NoError(t, actions_model.InsertActionUser(t.Context(), &actions_model.ActionUser{
 			UserID:                  pullRequestPosterID,
 			RepoID:                  repoID,
@@ -68,7 +64,7 @@ jobs:
 		}))
 
 		previousCancelledCount := unittest.GetCount(t, &actions_model.ActionRun{Status: actions_model.StatusCancelled})
-		_, err = actions_model.GetActionUserByUserIDAndRepoIDAndUpdateAccess(t.Context(), pullRequestPosterID, repoID)
+		_, err := actions_model.GetActionUserByUserIDAndRepoIDAndUpdateAccess(t.Context(), pullRequestPosterID, repoID)
 		require.NoError(t, err)
 
 		require.NoError(t, RevokeTrust(t.Context(), repoID, pullRequestPosterID))
@@ -83,24 +79,17 @@ jobs:
 
 	createPullRequestRun := func(t *testing.T, pullRequestID, repoID int64) *actions_model.ActionRun {
 		t.Helper()
-		singleWorkflows, err := actions_module.JobParser([]byte(`
-jobs:
-  job:
-    runs-on: docker
-    steps:
-      - run: echo OK
-`))
-		require.NoError(t, err)
-		require.Len(t, singleWorkflows, 1)
 		runNotApproved := &actions_model.ActionRun{
 			TriggerUserID:       2,
 			RepoID:              repoID,
-			Status:              actions_model.StatusWaiting,
+			Status:              actions_model.StatusBlocked,
 			NeedApproval:        true,
 			PullRequestID:       pullRequestID,
 			PullRequestPosterID: pullRequestPosterID,
 		}
-		require.NoError(t, actions_model.InsertRunWithoutNotification(t.Context(), runNotApproved, singleWorkflows))
+		waitingJob := &actions_model.ActionRunJob{Status: actions_model.StatusBlocked, Handle: gouuid.New().String()}
+		jobs := []*actions_model.ActionRunJob{waitingJob}
+		require.NoError(t, actions_model.InsertRunWithoutNotification(t.Context(), runNotApproved, jobs))
 		return runNotApproved
 	}
 

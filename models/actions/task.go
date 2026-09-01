@@ -13,13 +13,10 @@ import (
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/unit"
-	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
-	"code.forgejo.org/forgejo/runner/v13/act/jobparser"
-	"code.forgejo.org/xorm/xorm"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"xorm.io/builder"
 )
@@ -361,116 +358,6 @@ var (
 	ErrNoJobUpdated       = errors.New("no job updated")
 )
 
-func CreateTaskForRunner(ctx context.Context, runner *ActionRunner, requestKey, handle *string) (*ActionTask, error) {
-	ctx, committer, err := db.TxContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer committer.Close()
-
-	e := db.GetEngine(ctx)
-
-	jobs, err := GetAvailableJobsForRunner(e, runner)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: a more efficient way to filter labels
-	var job *ActionRunJob
-	log.Trace("runner labels: %v", runner.AgentLabels)
-	for _, j := range jobs {
-		if j.IsRequestedByRunner(handle) && j.ItRunsOn(runner.AgentLabels) {
-			job = j
-			break
-		}
-	}
-	if job == nil {
-		return nil, ErrNoMatchingJobFound
-	}
-	if err := job.LoadAttributes(ctx); err != nil {
-		return nil, err
-	}
-
-	now := timeutil.TimeStampNow()
-	job.Started = now
-	job.Status = StatusRunning
-
-	task := &ActionTask{
-		JobID:             job.ID,
-		Attempt:           job.Attempt,
-		RunnerID:          runner.ID,
-		Started:           now,
-		Status:            StatusRunning,
-		RepoID:            job.RepoID,
-		OwnerID:           job.OwnerID,
-		CommitSHA:         job.CommitSHA,
-		IsForkPullRequest: job.IsForkPullRequest,
-	}
-	if requestKey != nil {
-		task.RunnerRequestKey = *requestKey
-	}
-	task.GenerateToken()
-
-	var workflowJob *jobparser.Job
-	if gots, err := jobparser.Parse(job.WorkflowPayload, false); err != nil {
-		return nil, fmt.Errorf("parse workflow of job %d: %w", job.ID, err)
-	} else if len(gots) != 1 {
-		return nil, fmt.Errorf("workflow of job %d: not single workflow", job.ID)
-	} else { //nolint:revive
-		_, workflowJob = gots[0].Job()
-	}
-
-	if _, err := e.Insert(task); err != nil {
-		return nil, err
-	}
-
-	task.LogFilename = logFileName(job.Run.Repo.FullName(), task.ID)
-	if err := UpdateTask(ctx, task, "log_filename"); err != nil {
-		return nil, err
-	}
-
-	if len(workflowJob.Steps) > 0 {
-		steps := make([]*ActionTaskStep, len(workflowJob.Steps))
-		for i, v := range workflowJob.Steps {
-			name, _ := util.SplitStringAtByteN(v.String(), 255)
-			steps[i] = &ActionTaskStep{
-				Name:   name,
-				TaskID: task.ID,
-				Index:  int64(i),
-				RepoID: task.RepoID,
-				Status: StatusWaiting,
-			}
-		}
-		if _, err := e.Insert(steps); err != nil {
-			return nil, err
-		}
-		task.Steps = steps
-	}
-
-	job.TaskID = task.ID
-	// We never have to send a notification here because the job is started with a not done status.
-	//
-	// ErrDeadlock can occur on MariaDB w/ `innodb_snapshot_isolation`, rather than returning 0 records -- we can treat
-	// that just the same and return the `ErrNoJobUpdated` error code. An alternative would be to use READ COMMITTED
-	// transaction isolation level, but models/db doesn't currently expose that, and it would cause transaction nesting
-	// difficulties.
-	if n, err := UpdateRunJobWithoutNotification(ctx, job, builder.Eq{"task_id": 0}); err != nil && errors.Is(err, xorm.ErrDeadlock) {
-		return nil, ErrNoJobUpdated
-	} else if err != nil {
-		return nil, err
-	} else if n != 1 {
-		return nil, ErrNoJobUpdated
-	}
-
-	task.Job = job
-
-	if err := committer.Commit(); err != nil {
-		return nil, err
-	}
-
-	return task, nil
-}
-
 // Placeholder tasks are created when the status/content of an [ActionRunJob] is resolved by Forgejo without dispatch to
 // a runner, specifically in the case of a workflow call's outer job.
 func CreatePlaceholderTask(ctx context.Context, job *ActionRunJob, outputs map[string]string) (*ActionTask, error) {
@@ -547,16 +434,6 @@ func FindOldTasksToExpire(ctx context.Context, olderThan timeutil.TimeStamp, lim
 	return tasks, e.Where("stopped > 0 AND stopped < ? AND log_expired = ?", olderThan, false).
 		Limit(limit).
 		Find(&tasks)
-}
-
-func logFileName(repoFullName string, taskID int64) string {
-	ret := fmt.Sprintf("%s/%02x/%d.log", repoFullName, taskID%256, taskID)
-
-	if setting.Actions.LogCompression.IsZstd() {
-		ret += ".zst"
-	}
-
-	return ret
 }
 
 func getTaskIDFromCache(token string) int64 {

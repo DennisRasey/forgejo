@@ -15,8 +15,6 @@ import (
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
-
-	"xorm.io/builder"
 )
 
 var (
@@ -101,7 +99,7 @@ func RerunAllJobs(ctx context.Context, run *actions_model.ActionRun) ([]*actions
 				initialStatus = actions_model.StatusBlocked
 			}
 
-			if err := rerunSingleJob(ctx, job, initialStatus); err != nil {
+			if err := InitiateNextJobAttempt(ctx, job, initialStatus); err != nil {
 				return fmt.Errorf("could not rerun job %d of run %d: %w", job.ID, run.ID, err)
 			}
 
@@ -191,7 +189,7 @@ func RerunJob(ctx context.Context, job *actions_model.ActionRunJob) ([]*actions_
 				initialStatus = actions_model.StatusBlocked
 			}
 
-			if err := rerunSingleJob(ctx, jobToRerun, initialStatus); err != nil {
+			if err := InitiateNextJobAttempt(ctx, jobToRerun, initialStatus); err != nil {
 				return fmt.Errorf("cannot rerun job %d: %w", jobToRerun.ID, err)
 			}
 			rerunJobs = append(rerunJobs, jobToRerun)
@@ -209,24 +207,6 @@ func RerunJob(ctx context.Context, job *actions_model.ActionRunJob) ([]*actions_
 	return rerunJobs, nil
 }
 
-func rerunSingleJob(ctx context.Context, job *actions_model.ActionRunJob, initialStatus actions_model.Status) error {
-	oldStatus := job.Status
-
-	if err := job.PrepareNextAttempt(initialStatus); err != nil {
-		return err
-	}
-
-	// The columns have to be specified here to work around a xorm quirk: It won't update columns that are set to their
-	// zero value without AllCols().
-	if _, err := actions_model.UpdateRunJobWithoutNotification(ctx, job, builder.Eq{"status": oldStatus}, "handle", "attempt", "task_id", "status", "started", "stopped"); err != nil {
-		return err
-	}
-
-	CreateCommitStatus(ctx, job)
-
-	return nil
-}
-
 // cancelSingleJob cancels the given job and its associated task, if any. outcomeStatus defines the status that should
 // be assigned to the cancelled job and its associated task after cancellation; a non-terminal status will result in an
 // error. Nothing happens if the job has already been completed.
@@ -239,6 +219,9 @@ func cancelSingleJob(ctx context.Context, job *actions_model.ActionRunJob, outco
 	}
 
 	return db.WithTx(ctx, func(ctx context.Context) error {
+		// Capture the job's current status for notifications.
+		priorStatus := job.Status
+
 		job.Status = outcomeStatus
 		job.Stopped = timeutil.TimeStampNow()
 		_, err := actions_model.UpdateRunJobWithoutNotification(ctx, job, nil, "status", "stopped")
@@ -246,13 +229,17 @@ func cancelSingleJob(ctx context.Context, job *actions_model.ActionRunJob, outco
 			return fmt.Errorf("could not cancel job %d: %w", job.ID, err)
 		}
 
+		if err := PropagateJobStatus(ctx, job.ID, priorStatus); err != nil {
+			return fmt.Errorf("could not propagate the status of job %d: %w", job.ID, err)
+		}
+
 		// A task might have been created while we're trying to cancel the job. Therefore, always try to stop the task.
 		if err := stopTask(ctx, job.TaskID, outcomeStatus); err != nil {
-			if errors.Is(err, util.ErrNotExist) {
-				return nil
+			if !errors.Is(err, util.ErrNotExist) {
+				return err
 			}
-			return err
 		}
+
 		return nil
 	})
 }

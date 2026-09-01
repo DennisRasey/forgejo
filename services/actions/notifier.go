@@ -5,10 +5,8 @@ package actions
 
 import (
 	"context"
-	"fmt"
 
 	actions_model "forgejo.org/models/actions"
-	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
 	packages_model "forgejo.org/models/packages"
 	perm_model "forgejo.org/models/perm"
@@ -844,50 +842,4 @@ func calculateWarnings(run *actions_model.ActionRun, swfs []*jobparser.SingleWor
 	}
 	run.PreExecutionWarningCodes = warnings
 	run.PreExecutionWarningDetails = warningDetails
-}
-
-// Insert a new run, and all its jobs, into the database.  In the event that all the `if` clauses of the jobs are
-// evaluated at this stage and are `false`,
-func InsertRun(ctx context.Context, run *actions_model.ActionRun, jobs []*jobparser.SingleWorkflow) error {
-	return db.WithTx(ctx, func(ctx context.Context) error {
-		calculateWarnings(run, jobs)
-
-		if err := actions_model.InsertRunWithoutNotification(ctx, run, jobs); err != nil {
-			return fmt.Errorf("InsertRunWithoutNotification: %w", err)
-		}
-
-		// WorkflowRunEvent expects a fully loaded run.
-		if err := run.LoadAttributes(ctx); err != nil {
-			return fmt.Errorf("could not load attributes of run %d: %w", run.ID, err)
-		}
-
-		notify_service.WorkflowRunEvent(ctx, actions_model.NewNewWorkflowRunAttempt(run))
-
-		// Some jobs might have been immediately set to Skipped when they were inserted.  Other jobs may be
-		// dependent on those skipped jobs.  While we're still in this transaction and before these jobs are visible,
-		// run the job emitter which can recursively evaluate this state and update dependent runs status to either
-		// skipped or waiting, depending on their 'if':
-		if !run.NeedApproval { // don't unblock jobs if the run needs approval
-			if err := checkJobsOfRun(ctx, run.ID, 0); err != nil {
-				return fmt.Errorf("check jobs of run: %w", err)
-			}
-		}
-
-		// checkJobsOfRun() above can lead to an update of the run. But as it loads the run from
-		// the database, and might even write directly to the database, the changes are not
-		// reflected in the `run` variable. Therefore, we have to refresh it.
-		dbRun, err := actions_model.GetRunByID(ctx, run.ID)
-		if err != nil {
-			return fmt.Errorf("could not load run %d: %w", run.ID, err)
-		}
-		*run = *dbRun
-
-		// Normally, the status of a job is input to InsertRun as Waiting, and remains that way.  But InsertRunJobs can
-		// evaluate the 'if' clauses of each job, and if every job is skipped then the run status needs to be updated.
-		if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
-			return fmt.Errorf("could not refresh and propagate the status of run %d: %w", run.ID, err)
-		}
-
-		return nil
-	})
 }

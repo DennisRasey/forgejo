@@ -85,4 +85,8 @@ type Notifier interface {
 
 	ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status)
 	WorkflowRunEvent(ctx context.Context, event actions_model.ActionRunEvent)
+
+	NewWorkflowJobAttempt(ctx context.Context, job *actions_model.ActionRunJob)
+	WorkflowJobStatusChanged(ctx context.Context, job *actions_model.ActionRunJob, priorStatus actions_model.Status)
+	WorkflowJobCompleted(ctx context.Context, job *actions_model.ActionRunJob, priorStatus actions_model.Status)
 }

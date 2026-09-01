@@ -936,6 +936,18 @@ func (m *webhookNotifier) WorkflowRunEvent(ctx context.Context, event actions_mo
 	}
 }
 
+func (m *webhookNotifier) NewWorkflowJobAttempt(_ context.Context, job *actions_model.ActionRunJob) {
+	log.Debug("New attempt of job %d", job.ID)
+}
+
+func (m *webhookNotifier) WorkflowJobStatusChanged(_ context.Context, job *actions_model.ActionRunJob, priorStatus actions_model.Status) {
+	log.Debug("Status of job %d changed from %s to %s", job.ID, priorStatus, job.Status)
+}
+
+func (m *webhookNotifier) WorkflowJobCompleted(_ context.Context, job *actions_model.ActionRunJob, priorStatus actions_model.Status) {
+	log.Debug("Job %d completed with status %s, was %s", job.ID, job.Status, priorStatus)
+}
+
 func notifyPackage(ctx context.Context, sender *user_model.User, pd *packages_model.PackageDescriptor, action api.HookPackageAction) {
 	source := EventSource{
 		Repository: pd.Repository,

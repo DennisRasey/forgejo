@@ -223,3 +223,15 @@ func (*NullNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.Ac
 func (n *NullNotifier) WorkflowRunEvent(_ context.Context, _ actions_model.ActionRunEvent) {
 	// Do nothing.
 }
+
+func (n *NullNotifier) NewWorkflowJobAttempt(_ context.Context, _ *actions_model.ActionRunJob) {
+	// Do nothing.
+}
+
+func (n *NullNotifier) WorkflowJobStatusChanged(_ context.Context, _ *actions_model.ActionRunJob, _ actions_model.Status) {
+	// Do nothing.
+}
+
+func (n *NullNotifier) WorkflowJobCompleted(_ context.Context, _ *actions_model.ActionRunJob, _ actions_model.Status) {
+	// Do nothing.
+}

@@ -344,6 +344,17 @@ func (job *ActionRunJob) HasIncompleteWith() (bool, *jobparser.IncompleteNeeds, 
 	return jobWorkflow.IncompleteWith, jobWorkflow.IncompleteWithNeeds, jobWorkflow.IncompleteWithMatrix, nil
 }
 
+// IsIncomplete returns true if this job cannot proceed because some information is missing and
+// other jobs have to complete for it to become available.
+func (job *ActionRunJob) IsIncomplete() (bool, error) {
+	jobWorkflow, err := job.DecodeWorkflowPayload()
+	if err != nil {
+		return false, fmt.Errorf("could not decode workflow payload of job %d: %w", job.ID, err)
+	}
+
+	return jobWorkflow.IncompleteMatrix || jobWorkflow.IncompleteRunsOn || jobWorkflow.IncompleteWith, nil
+}
+
 // EnableOpenIDConnect checks whether the job allows for ID token generation.
 func (job *ActionRunJob) EnableOpenIDConnect() (bool, error) {
 	jobWorkflow, err := job.DecodeWorkflowPayload()

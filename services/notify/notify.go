@@ -409,3 +409,21 @@ func WorkflowRunEvent(ctx context.Context, event actions_model.ActionRunEvent) {
 		notifier.WorkflowRunEvent(ctx, event)
 	}
 }
+
+func NewWorkflowJobAttempt(ctx context.Context, job *actions_model.ActionRunJob) {
+	for _, notifier := range notifiers {
+		notifier.NewWorkflowJobAttempt(ctx, job)
+	}
+}
+
+func WorkflowJobStatusChanged(ctx context.Context, job *actions_model.ActionRunJob, priorStatus actions_model.Status) {
+	for _, notifier := range notifiers {
+		notifier.WorkflowJobStatusChanged(ctx, job, priorStatus)
+	}
+}
+
+func WorkflowJobCompleted(ctx context.Context, job *actions_model.ActionRunJob, priorStatus actions_model.Status) {
+	for _, notifier := range notifiers {
+		notifier.WorkflowJobCompleted(ctx, job, priorStatus)
+	}
+}
