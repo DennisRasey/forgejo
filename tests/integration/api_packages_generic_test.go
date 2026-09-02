@@ -15,6 +15,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/timeutil"
 	"forgejo.org/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -114,10 +115,28 @@ func TestPackageGeneric(t *testing.T) {
 			assert.Equal(t, count, pvs[0].DownloadCount)
 		}
 
+		const nilTime = timeutil.TimeStamp(0)
+		checkLastDownloadAfter := func(referenceTime timeutil.TimeStamp) {
+			pvs, err := packages.GetVersionsByPackageType(db.DefaultContext, user.ID, packages.TypeGeneric)
+			require.NoError(t, err)
+			assert.Len(t, pvs, 1)
+			if referenceTime == nilTime {
+				assert.Equal(t, nilTime, pvs[0].LastDownloadUnix)
+			} else {
+				assert.Greater(t, pvs[0].LastDownloadUnix.AsLocalTime().Compare(referenceTime.AsLocalTime()), -1)
+			}
+		}
+
 		checkDownloadCount(0)
+		checkLastDownloadAfter(nilTime)
 
 		req := NewRequest(t, "HEAD", url+"/"+filename)
 		MakeRequest(t, req, http.StatusOK)
+
+		checkDownloadCount(0)
+		checkLastDownloadAfter(nilTime)
+
+		preRequestTime := timeutil.TimeStampNow()
 
 		req = NewRequest(t, "GET", url+"/"+filename)
 		resp := MakeRequest(t, req, http.StatusOK)
@@ -125,11 +144,15 @@ func TestPackageGeneric(t *testing.T) {
 		assert.Equal(t, content, resp.Body.Bytes())
 
 		checkDownloadCount(1)
+		checkLastDownloadAfter(preRequestTime)
+
+		preRequestTime = timeutil.TimeStampNow()
 
 		req = NewRequest(t, "GET", url+"/dummy.bin")
 		MakeRequest(t, req, http.StatusOK)
 
 		checkDownloadCount(2)
+		checkLastDownloadAfter(preRequestTime)
 
 		t.Run("NotExists", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
@@ -176,10 +199,15 @@ func TestPackageGeneric(t *testing.T) {
 			req := NewRequest(t, "HEAD", url+"/"+filename)
 			MakeRequest(t, req, http.StatusOK)
 
+			checkDownloadCount(2)
+
+			preRequestTime = timeutil.TimeStampNow()
+
 			req = NewRequest(t, "GET", url+"/"+filename)
 			resp := MakeRequest(t, req, http.StatusSeeOther)
 
 			checkDownloadCount(3)
+			checkLastDownloadAfter(preRequestTime)
 
 			location := resp.Header().Get("Location")
 			assert.NotEmpty(t, location)

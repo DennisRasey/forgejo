@@ -27,16 +27,17 @@ func init() {
 
 // PackageVersion represents a package version
 type PackageVersion struct {
-	ID            int64              `xorm:"pk autoincr"`
-	PackageID     int64              `xorm:"UNIQUE(s) INDEX NOT NULL"`
-	CreatorID     int64              `xorm:"NOT NULL DEFAULT 0"`
-	Version       string             `xorm:"NOT NULL"`
-	LowerVersion  string             `xorm:"UNIQUE(s) INDEX NOT NULL"`
-	CreatedUnix   timeutil.TimeStamp `xorm:"created INDEX NOT NULL"`
-	IsInternal    bool               `xorm:"INDEX NOT NULL DEFAULT false"`
-	MetadataJSON  string             `xorm:"metadata_json LONGTEXT"`
-	DownloadCount int64              `xorm:"NOT NULL DEFAULT 0"`
-	TotalSize     int64              `xorm:"NOT NULL DEFAULT 0"`
+	ID               int64              `xorm:"pk autoincr"`
+	PackageID        int64              `xorm:"UNIQUE(s) INDEX NOT NULL"`
+	CreatorID        int64              `xorm:"NOT NULL DEFAULT 0"`
+	Version          string             `xorm:"NOT NULL"`
+	LowerVersion     string             `xorm:"UNIQUE(s) INDEX NOT NULL"`
+	CreatedUnix      timeutil.TimeStamp `xorm:"created INDEX NOT NULL"`
+	IsInternal       bool               `xorm:"INDEX NOT NULL DEFAULT false"`
+	MetadataJSON     string             `xorm:"metadata_json LONGTEXT"`
+	DownloadCount    int64              `xorm:"NOT NULL DEFAULT 0"`
+	LastDownloadUnix timeutil.TimeStamp `xorm:"NULL"`
+	TotalSize        int64              `xorm:"NOT NULL DEFAULT 0"`
 }
 
 // GetOrInsertVersion inserts a version. If the same version exist already ErrDuplicatePackageVersion is returned
@@ -84,9 +85,9 @@ func (pv *PackageVersion) UpdateTotalSize(ctx context.Context) error {
 	return err
 }
 
-// IncrementDownloadCounter increments the download counter of a version
-func IncrementDownloadCounter(ctx context.Context, versionID int64) error {
-	_, err := db.GetEngine(ctx).Exec("UPDATE `package_version` SET `download_count` = `download_count` + 1 WHERE `id` = ?", versionID)
+// IncrementDownloadCounterAndSetLastDownload increments the download counter and sets the last download time of a version
+func IncrementDownloadCounterAndSetLastDownload(ctx context.Context, versionID int64) error {
+	_, err := db.GetEngine(ctx).Exec("UPDATE `package_version` SET `download_count` = `download_count` + 1, `last_download_unix` = ? WHERE `id` = ?", timeutil.TimeStampNow(), versionID)
 	return err
 }
 

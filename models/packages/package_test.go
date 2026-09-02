@@ -81,7 +81,7 @@ func TestGetPackageByID(t *testing.T) {
 	require.Equal(t, *p0, *p)
 	require.NoError(t, err)
 
-	// Get package with non-existng ID should yield ErrPackageNotExist
+	// Get package with non-existing ID should yield ErrPackageNotExist
 	p, err = packages_model.GetPackageByID(db.DefaultContext, 999)
 	require.Nil(t, p)
 	require.Error(t, err)
@@ -254,7 +254,7 @@ func TestHasCountPackages(t *testing.T) {
 	require.NotNil(t, pv2)
 	require.NoError(t, err)
 
-	// A package withmultiple package versions should be counted only once
+	// A package with multiple package versions should be counted only once
 	has, err = packages_model.HasOwnerPackages(db.DefaultContext, owner.ID)
 	require.True(t, has)
 	require.NoError(t, err)
@@ -482,4 +482,35 @@ func TestSortPackages(t *testing.T) {
 	for i, pv := range pvs {
 		assert.Equal(t, expectedOrder[i], pv.ID)
 	}
+}
+
+func TestDownloadCounterAndLastDownload(t *testing.T) {
+	p := prepareExamplePackage(t)
+	pv0, err := packages_model.GetOrInsertVersion(db.DefaultContext, &packages_model.PackageVersion{
+		PackageID:    p.ID,
+		LowerVersion: "normal",
+		IsInternal:   false,
+	})
+	require.NotNil(t, pv0)
+	require.NoError(t, err)
+
+	referenceTime := timeutil.TimeStamp(0)
+	// There should be no downloads, yet.
+	pv, err := packages_model.GetVersionByID(db.DefaultContext, pv0.ID)
+	require.NoError(t, err)
+	require.EqualValues(t, 0, pv.DownloadCount)
+	require.Equal(t, referenceTime, pv.LastDownloadUnix)
+
+	// Increment Download Counter And Set Last Download should yield no error
+	err = packages_model.IncrementDownloadCounterAndSetLastDownload(db.DefaultContext, pv.ID)
+	require.NoError(t, err)
+
+	referenceTime = timeutil.TimeStampNow()
+	// The download count should be incremented and the last download time not null.
+	pv, err = packages_model.GetVersionByID(db.DefaultContext, pv.ID)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, pv.DownloadCount)
+	require.GreaterOrEqual(t, pv.LastDownloadUnix.AsLocalTime().Compare(referenceTime.AsLocalTime()), 0)
+
+	deletePackage(t, p)
 }

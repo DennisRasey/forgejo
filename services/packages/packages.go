@@ -675,8 +675,8 @@ func GetPackageBlobStream(ctx context.Context, pf *packages_model.PackageFile, p
 
 	if err == nil {
 		if pf.IsLead {
-			if err := packages_model.IncrementDownloadCounter(ctx, pf.VersionID); err != nil {
-				log.Error("Error incrementing download counter: %v", err)
+			if err := packages_model.IncrementDownloadCounterAndSetLastDownload(ctx, pf.VersionID); err != nil {
+				log.Error("Error incrementing download counter and setting last download: %v", err)
 			}
 		}
 	}
