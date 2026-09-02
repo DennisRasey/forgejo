@@ -97,6 +97,7 @@ type repository struct {
 	init          *bool
 	archived      *bool
 	disabledUnits *[]unit_model.Type
+	collaborator  *string
 }
 
 func (o repository) Clone() repository {
@@ -111,6 +112,7 @@ func (o repository) Clone() repository {
 		init:          pointerToCopyOrNil(o.init),
 		archived:      pointerToCopyOrNil(o.archived),
 		disabledUnits: disabledUnits,
+		collaborator:  pointerToCopyOrNil(o.collaborator),
 	}
 }
 
@@ -130,6 +132,9 @@ func (o repository) String() string {
 	}
 	if o.disabledUnits != nil {
 		str = append(str, fmt.Sprintf("repository.disabledUnits:%v", *o.disabledUnits))
+	}
+	if o.collaborator != nil {
+		str = append(str, fmt.Sprintf("repository.collaborator:%v", *o.collaborator))
 	}
 	return strings.Join(str, " ")
 }
@@ -443,6 +448,26 @@ func (o *sharedData) SetRepositoryDisabledUnitsDefault(disabledUnits []unit_mode
 
 func (o *sharedData) SetRepositoryDisabledUnits(disabledUnits []unit_model.Type) *sharedData {
 	o.repository.disabledUnits = &disabledUnits
+	return o
+}
+
+func (o sharedData) RepositoryCollaborator() string {
+	return getReferenceOrZero(o.repository.collaborator)
+}
+
+func (o sharedData) HasRepositoryCollaborator() bool {
+	return o.repository.collaborator != nil
+}
+
+func (o *sharedData) SetRepositoryCollaboratorDefault(collaborator string) *sharedData {
+	if !o.HasRepositoryCollaborator() {
+		o.SetRepositoryCollaborator(collaborator)
+	}
+	return o
+}
+
+func (o *sharedData) SetRepositoryCollaborator(collaborator string) *sharedData {
+	o.repository.collaborator = &collaborator
 	return o
 }
 

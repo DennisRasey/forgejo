@@ -417,7 +417,7 @@ func TestAPIEditIssueAutoDate(t *testing.T) {
 		var apiError api.APIError
 		DecodeJSON(t, resp, &apiError)
 
-		assert.Equal(t, "user needs to have admin or repository owner right to set an update date", apiError.Message)
+		assert.Equal(t, "No permission to edit the following issue fields: updated_at", apiError.Message)
 	})
 }
 

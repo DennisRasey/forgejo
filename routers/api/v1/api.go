@@ -246,6 +246,36 @@ func reqIssueUnlockedOrCanWrite(indexParam string) func(ctx *context.APIContext)
 	}
 }
 
+func reqEditIssue(indexParam string) func(ctx *context.APIContext) {
+	apiv1_permissions_testhelpers.RecordSignature(apiv1_permissions.ReqEditIssue)
+	return func(ctx *context.APIContext) {
+		issue := ctx.LoadIssue(indexParam)
+		if ctx.Written() {
+			return
+		}
+		apiv1_permissions.ReqEditIssue(ctx, issue, web.GetForm(ctx).(*api.EditIssueOption))
+	}
+}
+
+// hack in the sense that it should fail hard but instead silently does nothing
+// it would be a breaking change to remove this hack
+func hackEditIssue(indexParam string) func(ctx *context.APIContext) {
+	return func(ctx *context.APIContext) {
+		issue := ctx.LoadIssue(indexParam)
+		if ctx.Written() {
+			return
+		}
+		canWrite := !issue.IsLocked && ctx.Permission().CanWriteIssuesOrPulls(issue.IsPull)
+		if !canWrite {
+			form := web.GetForm(ctx).(*api.EditIssueOption)
+			form.Assignee = nil
+			form.Assignees = nil
+			form.Deadline = nil
+			form.RemoveDeadline = nil
+		}
+	}
+}
+
 func reqCommentIssueUnlockedOrCanWrite(idParam string) func(ctx *context.APIContext) {
 	apiv1_permissions_testhelpers.RecordSignature(apiv1_permissions.ReqIssueUnlockedOrCanWrite)
 	return func(ctx *context.APIContext) {
@@ -1142,7 +1172,7 @@ func Routes() *web.Route {
 					})
 					m.Group("/{index}", func() {
 						m.Combo("").Get(repo.GetIssue).
-							Patch(reqToken(), bind(api.EditIssueOption{}), repo.EditIssue).
+							Patch(reqToken(), mustNotBeArchived(), bind(api.EditIssueOption{}), hackEditIssue("index"), reqEditIssue("index"), repo.EditIssue).
 							Delete(reqToken(), reqAdmin(), context.ReferencesGitRepo(), repo.DeleteIssue)
 						m.Group("/comments", func() {
 							m.Combo("").Get(repo.ListIssueComments).
