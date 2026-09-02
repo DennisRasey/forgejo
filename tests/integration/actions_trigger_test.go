@@ -289,7 +289,7 @@ jobs:
 				doSomething: func() {
 					sha, err := baseGitRepo.GetRefCommitID(pr.GetGitRefName())
 					require.NoError(t, err)
-					err = issue_service.ChangeStatus(db.DefaultContext, pr.Issue, user2, sha, true)
+					err = issue_service.ChangeStatus(db.DefaultContext, pr.Issue, user2, &issues_model.PRNotificationInfo{MergedCommitID: sha}, true)
 					require.NoError(t, err)
 				},
 				actionRunCount: 1,
@@ -301,7 +301,7 @@ jobs:
 				doSomething: func() {
 					sha, err := baseGitRepo.GetRefCommitID(pr.GetGitRefName())
 					require.NoError(t, err)
-					err = issue_service.ChangeStatus(db.DefaultContext, pr.Issue, user2, sha, false)
+					err = issue_service.ChangeStatus(db.DefaultContext, pr.Issue, user2, &issues_model.PRNotificationInfo{MergedCommitID: sha}, false)
 					require.NoError(t, err)
 				},
 				actionRunCount: 1,

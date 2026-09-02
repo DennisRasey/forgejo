@@ -765,7 +765,7 @@ func CreateIssue(ctx *context.APIContext) {
 	}
 
 	if form.Closed {
-		if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer(), "", true); err != nil {
+		if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer(), &issues_model.PRNotificationInfo{MergedCommitID: ""}, true); err != nil {
 			if issues_model.IsErrDependenciesLeft(err) {
 				ctx.Error(http.StatusPreconditionFailed, "DependenciesLeft", "cannot close this issue because it still has open dependencies")
 				return
@@ -941,7 +941,7 @@ func EditIssue(ctx *context.APIContext) {
 		}
 		isClosed := api.StateClosed == api.StateType(*form.State)
 		if issue.IsClosed != isClosed {
-			if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer(), "", isClosed); err != nil {
+			if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer(), &issues_model.PRNotificationInfo{MergedCommitID: ""}, isClosed); err != nil {
 				if issues_model.IsErrDependenciesLeft(err) {
 					ctx.Error(http.StatusPreconditionFailed, "DependenciesLeft", "cannot close this issue because it still has open dependencies")
 					return

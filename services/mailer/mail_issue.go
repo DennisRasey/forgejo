@@ -31,6 +31,7 @@ type ActionAdditionalData interface {
 
 type ActionCloseIssueByCommit struct {
 	CommitID string
+	Repo     *repo_model.Repository
 }
 
 func (ActionCloseIssueByCommit) isActionAdditionalData() {}

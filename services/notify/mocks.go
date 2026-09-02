@@ -1247,8 +1247,8 @@ func (_c *MockNotifier_IssueChangeRef_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // IssueChangeStatus provides a mock function for the type MockNotifier
-func (_mock *MockNotifier) IssueChangeStatus(ctx context.Context, doer *user.User, commitID string, issue *issues.Issue, actionComment *issues.Comment, closeOrReopen bool) {
-	_mock.Called(ctx, doer, commitID, issue, actionComment, closeOrReopen)
+func (_mock *MockNotifier) IssueChangeStatus(ctx context.Context, doer *user.User, prInfo *issues.PRNotificationInfo, issue *issues.Issue, actionComment *issues.Comment, closeOrReopen bool) {
+	_mock.Called(ctx, doer, prInfo.MergedCommitID, issue, actionComment, closeOrReopen)
 	return
 }
 

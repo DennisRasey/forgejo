@@ -135,7 +135,7 @@ func (r *indexerNotifier) IssueChangeRef(ctx context.Context, doer *user_model.U
 	issue_indexer.UpdateIssueIndexer(ctx, issue.ID)
 }
 
-func (r *indexerNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, commitID string, issue *issues_model.Issue, actionComment *issues_model.Comment, closeOrReopen bool) {
+func (r *indexerNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, prInfo *issues_model.PRNotificationInfo, issue *issues_model.Issue, actionComment *issues_model.Comment, closeOrReopen bool) {
 	issue_indexer.UpdateIssueIndexer(ctx, issue.ID)
 }
 

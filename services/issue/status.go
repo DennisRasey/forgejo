@@ -13,7 +13,7 @@ import (
 )
 
 // ChangeStatus changes issue status to open or closed.
-func ChangeStatus(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, commitID string, closed bool) error {
+func ChangeStatus(ctx context.Context, issue *issues_model.Issue, doer *user_model.User, prInfo *issues_model.PRNotificationInfo, closed bool) error {
 	comment, err := issues_model.ChangeIssueStatus(ctx, issue, doer, closed)
 	if err != nil {
 		if issues_model.IsErrDependenciesLeft(err) && closed {
@@ -30,7 +30,7 @@ func ChangeStatus(ctx context.Context, issue *issues_model.Issue, doer *user_mod
 		}
 	}
 
-	notify_service.IssueChangeStatus(ctx, doer, commitID, issue, comment, closed)
+	notify_service.IssueChangeStatus(ctx, doer, prInfo, issue, comment, closed)
 
 	return nil
 }

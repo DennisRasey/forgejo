@@ -189,6 +189,11 @@ type PullRequest struct {
 	Flow PullRequestFlow `xorm:"NOT NULL DEFAULT 0"`
 }
 
+type PRNotificationInfo struct {
+	MergedCommitID string
+	BaseRepo       *repo_model.Repository
+}
+
 func init() {
 	db.RegisterModel(new(PullRequest))
 }

@@ -34,7 +34,7 @@ func (*NullNotifier) NewIssue(ctx context.Context, issue *issues_model.Issue, me
 }
 
 // IssueChangeStatus places a place holder function
-func (*NullNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, commitID string, issue *issues_model.Issue, actionComment *issues_model.Comment, isClosed bool) {
+func (*NullNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, prInfo *issues_model.PRNotificationInfo, issue *issues_model.Issue, actionComment *issues_model.Comment, isClosed bool) {
 }
 
 // DeleteIssue notify when some issue deleted

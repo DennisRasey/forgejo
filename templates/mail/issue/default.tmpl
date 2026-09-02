@@ -36,7 +36,7 @@
 	<p>
 		{{if eq .ActionName "close"}}
 			{{if ne .CloseIssueByCommit ""}}
-				{{$commitUrl := printf "%s/commit/%s" .Issue.Repo.HTMLURL .CloseIssueByCommit}}
+				{{$commitUrl := printf "%s/commit/%s" .CloseIssueByCommitInRepo.HTMLURL .CloseIssueByCommit}}
 				{{$shortSha := ShortSha .CloseIssueByCommit}}
 				{{$commitLink := HTMLFormat "<a href='%[1]s'><b>%[2]s</b></a>" $commitUrl $shortSha}}
 				{{$doer := HTMLFormat "<b>@%[1]s</b>" .Doer.Name}}

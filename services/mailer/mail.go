@@ -294,8 +294,13 @@ func composeIssueCommentMessages(ctx *mailCommentContext, lang string, recipient
 	}
 	if closeIssueByCommit, ok := ctx.ActionAdditionalData.(ActionCloseIssueByCommit); ok {
 		mailMeta["CloseIssueByCommit"] = closeIssueByCommit.CommitID
+		mailMeta["CloseIssueByCommitInRepo"] = ctx.Issue.Repo
+		if closeIssueByCommit.Repo != nil {
+			mailMeta["CloseIssueByCommitInRepo"] = closeIssueByCommit.Repo
+		}
 	} else {
 		mailMeta["CloseIssueByCommit"] = ""
+		mailMeta["CloseIssueByCommitInRepo"] = ""
 	}
 
 	var mailSubject bytes.Buffer

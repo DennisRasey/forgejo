@@ -160,7 +160,7 @@ func createOpenWipPullRequest(ctx context.Context, t *testing.T, user *user_mode
 func createClosedPullRequest(ctx context.Context, t *testing.T, user *user_model.User, repo *repo_model.Repository) *issues_model.PullRequest {
 	pull := createPullRequest(t, user, repo, "branch-closed", "closed")
 
-	err := issue_service.ChangeStatus(ctx, pull.Issue, user, "", true)
+	err := issue_service.ChangeStatus(ctx, pull.Issue, user, &issues_model.PRNotificationInfo{MergedCommitID: ""}, true)
 	require.NoError(t, err)
 
 	assert.True(t, pull.Issue.IsClosed)
@@ -176,7 +176,7 @@ func createClosedWipPullRequest(ctx context.Context, t *testing.T, user *user_mo
 	err := issue_service.ChangeTitle(ctx, pull.Issue, user, "WIP: "+pull.Issue.Title)
 	require.NoError(t, err)
 
-	err = issue_service.ChangeStatus(ctx, pull.Issue, user, "", true)
+	err = issue_service.ChangeStatus(ctx, pull.Issue, user, &issues_model.PRNotificationInfo{MergedCommitID: ""}, true)
 	require.NoError(t, err)
 
 	assert.True(t, pull.Issue.IsClosed)

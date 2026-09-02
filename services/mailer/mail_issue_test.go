@@ -33,7 +33,7 @@ func TestCloseIssue(t *testing.T) {
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
-	err := issue_service.ChangeStatus(db.DefaultContext, issue, user, "", true)
+	err := issue_service.ChangeStatus(db.DefaultContext, issue, user, &issues_model.PRNotificationInfo{MergedCommitID: ""}, true)
 	require.NoError(t, err)
 	assert.True(t, called)
 }
@@ -56,7 +56,7 @@ func TestCloseIssueByCommit(t *testing.T) {
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
-	err := issue_service.ChangeStatus(db.DefaultContext, issue, user, "abc123def", true)
+	err := issue_service.ChangeStatus(db.DefaultContext, issue, user, &issues_model.PRNotificationInfo{MergedCommitID: "abc123def"}, true)
 	require.NoError(t, err)
 	assert.True(t, called)
 }

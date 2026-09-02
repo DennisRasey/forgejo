@@ -45,6 +45,7 @@ import (
 	"forgejo.org/services/automerge"
 	app_context "forgejo.org/services/context"
 	"forgejo.org/services/forms"
+	"forgejo.org/services/mailer"
 	"forgejo.org/services/pull"
 	commitstatus_service "forgejo.org/services/repository/commitstatus"
 	webhook_service "forgejo.org/services/webhook"
@@ -1535,5 +1536,84 @@ func TestMergeHTTPRequestCancellation(t *testing.T) {
 				assert.Equal(t, "Initial commit", targetBranchInDB.CommitMessage)
 			}
 		}
+	})
+}
+
+func getRepoDefaultBranchCommitID(t *testing.T, repo *repo_model.Repository) string {
+	gitRepoPR, err := gitrepo.OpenRepository(db.DefaultContext, repo)
+	require.NoError(t, err)
+	sha, err := gitRepoPR.GetRefCommitID(repo.DefaultBranch)
+	require.NoError(t, err)
+	gitRepoPR.Close()
+	return sha
+}
+
+func TestMergeClosesIssueInOtherRepo(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, giteaURL *url.URL) {
+		const testFileName = "README.md"
+		const testFileContents = "test\n"
+		const changeBranch = "change"
+		const newFileName = "newFile"
+
+		user := forgery.CreateUser(t, &forgery.CreateUserOptions{
+			EmailNotificationsPreference: user_model.EmailNotificationsAndYourOwn,
+		})
+		org := forgery.CreateOrganisation(t, user)
+
+		// create repo where the PR that closes the issue will be
+		repoPR := forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{
+			DefaultBranch: "main",
+			Files:         forgery.MapFS{testFileName: forgery.MapFile(testFileContents)},
+			Name:          "repo-pr",
+		})
+
+		// create repo that contains the issue to be closed
+		repoIssue := forgery.CreateRepository(t, org.AsUser(), &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{},
+			Name:  "repo-issue",
+		})
+
+		// create the issue
+		issue := createIssue(t, user, repoIssue, "test issue", "to be closed by merging PR in repoPR")
+
+		// create a branch in repoPR
+		dstPath := t.TempDir()
+		giteaURL.Path = fmt.Sprintf("%s/%s.git", org.Name, repoPR.Name)
+		giteaURL.User = url.UserPassword(user.Name, userPassword)
+		doGitClone(dstPath, giteaURL)(t)
+		doGitCreateBranch(dstPath, changeBranch)(t)
+
+		// add a file, create a commit in repoPR, push it
+		generateCommitWithNewData(t, littleSize, dstPath, user.Email, user.Name, newFileName)
+		doGitPushTestRepository(dstPath, "origin", changeBranch)(t)
+
+		// create a PR
+		ctx := NewAPITestContext(t, user.Name, repoPR.Name, auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
+		pr, err := doAPICreatePullRequest(ctx, org.Name, repoPR.Name, repoPR.DefaultBranch, changeBranch)(t)
+		require.NoError(t, err)
+
+		// merge PR with a comment that uses the close keyword
+		messageText := ""
+		defer test.MockVariableValue(&mailer.SendAsync, func(msgs ...*mailer.Message) {
+			linkFragment := fmt.Sprintf("%s/%s/commit/", org.Name, repoPR.Name)
+			if len(msgs) > 0 && strings.Contains(msgs[0].Body, linkFragment) {
+				messageText = msgs[0].Body
+			}
+		})()
+		doAPIMergePullRequestForm(t, ctx, org.Name, repoPR.Name, pr.Index,
+			&forms.MergePullRequestForm{
+				MergeMessageField: fmt.Sprintf("closes %s/%s#%d", org.Name, repoIssue.Name, issue.Index),
+				Do:                string(repo_model.MergeStyleMerge),
+				ForceMerge:        true,
+			})
+
+		// verify the issue is closed
+		issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+		assert.True(t, issue.IsClosed)
+
+		// verify link in email
+		sha := getRepoDefaultBranchCommitID(t, repoPR)
+		linkFragmentWithSha := fmt.Sprintf("%s/%s/commit/%s", org.Name, repoPR.Name, sha)
+		assert.Contains(t, messageText, linkFragmentWithSha)
 	})
 }

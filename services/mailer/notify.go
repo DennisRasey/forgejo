@@ -55,7 +55,7 @@ func (m *mailNotifier) NewIssue(ctx context.Context, issue *issues_model.Issue, 
 	}
 }
 
-func (m *mailNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, commitID string, issue *issues_model.Issue, actionComment *issues_model.Comment, isClosed bool) {
+func (m *mailNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, prInfo *issues_model.PRNotificationInfo, issue *issues_model.Issue, actionComment *issues_model.Comment, isClosed bool) {
 	var actionType activities_model.ActionType
 	var actionAdditionalData ActionAdditionalData
 	if issue.IsPull {
@@ -67,10 +67,10 @@ func (m *mailNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.U
 	} else {
 		if isClosed {
 			actionType = activities_model.ActionCloseIssue
-			if commitID != "" {
+			if prInfo.MergedCommitID != "" {
 				// An issue being closed *and* a commitID being present means that the issue was closed by a PR or
 				// commit message that closed it by reference.
-				actionAdditionalData = ActionCloseIssueByCommit{CommitID: commitID}
+				actionAdditionalData = ActionCloseIssueByCommit{CommitID: prInfo.MergedCommitID, Repo: prInfo.BaseRepo}
 			}
 		} else {
 			actionType = activities_model.ActionReopenIssue

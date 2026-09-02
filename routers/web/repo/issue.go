@@ -3099,7 +3099,7 @@ func UpdateIssueStatus(ctx *context.Context) {
 			continue
 		}
 		if issue.IsClosed != isClosed {
-			if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer, "", isClosed); err != nil {
+			if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer, &issues_model.PRNotificationInfo{MergedCommitID: ""}, isClosed); err != nil {
 				if issues_model.IsErrDependenciesLeft(err) {
 					ctx.JSON(http.StatusPreconditionFailed, map[string]any{
 						"error": ctx.Tr("repo.issues.dependency.issue_batch_close_blocked", issue.Index),
@@ -3244,7 +3244,7 @@ func NewComment(ctx *context.Context) {
 				ctx.Flash.Info(ctx.Tr("repo.pulls.open_unmerged_pull_exists", pr.Index))
 			} else {
 				isClosed := form.Status == "close"
-				if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer, "", isClosed); err != nil {
+				if err := issue_service.ChangeStatus(ctx, issue, ctx.Doer, &issues_model.PRNotificationInfo{MergedCommitID: ""}, isClosed); err != nil {
 					if errors.Is(err, user_model.ErrBlockedByUser) {
 						if issue.IsPull {
 							ctx.JSONError(ctx.Tr("repo.pulls.blocked_by_user"))

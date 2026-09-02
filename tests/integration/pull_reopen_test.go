@@ -128,7 +128,7 @@ func TestPullrequestReopen(t *testing.T) {
 		issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{Title: "Testing reopen functionality"})
 
 		// Close the PR.
-		err = issue_service.ChangeStatus(db.DefaultContext, issue, user2, "", true)
+		err = issue_service.ChangeStatus(db.DefaultContext, issue, user2, &issues_model.PRNotificationInfo{MergedCommitID: ""}, true)
 		require.NoError(t, err)
 
 		session := loginUser(t, "user2")

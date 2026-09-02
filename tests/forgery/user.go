@@ -24,7 +24,8 @@ func uniqueSafeName(testName string) string {
 }
 
 type CreateUserOptions struct {
-	IsAdmin bool
+	IsAdmin                      bool
+	EmailNotificationsPreference string
 }
 
 const userPassword = "password"
@@ -32,8 +33,14 @@ const userPassword = "password"
 func CreateUser(t testing.TB, opts *CreateUserOptions) *user_model.User {
 	t.Helper()
 
+	var overwrite *user_model.CreateUserOverwriteOptions
 	if opts == nil {
 		opts = &CreateUserOptions{}
+		overwrite = &user_model.CreateUserOverwriteOptions{}
+	} else {
+		overwrite = &user_model.CreateUserOverwriteOptions{
+			EmailNotificationsPreference: &opts.EmailNotificationsPreference,
+		}
 	}
 	u := &user_model.User{}
 
@@ -44,7 +51,7 @@ func CreateUser(t testing.TB, opts *CreateUserOptions) *user_model.User {
 	u.Passwd = userPassword
 	u.IsAdmin = opts.IsAdmin
 
-	err := user_model.CreateUser(t.Context(), u)
+	err := user_model.CreateUser(t.Context(), u, overwrite)
 	require.NoError(t, err)
 	return u
 }

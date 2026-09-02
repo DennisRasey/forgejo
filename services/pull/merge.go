@@ -302,7 +302,7 @@ func handleCloseCrossReferences(ctx context.Context, pr *issues_model.PullReques
 		}
 		isClosed := ref.RefAction == references.XRefActionCloses
 		if isClosed != ref.Issue.IsClosed {
-			if err = issue_service.ChangeStatus(ctx, ref.Issue, doer, pr.MergedCommitID, isClosed); err != nil {
+			if err = issue_service.ChangeStatus(ctx, ref.Issue, doer, &issues_model.PRNotificationInfo{MergedCommitID: pr.MergedCommitID}, isClosed); err != nil {
 				// Allow ErrDependenciesLeft
 				if !issues_model.IsErrDependenciesLeft(err) {
 					return err

@@ -226,7 +226,7 @@ func (m *webhookNotifier) IssueChangeTitle(ctx context.Context, doer *user_model
 	}
 }
 
-func (m *webhookNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, commitID string, issue *issues_model.Issue, actionComment *issues_model.Comment, isClosed bool) {
+func (m *webhookNotifier) IssueChangeStatus(ctx context.Context, doer *user_model.User, prInfo *issues_model.PRNotificationInfo, issue *issues_model.Issue, actionComment *issues_model.Comment, isClosed bool) {
 	permission, _ := access_model.GetUserRepoPermission(ctx, issue.Repo, issue.Poster)
 	var err error
 	if issue.IsPull {
@@ -240,7 +240,7 @@ func (m *webhookNotifier) IssueChangeStatus(ctx context.Context, doer *user_mode
 			PullRequest: convert.ToAPIPullRequest(ctx, issue.PullRequest, doer),
 			Repository:  convert.ToRepo(ctx, issue.Repo, permission),
 			Sender:      convert.ToUser(ctx, doer, nil),
-			CommitID:    commitID,
+			CommitID:    prInfo.MergedCommitID,
 		}
 		if isClosed {
 			apiPullRequest.Action = api.HookIssueClosed
@@ -254,7 +254,7 @@ func (m *webhookNotifier) IssueChangeStatus(ctx context.Context, doer *user_mode
 			Issue:      convert.ToAPIIssue(ctx, doer, issue),
 			Repository: convert.ToRepo(ctx, issue.Repo, permission),
 			Sender:     convert.ToUser(ctx, doer, nil),
-			CommitID:   commitID,
+			CommitID:   prInfo.MergedCommitID,
 		}
 		if isClosed {
 			apiIssue.Action = api.HookIssueClosed
