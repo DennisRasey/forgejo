@@ -20,17 +20,33 @@ import (
 func TestIncreaseDownloadCount(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
-	attachment, err := repo_model.GetAttachmentByUUID(db.DefaultContext, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
-	require.NoError(t, err)
-	assert.Equal(t, int64(0), attachment.DownloadCount)
+	t.Run("Release", func(t *testing.T) {
+		attachment, err := repo_model.GetAttachmentByUUID(db.DefaultContext, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19")
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), attachment.DownloadCount)
 
-	// increase download count
-	err = attachment.IncreaseDownloadCount(db.DefaultContext)
-	require.NoError(t, err)
+		// increase download count
+		err = attachment.IncreaseDownloadCount(db.DefaultContext)
+		require.NoError(t, err)
 
-	attachment, err = repo_model.GetAttachmentByUUID(db.DefaultContext, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
-	require.NoError(t, err)
-	assert.Equal(t, int64(1), attachment.DownloadCount)
+		attachment, err = repo_model.GetAttachmentByUUID(db.DefaultContext, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a19")
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), attachment.DownloadCount)
+	})
+
+	t.Run("Other attachment", func(t *testing.T) {
+		attachment, err := repo_model.GetAttachmentByUUID(db.DefaultContext, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), attachment.DownloadCount)
+
+		// increase download count
+		err = attachment.IncreaseDownloadCount(db.DefaultContext)
+		require.NoError(t, err)
+
+		attachment, err = repo_model.GetAttachmentByUUID(db.DefaultContext, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), attachment.DownloadCount)
+	})
 }
 
 func TestGetByCommentOrIssueID(t *testing.T) {

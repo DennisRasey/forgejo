@@ -56,9 +56,12 @@ func init() {
 
 // IncreaseDownloadCount is update download count + 1
 func (a *Attachment) IncreaseDownloadCount(ctx context.Context) error {
-	// Update download count.
-	if _, err := db.GetEngine(ctx).Exec("UPDATE `attachment` SET download_count=download_count+1 WHERE id=?", a.ID); err != nil {
-		return fmt.Errorf("increase attachment count: %w", err)
+	// Only increment download counts for release attachments
+	if a.ReleaseID != 0 {
+		// Update download count.
+		if _, err := db.GetEngine(ctx).Exec("UPDATE `attachment` SET download_count=download_count+1 WHERE id=?", a.ID); err != nil {
+			return fmt.Errorf("increase attachment count: %w", err)
+		}
 	}
 
 	return nil

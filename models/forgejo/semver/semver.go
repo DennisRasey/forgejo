@@ -73,7 +73,7 @@ func SetVersionWithEngine(e db.Engine, v *version.Version) error {
 
 	if !has {
 		_, err = e.Exec("insert into forgejo_sem_ver values (?)", v.String())
-	} else {
+	} else if semver.Version != v.String() {
 		_, err = e.Exec("update forgejo_sem_ver set version = ?", v.String())
 	}
 	return err
