@@ -101,8 +101,7 @@ func OIDCRoutes(prefix string) *web.Route {
 	// and inspecting the names of the json struct tags
 	rt := reflect.TypeFor[actions_service.IDTokenCustomClaims]()
 
-	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
+	for f := range rt.Fields() {
 		v := strings.Split(f.Tag.Get("json"), ",")[0]
 		if v == "" || v == "-" {
 			continue

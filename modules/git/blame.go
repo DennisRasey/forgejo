@@ -207,5 +207,5 @@ func tryCreateBlameIgnoreRevsFile(commit *Commit) *string {
 		return nil
 	}
 
-	return util.ToPointer(f.Name())
+	return new(f.Name())
 }

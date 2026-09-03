@@ -239,8 +239,8 @@ func (key ecdsaSigningKey) ToJWK() (map[string]string, error) {
 		"alg": key.SigningMethod().Alg(),
 		"kid": key.id,
 		"crv": pubKey.Params().Name,
-		"x":   base64.RawURLEncoding.EncodeToString(pubKey.X.Bytes()),
-		"y":   base64.RawURLEncoding.EncodeToString(pubKey.Y.Bytes()),
+		"x":   base64.RawURLEncoding.EncodeToString(pubKey.X.Bytes()), //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to x, even if unsafe.
+		"y":   base64.RawURLEncoding.EncodeToString(pubKey.Y.Bytes()), //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to y, even if unsafe.
 	}, nil
 }
 

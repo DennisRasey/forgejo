@@ -98,16 +98,16 @@ func TestGiteaDownloadRepo(t *testing.T) {
 		{
 			Title:    "V2 Finalize",
 			Created:  time.Unix(0, 0),
-			Deadline: timePtr(time.Unix(1599263999, 0)),
-			Updated:  timePtr(time.Date(2022, 11, 13, 5, 29, 15, 0, time.UTC)),
+			Deadline: new(time.Unix(1599263999, 0)),
+			Updated:  new(time.Date(2022, 11, 13, 5, 29, 15, 0, time.UTC)),
 			State:    "open",
 		},
 		{
 			Title:       "V1",
 			Description: "Generate Content",
 			Created:     time.Unix(0, 0),
-			Updated:     timePtr(time.Unix(0, 0)),
-			Closed:      timePtr(time.Unix(1598985406, 0)),
+			Updated:     new(time.Unix(0, 0)),
+			Closed:      new(time.Unix(1598985406, 0)),
 			State:       "closed",
 		},
 	}, milestones)
@@ -183,7 +183,7 @@ func TestGiteaDownloadRepo(t *testing.T) {
 					Content:  "laugh",
 				},
 			},
-			Closed: timePtr(time.Date(2020, 9, 1, 15, 49, 34, 0, time.UTC)),
+			Closed: new(time.Date(2020, 9, 1, 15, 49, 34, 0, time.UTC)),
 		},
 		{
 			Number:      2,
@@ -202,7 +202,7 @@ func TestGiteaDownloadRepo(t *testing.T) {
 				Color:       "d4c5f9",
 				Description: "",
 			}},
-			Closed: timePtr(time.Unix(1598969497, 0)),
+			Closed: new(time.Unix(1598969497, 0)),
 		},
 	}, issues)
 
@@ -249,7 +249,7 @@ func TestGiteaDownloadRepo(t *testing.T) {
 		IsLocked:    false,
 		Created:     time.Unix(1598982759, 0),
 		Updated:     time.Unix(1599023425, 0),
-		Closed:      timePtr(time.Date(2020, 9, 1, 17, 55, 33, 0, time.UTC)),
+		Closed:      new(time.Date(2020, 9, 1, 17, 55, 33, 0, time.UTC)),
 		Assignees:   []string{"techknowlogick"},
 		Base: base.PullRequestBranch{
 			CloneURL:  "",
@@ -266,7 +266,7 @@ func TestGiteaDownloadRepo(t *testing.T) {
 			OwnerName: "6543-forks",
 		},
 		Merged:         true,
-		MergedTime:     timePtr(time.Unix(1598982934, 0)),
+		MergedTime:     new(time.Unix(1598982934, 0)),
 		MergeCommitSHA: "827aa28a907853e5ddfa40c8f9bc52471a2685fd",
 		PatchURL:       server.URL + "/gitea/test_repo/pulls/12.patch",
 	}, prs[1])

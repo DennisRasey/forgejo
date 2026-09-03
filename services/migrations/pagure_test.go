@@ -100,7 +100,7 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Milestone:  "Milestone BBBB",
 			Created:    time.Date(2023, time.October, 13, 4, 1, 16, 0, time.UTC),
 			Updated:    time.Date(2025, time.June, 25, 6, 25, 57, 0, time.UTC),
-			Closed:     timePtr(time.Date(2025, time.June, 25, 6, 22, 59, 0, time.UTC)),
+			Closed:     new(time.Date(2025, time.June, 25, 6, 22, 59, 0, time.UTC)),
 			Labels: []*base.Label{
 				{
 					Name: "cccc",
@@ -126,7 +126,7 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			Milestone:  "Milestone AAAA",
 			Created:    time.Date(2023, time.October, 13, 3, 57, 42, 0, time.UTC),
 			Updated:    time.Date(2025, time.June, 25, 6, 25, 45, 0, time.UTC),
-			Closed:     timePtr(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			Closed:     new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			Labels: []*base.Label{
 				{
 					Name: "aaaa",
@@ -234,8 +234,8 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			State:      "closed",
 			Created:    time.Date(2025, time.May, 19, 6, 12, 45, 0, time.UTC),
 			Updated:    time.Date(2025, time.May, 19, 6, 17, 11, 0, time.UTC),
-			Closed:     timePtr(time.Date(2025, time.May, 19, 6, 17, 11, 0, time.UTC)),
-			MergedTime: timePtr(time.Date(2025, time.May, 19, 6, 17, 11, 0, time.UTC)),
+			Closed:     new(time.Date(2025, time.May, 19, 6, 17, 11, 0, time.UTC)),
+			MergedTime: new(time.Date(2025, time.May, 19, 6, 17, 11, 0, time.UTC)),
 			Merged:     true,
 			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/10.patch",
 			Labels: []*base.Label{
@@ -264,8 +264,8 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			State:      "closed",
 			Created:    time.Date(2025, time.May, 19, 6, 12, 41, 0, time.UTC),
 			Updated:    time.Date(2025, time.May, 19, 6, 14, 3, 0, time.UTC),
-			Closed:     timePtr(time.Date(2025, time.May, 19, 6, 14, 3, 0, time.UTC)),
-			MergedTime: timePtr(time.Date(2025, time.May, 19, 6, 14, 3, 0, time.UTC)),
+			Closed:     new(time.Date(2025, time.May, 19, 6, 14, 3, 0, time.UTC)),
+			MergedTime: new(time.Date(2025, time.May, 19, 6, 14, 3, 0, time.UTC)),
 			Merged:     true,
 			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/9.patch",
 			Labels: []*base.Label{
@@ -294,8 +294,8 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			State:      "closed",
 			Created:    time.Date(2025, time.May, 5, 6, 45, 32, 0, time.UTC),
 			Updated:    time.Date(2025, time.May, 5, 6, 54, 13, 0, time.UTC),
-			Closed:     timePtr(time.Date(2025, time.May, 5, 6, 54, 13, 0, time.UTC)),
-			MergedTime: timePtr(time.Date(2025, time.May, 5, 6, 54, 13, 0, time.UTC)), // THIS IS WRONG
+			Closed:     new(time.Date(2025, time.May, 5, 6, 54, 13, 0, time.UTC)),
+			MergedTime: new(time.Date(2025, time.May, 5, 6, 54, 13, 0, time.UTC)), // THIS IS WRONG
 			Merged:     false,
 			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/8.patch",
 			Labels: []*base.Label{
@@ -323,9 +323,9 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			PosterID:   -1,
 			State:      "closed",
 			Created:    time.Date(2025, time.May, 5, 6, 45, 6, 0, time.UTC),
-			Updated:    time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC),          // IT SHOULD BE NIL
-			Closed:     timePtr(time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC)), // IT is CLOSED, Not MERGED so SHOULD NOT BE NIL
-			MergedTime: timePtr(time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC)), // THIS IS WRONG
+			Updated:    time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC),      // IT SHOULD BE NIL
+			Closed:     new(time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC)), // IT is CLOSED, Not MERGED so SHOULD NOT BE NIL
+			MergedTime: new(time.Date(2025, time.May, 5, 6, 54, 3, 0, time.UTC)), // THIS IS WRONG
 			Merged:     false,
 			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/7.patch",
 			Labels: []*base.Label{
@@ -354,8 +354,8 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			State:      "open",
 			Created:    time.Date(2025, time.May, 5, 6, 44, 30, 0, time.UTC),
 			Updated:    time.Date(2025, time.May, 19, 8, 30, 50, 0, time.UTC),
-			Closed:     timePtr(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
-			MergedTime: timePtr(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			Closed:     new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			MergedTime: new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			Merged:     false,
 			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/6.patch",
 			Labels: []*base.Label{
@@ -384,8 +384,8 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 			State:      "open",
 			Created:    time.Date(2025, time.May, 5, 6, 43, 57, 0, time.UTC),
 			Updated:    time.Date(2025, time.May, 19, 6, 29, 45, 0, time.UTC),
-			Closed:     timePtr(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
-			MergedTime: timePtr(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			Closed:     new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			MergedTime: new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			Merged:     false,
 			PatchURL:   server.URL + "/protop2g-test-srce/pull-request/5.patch",
 			Labels: []*base.Label{
@@ -443,22 +443,22 @@ func TestPagureDownloadRepoWithPublicIssues(t *testing.T) {
 	dict := map[string]*base.Milestone{
 		"Milestone AAAA": {
 			Title:    "Milestone AAAA",
-			Deadline: timePtr(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
+			Deadline: new(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
 			State:    "open",
 		},
 		"Milestone BBBB": {
 			Title:    "Milestone BBBB",
-			Deadline: timePtr(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
+			Deadline: new(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
 			State:    "closed",
 		},
 		"Milestone CCCC": {
 			Title:    "Milestone CCCC",
-			Deadline: timePtr(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
+			Deadline: new(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
 			State:    "open",
 		},
 		"Milestone DDDD": {
 			Title:    "Milestone DDDD",
-			Deadline: timePtr(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
+			Deadline: new(time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC)),
 			State:    "closed",
 		},
 	}
@@ -539,7 +539,7 @@ func TestPagureDownloadRepoWithPrivateIssues(t *testing.T) {
 			Milestone:  "Milestone DDDD",
 			Created:    time.Date(2023, time.November, 21, 8, 6, 56, 0, time.UTC),
 			Updated:    time.Date(2025, time.June, 25, 6, 26, 26, 0, time.UTC),
-			Closed:     timePtr(time.Date(2025, time.June, 25, 6, 23, 51, 0, time.UTC)),
+			Closed:     new(time.Date(2025, time.June, 25, 6, 23, 51, 0, time.UTC)),
 			Labels: []*base.Label{
 				{
 					Name: "gggg",
@@ -565,7 +565,7 @@ func TestPagureDownloadRepoWithPrivateIssues(t *testing.T) {
 			Milestone:  "Milestone CCCC",
 			Created:    time.Date(2023, time.November, 21, 8, 3, 57, 0, time.UTC),
 			Updated:    time.Date(2025, time.June, 25, 6, 26, 7, 0, time.UTC),
-			Closed:     timePtr(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
+			Closed:     new(time.Date(1, time.January, 1, 0, 0, 0, 0, time.UTC)),
 			Labels: []*base.Label{
 				{
 					Name: "eeee",
@@ -664,17 +664,17 @@ func TestProcessDate(t *testing.T) {
 		},
 		{
 			name:     "empty string",
-			input:    strPtr(""),
+			input:    new(""),
 			expected: time.Time{},
 		},
 		{
 			name:     "unix timestamp",
-			input:    strPtr("1609459200"),
+			input:    new("1609459200"),
 			expected: time.Unix(1609459200, 0),
 		},
 		{
 			name:     "YYYY-MM-DD format",
-			input:    strPtr("2025-12-12"),
+			input:    new("2025-12-12"),
 			expected: time.Date(2025, time.December, 12, 0, 0, 0, 0, time.UTC),
 		},
 	}
@@ -685,8 +685,4 @@ func TestProcessDate(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-func strPtr(s string) *string {
-	return &s
 }

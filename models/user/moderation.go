@@ -89,8 +89,8 @@ var userDataColumnNames = sync.OnceValue(func() []string {
 	mapper := new(names.GonicMapper)
 	udType := reflect.TypeFor[UserData]()
 	columnNames := make([]string, 0, udType.NumField())
-	for i := 0; i < udType.NumField(); i++ {
-		columnNames = append(columnNames, mapper.Obj2Table(udType.Field(i).Name))
+	for field := range udType.Fields() {
+		columnNames = append(columnNames, mapper.Obj2Table(field.Name))
 	}
 	return columnNames
 })

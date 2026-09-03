@@ -828,7 +828,7 @@ func ArtifactsDownloadView(ctx *app_context.Context) {
 			ctx.Error(http.StatusInternalServerError, err.Error())
 			return
 		}
-		common.ServeContentByReadSeeker(ctx.Base, artifacts[0].ArtifactName+".zip", util.ToPointer(art.UpdatedUnix.AsTime()), f)
+		common.ServeContentByReadSeeker(ctx.Base, artifacts[0].ArtifactName+".zip", new(art.UpdatedUnix.AsTime()), f)
 		return
 	}
 

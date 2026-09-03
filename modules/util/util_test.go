@@ -5,10 +5,10 @@
 package util_test
 
 import (
-	"bytes"
 	"crypto/rand"
 	"strings"
 	"testing"
+	"testing/cryptotest"
 
 	"forgejo.org/modules/test"
 	"forgejo.org/modules/util"
@@ -211,42 +211,25 @@ func TestToTitleCase(t *testing.T) {
 	assert.Equal(t, `Foo Bar Baz`, util.ToTitleCase(`FOO BAR BAZ`))
 }
 
-func TestToPointer(t *testing.T) {
-	assert.Equal(t, "abc", *util.ToPointer("abc"))
-	assert.Equal(t, 123, *util.ToPointer(123))
-	abc := "abc"
-	assert.NotSame(t, &abc, util.ToPointer(abc))
-	val123 := 123
-	assert.NotSame(t, &val123, util.ToPointer(val123))
-}
-
 func TestReserveLineBreakForTextarea(t *testing.T) {
 	assert.Equal(t, "test\ndata", util.ReserveLineBreakForTextarea("test\r\ndata"))
 	assert.Equal(t, "test\ndata\n", util.ReserveLineBreakForTextarea("test\r\ndata\r\n"))
 }
 
 const (
-	testPublicKey  = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4\n"
+	testPublicKey  = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHX8yEKexoMqBPPwG4pGAhhjo5CyiHLiJZ7p3jg0aJZM\n"
 	testPrivateKey = `-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtz
-c2gtZWQyNTUxOQAAACADoQe/884Qvh1w3RjnS8CZZ+TWMJulDV8d3IZkElUxuAAA
-AIggISIjICEiIwAAAAtzc2gtZWQyNTUxOQAAACADoQe/884Qvh1w3RjnS8CZZ+TW
-MJulDV8d3IZkElUxuAAAAEAAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0e
-HwOhB7/zzhC+HXDdGOdLwJln5NYwm6UNXx3chmQSVTG4AAAAAAECAwQF
+c2gtZWQyNTUxOQAAACB1/MhCnsaDKgTz8BuKRgIYY6OQsohy4iWe6d44NGiWTAAA
+AIhNLlZvTS5WbwAAAAtzc2gtZWQyNTUxOQAAACB1/MhCnsaDKgTz8BuKRgIYY6OQ
+sohy4iWe6d44NGiWTAAAAEDZh37ObTaKrBpvQZ7GJ8drG/sfo3xBoR6kat1qSNiU
+dHX8yEKexoMqBPPwG4pGAhhjo5CyiHLiJZ7p3jg0aJZMAAAAAAECAwQF
 -----END OPENSSH PRIVATE KEY-----` + "\n"
 )
 
 func TestGeneratingEd25519Keypair(t *testing.T) {
 	defer test.MockProtect(&rand.Reader)()
-
-	// Only 32 bytes needs to be provided to generate a ed25519 keypair.
-	// And another 32 bytes are required, which is included as random value
-	// in the OpenSSH format.
-	b := make([]byte, 64)
-	for i := range 64 {
-		b[i] = byte(i)
-	}
-	rand.Reader = bytes.NewReader(b)
+	cryptotest.SetGlobalRandom(t, 0)
 
 	publicKey, privateKey, err := util.GenerateSSHKeypair()
 	require.NoError(t, err)

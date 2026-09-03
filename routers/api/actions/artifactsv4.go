@@ -572,7 +572,7 @@ func (r *artifactV4Routes) downloadArtifact(ctx *ArtifactContext) {
 		return
 	}
 
-	common.ServeContentByReadSeeker(ctx.Base, artifactName, util.ToPointer(artifact.UpdatedUnix.AsTime()), file)
+	common.ServeContentByReadSeeker(ctx.Base, artifactName, new(artifact.UpdatedUnix.AsTime()), file)
 }
 
 func (r *artifactV4Routes) deleteArtifact(ctx *ArtifactContext) {

@@ -15,7 +15,6 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/storage"
-	"forgejo.org/modules/util"
 	"forgejo.org/routers/common"
 	"forgejo.org/services/attachment"
 	"forgejo.org/services/context"
@@ -203,7 +202,7 @@ func ServeAttachment(ctx *context.Context, uuid string) {
 	}
 	defer fr.Close()
 
-	common.ServeContentByReadSeeker(ctx.Base, attach.Name, util.ToPointer(attach.CreatedUnix.AsTime()), fr)
+	common.ServeContentByReadSeeker(ctx.Base, attach.Name, new(attach.CreatedUnix.AsTime()), fr)
 }
 
 // GetAttachment serve attachments
