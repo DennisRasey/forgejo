@@ -832,7 +832,8 @@ func TestActionsRunsEvaluateIf(t *testing.T) {
 			notifier.On("Run").Return().Maybe()
 			notifier.On("PushCommits", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
 			notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return()
-			notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return()
+			notifier.On("NewWorkflowRunAttempt", mock.Anything, mock.Anything).Return()
+			notifier.On("WorkflowRunCompleted", mock.Anything, mock.Anything, mock.Anything).Return()
 
 			notify_service.RegisterNotifier(notifier)
 			defer notify_service.UnregisterNotifier(notifier)
@@ -841,7 +842,8 @@ func TestActionsRunsEvaluateIf(t *testing.T) {
 			arif.assertNoRunnableJobs()
 
 			notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 1)
-			notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 2)
+			notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 1)
+			notifier.AssertNumberOfCalls(t, "WorkflowRunCompleted", 1)
 			notifier.AssertCalled(
 				t, "NewWorkflowJobAttempt", mock.Anything,
 				mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
@@ -849,21 +851,20 @@ func TestActionsRunsEvaluateIf(t *testing.T) {
 				}),
 			)
 			notifier.AssertCalled(t,
-				"WorkflowRunEvent",
+				"NewWorkflowRunAttempt",
 				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
-				mock.MatchedBy(func(event *actions_model.NewWorkflowRunAttempt) bool {
-					return event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
-						// StatusSkipped is wrong (it should be StatusWaiting). The reason is that
-						// the run is not cloned before being emitted as an event.
-						event.GetRun().Status == actions_model.StatusSkipped
+				mock.MatchedBy(func(run *actions_model.ActionRun) bool {
+					return run.Title == ".forgejo/workflows/serverside_if.yml" &&
+						run.Status == actions_model.StatusWaiting
 				}))
-			notifier.AssertCalled(t, "WorkflowRunEvent",
+			notifier.AssertCalled(t, "WorkflowRunCompleted",
 				mock.MatchedBy(func(ctx context.Context) bool { return ctx != nil }),
-				mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
-					return event.GetPriorStatus() == actions_model.StatusWaiting &&
-						event.GetRun().Title == ".forgejo/workflows/serverside_if.yml" &&
-						event.GetRun().Status == actions_model.StatusSkipped
-				}))
+				mock.MatchedBy(func(run *actions_model.ActionRun) bool {
+					return run.Title == ".forgejo/workflows/serverside_if.yml" &&
+						run.Status == actions_model.StatusSkipped
+				}),
+				actions_model.StatusWaiting,
+			)
 		})
 
 		t.Run("skip single job instantly", func(t *testing.T) {

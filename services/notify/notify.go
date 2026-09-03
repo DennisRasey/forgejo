@@ -404,9 +404,21 @@ func ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorSt
 	}
 }
 
-func WorkflowRunEvent(ctx context.Context, event actions_model.ActionRunEvent) {
+func NewWorkflowRunAttempt(ctx context.Context, run *actions_model.ActionRun) {
 	for _, notifier := range notifiers {
-		notifier.WorkflowRunEvent(ctx, event)
+		notifier.NewWorkflowRunAttempt(ctx, run)
+	}
+}
+
+func WorkflowRunStatusChanged(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
+	for _, notifier := range notifiers {
+		notifier.WorkflowRunStatusChanged(ctx, run, priorStatus)
+	}
+}
+
+func WorkflowRunCompleted(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
+	for _, notifier := range notifiers {
+		notifier.WorkflowRunCompleted(ctx, run, priorStatus)
 	}
 }
 

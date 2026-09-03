@@ -297,13 +297,8 @@ func StopTask(ctx context.Context, taskID int64, status actions_model.Status) er
 		return fmt.Errorf("could not propagate changed status of job %d: %w", job.ID, err)
 	}
 
-	run, err := actions_model.GetRunByID(ctx, job.RunID)
-	if err != nil {
-		return fmt.Errorf("could not load run %d: %w", job.RunID, err)
-	}
-
-	if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
-		return fmt.Errorf("could not update status of run %d: %w", run.ID, err)
+	if err := RefreshAndPropagateRunStatus(ctx, job.RunID); err != nil {
+		return fmt.Errorf("could not update status of run %d: %w", job.RunID, err)
 	}
 
 	return nil
@@ -364,12 +359,8 @@ func UpdateTaskByState(ctx context.Context, runnerID int64, state *runnerv1.Task
 			return nil, fmt.Errorf("could not propagate changed status of job %d: %w", job.ID, err)
 		}
 
-		run, err := actions_model.GetRunByID(ctx, job.RunID)
-		if err != nil {
-			return nil, fmt.Errorf("could not load run %d: %w", job.RunID, err)
-		}
-		if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
-			return nil, fmt.Errorf("could not refresh and propagate status of run %d: %w", run.ID, err)
+		if err := RefreshAndPropagateRunStatus(ctx, job.RunID); err != nil {
+			return nil, fmt.Errorf("could not refresh and propagate status of run %d: %w", job.RunID, err)
 		}
 	} else {
 		// Force update ActionTask.Updated to avoid the task being judged as a zombie task

@@ -11,6 +11,7 @@ import (
 	actions_model "forgejo.org/models/actions"
 	"forgejo.org/models/db"
 	"forgejo.org/modules/actions"
+	"forgejo.org/modules/container"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
@@ -86,7 +87,7 @@ func CancelAbandonedJobs(ctx context.Context) error {
 	}
 
 	return db.WithTx(ctx, func(ctx context.Context) error {
-		runsToUpdate := map[int64]*actions_model.ActionRun{}
+		runsToUpdate := container.Set[int64]{}
 		now := timeutil.TimeStampNow()
 		for _, job := range jobs {
 			// Capture the current status because it is required for sending notifications.
@@ -102,17 +103,14 @@ func CancelAbandonedJobs(ctx context.Context) error {
 				return fmt.Errorf("could not propagate the status of job %d: %w", job.ID, err)
 			}
 
-			if err = job.LoadRun(ctx); err != nil {
-				return fmt.Errorf("could not load run of job %d: %w", job.ID, err)
-			}
-			runsToUpdate[job.RunID] = job.Run
+			runsToUpdate.Add(job.RunID)
 
 			CreateCommitStatus(ctx, job)
 		}
 
-		for _, run := range runsToUpdate {
-			if err = RefreshAndPropagateRunStatus(ctx, run); err != nil {
-				return fmt.Errorf("could not refresh and propagate the status of run %d: %w", run.ID, err)
+		for runID := range runsToUpdate {
+			if err = RefreshAndPropagateRunStatus(ctx, runID); err != nil {
+				return fmt.Errorf("could not refresh and propagate the status of run %d: %w", runID, err)
 			}
 		}
 

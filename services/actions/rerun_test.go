@@ -63,8 +63,8 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 
 		notifier := notify_service.NewMockNotifier(t)
 		notifier.On("Run").Return().Maybe()
-		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
-		notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return()
+		notifier.On("NewWorkflowRunAttempt", mock.Anything, mock.Anything).Return()
 
 		notify_service.RegisterNotifier(notifier)
 		defer notify_service.UnregisterNotifier(notifier)
@@ -114,7 +114,7 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 		}, 1)
 
 		notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 2)
-		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 1)
 		notifier.AssertCalled(
 			t, "NewWorkflowJobAttempt", mock.Anything,
 			mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
@@ -128,9 +128,9 @@ func TestRerun_RerunAllJobs(t *testing.T) {
 			}),
 		)
 		notifier.AssertCalled(
-			t, "WorkflowRunEvent", mock.Anything,
-			mock.MatchedBy(func(event *actions_model.NewWorkflowRunAttempt) bool {
-				return event.GetRun().ID == 455620 && event.GetRun().Status == actions_model.StatusWaiting
+			t, "NewWorkflowRunAttempt", mock.Anything,
+			mock.MatchedBy(func(run *actions_model.ActionRun) bool {
+				return run.ID == 455620 && run.Status == actions_model.StatusWaiting
 			}),
 		)
 	})
@@ -233,8 +233,8 @@ func TestRerun_RerunJob(t *testing.T) {
 
 		notifier := notify_service.NewMockNotifier(t)
 		notifier.On("Run").Return().Maybe()
-		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
-		notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return()
+		notifier.On("NewWorkflowRunAttempt", mock.Anything, mock.Anything).Return()
 
 		notify_service.RegisterNotifier(notifier)
 		defer notify_service.UnregisterNotifier(notifier)
@@ -284,7 +284,7 @@ func TestRerun_RerunJob(t *testing.T) {
 		}, 1)
 
 		notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 1)
-		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 1)
 		notifier.AssertCalled(
 			t, "NewWorkflowJobAttempt", mock.Anything,
 			mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
@@ -292,9 +292,9 @@ func TestRerun_RerunJob(t *testing.T) {
 			}),
 		)
 		notifier.AssertCalled(
-			t, "WorkflowRunEvent", mock.Anything,
-			mock.MatchedBy(func(event *actions_model.NewWorkflowRunAttempt) bool {
-				return event.GetRun().ID == 455650 && event.GetRun().Status == actions_model.StatusWaiting
+			t, "NewWorkflowRunAttempt", mock.Anything,
+			mock.MatchedBy(func(run *actions_model.ActionRun) bool {
+				return run.ID == 455650 && run.Status == actions_model.StatusWaiting
 			}),
 		)
 	})
@@ -305,8 +305,8 @@ func TestRerun_RerunJob(t *testing.T) {
 
 		notifier := notify_service.NewMockNotifier(t)
 		notifier.On("Run").Return().Maybe()
-		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
-		notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return()
+		notifier.On("NewWorkflowRunAttempt", mock.Anything, mock.Anything).Return()
 
 		notify_service.RegisterNotifier(notifier)
 		defer notify_service.UnregisterNotifier(notifier)
@@ -336,7 +336,7 @@ func TestRerun_RerunJob(t *testing.T) {
 		assert.Equal(t, timeutil.TimeStamp(0), dependentJob.Stopped)
 
 		notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 2)
-		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 1)
 		notifier.AssertCalled(
 			t, "NewWorkflowJobAttempt", mock.Anything,
 			mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
@@ -350,9 +350,9 @@ func TestRerun_RerunJob(t *testing.T) {
 			}),
 		)
 		notifier.AssertCalled(
-			t, "WorkflowRunEvent", mock.Anything,
-			mock.MatchedBy(func(event *actions_model.NewWorkflowRunAttempt) bool {
-				return event.GetRun().ID == 455650 && event.GetRun().Status == actions_model.StatusWaiting
+			t, "NewWorkflowRunAttempt", mock.Anything,
+			mock.MatchedBy(func(run *actions_model.ActionRun) bool {
+				return run.ID == 455650 && run.Status == actions_model.StatusWaiting
 			}),
 		)
 	})
@@ -365,7 +365,7 @@ func TestRerun_RerunJob(t *testing.T) {
 		notifier.On("Run").Return().Maybe()
 		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
 		notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+		notifier.On("NewWorkflowRunAttempt", mock.Anything, mock.Anything).Return()
 
 		notify_service.RegisterNotifier(notifier)
 		defer notify_service.UnregisterNotifier(notifier)
@@ -383,7 +383,7 @@ func TestRerun_RerunJob(t *testing.T) {
 
 		notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 2)
 		notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 1)
-		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 1)
 
 		job = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: 683911})
 
@@ -423,7 +423,7 @@ func TestRerun_RerunJob(t *testing.T) {
 
 		notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 4)
 		notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 2)
-		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 1)
 	})
 
 	t.Run("Rerun job with needs", func(t *testing.T) {
@@ -432,8 +432,8 @@ func TestRerun_RerunJob(t *testing.T) {
 
 		notifier := notify_service.NewMockNotifier(t)
 		notifier.On("Run").Return().Maybe()
-		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
-		notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+		notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return()
+		notifier.On("NewWorkflowRunAttempt", mock.Anything, mock.Anything).Return()
 
 		notify_service.RegisterNotifier(notifier)
 		defer notify_service.UnregisterNotifier(notifier)
@@ -456,7 +456,7 @@ func TestRerun_RerunJob(t *testing.T) {
 		assert.Equal(t, timeutil.TimeStamp(0), job.Stopped)
 
 		notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 1)
-		notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+		notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 1)
 	})
 
 	t.Run("Error if workflow invalid", func(t *testing.T) {

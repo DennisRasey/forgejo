@@ -61,17 +61,10 @@ func (m *mockNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.
 	m.testIdx++
 }
 
-func (m *mockNotifier) WorkflowRunEvent(ctx context.Context, event actions_model.ActionRunEvent) {
-	switch e := event.(type) {
-	case *actions_model.NewWorkflowRunAttempt:
-		// Do nothing
-		break
-	case *actions_model.WorkflowRunStatusChanged:
-		// Do nothing
-		break
-	case *actions_model.WorkflowRunCompleted:
-		m.ActionRunNowDone(ctx, e.GetRun(), e.GetPriorStatus())
-	}
+func (m *mockNotifier) WorkflowRunCompleted(
+	ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status,
+) {
+	m.ActionRunNowDone(ctx, run, priorStatus)
 }
 
 // ensure all tests have been run

@@ -52,12 +52,7 @@ func jobEmitterQueueHandler(items ...*jobUpdate) []*jobUpdate {
 			ret = append(ret, update)
 		}
 
-		run, err := actions_model.GetRunByID(ctx, update.RunID)
-		if err != nil {
-			logger.Error("GetRunByID failed for run %d: %v", update.RunID, err)
-			continue
-		}
-		if err = RefreshAndPropagateRunStatus(ctx, run); err != nil {
+		if err := RefreshAndPropagateRunStatus(ctx, update.RunID); err != nil {
 			logger.Error("RefreshAndPropagateRunStatus failed for run %d: %v", update.RunID, err)
 		}
 	}
@@ -495,12 +490,8 @@ func prepareJobForEmitting(ctx context.Context, blockedJob *actions_model.Action
 		}
 
 		// After manipulating jobs, update the status of the run to prevent it from being out of sync.
-		run, err := actions_model.GetRunByID(ctx, blockedJob.RunID)
-		if err != nil {
-			return fmt.Errorf("could not get run %d: %w", blockedJob.RunID, err)
-		}
-		if err := RefreshAndPropagateRunStatus(ctx, run); err != nil {
-			return fmt.Errorf("could not refresh and propagate the status of run %d: %w", run.ID, err)
+		if err := RefreshAndPropagateRunStatus(ctx, blockedJob.RunID); err != nil {
+			return fmt.Errorf("could not refresh and propagate the status of run %d: %w", blockedJob.RunID, err)
 		}
 
 		return nil

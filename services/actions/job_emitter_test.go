@@ -378,15 +378,6 @@ jobs:
     steps: []
 `
 
-type mockNotifier struct {
-	notify_service.NullNotifier
-	events []actions_model.ActionRunEvent
-}
-
-func (m *mockNotifier) WorkflowRunEvent(_ context.Context, event actions_model.ActionRunEvent) {
-	m.events = append(m.events, event)
-}
-
 func Test_prepareJobForEmitting(t *testing.T) {
 	// Shouldn't get any decoding errors during this test -- pop them up from a log warning to a test fatal error.
 	defer test.MockVariableValue(&model.OnDecodeNodeError, func(node yaml.Node, out any, err error) {
@@ -633,13 +624,16 @@ func Test_prepareJobForEmitting(t *testing.T) {
 				notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 0)
 				notifier.AssertNumberOfCalls(t, "WorkflowJobStatusChanged", 0)
 				notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 0)
-				notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+				notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowRunStatusChanged", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowRunCompleted", 1)
 
 				notifier.AssertCalled(
-					t, "WorkflowRunEvent", mock.Anything,
-					mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
-						return event.GetRun().Status == actions_model.StatusFailure
+					t, "WorkflowRunCompleted", mock.Anything,
+					mock.MatchedBy(func(run *actions_model.ActionRun) bool {
+						return run.Status == actions_model.StatusFailure
 					}),
+					actions_model.StatusRunning,
 				)
 			},
 		},
@@ -683,12 +677,16 @@ func Test_prepareJobForEmitting(t *testing.T) {
 				notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 0)
 				notifier.AssertNumberOfCalls(t, "WorkflowJobStatusChanged", 0)
 				notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 0)
-				notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+				notifier.AssertNumberOfCalls(t, "NewWorkflowRunAttempt", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowRunStatusChanged", 0)
+				notifier.AssertNumberOfCalls(t, "WorkflowRunCompleted", 1)
+
 				notifier.AssertCalled(
-					t, "WorkflowRunEvent", mock.Anything,
-					mock.MatchedBy(func(event *actions_model.WorkflowRunCompleted) bool {
-						return event.GetRun().Status == actions_model.StatusSuccess
+					t, "WorkflowRunCompleted", mock.Anything,
+					mock.MatchedBy(func(run *actions_model.ActionRun) bool {
+						return run.Status == actions_model.StatusSuccess
 					}),
+					actions_model.StatusRunning,
 				)
 			},
 		},
@@ -700,10 +698,12 @@ func Test_prepareJobForEmitting(t *testing.T) {
 
 			notifier := notify_service.NewMockNotifier(t)
 			notifier.On("Run").Return().Maybe()
-			notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil).Maybe()
-			notifier.On("WorkflowJobStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-			notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-			notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil).Maybe()
+			notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return().Maybe()
+			notifier.On("WorkflowJobStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return().Maybe()
+			notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return().Maybe()
+			notifier.On("NewWorkflowRunAttempt", mock.Anything, mock.Anything).Return().Maybe()
+			notifier.On("WorkflowRunStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return().Maybe()
+			notifier.On("WorkflowRunCompleted", mock.Anything, mock.Anything, mock.Anything).Return().Maybe()
 
 			notify_service.RegisterNotifier(notifier)
 			defer notify_service.UnregisterNotifier(notifier)
@@ -1012,9 +1012,9 @@ func Test_checkJobsOfRun_ExpandsMatrixWithCorrectOutputJobStatuses(t *testing.T)
 
 	notifier := notify_service.NewMockNotifier(t)
 	notifier.On("Run").Return().Maybe()
-	notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return(nil)
-	notifier.On("WorkflowJobStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	notifier.On("WorkflowRunEvent", mock.Anything, mock.Anything).Return(nil)
+	notifier.On("NewWorkflowJobAttempt", mock.Anything, mock.Anything).Return()
+	notifier.On("WorkflowJobStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return()
+	notifier.On("WorkflowRunStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return()
 
 	notify_service.RegisterNotifier(notifier)
 	defer notify_service.UnregisterNotifier(notifier)
@@ -1045,5 +1045,6 @@ func Test_checkJobsOfRun_ExpandsMatrixWithCorrectOutputJobStatuses(t *testing.T)
 
 	notifier.AssertNumberOfCalls(t, "NewWorkflowJobAttempt", 3)
 	notifier.AssertNumberOfCalls(t, "WorkflowJobStatusChanged", 3)
-	notifier.AssertNumberOfCalls(t, "WorkflowRunEvent", 1)
+	notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 0)
+	notifier.AssertNumberOfCalls(t, "WorkflowRunStatusChanged", 1)
 }

@@ -226,8 +226,8 @@ func (_c *MockCache_Get_Call) Run(run func(key string)) *MockCache_Get_Call {
 	return _c
 }
 
-func (_c *MockCache_Get_Call) Return(v any) *MockCache_Get_Call {
-	_c.Call.Return(v)
+func (_c *MockCache_Get_Call) Return(anyMoqParam any) *MockCache_Get_Call {
+	_c.Call.Return(anyMoqParam)
 	return _c
 }
 

@@ -921,19 +921,26 @@ func (m *webhookNotifier) ActionRunNowDone(ctx context.Context, run *actions_mod
 	}
 }
 
-func (m *webhookNotifier) WorkflowRunEvent(ctx context.Context, event actions_model.ActionRunEvent) {
-	log.Debug("Workflow run event: %#v", event)
+func (m *webhookNotifier) NewWorkflowRunAttempt(_ context.Context, run *actions_model.ActionRun) {
+	log.Debug("New attempt of workflow run %d started with status %v", run.ID, run.Status)
 
-	switch e := event.(type) {
-	case *actions_model.NewWorkflowRunAttempt:
-		// Do nothing
-		break
-	case *actions_model.WorkflowRunStatusChanged:
-		// Do nothing
-		break
-	case *actions_model.WorkflowRunCompleted:
-		m.ActionRunNowDone(ctx, e.GetRun(), e.GetPriorStatus())
-	}
+	// Do nothing.
+}
+
+func (m *webhookNotifier) WorkflowRunStatusChanged(
+	_ context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status,
+) {
+	log.Debug("Status of workflow run %d changed from %v to %v", run.ID, priorStatus, run.Status)
+
+	// Do nothing.
+}
+
+func (m *webhookNotifier) WorkflowRunCompleted(
+	ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status,
+) {
+	log.Debug("Workflow run %d completed with status %v", run.ID, run.Status)
+
+	m.ActionRunNowDone(ctx, run, priorStatus)
 }
 
 func (m *webhookNotifier) NewWorkflowJobAttempt(_ context.Context, job *actions_model.ActionRunJob) {

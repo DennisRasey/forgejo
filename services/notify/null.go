@@ -220,7 +220,15 @@ func (*NullNotifier) ChangeDefaultBranch(ctx context.Context, repo *repo_model.R
 func (*NullNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
 }
 
-func (n *NullNotifier) WorkflowRunEvent(_ context.Context, _ actions_model.ActionRunEvent) {
+func (n *NullNotifier) NewWorkflowRunAttempt(_ context.Context, _ *actions_model.ActionRun) {
+	// Do nothing.
+}
+
+func (n *NullNotifier) WorkflowRunStatusChanged(_ context.Context, _ *actions_model.ActionRun, _ actions_model.Status) {
+	// Do nothing.
+}
+
+func (n *NullNotifier) WorkflowRunCompleted(_ context.Context, _ *actions_model.ActionRun, _ actions_model.Status) {
 	// Do nothing.
 }
 

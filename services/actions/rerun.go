@@ -195,8 +195,8 @@ func RerunJob(ctx context.Context, job *actions_model.ActionRunJob) ([]*actions_
 			rerunJobs = append(rerunJobs, jobToRerun)
 		}
 
-		if err = RefreshAndPropagateRunStatus(ctx, job.Run); err != nil {
-			return fmt.Errorf("could not refresh and propagate the status of run %d: %w", job.Run.ID, err)
+		if err = RefreshAndPropagateRunStatus(ctx, job.RunID); err != nil {
+			return fmt.Errorf("could not refresh and propagate the status of run %d: %w", job.RunID, err)
 		}
 
 		return nil
