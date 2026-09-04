@@ -17,36 +17,33 @@ excluded+='forgejo.org/tests/e2e|'                        # JavaScript is not in
 excluded+='FAKETERMINATOR'                                # do not modify
 
 : ${COVERAGEDIR:=$(pwd)/coverage/data}
+: ${COVERAGE_TEST_NAME:=unit}
 : ${GO:=$(go env GOROOT)/bin/go}
 
 DEFAULT_TEST_PACKAGES=$($GO list ./... | grep -E -v "$excluded")
 
-COVERED_PACKAGES=$($GO list ./...)
-COVERED_PACKAGES=$(echo $COVERED_PACKAGES | sed -e 's/ /,/g')
+COVERED_PACKAGES=forgejo.org/cmd/...,forgejo.org/models/...,forgejo.org/modules/...,forgejo.org/routers/...,forgejo.org/services/...
+
+function run_verbose() {
+  echo "$@"
+  "$@"
+}
 
 function run_test() {
   local package="$1"
-  if echo "$package" | grep --quiet --fixed-string ".."; then
-    echo "$package contains a suspicious .."
-    return 1
-  fi
 
-  local coverage="$COVERAGEDIR/$COVERAGE_TEST_DATABASE/$package"
+  local coverage="$COVERAGEDIR/$COVERAGE_TEST_NAME"
   rm -fr $coverage
   mkdir -p $coverage
 
-  #
-  # -race cannot be used because it requires -covermode atomic which is
-  # different from the end-to-end tests and would cause issues wen merging
-  #
   set -o pipefail
-  $GO test -timeout=40m -tags='sqlite sqlite_unlock_notify' -cover $package -coverpkg $COVERED_PACKAGES $COVERAGE_TEST_ARGS -args -test.gocoverdir=$coverage |& grep -v 'warning: no packages being tested depend on matches for pattern'
+  run_verbose $GO test -timeout=40m -tags='sqlite sqlite_unlock_notify' -covermode atomic -cover $package -coverpkg $COVERED_PACKAGES $COVERAGE_TEST_ARGS -args -test.gocoverdir=$coverage |& grep --text -v 'warning: no packages being tested depend on matches for pattern'
   set +o pipefail
 }
 
 function test_packages() {
-  for package in ${@:-$DEFAULT_TEST_PACKAGES}; do
-    run_test $package
+  for package in "${@:-$DEFAULT_TEST_PACKAGES}"; do
+    run_test "$package"
   done
 }
 

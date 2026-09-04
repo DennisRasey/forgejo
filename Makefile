@@ -603,40 +603,51 @@ test\#%: | compute-go-test-packages
 	@echo "Running go test with $(GOTESTFLAGS) -tags '$(TEST_TAGS)'..."
 	@TZ=UTC GITEA_ROOT="$(CURDIR)" $(GOTEST) $(GOTESTFLAGS) -tags='$(TEST_TAGS)' -run $(subst .,/,$*) $(GO_TEST_PACKAGES)
 
+.PHONY: coverage-reset
 coverage-reset:
 	rm -fr coverage
 
+.PHONY: coverage-merge
 coverage-merge:
 	rm -fr coverage/merged ; mkdir -p coverage/merged
 	$(GO) tool covdata merge -i `find coverage/data -name 'covmeta.*' | sed -e 's|/covmeta.*|,|' | tr -d '\n' | sed -e 's/,$$//'` -o coverage/merged
 
+.PHONY: coverage-convert
 coverage-convert: coverage-merge
 	$(GO) tool covdata textfmt -i=coverage/merged -o=coverage/textfmt.out
 
+.PHONY: coverage-show-html
 coverage-show-html: coverage-convert
 	( cd coverage ; $(GO) tool cover -html=textfmt.out -o coverage.html )
 	xdg-open coverage/coverage.html
 
+.PHONY: coverage-show-percentage
 coverage-show-percentage: coverage-convert
 	go tool cover -func=coverage/textfmt.out
 
+.PHONY: coverage-run
 coverage-run: | compute-go-test-packages
 	contrib/coverage-helper.sh test_packages $(COVERAGE_TEST_PACKAGES)
 
+.PHONY: coverage-run-%
 coverage-run-%: coverage-run-migration-% coverage-run-integration-%
 	echo $@ done
 
+.PHONY: coverage-run-migration-%
 coverage-run-migration-%: generate-ini-% | compute-migration-packages
 	$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/$*.ini COVERAGE_TEST_ARGS= COVERAGE_TEST_PACKAGES=forgejo.org/tests/integration/migration-test coverage-run
 	for pkg in $(MIGRATION_PACKAGES); do \
-		$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/$*.ini COVERAGE_TEST_DATABASE=$* COVERAGE_TEST_ARGS= COVERAGE_TEST_PACKAGES=$$pkg coverage-run ; \
+		$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/$*.ini COVERAGE_TEST_NAME=$* COVERAGE_TEST_ARGS= COVERAGE_TEST_PACKAGES=$$pkg coverage-run ; \
 	done
 
+.PHONY: coverage-run-integration-%
 coverage-run-integration-%: generate-ini-%
-	$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/$*.ini COVERAGE_TEST_DATABASE=$* COVERAGE_TEST_PACKAGES=forgejo.org/tests/integration coverage-run
+	$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/$*.ini COVERAGE_TEST_NAME=$* COVERAGE_TEST_PACKAGES=forgejo.org/tests/integration coverage-run
 
-coverage-run-e2e: frontend playwright generate-ini-sqlite
-	$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini COVERAGE_TEST_DATABASE=sqlite PLAYWRIGHT_PROJECT=firefox COVERAGE_TEST_PACKAGES=forgejo.org/tests/e2e COVERAGE_TEST_ARGS="-test.run TestE2e ${COVERAGE_TEST_ARGS}" coverage-run
+COVERAGE_E2E_RUN ?= -test.run TestE2e
+
+coverage-run-e2e: playwright generate-ini-sqlite
+	$(MAKE) GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini COVERAGE_TEST_NAME=e2e PLAYWRIGHT_PROJECT=firefox COVERAGE_TEST_PACKAGES=forgejo.org/tests/e2e COVERAGE_TEST_ARGS="${COVERAGE_E2E_RUN} ${COVERAGE_TEST_ARGS}" coverage-run
 
 .PHONY: tidy
 tidy:

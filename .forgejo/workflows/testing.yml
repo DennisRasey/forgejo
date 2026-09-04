@@ -9,6 +9,12 @@ on:
       - 'v*/forgejo*'
   workflow_dispatch:
 
+# for debugging purposes, uncomment to only run a subset of the tests
+#env:
+#  INTEGRATION_TESTS_ENV: COVERAGE_TEST_ARGS=-run=TestAPIListRepoComments
+#  UNIT_TESTS_ENV: COVERAGE_TEST_PACKAGES=forgejo.org/modules/actions
+#  E2E_TESTS_ENV: COVERAGE_E2E_RUN="-test.run TestE2e/user-events"
+
 jobs:
   backend-checks:
     if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
@@ -61,14 +67,14 @@ jobs:
       - name: 'Cache frontend build for playwright testing'
         uses: https://data.forgejo.org/actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ${{github.workspace}}/public/assets
-          key: frontend-build-${{ github.sha }}
+          path: ${{forgejo.workspace}}/public/assets
+          key: frontend-build-${{ forgejo.sha }}
   test-unit:
     if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
     runs-on: docker
     needs: [backend-checks, frontend-checks]
     container:
-      image: 'data.forgejo.org/oci/node:24-trixie'
+      image: 'data.forgejo.org/oci/ci:3'
       # options: --tmpfs /tmp:exec,noatime # Too much memory usage
     services:
       elasticsearch:
@@ -93,13 +99,20 @@ jobs:
           apt-get -q install -qq -y jq
           ./release-notes-assistant.sh test_main
       - run: |
-          su forgejo -c 'make test-backend test-check'
+          su forgejo -c '${{ env.UNIT_TESTS_ENV }} make COVERAGE_TEST_ARGS=-race coverage-run'
+          su forgejo -c 'make test-check'
         timeout-minutes: 120
         env:
           RACE_ENABLED: 'true'
           TAGS: bindata
           TEST_ELASTICSEARCH_URL: http://elasticsearch:9200
           TEST_MINIO_ENDPOINT: minio:9000
+      - name: upload coverage data
+        uses: https://data.forgejo.org/actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{forgejo.workspace}}/coverage/data/unit
+          key: coverage-unit-${{ forgejo.sha }}
+
   test-e2e:
     if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
     runs-on: docker
@@ -116,8 +129,8 @@ jobs:
         uses: https://data.forgejo.org/actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: cache-frontend
         with:
-          path: ${{github.workspace}}/public/assets
-          key: frontend-build-${{ github.sha }}
+          path: ${{forgejo.workspace}}/public/assets
+          key: frontend-build-${{ forgejo.sha }}
       - name: 'Build frontend (if not cached)'
         if: steps.cache-frontend.outputs.cache-hit != 'true'
         run: |
@@ -126,7 +139,7 @@ jobs:
         id: run-all
         if: forgejo.event_name == 'push' || contains(forgejo.event.pull_request.labels.*.name, 'run-all-playwright-tests') || contains(forgejo.event.pull_request.title, 'playwright')
         run: |
-          echo "all=1" >> "$GITHUB_OUTPUT"
+          echo "all=1" >> "$FORGEJO_OUTPUT"
       - name: Get changed files
         if: forgejo.event_name == 'pull_request'
         id: changed-files
@@ -139,7 +152,8 @@ jobs:
           path: |
             /home/forgejo/.cache/ms-playwright
       - run: |
-          su forgejo -c 'make generate test-e2e-sqlite'
+          su forgejo -c 'make generate'
+          su forgejo -c '${{ env.E2E_TESTS_ENV }} make coverage-run-e2e'
         timeout-minutes: 120
         env:
           USE_REPO_TEST_DIR: 1
@@ -152,6 +166,12 @@ jobs:
           name: test-artifacts.zip
           path: tests/e2e/test-artifacts/
           retention-days: 3
+      - name: upload coverage data
+        uses: https://data.forgejo.org/actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{forgejo.workspace}}/coverage/data/e2e
+          key: coverage-e2e-${{ forgejo.sha }}
+
   test-remote-cacher:
     if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
     runs-on: docker
@@ -262,7 +282,7 @@ jobs:
     runs-on: docker
     needs: [backend-checks, frontend-checks]
     container:
-      image: 'data.forgejo.org/oci/node:24-trixie'
+      image: 'data.forgejo.org/oci/ci:3'
       # options: --tmpfs /tmp:exec,noatime # Too much memory usage
     steps:
       - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -272,13 +292,65 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
       - run: |
-          su forgejo -c 'make test-sqlite-migration test-sqlite'
+          su forgejo -c 'make test-sqlite-migration'
+          su forgejo -c '${{ env.INTEGRATION_TESTS_ENV }} make coverage-run-sqlite'
         timeout-minutes: 120
         env:
           TAGS: sqlite sqlite_unlock_notify
-          RACE_ENABLED: true
           TEST_TAGS: sqlite sqlite_unlock_notify
           USE_REPO_TEST_DIR: 1
+      - name: upload coverage data
+        uses: https://data.forgejo.org/actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{forgejo.workspace}}/coverage/data/sqlite
+          key: coverage-sqlite-${{ forgejo.sha }}
+  coverage:
+    if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
+    runs-on: docker
+    container:
+      image: 'data.forgejo.org/oci/ci:3'
+    needs: [test-unit, test-e2e, test-sqlite]
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.forgejo/workflows-composite/setup-env
+      - id: coverage-unit
+        uses: https://data.forgejo.org/actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{forgejo.workspace}}/coverage/data/unit
+          key: coverage-unit-${{ forgejo.sha }}
+      - id: coverage-e2e
+        uses: https://data.forgejo.org/actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{forgejo.workspace}}/coverage/data/e2e
+          key: coverage-e2e-${{ forgejo.sha }}
+      - id: coverage-sqlite
+        uses: https://data.forgejo.org/actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{forgejo.workspace}}/coverage/data/sqlite
+          key: coverage-sqlite-${{ forgejo.sha }}
+      - name: show missing coverage data
+        if: "! steps.coverage-unit.outputs.cache-hit || ! steps.coverage-e2e.outputs.cache-hit || ! steps.coverage-sqlite.outputs.cache-hit"
+        run: |
+          echo "found unit coverage data = ${{ steps.coverage-unit.outputs.cache-hit }}"
+          echo "found e2e coverage data = ${{ steps.coverage-e2e.outputs.cache-hit }}"
+          echo "found sqlite coverage data = ${{ steps.coverage-sqlite.outputs.cache-hit }}"
+      - name: merge and convert coverage data
+        if: steps.coverage-unit.outputs.cache-hit && steps.coverage-e2e.outputs.cache-hit && steps.coverage-sqlite.outputs.cache-hit
+        run: |
+          make coverage-show-percentage
+      - if: forgejo.event_name == 'pull_request' && (steps.coverage-unit.outputs.cache-hit && steps.coverage-e2e.outputs.cache-hit && steps.coverage-sqlite.outputs.cache-hit)
+        name: create or update the coverage report in a pull request comment
+        uses: https://codeberg.org/clouds666/unkai@0241847811cf3da3c2c6ad954c10d839c68544d6 # v0.2.9
+        with:
+          token: ${{ forgejo.TOKEN }}
+      - if: forgejo.event_name != 'pull_request' && (steps.coverage-unit.outputs.cache-hit && steps.coverage-e2e.outputs.cache-hit && steps.coverage-sqlite.outputs.cache-hit)
+        name: upload the converted coverage data (textfmt.out)
+        uses: https://data.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/textfmt.out
+          retention-days: 1
+
   security-check:
     if: vars.ROLE == 'forgejo-coding' || vars.ROLE == 'forgejo-testing'
     runs-on: docker
