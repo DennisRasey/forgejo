@@ -72,7 +72,7 @@ forgejo.org/modules/auth/password/pwn
 	WithHTTP
 
 forgejo.org/modules/base
-	SetupGiteaRoot
+	SetupProjectRoot
 
 forgejo.org/modules/cache
 	WithNoCacheContext

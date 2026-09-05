@@ -129,27 +129,27 @@ func IsCitationFile(entry *git.TreeEntry) bool {
 	return entry.Name() == "CITATION.cff" || entry.Name() == "CITATION.bib"
 }
 
-// SetupGiteaRoot Sets GITEA_ROOT if it is not already set and returns the value
+// SetupProjectRoot sets PROJECT_ROOT if it is not already set and returns the value
 // TODO: move to a test folder (e.g. models/unittest/) since this isn't called outside tests
-func SetupGiteaRoot() string {
-	giteaRoot := os.Getenv("GITEA_ROOT")
-	if giteaRoot == "" {
+func SetupProjectRoot() string {
+	projectRoot := os.Getenv("PROJECT_ROOT")
+	if projectRoot == "" {
 		_, filename, _, _ := runtime.Caller(0)
-		giteaRoot = strings.TrimSuffix(filename, "modules/base/tool.go")
+		projectRoot = strings.TrimSuffix(filename, "modules/base/tool.go")
 		wd, err := os.Getwd()
 		if err != nil {
-			rel, err := filepath.Rel(giteaRoot, wd)
+			rel, err := filepath.Rel(projectRoot, wd)
 			if err != nil && strings.HasPrefix(filepath.ToSlash(rel), "../") {
-				giteaRoot = wd
+				projectRoot = wd
 			}
 		}
-		if _, err := os.Stat(filepath.Join(giteaRoot, "go.mod")); os.IsNotExist(err) {
-			giteaRoot = ""
-		} else if err := os.Setenv("GITEA_ROOT", giteaRoot); err != nil {
-			giteaRoot = ""
+		if _, err := os.Stat(filepath.Join(projectRoot, "go.mod")); os.IsNotExist(err) {
+			projectRoot = ""
+		} else if err := os.Setenv("PROJECT_ROOT", projectRoot); err != nil {
+			projectRoot = ""
 		}
 	}
-	return giteaRoot
+	return projectRoot
 }
 
 // FormatNumberSI format a number

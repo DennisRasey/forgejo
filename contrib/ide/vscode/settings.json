@@ -4,8 +4,8 @@
   "go.lintTool": "golangci-lint",
   "go.lintFlags": ["--fast"],
   "go.testEnvVars": {
-    "GITEA_ROOT": "${workspaceRoot}",
-    "GITEA_CONF": "tests/sqlite.ini",
+    "PROJECT_ROOT": "${workspaceRoot}",
+    "PROJECT_CONF": "tests/sqlite.ini",
   },
   "chat.disableAIFeatures": true,
 }

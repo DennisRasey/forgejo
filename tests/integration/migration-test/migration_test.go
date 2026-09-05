@@ -39,9 +39,9 @@ var currentEngine *xorm.Engine
 
 func getRoot(t *testing.T) string {
 	t.Helper()
-	root := base.SetupGiteaRoot()
+	root := base.SetupProjectRoot()
 	if root == "" {
-		t.Fatal("Environment variable $GITEA_ROOT not set")
+		t.Fatal("Environment variable $PROJECT_ROOT not set")
 	}
 	return root
 }
@@ -54,14 +54,14 @@ func initMigrationTest(t *testing.T) func() {
 	setting.AppPath = path.Join(root, "migration-test-should-not-need-a-binary") // use RunMainAppWithStdin if a binary is needed
 	setting.AppWorkPath = root
 
-	giteaConf := os.Getenv("GITEA_CONF")
-	if giteaConf == "" {
-		tests.Printf("Environment variable $GITEA_CONF not set\n")
+	projectConf := os.Getenv("PROJECT_CONF")
+	if projectConf == "" {
+		tests.Printf("Environment variable $PROJECT_CONF not set\n")
 		os.Exit(1)
-	} else if !path.IsAbs(giteaConf) {
-		setting.CustomConf = path.Join(root, giteaConf)
+	} else if !path.IsAbs(projectConf) {
+		setting.CustomConf = path.Join(root, projectConf)
 	} else {
-		setting.CustomConf = giteaConf
+		setting.CustomConf = projectConf
 	}
 
 	unittest.InitSettings()

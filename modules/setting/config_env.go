@@ -168,12 +168,7 @@ func EnvironmentToConfig(cfg ConfigProvider, envs []string) (changed bool) {
 	return changed
 }
 
-// InitGiteaEnvVars initializes the environment variables for gitea
-func InitGiteaEnvVars() {
-	// Ideally Gitea should only accept the environment variables which it clearly knows instead of unsetting the ones it doesn't want,
-	// but the ideal behavior would be a breaking change, and it seems not bringing enough benefits to end users,
-	// so at the moment we could still keep "unsetting the unnecessary environments"
-
+func InitEnvVars() {
 	// HOME is managed by Gitea, Gitea's git should use "HOME/.gitconfig".
 	// But git would try "XDG_CONFIG_HOME/git/config" first if "HOME/.gitconfig" does not exist,
 	// then our git.InitFull would still write to "XDG_CONFIG_HOME/git/config" if XDG_CONFIG_HOME is set.

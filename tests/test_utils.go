@@ -95,33 +95,33 @@ func RunMainAppWithStdin(stdin io.Reader, subcommand string, args ...string) (st
 func InitTest() {
 	log.RegisterEventWriter("test", testlogger.NewTestLoggerWriter)
 
-	giteaRoot := base.SetupGiteaRoot()
-	if giteaRoot == "" {
-		exitf("Environment variable $GITEA_ROOT not set")
+	projectRoot := base.SetupProjectRoot()
+	if projectRoot == "" {
+		exitf("Environment variable $PROJECT_ROOT not set")
 	}
 
 	// TODO: Speedup tests that rely on the event source ticker, confirm whether there is any bug or failure.
 	// setting.UI.Notification.EventSourceUpdateTime = time.Second
 
 	setting.IsInTesting = true
-	setting.AppWorkPath = giteaRoot
+	setting.AppWorkPath = projectRoot
 	setting.CustomPath = filepath.Join(setting.AppWorkPath, "custom")
-	giteaConf := os.Getenv("GITEA_CONF")
-	if giteaConf == "" {
+	projectConf := os.Getenv("PROJECT_CONF")
+	if projectConf == "" {
 		// By default, use sqlite.ini for testing, then IDE like GoLand can start the test process with debugger.
 		// It's easier for developers to debug bugs step by step with a debugger.
-		// Notice: when doing "ssh push", Gitea executes sub processes, debugger won't work for the sub processes.
-		giteaConf = "tests/sqlite.ini"
-		_ = os.Setenv("GITEA_CONF", giteaConf)
-		fmt.Printf("Environment variable $GITEA_CONF not set, use default: %s\n", giteaConf)
+		// Notice: when doing "ssh push", Forgejo executes sub processes, debugger won't work for the sub processes.
+		projectConf = "tests/sqlite.ini"
+		_ = os.Setenv("PROJECT_CONF", projectConf)
+		fmt.Printf("Environment variable $PROJECT_CONF not set, use default: %s\n", projectConf)
 		if !setting.EnableSQLite3 {
 			exitf(`sqlite3 requires: import _ "github.com/mattn/go-sqlite3" or -tags sqlite,sqlite_unlock_notify`)
 		}
 	}
-	if !path.IsAbs(giteaConf) {
-		setting.CustomConf = filepath.Join(giteaRoot, giteaConf)
+	if !path.IsAbs(projectConf) {
+		setting.CustomConf = filepath.Join(projectRoot, projectConf)
 	} else {
-		setting.CustomConf = giteaConf
+		setting.CustomConf = projectConf
 	}
 
 	executablePath, err := filepath.Abs(os.Args[0])
@@ -379,8 +379,8 @@ func PrepareTestEnv(t testing.TB, skip ...int) func() {
 	deferFn := PrepareTestEnvWithPackageData(t, skip...)
 	PrepareCleanPackageData(t)
 
-	giteaRoot := base.SetupGiteaRoot()
-	setting.AppWorkPath = giteaRoot
+	projectRoot := base.SetupProjectRoot()
+	setting.AppWorkPath = projectRoot
 
 	return deferFn
 }

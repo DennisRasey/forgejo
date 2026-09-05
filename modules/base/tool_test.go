@@ -113,11 +113,11 @@ func TestInt64sToStrings(t *testing.T) {
 
 // TODO: Test EntryIcon
 
-func TestSetupGiteaRoot(t *testing.T) {
-	t.Setenv("GITEA_ROOT", "test")
-	assert.Equal(t, "test", SetupGiteaRoot())
-	t.Setenv("GITEA_ROOT", "")
-	assert.NotEqual(t, "test", SetupGiteaRoot())
+func TestSetupProjectRoot(t *testing.T) {
+	t.Setenv("PROJECT_ROOT", "test")
+	assert.Equal(t, "test", SetupProjectRoot())
+	t.Setenv("PROJECT_ROOT", "")
+	assert.NotEqual(t, "test", SetupProjectRoot())
 }
 
 func TestFormatNumberSI(t *testing.T) {

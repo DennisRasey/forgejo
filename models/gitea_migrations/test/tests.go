@@ -120,24 +120,24 @@ func PrepareTestEnv(t *testing.T, skip int, syncModels ...any) (*xorm.Engine, fu
 func MainTest(m *testing.M) {
 	log.RegisterEventWriter("test", testlogger.NewTestLoggerWriter)
 
-	giteaRoot := base.SetupGiteaRoot()
-	if giteaRoot == "" {
-		fmt.Println("Environment variable $GITEA_ROOT not set")
+	projectRoot := base.SetupProjectRoot()
+	if projectRoot == "" {
+		fmt.Println("Environment variable $PROJECT_ROOT not set")
 		os.Exit(1)
 	}
-	setting.AppWorkPath = giteaRoot
-	setting.AppPath = path.Join(giteaRoot, "gitea_migrations-should-not-need-a-binary") // use RunMainAppWithStdin if a binary is needed
+	setting.AppWorkPath = projectRoot
+	setting.AppPath = path.Join(projectRoot, "gitea_migrations-should-not-need-a-binary") // use RunMainAppWithStdin if a binary is needed
 
-	giteaConf := os.Getenv("GITEA_CONF")
-	if giteaConf == "" {
-		giteaConf = path.Join(setting.AppWorkPath, "tests/sqlite.ini")
-		fmt.Printf("Environment variable $GITEA_CONF not set - defaulting to %s\n", giteaConf)
+	projectConf := os.Getenv("PROJECT_CONF")
+	if projectConf == "" {
+		projectConf = path.Join(setting.AppWorkPath, "tests/sqlite.ini")
+		fmt.Printf("Environment variable $PROJECT_CONF not set - defaulting to %s\n", projectConf)
 	}
 
-	if !path.IsAbs(giteaConf) {
-		setting.CustomConf = path.Join(giteaRoot, giteaConf)
+	if !path.IsAbs(projectConf) {
+		setting.CustomConf = path.Join(projectRoot, projectConf)
 	} else {
-		setting.CustomConf = giteaConf
+		setting.CustomConf = projectConf
 	}
 
 	tmpDataPath, err := os.MkdirTemp("", "data")
