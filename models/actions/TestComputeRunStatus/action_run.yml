@@ -1,0 +1,8 @@
+- id: 371311
+  repo_id: 4
+  owner_id: 1
+  title: Test
+  workflow_id: test.yaml
+  workflow_directory: .forgejo/workflows
+  trigger_user_id: 1
+  status: 6 # running

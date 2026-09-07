@@ -172,6 +172,7 @@ type ViewRunInfo struct {
 	Title                string          `json:"title"`
 	TitleHTML            template.HTML   `json:"titleHTML"`
 	Status               string          `json:"status"`
+	EstimatedOutcome     string          `json:"estimatedOutcome"`
 	Description          string          `json:"description"`
 	CanCancel            bool            `json:"canCancel"`
 	CanApprove           bool            `json:"canApprove"` // the run needs an approval and the doer has permission to approve
@@ -301,21 +302,14 @@ func getViewResponse(ctx *app_context.Context, req *ViewRequest, runIndex, jobIn
 	resp.State.Run.CanDelete = run.Status.IsDone() && ctx.IsUserRepoAdmin()
 	resp.State.Run.Jobs = make([]*ViewJob, 0, len(jobs)) // marshal to '[]' instead of 'null' in json
 	resp.State.Run.Status = run.Status.String()
+	resp.State.Run.EstimatedOutcome = actions_model.EstimateRunOutcome(jobs).String()
 	resp.State.Run.PreExecutionError = actions_model.TranslatePreExecutionError(ctx.Locale, run)
 	resp.State.Run.PreExecutionWarnings = actions_model.TranslatePreExecutionWarning(ctx.Locale, run)
 	resp.State.Run.Description = runDescription
-
-	// It's possible for the run to be marked with a finalized status (eg. failure) because of a  single job within the
-	// run; eg. one job fails, the run fails. But other jobs can still be running. The frontend RepoActionView uses the
-	// `done` flag to indicate whether to stop querying the run's status -- so even though the run has reached a final
-	// state, it may not be time to stop polling for updates.
-	done := run.Status.IsDone()
+	resp.State.Run.Done = run.Status.IsDone()
+	resp.State.Run.CanCancel = !run.Status.IsDone() && ctx.Repo.CanWrite(unit.TypeActions)
 
 	for _, v := range jobs {
-		if !v.Status.IsDone() {
-			// Ah, another job is still running. Keep the frontend polling enabled then.
-			done = false
-		}
 		canBeRerun, err := v.CanBeRerun(ctx)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, err.Error())
@@ -329,8 +323,6 @@ func getViewResponse(ctx *app_context.Context, req *ViewRequest, runIndex, jobIn
 			Duration: v.Duration().String(),
 		})
 	}
-	resp.State.Run.Done = done
-	resp.State.Run.CanCancel = !done && ctx.Repo.CanWrite(unit.TypeActions)
 
 	pusher := ViewUser{
 		DisplayName: run.TriggerUser.GetDisplayName(),

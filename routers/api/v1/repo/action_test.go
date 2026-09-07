@@ -52,8 +52,8 @@ func TestActions(t *testing.T) {
 			assert.Equal(t, http.StatusOK, resp.Code)
 			var runResp api.ListActionRunResponse
 			contexttest.DecodeJSON(t, resp, &runResp)
-			assert.Len(t, runResp.Entries, 2)
-			assert.Equal(t, int64(2), runResp.TotalCount)
+			assert.Len(t, runResp.Entries, 1)
+			assert.Equal(t, int64(1), runResp.TotalCount)
 		})
 
 		t.Run("filtered by workflow_id", func(t *testing.T) {

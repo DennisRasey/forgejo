@@ -153,6 +153,7 @@ func baseExpectedViewResponse() *ViewResponse {
 				Title:             "update actions",
 				TitleHTML:         template.HTML("update actions"),
 				Status:            "success",
+				EstimatedOutcome:  "success",
 				Description:       "actions.runs.on_push_description",
 				CanCancel:         false,
 				CanApprove:        false,
@@ -257,6 +258,8 @@ func TestActionsViewViewPost(t *testing.T) {
 				resp.State.Run.Link = "/user5/repo4/actions/runs/189"
 				resp.State.Run.Title = "job output"
 				resp.State.Run.TitleHTML = "job output"
+				resp.State.Run.Status = "waiting"
+				resp.State.Run.EstimatedOutcome = "unknown"
 				resp.State.Run.Jobs = []*ViewJob{
 					{
 						ID:     194,
@@ -324,6 +327,8 @@ func TestActionsViewViewPost(t *testing.T) {
 				resp.State.Run.Link = "/user5/repo4/actions/runs/190"
 				resp.State.Run.Title = "job output"
 				resp.State.Run.TitleHTML = "job output"
+				resp.State.Run.Status = "waiting"
+				resp.State.Run.EstimatedOutcome = "unknown"
 				resp.State.Run.Done = false
 				resp.State.Run.Jobs = []*ViewJob{
 					{

@@ -191,7 +191,7 @@ func TestRepoNumOpenActions(t *testing.T) {
 	t.Run("Repo 4", func(t *testing.T) {
 		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 4})
 		clearRepoRunCountCache(t.Context(), repo.ID)
-		assert.Equal(t, 0, RepoNumOpenActions(t.Context(), repo.ID))
+		assert.Equal(t, 3, RepoNumOpenActions(t.Context(), repo.ID))
 	})
 
 	t.Run("Repo 63", func(t *testing.T) {

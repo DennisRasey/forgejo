@@ -281,7 +281,42 @@ func UpdateRunJobWithoutNotification(ctx context.Context, job *ActionRunJob, con
 	return affected, nil
 }
 
-var AggregateJobStatus = func(jobs []*ActionRunJob) Status {
+func AggregateJobStatus(jobs []*ActionRunJob) Status {
+	allSuccessOrSkipped := len(jobs) != 0
+	allSkipped := len(jobs) != 0
+	var hasFailure, hasCancelled, hasWaiting, hasRunning, hasBlocked bool
+	for _, job := range jobs {
+		allSuccessOrSkipped = allSuccessOrSkipped && (job.Status == StatusSuccess || job.Status == StatusSkipped)
+		allSkipped = allSkipped && job.Status == StatusSkipped
+		hasFailure = hasFailure || job.Status == StatusFailure
+		hasCancelled = hasCancelled || job.Status == StatusCancelled
+		hasWaiting = hasWaiting || job.Status == StatusWaiting
+		hasRunning = hasRunning || job.Status == StatusRunning
+		hasBlocked = hasBlocked || job.Status == StatusBlocked
+	}
+	switch {
+	case allSkipped:
+		return StatusSkipped
+	case allSuccessOrSkipped:
+		return StatusSuccess
+	case hasRunning:
+		return StatusRunning
+	case hasWaiting:
+		return StatusWaiting
+	case hasBlocked:
+		return StatusBlocked
+	case hasCancelled:
+		return StatusCancelled
+	case hasFailure:
+		return StatusFailure
+	default:
+		return StatusUnknown // Should not happen
+	}
+}
+
+// EstimateRunOutcome estimates the outcome of a run based on the current state of its jobs. Returns either one of
+// DoneStatuses or StatusUnknown.
+func EstimateRunOutcome(jobs []*ActionRunJob) Status {
 	allSuccessOrSkipped := len(jobs) != 0
 	allSkipped := len(jobs) != 0
 	var hasFailure, hasCancelled, hasWaiting, hasRunning, hasBlocked bool
@@ -303,14 +338,10 @@ var AggregateJobStatus = func(jobs []*ActionRunJob) Status {
 		return StatusCancelled
 	case hasFailure:
 		return StatusFailure
-	case hasRunning:
-		return StatusRunning
-	case hasWaiting:
-		return StatusWaiting
-	case hasBlocked:
-		return StatusBlocked
+	case hasRunning, hasWaiting, hasBlocked:
+		return StatusUnknown
 	default:
-		return StatusUnknown // it shouldn't happen
+		return StatusUnknown // Should not happen
 	}
 }
 

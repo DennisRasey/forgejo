@@ -22,7 +22,7 @@ func TestCancelAbandonedJobs(t *testing.T) {
 	notifier := notify_service.NewMockNotifier(t)
 	notifier.On("Run").Return().Maybe()
 	notifier.On("WorkflowJobCompleted", mock.Anything, mock.Anything, mock.Anything).Return()
-	notifier.On("WorkflowRunCompleted", mock.Anything, mock.Anything, mock.Anything).Return()
+	notifier.On("WorkflowRunStatusChanged", mock.Anything, mock.Anything, mock.Anything).Return()
 
 	notify_service.RegisterNotifier(notifier)
 	defer notify_service.UnregisterNotifier(notifier)
@@ -50,7 +50,7 @@ func TestCancelAbandonedJobs(t *testing.T) {
 	assert.Equal(t, actions_model.StatusWaiting, job.Status)
 
 	notifier.AssertNumberOfCalls(t, "WorkflowJobCompleted", 2)
-	notifier.AssertNumberOfCalls(t, "WorkflowRunCompleted", 1)
+	notifier.AssertNumberOfCalls(t, "WorkflowRunStatusChanged", 1)
 	notifier.AssertCalled(
 		t, "WorkflowJobCompleted", mock.Anything,
 		mock.MatchedBy(func(job *actions_model.ActionRunJob) bool {
@@ -66,9 +66,9 @@ func TestCancelAbandonedJobs(t *testing.T) {
 		actions_model.StatusBlocked,
 	)
 	notifier.AssertCalled(
-		t, "WorkflowRunCompleted", mock.Anything,
+		t, "WorkflowRunStatusChanged", mock.Anything,
 		mock.MatchedBy(func(run *actions_model.ActionRun) bool {
-			return run.ID == 900 && run.Status == actions_model.StatusCancelled
+			return run.ID == 900 && run.Status == actions_model.StatusRunning
 		}),
 		actions_model.StatusUnknown,
 	)

@@ -83,6 +83,7 @@ export default {
         title: '',
         titleHTML: '',
         status: '',
+        estimatedOutcome: '',
         description: '',
         canCancel: false,
         canApprove: false,
@@ -407,6 +408,13 @@ export default {
       return ['success', 'running', 'failure', 'cancelled'].includes(status);
     },
 
+    failFastStatus(status, estimatedOutcome) {
+      if (this.isDone(estimatedOutcome)) {
+        return estimatedOutcome;
+      }
+      return status;
+    },
+
     toggleAttemptDropdown() {
       if (this.menuVisible === 'attempt') {
         this.menuVisible = undefined;
@@ -488,7 +496,11 @@ export default {
     <div class="action-view-header">
       <div class="action-info-summary">
         <div class="action-info-summary-title">
-          <ActionRunStatus :locale-status="locale.status[run.status]" :status="run.status" :size="20"/>
+          <ActionRunStatus
+            :locale-status="locale.status[failFastStatus(run.status, run.estimatedOutcome)]"
+            :status="failFastStatus(run.status, run.estimatedOutcome)"
+            :size="20"
+          />
           <!-- eslint-disable-next-line vue/no-v-html -->
           <h2 class="action-info-summary-title-text" v-html="run.titleHTML"/>
         </div>

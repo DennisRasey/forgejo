@@ -590,3 +590,151 @@ func TestActionRunJob_IsIncomplete(t *testing.T) {
 		})
 	}
 }
+
+func TestAggregateJobStatus(t *testing.T) {
+	cases := []struct {
+		statuses []Status
+		expected Status
+	}{
+		// unknown with other status
+		{[]Status{}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusSuccess}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusSkipped}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusFailure}, StatusFailure},
+		{[]Status{StatusUnknown, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusUnknown, StatusWaiting}, StatusWaiting},
+		{[]Status{StatusUnknown, StatusRunning}, StatusRunning},
+		{[]Status{StatusUnknown, StatusBlocked}, StatusBlocked},
+
+		// success with other status
+		{[]Status{StatusSuccess}, StatusSuccess},
+		{[]Status{StatusSuccess, StatusSkipped}, StatusSuccess}, // skipped doesn't affect success
+		{[]Status{StatusSuccess, StatusFailure}, StatusFailure},
+		{[]Status{StatusSuccess, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusSuccess, StatusWaiting}, StatusWaiting},
+		{[]Status{StatusSuccess, StatusRunning}, StatusRunning},
+		{[]Status{StatusSuccess, StatusBlocked}, StatusBlocked},
+
+		// cancelled with other status
+		{[]Status{StatusCancelled}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusSuccess}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusSkipped}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusFailure}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusWaiting}, StatusWaiting},
+		{[]Status{StatusCancelled, StatusRunning}, StatusRunning},
+		{[]Status{StatusCancelled, StatusBlocked}, StatusBlocked},
+
+		// failure with other status
+		{[]Status{StatusFailure}, StatusFailure},
+		{[]Status{StatusFailure, StatusSuccess}, StatusFailure},
+		{[]Status{StatusFailure, StatusSkipped}, StatusFailure},
+		{[]Status{StatusFailure, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusFailure, StatusWaiting}, StatusWaiting},
+		{[]Status{StatusFailure, StatusRunning}, StatusRunning},
+		{[]Status{StatusFailure, StatusBlocked}, StatusBlocked},
+
+		// skipped with other status
+		{[]Status{StatusSkipped}, StatusSkipped},
+		{[]Status{StatusSkipped, StatusSuccess}, StatusSuccess},
+		{[]Status{StatusSkipped, StatusFailure}, StatusFailure},
+		{[]Status{StatusSkipped, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusSkipped, StatusWaiting}, StatusWaiting},
+		{[]Status{StatusSkipped, StatusRunning}, StatusRunning},
+		{[]Status{StatusSkipped, StatusBlocked}, StatusBlocked},
+
+		// Remaining status combinations
+		{[]Status{StatusWaiting}, StatusWaiting},
+		{[]Status{StatusWaiting, StatusBlocked}, StatusWaiting},
+		{[]Status{StatusWaiting, StatusRunning}, StatusRunning},
+
+		{[]Status{StatusBlocked}, StatusBlocked},
+		{[]Status{StatusBlocked, StatusRunning}, StatusRunning},
+
+		{[]Status{StatusRunning}, StatusRunning},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%v", c.statuses), func(t *testing.T) {
+			var jobs []*ActionRunJob
+			for _, v := range c.statuses {
+				jobs = append(jobs, &ActionRunJob{Status: v})
+			}
+			actual := AggregateJobStatus(jobs)
+			assert.Equalf(t, c.expected, actual, "expected %s but got %s", c.expected, actual)
+		})
+	}
+}
+
+func TestEstimateRunOutcome(t *testing.T) {
+	cases := []struct {
+		statuses []Status
+		expected Status
+	}{
+		// unknown with other status
+		{[]Status{}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusSuccess}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusSkipped}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusFailure}, StatusFailure},
+		{[]Status{StatusUnknown, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusUnknown, StatusWaiting}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusRunning}, StatusUnknown},
+		{[]Status{StatusUnknown, StatusBlocked}, StatusUnknown},
+
+		// success with other status
+		{[]Status{StatusSuccess}, StatusSuccess},
+		{[]Status{StatusSuccess, StatusSkipped}, StatusSuccess}, // skipped doesn't affect success
+		{[]Status{StatusSuccess, StatusFailure}, StatusFailure},
+		{[]Status{StatusSuccess, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusSuccess, StatusWaiting}, StatusUnknown},
+		{[]Status{StatusSuccess, StatusRunning}, StatusUnknown},
+		{[]Status{StatusSuccess, StatusBlocked}, StatusUnknown},
+
+		// cancelled with other status
+		{[]Status{StatusCancelled}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusSuccess}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusSkipped}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusFailure}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusWaiting}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusRunning}, StatusCancelled},
+		{[]Status{StatusCancelled, StatusBlocked}, StatusCancelled},
+
+		// failure with other status
+		{[]Status{StatusFailure}, StatusFailure},
+		{[]Status{StatusFailure, StatusSuccess}, StatusFailure},
+		{[]Status{StatusFailure, StatusSkipped}, StatusFailure},
+		{[]Status{StatusFailure, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusFailure, StatusWaiting}, StatusFailure},
+		{[]Status{StatusFailure, StatusRunning}, StatusFailure},
+		{[]Status{StatusFailure, StatusBlocked}, StatusFailure},
+
+		// skipped with other status
+		{[]Status{StatusSkipped}, StatusSkipped},
+		{[]Status{StatusSkipped, StatusSuccess}, StatusSuccess},
+		{[]Status{StatusSkipped, StatusFailure}, StatusFailure},
+		{[]Status{StatusSkipped, StatusCancelled}, StatusCancelled},
+		{[]Status{StatusSkipped, StatusWaiting}, StatusUnknown},
+		{[]Status{StatusSkipped, StatusRunning}, StatusUnknown},
+		{[]Status{StatusSkipped, StatusBlocked}, StatusUnknown},
+
+		// Remaining status combinations
+		{[]Status{StatusWaiting}, StatusUnknown},
+		{[]Status{StatusWaiting, StatusBlocked}, StatusUnknown},
+		{[]Status{StatusWaiting, StatusRunning}, StatusUnknown},
+
+		{[]Status{StatusBlocked}, StatusUnknown},
+		{[]Status{StatusBlocked, StatusRunning}, StatusUnknown},
+
+		{[]Status{StatusRunning}, StatusUnknown},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%v", c.statuses), func(t *testing.T) {
+			var jobs []*ActionRunJob
+			for _, v := range c.statuses {
+				jobs = append(jobs, &ActionRunJob{Status: v})
+			}
+			actual := EstimateRunOutcome(jobs)
+			assert.Equalf(t, c.expected, actual, "expected %s but got %s", c.expected, actual)
+		})
+	}
+}
