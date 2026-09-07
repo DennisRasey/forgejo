@@ -405,10 +405,13 @@ func UpdateTask(ctx context.Context, task *ActionTask, cols ...string) error {
 	return err
 }
 
-// DeleteTask removes the given task including all its steps and outputs. Removing logs and ephemeral runners is the
-// caller's responsibility.
+// DeleteTask removes the given task including all its steps, outputs and summaries.
+// Removing logs and ephemeral runners is the caller's responsibility.
 func DeleteTask(ctx context.Context, taskID int64) error {
 	return db.WithTx(ctx, func(ctx context.Context) error {
+		if err := DeleteTaskStepSummaries(ctx, taskID); err != nil {
+			return fmt.Errorf("unable to delete step summaries of task %d: %w", taskID, err)
+		}
 		var err error
 		_, err = db.GetEngine(ctx).Delete(&ActionTaskStep{TaskID: taskID})
 		if err != nil {

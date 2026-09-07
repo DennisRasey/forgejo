@@ -59,3 +59,21 @@ func TestTruncateRunes(t *testing.T) {
 	assert.Equal(t, "测试", TruncateRunes("测试", 2))
 	assert.Equal(t, "测试", TruncateRunes("测试", 3))
 }
+
+func TestTruncateStringAtWordBoundary(t *testing.T) {
+	for _, tc := range []struct {
+		testcase string
+		input    string
+		n        int
+		expected string
+	}{
+		{"no truncation if below limit", "This summary is short", 1337, "This summary is short"},
+		{"truncation does not cut into words", "This summary is way too long", 20, "This summary is…"},
+		// If no space is found within in the last 14 bytes of the - as of now - truncated string we're bailing out
+		{"no truncation on wordboundary if no space appears in range of the truncation point", "ContinuumTransfunctioner is a very mysterious and powerful device.", 20, "ContinuumTransfun…"},
+	} {
+		t.Run(tc.testcase, func(t *testing.T) {
+			assert.Equal(t, tc.expected, TruncateStringAtWordBoundary(tc.input, tc.n))
+		})
+	}
+}

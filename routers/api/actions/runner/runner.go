@@ -410,6 +410,53 @@ func (*Service) UpdateLog(
 	return res, nil
 }
 
+// UpdateStepSummary stores the step summaries (GITHUB_STEP_SUMMARY markdown) of the task.
+func (*Service) UpdateStepSummary(
+	ctx context.Context,
+	req *connect.Request[runnerv1.UpdateStepSummaryRequest],
+) (*connect.Response[runnerv1.UpdateStepSummaryResponse], error) {
+	runner := GetRunner(ctx)
+
+	task, err := actions_model.GetTaskByID(ctx, req.Msg.TaskId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("get task: %w", err))
+	} else if runner.ID != task.RunnerID {
+		return nil, connect.NewError(connect.CodeInternal, errors.New("invalid runner for task"))
+	}
+
+	if len(req.Msg.Summaries) == 0 {
+		return connect.NewResponse(&runnerv1.UpdateStepSummaryResponse{}), nil
+	}
+
+	steps, err := actions_model.GetTaskStepsByTaskID(ctx, task.ID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("get task steps: %w", err))
+	}
+	stepsByIndex := make(map[int64]*actions_model.ActionTaskStep, len(steps))
+	for _, step := range steps {
+		stepsByIndex[step.Index] = step
+	}
+
+	summaries := make([]*actions_model.ActionTaskStepSummary, 0, len(req.Msg.Summaries))
+	for _, summary := range req.Msg.Summaries {
+		step, ok := stepsByIndex[summary.StepNumber]
+		if !ok {
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("unknown step number %d for task %d", summary.StepNumber, task.ID))
+		}
+		summaries = append(summaries, &actions_model.ActionTaskStepSummary{
+			StepID:  step.ID,
+			TaskID:  task.ID,
+			RepoID:  task.RepoID,
+			Content: summary.Content,
+		})
+	}
+	if err := actions_model.SaveTaskStepSummaries(ctx, summaries...); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("save step summaries: %w", err))
+	}
+
+	return connect.NewResponse(&runnerv1.UpdateStepSummaryResponse{}), nil
+}
+
 func recoverTasks(ctx context.Context, runner *actions_model.ActionRunner, requestKey string) ([]*runnerv1.Task, error) {
 	// Search for previous tasks is based upon both the runner and the request key in order to reduce the security
 	// risk. If a request key is leaked (eg. it appears in a log file, log file gets published in a bug report) it

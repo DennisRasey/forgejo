@@ -63,3 +63,17 @@ func TruncateRunes(str string, limit int) string {
 	}
 	return string([]rune(str)[:limit])
 }
+
+// TruncateStringAtWordBoundary truncates input to at most n bytes - aware of utf8 runes of course -
+// If the truncation point is inside a word and a space is close by the truncation happens at that word boundary.
+func TruncateStringAtWordBoundary(input string, n int) string {
+	truncated, right := SplitStringAtByteN(input, n)
+	if right == "" {
+		return truncated
+	}
+	// in case the content is in a Latin family language, we remove the last broken word.
+	if lastSpaceIdx := strings.LastIndex(truncated, " "); lastSpaceIdx != -1 && len(truncated)-lastSpaceIdx < 15 {
+		truncated = truncated[:lastSpaceIdx] + utf8Ellipsis
+	}
+	return truncated
+}

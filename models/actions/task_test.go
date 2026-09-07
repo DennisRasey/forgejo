@@ -146,3 +146,22 @@ func TestActionTask_GetAvailableJobsForRunner(t *testing.T) {
 		}
 	})
 }
+
+func TestActionTask_DeleteTask(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	const taskID, repoID = int64(46), int64(4)
+	step := &ActionTaskStep{TaskID: taskID, Index: 0, RepoID: repoID}
+	unittest.AssertSuccessfulInsert(t, step)
+	unittest.AssertSuccessfulInsert(t,
+		&ActionTaskStepSummary{StepID: step.ID, TaskID: taskID, RepoID: repoID, Content: "## gone"},
+		&ActionTaskOutput{TaskID: taskID, OutputKey: "delete_task_test", OutputValue: "gone"},
+	)
+
+	require.NoError(t, DeleteTask(t.Context(), taskID))
+
+	unittest.AssertNotExistsBean(t, &ActionTask{ID: taskID})
+	unittest.AssertCount(t, &ActionTaskStepSummary{TaskID: taskID}, 0)
+	unittest.AssertCount(t, &ActionTaskStep{TaskID: taskID}, 0)
+	unittest.AssertCount(t, &ActionTaskOutput{TaskID: taskID}, 0)
+}

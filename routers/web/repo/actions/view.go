@@ -25,6 +25,8 @@ import (
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/json"
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/markup"
+	"forgejo.org/modules/markup/markdown"
 	"forgejo.org/modules/templates"
 	"forgejo.org/modules/util"
 	"forgejo.org/modules/web"
@@ -187,9 +189,10 @@ type ViewRunInfo struct {
 }
 
 type ViewCurrentJob struct {
-	Title       string         `json:"title"`
-	Steps       []*ViewJobStep `json:"steps"`
-	AllAttempts []*TaskAttempt `json:"allAttempts"`
+	Title       string          `json:"title"`
+	Steps       []*ViewJobStep  `json:"steps"`
+	AllAttempts []*TaskAttempt  `json:"allAttempts"`
+	Summaries   []template.HTML `json:"summaries"`
 }
 
 type ViewLogs struct {
@@ -380,7 +383,8 @@ func getViewResponse(ctx *app_context.Context, req *ViewRequest, runIndex, jobIn
 	}
 
 	resp.State.CurrentJob.Title = current.Name
-	resp.State.CurrentJob.Steps = make([]*ViewJobStep, 0) // marshal to '[]' instead of 'null' in json
+	resp.State.CurrentJob.Steps = make([]*ViewJobStep, 0)      // marshal to '[]' instead of 'null' in json
+	resp.State.CurrentJob.Summaries = make([]template.HTML, 0) // marshal to '[]' instead of 'null' in json
 	resp.State.CurrentJob.AllAttempts = allAttempts
 
 	var task *actions_model.ActionTask
@@ -406,6 +410,13 @@ func getViewResponse(ctx *app_context.Context, req *ViewRequest, runIndex, jobIn
 	resp.Logs.StepsLog = make([]*ViewStepLog, 0) // marshal to '[]' instead of 'null' in json
 	// As noted above with TaskID; task will be nil when the job hasn't be picked yet...
 	if task != nil {
+		summaries, err := renderStepSummaries(ctx, task, metas)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, err.Error())
+			return nil
+		}
+		resp.State.CurrentJob.Summaries = summaries
+
 		steps := actions.FullSteps(task)
 		for _, v := range steps {
 			resp.State.CurrentJob.Steps = append(resp.State.CurrentJob.Steps, &ViewJobStep{
@@ -483,6 +494,33 @@ func getViewResponse(ctx *app_context.Context, req *ViewRequest, runIndex, jobIn
 	}
 
 	return resp
+}
+
+// renderStepSummaries loads the ActionTaskStepSummary content of the task's steps and renders them into sanitized HTML.
+// Each step's summary is rendered as its own markdown document, as to not break the layout with broken summaries.
+func renderStepSummaries(ctx *app_context.Context, task *actions_model.ActionTask, metas map[string]string) ([]template.HTML, error) {
+	summariesByStepID, err := actions_model.GetTaskStepSummariesByStepID(ctx, task.ID)
+	if err != nil {
+		return nil, fmt.Errorf("load step summaries of task %d: %w", task.ID, err)
+	}
+	rendered := make([]template.HTML, 0, len(summariesByStepID))
+	for _, step := range task.Steps {
+		summary, ok := summariesByStepID[step.ID]
+		if !ok {
+			continue
+		}
+		html, err := markdown.RenderString(&markup.RenderContext{
+			Links:   markup.Links{Base: ctx.Repo.RepoLink},
+			Metas:   metas,
+			GitRepo: ctx.Repo.GitRepo,
+			Ctx:     ctx,
+		}, summary.Content)
+		if err != nil {
+			return nil, fmt.Errorf("rendering summary of step %d of task %d: %w", step.Index, task.ID, err)
+		}
+		rendered = append(rendered, html)
+	}
+	return rendered, nil
 }
 
 // When used with the JS `linkAction` handler (typically a <button> with class="link-action" and a data-url), will cause

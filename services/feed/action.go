@@ -552,16 +552,7 @@ func abbreviatedComment(comment string) string {
 		return ""
 	}
 
-	truncatedContent, truncatedRight := util.SplitStringAtByteN(firstLine, 200)
-	if truncatedRight != "" {
-		// in case the content is in a Latin family language, we remove the last broken word.
-		lastSpaceIdx := strings.LastIndex(truncatedContent, " ")
-		if lastSpaceIdx != -1 && (len(truncatedContent)-lastSpaceIdx < 15) {
-			truncatedContent = truncatedContent[:lastSpaceIdx] + "…"
-		}
-	}
-
-	return truncatedContent
+	return util.TruncateStringAtWordBoundary(firstLine, 200)
 }
 
 // Return a clone of the incoming repository.PushCommits that is appropriately tweaked for the activity feed. The struct

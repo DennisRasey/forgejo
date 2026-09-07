@@ -117,6 +117,7 @@ func TestDeleteTask(t *testing.T) {
 		runner := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunner{ID: 41601})
 		unittest.AssertCount(t, &actions_model.ActionTaskOutput{TaskID: task.ID}, 2)
 		unittest.AssertCount(t, &actions_model.ActionTaskStep{TaskID: task.ID}, 1)
+		unittest.AssertCount(t, &actions_model.ActionTaskStepSummary{TaskID: task.ID}, 1)
 
 		_, err := actions.WriteLogs(t.Context(), task.LogFilename, 0, []*runnerv1.LogRow{{Content: "OK"}})
 		require.NoError(t, err)
@@ -134,6 +135,7 @@ func TestDeleteTask(t *testing.T) {
 		unittest.AssertNotExistsBean(t, &actions_model.ActionTask{ID: task.ID})
 		unittest.AssertCount(t, &actions_model.ActionTaskOutput{TaskID: task.ID}, 0)
 		unittest.AssertCount(t, &actions_model.ActionTaskStep{TaskID: task.ID}, 0)
+		unittest.AssertCount(t, &actions_model.ActionTaskStepSummary{TaskID: task.ID}, 0)
 		unittest.AssertNotExistsBean(t, &actions_model.ActionRunner{ID: runner.ID})
 
 		// Verify that other tasks have been left alone.
@@ -167,6 +169,7 @@ func TestDeleteTask(t *testing.T) {
 		unittest.AssertNotExistsBean(t, &actions_model.ActionTask{ID: task.ID})
 		unittest.AssertCount(t, &actions_model.ActionTaskOutput{TaskID: task.ID}, 0)
 		unittest.AssertCount(t, &actions_model.ActionTaskStep{TaskID: task.ID}, 0)
+		unittest.AssertCount(t, &actions_model.ActionTaskStepSummary{TaskID: task.ID}, 0)
 		unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunner{ID: runner.ID})
 	})
 

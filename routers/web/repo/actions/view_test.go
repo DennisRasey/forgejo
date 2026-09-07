@@ -186,7 +186,8 @@ func baseExpectedViewResponse() *ViewResponse {
 				},
 			},
 			CurrentJob: ViewCurrentJob{
-				Title: "job_2",
+				Title:     "job_2",
+				Summaries: []template.HTML{},
 				Steps: []*ViewJobStep{
 					{
 						Summary: "Set up job",
