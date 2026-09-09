@@ -23,19 +23,21 @@ func init() {
 
 // PackageCleanupRule represents a rule which describes when to clean up package versions
 type PackageCleanupRule struct {
-	ID                   int64              `xorm:"pk autoincr"`
-	Enabled              bool               `xorm:"INDEX NOT NULL DEFAULT false"`
-	OwnerID              int64              `xorm:"UNIQUE(s) INDEX NOT NULL DEFAULT 0"`
-	Type                 Type               `xorm:"UNIQUE(s) INDEX NOT NULL"`
-	KeepCount            int                `xorm:"NOT NULL DEFAULT 0"`
-	KeepPattern          string             `xorm:"NOT NULL DEFAULT ''"`
-	KeepPatternMatcher   *regexp.Regexp     `xorm:"-"`
-	RemoveDays           int                `xorm:"NOT NULL DEFAULT 0"`
-	RemovePattern        string             `xorm:"NOT NULL DEFAULT ''"`
-	RemovePatternMatcher *regexp.Regexp     `xorm:"-"`
-	MatchFullName        bool               `xorm:"NOT NULL DEFAULT false"`
-	CreatedUnix          timeutil.TimeStamp `xorm:"created NOT NULL DEFAULT 0"`
-	UpdatedUnix          timeutil.TimeStamp `xorm:"updated NOT NULL DEFAULT 0"`
+	ID                     int64              `xorm:"pk autoincr"`
+	Enabled                bool               `xorm:"INDEX NOT NULL DEFAULT false"`
+	OwnerID                int64              `xorm:"UNIQUE(s) INDEX NOT NULL DEFAULT 0"`
+	Type                   Type               `xorm:"UNIQUE(s) INDEX NOT NULL"`
+	KeepCount              int                `xorm:"NOT NULL DEFAULT 0"`
+	KeepLastDownloadDays   int                `xorm:"NOT NULL DEFAULT 0"`
+	KeepPattern            string             `xorm:"NOT NULL DEFAULT ''"`
+	KeepPatternMatcher     *regexp.Regexp     `xorm:"-"`
+	RemoveDays             int                `xorm:"NOT NULL DEFAULT 0"`
+	RemoveLastDownloadDays int                `xorm:"NOT NULL DEFAULT 0"`
+	RemovePattern          string             `xorm:"NOT NULL DEFAULT ''"`
+	RemovePatternMatcher   *regexp.Regexp     `xorm:"-"`
+	MatchFullName          bool               `xorm:"NOT NULL DEFAULT false"`
+	CreatedUnix            timeutil.TimeStamp `xorm:"created NOT NULL DEFAULT 0"`
+	UpdatedUnix            timeutil.TimeStamp `xorm:"updated NOT NULL DEFAULT 0"`
 }
 
 func (pcr *PackageCleanupRule) CompiledPattern() error {

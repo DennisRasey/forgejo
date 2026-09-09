@@ -12,6 +12,7 @@
 				<th>{{ctx.Locale.Tr "admin.packages.creator"}}</th>
 				<th>{{ctx.Locale.Tr "admin.packages.size"}}</th>
 				<th>{{ctx.Locale.Tr "admin.packages.published"}}</th>
+				<th>{{ctx.Locale.Tr "admin.packages.last_download"}}</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -23,10 +24,11 @@
 					<td><a href="{{.Creator.HomeLink}}">{{.Creator.Name}}</a></td>
 					<td>{{ctx.Locale.TrSize .CalculateBlobSize}}</td>
 					<td>{{DateUtils.AbsoluteShort .Version.CreatedUnix}}</td>
+					<td>{{DateUtils.AbsoluteShort .Version.LastDownloadUnix}}</td>
 				</tr>
 			{{else}}
 				<tr>
-					<td colspan="6">{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.preview.none"}}</td>
+					<td colspan="7">{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.preview.none"}}</td>
 				</tr>
 			{{end}}
 		</tbody>

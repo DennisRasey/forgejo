@@ -108,7 +108,10 @@ func GetCleanupTargets(ctx context.Context, pcr *packages_model.PackageCleanupRu
 		return nil, err
 	}
 
-	olderThan := time.Now().AddDate(0, 0, -pcr.RemoveDays)
+	now := time.Now()
+	olderThan := now.AddDate(0, 0, -pcr.RemoveDays)
+	keepLastDownloadAfter := now.AddDate(0, 0, -pcr.KeepLastDownloadDays)
+	removeLastDownloadBefore := now.AddDate(0, 0, -pcr.RemoveLastDownloadDays)
 
 	packages, err := packages_model.GetPackagesByType(ctx, pcr.OwnerID, pcr.Type)
 	if err != nil {
@@ -151,8 +154,21 @@ func GetCleanupTargets(ctx context.Context, pcr *packages_model.PackageCleanupRu
 				log.Debug("Rule[%d]: keep '%s/%s' (keep pattern)", pcr.ID, p.Name, pv.Version)
 				continue
 			}
+			// When a package hasn't been downloaded, we assume creation time to be able to clean.
+			lastDownloadTime := pv.CreatedUnix
+			if !pv.LastDownloadUnix.IsZero() {
+				lastDownloadTime = pv.LastDownloadUnix
+			}
+			if lastDownloadTime.AsLocalTime().After(keepLastDownloadAfter) {
+				log.Debug("Rule[%d]: keep '%s/%s' (keep last download days)", pcr.ID, p.Name, pv.Version)
+				continue
+			}
 			if pv.CreatedUnix.AsLocalTime().After(olderThan) {
 				log.Debug("Rule[%d]: keep '%s/%s' (remove days)", pcr.ID, p.Name, pv.Version)
+				continue
+			}
+			if lastDownloadTime.AsLocalTime().After(removeLastDownloadBefore) {
+				log.Debug("Rule[%d]: keep '%s/%s' (remove last download days)", pcr.ID, p.Name, pv.Version)
 				continue
 			}
 			if pcr.RemovePatternMatcher != nil && !pcr.RemovePatternMatcher.MatchString(toMatch) {

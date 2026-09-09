@@ -36,6 +36,19 @@
 				<option{{if eq .CleanupRule.KeepCount 100}} selected="selected"{{end}} value="100">{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.count.n" 100}}</option>
 			</select>
 		</div>
+		<div class="field {{if .Err_KeepLastDownloadDays}}error{{end}}">
+			<label>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.last_download"}}:</label>
+			<select class="ui selection dropdown" name="keep_last_download_days">
+				<option{{if eq .CleanupRule.KeepLastDownloadDays 0}} selected="selected"{{end}} value="0"></option>
+				<option{{if eq .CleanupRule.KeepLastDownloadDays 7}} selected="selected"{{end}} value="7">{{ctx.Locale.Tr "tool.days" 7}}</option>
+				<option{{if eq .CleanupRule.KeepLastDownloadDays 14}} selected="selected"{{end}} value="14">{{ctx.Locale.Tr "tool.days" 14}}</option>
+				<option{{if eq .CleanupRule.KeepLastDownloadDays 30}} selected="selected"{{end}} value="30">{{ctx.Locale.Tr "tool.days" 30}}</option>
+				<option{{if eq .CleanupRule.KeepLastDownloadDays 60}} selected="selected"{{end}} value="60">{{ctx.Locale.Tr "tool.days" 60}}</option>
+				<option{{if eq .CleanupRule.KeepLastDownloadDays 90}} selected="selected"{{end}} value="90">{{ctx.Locale.Tr "tool.days" 90}}</option>
+				<option{{if eq .CleanupRule.KeepLastDownloadDays 180}} selected="selected"{{end}} value="180">{{ctx.Locale.Tr "tool.days" 180}}</option>
+			</select>
+			<p>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.last_download.no_download"}}</p>
+		</div>
 		<div class="field {{if .Err_KeepPattern}}error{{end}}">
 			<label>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.pattern"}}:</label>
 			<input name="keep_pattern" type="text" value="{{.CleanupRule.KeepPattern}}">
@@ -54,6 +67,19 @@
 				<option{{if eq .CleanupRule.RemoveDays 90}} selected="selected"{{end}} value="90">{{ctx.Locale.Tr "tool.days" 90}}</option>
 				<option{{if eq .CleanupRule.RemoveDays 180}} selected="selected"{{end}} value="180">{{ctx.Locale.Tr "tool.days" 180}}</option>
 			</select>
+		</div>
+		<div class="field {{if .Err_RemoveLastDownloadDays}}error{{end}}">
+			<label>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.remove.last_download"}}:</label>
+			<select class="ui selection dropdown" name="remove_last_download_days">
+				<option{{if eq .CleanupRule.RemoveLastDownloadDays 0}} selected="selected"{{end}} value="0"></option>
+				<option{{if eq .CleanupRule.RemoveLastDownloadDays 7}} selected="selected"{{end}} value="7">{{ctx.Locale.Tr "tool.days" 7}}</option>
+				<option{{if eq .CleanupRule.RemoveLastDownloadDays 14}} selected="selected"{{end}} value="14">{{ctx.Locale.Tr "tool.days" 14}}</option>
+				<option{{if eq .CleanupRule.RemoveLastDownloadDays 30}} selected="selected"{{end}} value="30">{{ctx.Locale.Tr "tool.days" 30}}</option>
+				<option{{if eq .CleanupRule.RemoveLastDownloadDays 60}} selected="selected"{{end}} value="60">{{ctx.Locale.Tr "tool.days" 60}}</option>
+				<option{{if eq .CleanupRule.RemoveLastDownloadDays 90}} selected="selected"{{end}} value="90">{{ctx.Locale.Tr "tool.days" 90}}</option>
+				<option{{if eq .CleanupRule.RemoveLastDownloadDays 180}} selected="selected"{{end}} value="180">{{ctx.Locale.Tr "tool.days" 180}}</option>
+			</select>
+			<p>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.remove.last_download.no_download"}}</p>
 		</div>
 		<div class="field {{if .Err_RemovePattern}}error{{end}}">
 			<label>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.remove.pattern"}}:</label>
