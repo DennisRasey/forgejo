@@ -216,10 +216,6 @@ func (*NullNotifier) PackageDelete(ctx context.Context, doer *user_model.User, p
 func (*NullNotifier) ChangeDefaultBranch(ctx context.Context, repo *repo_model.Repository) {
 }
 
-// ActionRunNowDone places a place holder function
-func (*NullNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
-}
-
 func (n *NullNotifier) NewWorkflowRunAttempt(_ context.Context, _ *actions_model.ActionRun) {
 	// Do nothing.
 }

@@ -46,58 +46,6 @@ func (_m *MockNotifier) EXPECT() *MockNotifier_Expecter {
 	return &MockNotifier_Expecter{mock: &_m.Mock}
 }
 
-// ActionRunNowDone provides a mock function for the type MockNotifier
-func (_mock *MockNotifier) ActionRunNowDone(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status) {
-	_mock.Called(ctx, run, priorStatus)
-	return
-}
-
-// MockNotifier_ActionRunNowDone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ActionRunNowDone'
-type MockNotifier_ActionRunNowDone_Call struct {
-	*mock.Call
-}
-
-// ActionRunNowDone is a helper method to define mock.On call
-//   - ctx context.Context
-//   - run *actions.ActionRun
-//   - priorStatus actions.Status
-func (_e *MockNotifier_Expecter) ActionRunNowDone(ctx, run, priorStatus any) *MockNotifier_ActionRunNowDone_Call {
-	return &MockNotifier_ActionRunNowDone_Call{Call: _e.mock.On("ActionRunNowDone", ctx, run, priorStatus)}
-}
-
-func (_c *MockNotifier_ActionRunNowDone_Call) Run(run func(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status)) *MockNotifier_ActionRunNowDone_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *actions.ActionRun
-		if args[1] != nil {
-			arg1 = args[1].(*actions.ActionRun)
-		}
-		var arg2 actions.Status
-		if args[2] != nil {
-			arg2 = args[2].(actions.Status)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockNotifier_ActionRunNowDone_Call) Return() *MockNotifier_ActionRunNowDone_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *MockNotifier_ActionRunNowDone_Call) RunAndReturn(run func(ctx context.Context, run *actions.ActionRun, priorStatus actions.Status)) *MockNotifier_ActionRunNowDone_Call {
-	_c.Run(run)
-	return _c
-}
-
 // AdoptRepository provides a mock function for the type MockNotifier
 func (_mock *MockNotifier) AdoptRepository(ctx context.Context, doer, u *user.User, repo1 *repo.Repository) {
 	_mock.Called(ctx, doer, u, repo1)
@@ -1248,7 +1196,7 @@ func (_c *MockNotifier_IssueChangeRef_Call) RunAndReturn(run func(ctx context.Co
 
 // IssueChangeStatus provides a mock function for the type MockNotifier
 func (_mock *MockNotifier) IssueChangeStatus(ctx context.Context, doer *user.User, prInfo *issues.PRNotificationInfo, issue *issues.Issue, actionComment *issues.Comment, closeOrReopen bool) {
-	_mock.Called(ctx, doer, prInfo.MergedCommitID, issue, actionComment, closeOrReopen)
+	_mock.Called(ctx, doer, prInfo, issue, actionComment, closeOrReopen)
 	return
 }
 
@@ -1260,15 +1208,15 @@ type MockNotifier_IssueChangeStatus_Call struct {
 // IssueChangeStatus is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doer *user.User
-//   - commitID string
+//   - prInfo *issues.PRNotificationInfo
 //   - issue *issues.Issue
 //   - actionComment *issues.Comment
 //   - closeOrReopen bool
-func (_e *MockNotifier_Expecter) IssueChangeStatus(ctx, doer, commitID, issue, actionComment, closeOrReopen any) *MockNotifier_IssueChangeStatus_Call {
-	return &MockNotifier_IssueChangeStatus_Call{Call: _e.mock.On("IssueChangeStatus", ctx, doer, commitID, issue, actionComment, closeOrReopen)}
+func (_e *MockNotifier_Expecter) IssueChangeStatus(ctx, doer, prInfo, issue, actionComment, closeOrReopen any) *MockNotifier_IssueChangeStatus_Call {
+	return &MockNotifier_IssueChangeStatus_Call{Call: _e.mock.On("IssueChangeStatus", ctx, doer, prInfo, issue, actionComment, closeOrReopen)}
 }
 
-func (_c *MockNotifier_IssueChangeStatus_Call) Run(run func(ctx context.Context, doer *user.User, commitID string, issue *issues.Issue, actionComment *issues.Comment, closeOrReopen bool)) *MockNotifier_IssueChangeStatus_Call {
+func (_c *MockNotifier_IssueChangeStatus_Call) Run(run func(ctx context.Context, doer *user.User, prInfo *issues.PRNotificationInfo, issue *issues.Issue, actionComment *issues.Comment, closeOrReopen bool)) *MockNotifier_IssueChangeStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1278,9 +1226,9 @@ func (_c *MockNotifier_IssueChangeStatus_Call) Run(run func(ctx context.Context,
 		if args[1] != nil {
 			arg1 = args[1].(*user.User)
 		}
-		var arg2 string
+		var arg2 *issues.PRNotificationInfo
 		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg2 = args[2].(*issues.PRNotificationInfo)
 		}
 		var arg3 *issues.Issue
 		if args[3] != nil {
@@ -1311,7 +1259,7 @@ func (_c *MockNotifier_IssueChangeStatus_Call) Return() *MockNotifier_IssueChang
 	return _c
 }
 
-func (_c *MockNotifier_IssueChangeStatus_Call) RunAndReturn(run func(ctx context.Context, doer *user.User, commitID string, issue *issues.Issue, actionComment *issues.Comment, closeOrReopen bool)) *MockNotifier_IssueChangeStatus_Call {
+func (_c *MockNotifier_IssueChangeStatus_Call) RunAndReturn(run func(ctx context.Context, doer *user.User, prInfo *issues.PRNotificationInfo, issue *issues.Issue, actionComment *issues.Comment, closeOrReopen bool)) *MockNotifier_IssueChangeStatus_Call {
 	_c.Run(run)
 	return _c
 }

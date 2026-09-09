@@ -396,14 +396,6 @@ func ChangeDefaultBranch(ctx context.Context, repo *repo_model.Repository) {
 	}
 }
 
-// ActionRunNowDone notifies all subscribers that run has completed. ActionRunNowDone expects that all attributes of
-// run have been loaded.
-func ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
-	for _, notifier := range notifiers {
-		notifier.ActionRunNowDone(ctx, run, priorStatus)
-	}
-}
-
 func NewWorkflowRunAttempt(ctx context.Context, run *actions_model.ActionRun) {
 	for _, notifier := range notifiers {
 		notifier.NewWorkflowRunAttempt(ctx, run)

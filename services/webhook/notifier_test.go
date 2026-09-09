@@ -173,7 +173,7 @@ func TestAction(t *testing.T) {
 	t.Run("Successful Run", func(t *testing.T) {
 		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
 
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newSuccessRun, actions_model.StatusWaiting)
+		NewNotifier().WorkflowRunCompleted(t.Context(), newSuccessRun, actions_model.StatusWaiting)
 
 		// there's only one of these at the time
 		hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_success' AND payload_content LIKE '%success%newSuccessRun%'"))
@@ -189,7 +189,7 @@ func TestAction(t *testing.T) {
 	t.Run("Failed Run", func(t *testing.T) {
 		defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
 
-		NewNotifier().ActionRunNowDone(db.DefaultContext, newFailureRun, actions_model.StatusWaiting)
+		NewNotifier().WorkflowRunCompleted(t.Context(), newFailureRun, actions_model.StatusWaiting)
 
 		// there should only be this one at the time
 		hookTask := unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{}, unittest.Cond("event_type == 'action_run_failure' AND payload_content LIKE '%failure%newFailureRun%'"))

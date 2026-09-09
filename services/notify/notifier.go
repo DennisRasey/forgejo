@@ -83,8 +83,6 @@ type Notifier interface {
 
 	ChangeDefaultBranch(ctx context.Context, repo *repo_model.Repository)
 
-	ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status)
-
 	NewWorkflowRunAttempt(ctx context.Context, run *actions_model.ActionRun)
 	WorkflowRunStatusChanged(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status)
 	WorkflowRunCompleted(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status)

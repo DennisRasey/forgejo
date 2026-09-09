@@ -890,41 +890,12 @@ func (m *webhookNotifier) PackageDelete(ctx context.Context, doer *user_model.Us
 	notifyPackage(ctx, doer, pd, api.HookPackageDeleted)
 }
 
-func (m *webhookNotifier) ActionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
-	source := EventSource{
-		Repository: run.Repo,
-		Owner:      run.TriggerUser,
-	}
-
-	// The doer is the one whose perspective is used to view this ActionRun.
-	// In the best case we use the user that created the webhook.
-	// Unfortunately we don't know who that was.
-	// So instead we use the repo owner, who is able to create webhooks and allow others to do so by making them repo admins.
-	// This is pretty close to perfect.
-	doer := run.Repo.Owner
-
-	payload := &api.ActionPayload{
-		Run:         convert.ToActionRun(ctx, run, doer),
-		PriorStatus: priorStatus.String(),
-	}
-
-	if run.Status.IsSuccess() {
-		payload.Action = api.HookActionSuccess
-		if err := PrepareWebhooks(ctx, source, webhook_module.HookEventActionRunSuccess, payload); err != nil {
-			log.Error("PrepareWebhooks: %v", err)
-		}
-	} else {
-		payload.Action = api.HookActionFailure
-		if err := PrepareWebhooks(ctx, source, webhook_module.HookEventActionRunFailure, payload); err != nil {
-			log.Error("PrepareWebhooks: %v", err)
-		}
-	}
-}
-
-func (m *webhookNotifier) NewWorkflowRunAttempt(_ context.Context, run *actions_model.ActionRun) {
+func (m *webhookNotifier) NewWorkflowRunAttempt(ctx context.Context, run *actions_model.ActionRun) {
 	log.Debug("New attempt of workflow run %d started with status %v", run.ID, run.Status)
 
-	// Do nothing.
+	if run.Status.IsDone() {
+		actionRunNowDone(ctx, run, actions_model.StatusUnknown)
+	}
 }
 
 func (m *webhookNotifier) WorkflowRunStatusChanged(
@@ -940,7 +911,9 @@ func (m *webhookNotifier) WorkflowRunCompleted(
 ) {
 	log.Debug("Workflow run %d completed with status %v", run.ID, run.Status)
 
-	m.ActionRunNowDone(ctx, run, priorStatus)
+	if run.Status.IsDone() {
+		actionRunNowDone(ctx, run, priorStatus)
+	}
 }
 
 func (m *webhookNotifier) NewWorkflowJobAttempt(_ context.Context, job *actions_model.ActionRunJob) {
@@ -973,5 +946,36 @@ func notifyPackage(ctx context.Context, sender *user_model.User, pd *packages_mo
 		Sender:  convert.ToUser(ctx, sender, nil),
 	}); err != nil {
 		log.Error("PrepareWebhooks: %v", err)
+	}
+}
+
+func actionRunNowDone(ctx context.Context, run *actions_model.ActionRun, priorStatus actions_model.Status) {
+	source := EventSource{
+		Repository: run.Repo,
+		Owner:      run.TriggerUser,
+	}
+
+	// The doer is the one whose perspective is used to view this ActionRun.
+	// In the best case we use the user that created the webhook.
+	// Unfortunately we don't know who that was.
+	// So instead we use the repo owner, who is able to create webhooks and allow others to do so by making them repo admins.
+	// This is pretty close to perfect.
+	doer := run.Repo.Owner
+
+	payload := &api.ActionPayload{
+		Run:         convert.ToActionRun(ctx, run, doer),
+		PriorStatus: priorStatus.String(),
+	}
+
+	if run.Status.IsSuccess() {
+		payload.Action = api.HookActionSuccess
+		if err := PrepareWebhooks(ctx, source, webhook_module.HookEventActionRunSuccess, payload); err != nil {
+			log.Error("PrepareWebhooks: %v", err)
+		}
+	} else {
+		payload.Action = api.HookActionFailure
+		if err := PrepareWebhooks(ctx, source, webhook_module.HookEventActionRunFailure, payload); err != nil {
+			log.Error("PrepareWebhooks: %v", err)
+		}
 	}
 }
