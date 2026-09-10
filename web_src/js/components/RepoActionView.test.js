@@ -1,6 +1,9 @@
 import {mount, flushPromises} from '@vue/test-utils';
 import {toAbsoluteUrl} from '../utils.js';
 import RepoActionView from './RepoActionView.vue';
+import {initMarkupContent} from '../markup/content.js';
+
+vi.mock('../markup/content.js', () => ({initMarkupContent: vi.fn()}));
 
 const testLocale = {
   approve: 'Locale Approve',
@@ -653,4 +656,49 @@ test('view with pre-execution warning error', async () => {
   const block = wrapper.find('.warning.pre-execution-error');
   expect(block.exists()).toBe(true);
   expect(block.text()).toBe('pre-execution warningWarning 1: Action looks unstable.Warning 1: Action looks floppy.');
+});
+
+test('markup renderer are initialized on changes to the step-summary', async () => {
+  Object.defineProperty(document.documentElement, 'lang', {value: 'en'});
+  let summaries = ['<p>first</p>'];
+  let steps = [];
+  let runStatus = 'running';
+  vi.spyOn(global, 'fetch').mockImplementation((url) => {
+    if (url.endsWith('/artifacts')) {
+      return Promise.resolve({ok: true, json: vi.fn().mockResolvedValue({artifacts: []})});
+    }
+    return Promise.resolve({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        state: {
+          run: {status: runStatus, commit: {pusher: {}}},
+          currentJob: {title: 'test', steps, allAttempts: [], summaries},
+        },
+        logs: {stepsLog: []},
+      }),
+    });
+  });
+
+  const wrapper = mount(RepoActionView, {props: defaultTestProps});
+  await flushPromises();
+  initMarkupContent.mockClear();
+
+  wrapper.vm.loadJob();
+  await flushPromises();
+  expect(initMarkupContent).toHaveBeenCalledTimes(1);
+
+  // a poll where the job progressed but the summaries stayed the same
+  // does not re-initialize the markup renderer
+  // A new step does not magaically appear but the intent is to emphasize that initMarkupContent only invokes for changing summaries
+  steps = [{summary: 'a new step', duration: '1s', status: 'running'}];
+  runStatus = 'success';
+  wrapper.vm.loadJob();
+  await flushPromises();
+  expect(initMarkupContent).toHaveBeenCalledTimes(1);
+
+  // a grown summary does
+  summaries = ['<p>first</p>', '<p>second</p>'];
+  wrapper.vm.loadJob();
+  await flushPromises();
+  expect(initMarkupContent).toHaveBeenCalledTimes(2);
 });

@@ -13,9 +13,12 @@ export function renderCodeCopy() {
 
   for (const el of els) {
     if (!el.textContent) continue;
-    const btn = makeCodeCopyButton();
+    let btn = el.nextElementSibling?.classList?.contains('code-copy') ? el.nextElementSibling : null;
+    if (!btn) {
+      btn = makeCodeCopyButton();
+      el.after(btn);
+    }
     // remove final trailing newline introduced during HTML rendering
     btn.setAttribute('data-clipboard-text', el.textContent.replace(/\r?\n$/, ''));
-    el.after(btn);
   }
 }

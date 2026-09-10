@@ -4,6 +4,7 @@ import ActionRunStatus from './ActionRunStatus.vue';
 import ActionJobStepList from './ActionJobStepList.vue';
 import {toggleElem} from '../utils/dom.js';
 import {GET, POST, DELETE} from '../modules/fetch.js';
+import {initMarkupContent} from '../markup/content.js';
 import {showErrorToast} from '../modules/toast.js';
 
 export default {
@@ -64,6 +65,7 @@ export default {
     return {
       // internal state
       loading: false,
+      renderedSummaries: '',
       initialLoadComplete: false,
       needLoadingWithLogCursors: null,
       intervalID: null,
@@ -360,6 +362,12 @@ export default {
         // save the state to Vue data, then the UI will be updated
         this.run = job.state.run;
         this.currentJob = job.state.currentJob;
+
+        const summaries = this.currentJob.summaries?.join(' ') ?? '';
+        if (summaries && summaries !== this.renderedSummaries) {
+          this.renderedSummaries = summaries;
+          this.$nextTick(() => initMarkupContent());
+        }
 
         // sync the currentJobStepsStates to store the job step states
         for (let i = 0; i < this.currentJob.steps.length; i++) {

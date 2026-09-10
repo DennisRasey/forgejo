@@ -34,7 +34,7 @@ func init() {
 	db.RegisterModel(new(ActionTaskStepSummary))
 }
 
-// GetTaskStepSummaries returns the step summaries of the task, ordered by their step.
+// GetTaskStepSummaries returns the step summaries of the task.
 func GetTaskStepSummaries(ctx context.Context, taskID int64) ([]*ActionTaskStepSummary, error) {
 	var summaries []*ActionTaskStepSummary
 	return summaries, db.GetEngine(ctx).Where("task_id = ?", taskID).OrderBy("step_id ASC").Find(&summaries)
