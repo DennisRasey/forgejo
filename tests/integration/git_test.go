@@ -882,11 +882,15 @@ func doInternalReferences(ctx *APITestContext, dstPath string) func(t *testing.T
 
 		_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments(fmt.Sprintf(":refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
 		require.Error(t, gitErr)
-		assert.Contains(t, stdErr, fmt.Sprintf("[remote rejected] refs/pull/%d/head (deny deleting a hidden ref)", pr1.Index))
+		assert.Contains(t, stdErr, fmt.Sprintf("Forgejo: Only AGit pull-requests can be pushed via refs/pull/%d/head", pr1.Index))
+		assert.Contains(t, stdErr, pr1.HeadBranch)
+		assert.Contains(t, stdErr, fmt.Sprintf("[remote rejected] refs/pull/%d/head", pr1.Index))
 
 		_, stdErr, gitErr = git.NewCommand(git.DefaultContext, "push", "origin", "--force").AddDynamicArguments(fmt.Sprintf("HEAD~1:refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
 		require.Error(t, gitErr)
-		assert.Contains(t, stdErr, fmt.Sprintf("[remote rejected] HEAD~1 -> refs/pull/%d/head (deny updating a hidden ref)", pr1.Index))
+		assert.Contains(t, stdErr, fmt.Sprintf("Forgejo: Only AGit pull-requests can be pushed via refs/pull/%d/head", pr1.Index))
+		assert.Contains(t, stdErr, pr1.HeadBranch)
+		assert.Contains(t, stdErr, fmt.Sprintf("[remote rejected] HEAD~1 -> refs/pull/%d/head", pr1.Index))
 	}
 }
 
@@ -1046,6 +1050,91 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, headBranch string
 			assert.False(t, prMsg.HasMerged)
 			assert.Equal(t, commit, prMsg.Head.Sha)
 		})
+
+		t.Run("Push via refs/pull/.../head", func(t *testing.T) {
+			var pullCommit string
+			t.Run("AddCommit3", func(t *testing.T) {
+				err := os.WriteFile(path.Join(dstPath, "test_file_pushed_via_pull"), []byte("## test content \n ## test content 2"), 0o666)
+				require.NoError(t, err)
+
+				err = git.AddChanges(dstPath, true)
+				require.NoError(t, err)
+
+				err = git.CommitChanges(dstPath, git.CommitChangesOptions{
+					Committer: &git.Signature{
+						Email: "user2@example.com",
+						Name:  "user2",
+						When:  time.Now(),
+					},
+					Author: &git.Signature{
+						Email: "user2@example.com",
+						Name:  "user2",
+						When:  time.Now(),
+					},
+					Message: "Testing commit 3\n\nLonger description.",
+				})
+				require.NoError(t, err)
+				pullCommit, err = gitRepo.GetRefCommitID("HEAD")
+				require.NoError(t, err)
+			})
+			t.Run("Push3", func(t *testing.T) {
+				err := git.NewCommand(git.DefaultContext, "push", "origin").
+					AddDynamicArguments(fmt.Sprintf("HEAD:refs/pull/%d/head", pr1.Index)).
+					Run(&git.RunOpts{Dir: dstPath})
+				require.NoError(t, err)
+
+				unittest.AssertCount(t, &issues_model.PullRequest{}, pullNum+2)
+				prMsg := doAPIGetPullRequest(*ctx, ctx.Username, ctx.Reponame, pr1.Index)(t)
+
+				assert.False(t, prMsg.HasMerged)
+				assert.Equal(t, pullCommit, prMsg.Head.Sha)
+
+				pr1 = unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+					HeadRepoID: repo.ID,
+					Flow:       issues_model.PullRequestFlowAGit,
+					Index:      pr1.Index,
+				})
+				assert.Equal(t, 3, pr1.CommitsAhead)
+				assert.Equal(t, 0, pr1.CommitsBehind)
+			})
+			t.Run("Force push", func(t *testing.T) {
+				err := git.NewCommand(git.DefaultContext, "commit", "--amend", "-m", "Amended commit message").Run(&git.RunOpts{Dir: dstPath})
+				require.NoError(t, err)
+				amendedCommit, err := gitRepo.GetRefCommitID("HEAD")
+				require.NoError(t, err)
+
+				// without --force flag: failure
+				_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").
+					AddDynamicArguments(fmt.Sprintf("HEAD:refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
+				require.Error(t, gitErr)
+				assert.Contains(t, stdErr, "Updates were rejected") // generic git error message
+
+				// with --force flag: success
+				_, _, err = git.NewCommand(git.DefaultContext, "push", "origin", "--force").
+					AddDynamicArguments(fmt.Sprintf("HEAD:refs/pull/%d/head", pr1.Index)).RunStdString(&git.RunOpts{Dir: dstPath})
+				require.NoError(t, err)
+
+				prMsg := doAPIGetPullRequest(*ctx, ctx.Username, ctx.Reponame, pr1.Index)(t)
+
+				assert.False(t, prMsg.HasMerged)
+				assert.Equal(t, amendedCommit, prMsg.Head.Sha)
+
+				pr1 = unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+					HeadRepoID: repo.ID,
+					Flow:       issues_model.PullRequestFlowAGit,
+					Index:      pr1.Index,
+				})
+				assert.Equal(t, 3, pr1.CommitsAhead)
+				assert.Equal(t, 0, pr1.CommitsBehind)
+
+				// See TestGitPushAGit for owner/contributor permissions checks
+			})
+
+			// reset local repo to commit before the refs/pull/.../head test
+			err = git.NewCommand(git.DefaultContext, "reset", "--hard").AddDynamicArguments(commit).Run(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, err)
+		})
+
 		t.Run("PushParams", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 

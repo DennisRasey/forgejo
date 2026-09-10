@@ -249,6 +249,9 @@ func syncGitConfig() (err error) {
 	if err := configAddNonExist("receive.procReceiveRefs", "refs/for"); err != nil {
 		return err
 	}
+	if err := configAddNonExist("receive.procReceiveRefs", "refs/pull/"); err != nil {
+		return err
+	}
 
 	// Due to CVE-2022-24765, git now denies access to git directories which are not owned by current user
 	// however, some docker users and samba users find it difficult to configure their systems so that Gitea's git repositories are owned by the Gitea user. (Possibly Windows Service users - but ownership in this case should really be set correctly on the filesystem.)
@@ -302,7 +305,8 @@ func syncGitConfig() (err error) {
 		}
 	}
 
-	if err = configSet("receive.hideRefs", "refs/pull/"); err != nil {
+	// refs/pull/ were previously hidden
+	if err = configSet("receive.hideRefs", ""); err != nil {
 		return err
 	}
 

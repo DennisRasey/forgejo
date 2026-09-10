@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"forgejo.org/models"
@@ -231,6 +232,8 @@ func HookPreReceive(ctx *app_context.PrivateContext) {
 			preReceiveTag(ourCtx, oldCommitID, newCommitID, refFullName)
 		case refFullName.IsFor():
 			preReceiveFor(ourCtx, oldCommitID, newCommitID, refFullName)
+		case refFullName.IsPull():
+			preReceivePull(ourCtx, oldCommitID, newCommitID, refFullName)
 		default:
 			if ourCtx.isOverQuota {
 				ourCtx.quotaExceeded()
@@ -569,6 +572,59 @@ func preReceiveFor(ctx *preReceiveContext, oldCommitID, newCommitID string, refF
 			UserMsg: fmt.Sprintf("Unexpected ref: %s", refFullName),
 		})
 		return
+	}
+}
+
+func preReceivePull(ctx *preReceiveContext, oldCommitID, newCommitID string, refFullName git.RefName) { //nolint:unparam
+	pullIndex, _ := strconv.ParseInt(refFullName.PullName(), 10, 64)
+	if pullIndex <= 0 {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: fmt.Sprintf("Invalid ref: %s", refFullName),
+		})
+		return
+	}
+
+	pr, err := issues_model.GetPullRequestByIndex(ctx, ctx.Repo.Repository.ID, pullIndex)
+	if err != nil {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: fmt.Sprintf("Unable to get pull request %d", pullIndex),
+		})
+		return
+	}
+	if pr.Flow != issues_model.PullRequestFlowAGit {
+		userMsg := fmt.Sprintf("Only AGit pull-requests can be pushed via %s", refFullName)
+
+		if pr.HeadRepoID == ctx.Repo.Repository.ID {
+			userMsg += fmt.Sprintf("\nPush to branch %q instead", pr.HeadBranch)
+		} else if pr.LoadHeadRepo(ctx) == nil {
+			userMsg += "\nPush to the fork repo instead:"
+
+			cloneLink := pr.HeadRepo.CloneLink()
+			if !setting.Repository.DisableHTTPGit {
+				userMsg += fmt.Sprintf("\n  git push %s HEAD:%s", cloneLink.HTTPS, pr.HeadBranch)
+			}
+			if !setting.SSH.Disabled {
+				userMsg += fmt.Sprintf("\n  git push %s HEAD:%s", cloneLink.SSH, pr.HeadBranch)
+			}
+		}
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: userMsg,
+		})
+		return
+	}
+
+	// user must have repo write rights or be the PR creator
+	if !ctx.canWriteCode() {
+		if ctx.Written() {
+			return
+		}
+		if ctx.user.ID != pr.Issue.PosterID {
+			msg := fmt.Sprintf("User '%s' is not allowed to push to pull request %d of repository '%s/%s'.", ctx.user.Name, pr.Index, ctx.Repo.Repository.OwnerName, ctx.Repo.Repository.Name)
+			ctx.JSON(http.StatusForbidden, private.Response{
+				UserMsg: msg,
+			})
+			return
+		}
 	}
 }
 

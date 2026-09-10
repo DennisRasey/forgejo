@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	issues_model "forgejo.org/models/issues"
@@ -37,6 +38,58 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 	}
 
 	for i := range opts.OldCommitIDs {
+		// Only process references that are in the form of:
+		// - refs/pull/.../head
+		// - refs/for/...
+
+		if opts.RefFullNames[i].IsPull() {
+			if opts.NewCommitIDs[i] == objectFormat.EmptyObjectID().String() {
+				// ignore deletion of refs/pull
+				// can happen when executing git push --mirror
+				results = append(results, private.HookProcReceiveRefResult{
+					OriginalRef: opts.RefFullNames[i],
+					OldOID:      opts.OldCommitIDs[i],
+					NewOID:      opts.OldCommitIDs[i],
+					Ref:         "(Forgejo ignored PR deletion attempt)",
+				})
+				continue
+			}
+
+			refFullName := opts.RefFullNames[i]
+			pullIndex, _ := strconv.ParseInt(refFullName.PullName(), 10, 64)
+			if pullIndex <= 0 {
+				results = append(results, private.HookProcReceiveRefResult{
+					OriginalRef: opts.RefFullNames[i],
+					OldOID:      opts.OldCommitIDs[i],
+					NewOID:      opts.NewCommitIDs[i],
+					Err:         "Malformed pull request id",
+				})
+				continue
+			}
+
+			pr, err := issues_model.GetPullRequestByIndex(ctx, repo.ID, pullIndex)
+			if err != nil {
+				if !issues_model.IsErrPullRequestNotExist(err) {
+					return nil, fmt.Errorf("failed to get AGit pull request %d in repository %q: %w", pullIndex, repo.FullName(), err)
+				}
+				results = append(results, private.HookProcReceiveRefResult{
+					OriginalRef: opts.RefFullNames[i],
+					OldOID:      opts.OldCommitIDs[i],
+					NewOID:      opts.NewCommitIDs[i],
+					Err:         "Unknown pull request id",
+				})
+				continue
+			}
+
+			pullForcePush := true // git already rejects push without the --force flag in previous steps
+			result, err := procReceivePullRequest(ctx, repo, gitRepo, pr, opts.NewCommitIDs[i], opts.OldCommitIDs[i], opts.RefFullNames[i], pusher, pullForcePush)
+			if err != nil {
+				return nil, err
+			}
+			results = append(results, *result)
+			continue
+		}
+
 		// Avoid processing this change if the new commit is empty.
 		if opts.NewCommitIDs[i] == objectFormat.EmptyObjectID().String() {
 			results = append(results, private.HookProcReceiveRefResult{
@@ -48,7 +101,6 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 			continue
 		}
 
-		// Only process references that are in the form of refs/for/
 		if !opts.RefFullNames[i].IsFor() {
 			results = append(results, private.HookProcReceiveRefResult{
 				IsNotMatched: true,
@@ -168,83 +220,94 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 			continue
 		}
 
-		// Update an existing pull request.
-		if err := pr.LoadBaseRepo(ctx); err != nil {
-			return nil, fmt.Errorf("unable to load base repository for PR[%d]: %w", pr.ID, err)
-		}
-
-		oldCommitID, err := gitRepo.GetRefCommitID(pr.GetGitRefName())
+		result, err := procReceivePullRequest(ctx, repo, gitRepo, pr, opts.NewCommitIDs[i], opts.OldCommitIDs[i], opts.RefFullNames[i], pusher, forcePush)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get commit id of reference[%s] in base repository for PR[%d]: %w", pr.GetGitRefName(), pr.ID, err)
+			return nil, err
 		}
-
-		// Do not process this change if nothing was changed.
-		if oldCommitID == opts.NewCommitIDs[i] {
-			results = append(results, private.HookProcReceiveRefResult{
-				OriginalRef: opts.RefFullNames[i],
-				OldOID:      opts.OldCommitIDs[i],
-				NewOID:      opts.NewCommitIDs[i],
-				Err:         "The new commit is the same as the old commit",
-			})
-			continue
-		}
-
-		// If the force push option was not set, ensure that this change isn't a force push.
-		if !forcePush {
-			output, _, err := git.NewCommand(ctx, "rev-list", "--max-count=1").AddDynamicArguments(oldCommitID, "^"+opts.NewCommitIDs[i]).RunStdString(&git.RunOpts{Dir: repo.RepoPath(), Env: os.Environ()})
-			if err != nil {
-				return nil, fmt.Errorf("failed to detect a force push: %w", err)
-			} else if len(output) > 0 {
-				results = append(results, private.HookProcReceiveRefResult{
-					OriginalRef: opts.RefFullNames[i],
-					OldOID:      opts.OldCommitIDs[i],
-					NewOID:      opts.NewCommitIDs[i],
-					Err:         "Updates were rejected because the tip of your current branch is behind its remote counterpart. If this is intentional, set the `force-push` option by adding `-o force-push=true` to your `git push` command.",
-				})
-				continue
-			}
-		}
-
-		// Set the new commit as reference of the pull request.
-		pr.HeadCommitID = opts.NewCommitIDs[i]
-		if err = pull_service.UpdateRef(ctx, pr); err != nil {
-			return nil, fmt.Errorf("failed to update the reference of the pull request: %w", err)
-		}
-
-		// TODO: refactor to unify with `pull_service.AddTestPullRequestTask`
-
-		// Add the pull request to the merge conflicting checker queue.
-		pull_service.AddToTaskQueue(ctx, pr)
-
-		if err := pr.LoadIssue(ctx); err != nil {
-			return nil, fmt.Errorf("failed to load the issue of the pull request: %w", err)
-		}
-
-		// Validate pull request.
-		pull_service.ValidatePullRequest(ctx, pr, opts.NewCommitIDs[i], oldCommitID, pusher)
-
-		// TODO: call `InvalidateCodeComments`
-
-		// Create and notify about the new commits.
-		comment, err := pull_service.CreatePushPullComment(ctx, pusher, pr, oldCommitID, opts.NewCommitIDs[i])
-		if err == nil && comment != nil {
-			notify_service.PullRequestPushCommits(ctx, pusher, pr, comment)
-		}
-		notify_service.PullRequestSynchronized(ctx, pusher, pr)
-
-		// this always seems to be false
-		isForcePush := comment != nil && comment.IsForcePush
-
-		results = append(results, private.HookProcReceiveRefResult{
-			OldOID:      oldCommitID,
-			NewOID:      opts.NewCommitIDs[i],
-			Ref:         pr.GetGitRefName(),
-			OriginalRef: opts.RefFullNames[i],
-			IsForcePush: isForcePush,
-		})
+		results = append(results, *result)
 	}
 
 	return results, nil
+}
+
+func procReceivePullRequest(ctx context.Context,
+	repo *repo_model.Repository, gitRepo *git.Repository,
+	pr *issues_model.PullRequest,
+	newCommitID, oldCommitID string, refFullName git.RefName,
+	pusher *user_model.User, forcePush bool,
+) (*private.HookProcReceiveRefResult, error) {
+	// Update an existing pull request.
+	if err := pr.LoadBaseRepo(ctx); err != nil {
+		return nil, fmt.Errorf("unable to load base repository for PR[%d]: %w", pr.ID, err)
+	}
+
+	currentCommitID, err := gitRepo.GetRefCommitID(pr.GetGitRefName())
+	if err != nil {
+		return nil, fmt.Errorf("unable to get commit id of reference[%s] in base repository for PR[%d]: %w", pr.GetGitRefName(), pr.ID, err)
+	}
+
+	// Do not process this change if nothing was changed.
+	if currentCommitID == newCommitID {
+		return &private.HookProcReceiveRefResult{
+			OriginalRef: refFullName,
+			OldOID:      oldCommitID,
+			NewOID:      newCommitID,
+			Err:         "The new commit is the same as the old commit",
+		}, nil
+	}
+
+	// If the force push option was not set, ensure that this change isn't a force push.
+	if !forcePush {
+		output, _, err := git.NewCommand(ctx, "rev-list", "--max-count=1").AddDynamicArguments(currentCommitID, "^"+newCommitID).RunStdString(&git.RunOpts{Dir: repo.RepoPath(), Env: os.Environ()})
+		if err != nil {
+			return nil, fmt.Errorf("failed to detect a force push: %w", err)
+		} else if len(output) > 0 {
+			return &private.HookProcReceiveRefResult{
+				OriginalRef: refFullName,
+				OldOID:      oldCommitID,
+				NewOID:      newCommitID,
+				Err:         "Updates were rejected because the tip of your current branch is behind its remote counterpart. If this is intentional, set the `force-push` option by adding `-o force-push=true` to your `git push` command.",
+			}, nil
+		}
+	}
+
+	// Set the new commit as reference of the pull request.
+	pr.HeadCommitID = newCommitID
+	if err = pull_service.UpdateRef(ctx, pr); err != nil {
+		return nil, fmt.Errorf("failed to update the reference of the pull request: %w", err)
+	}
+
+	// TODO: refactor to unify with `pull_service.AddTestPullRequestTask`
+
+	// Add the pull request to the merge conflicting checker queue.
+	pull_service.AddToTaskQueue(ctx, pr)
+
+	if err := pr.LoadIssue(ctx); err != nil {
+		return nil, fmt.Errorf("failed to load the issue of the pull request: %w", err)
+	}
+
+	// Validate pull request.
+	pull_service.ValidatePullRequest(ctx, pr, newCommitID, currentCommitID, pusher)
+
+	// TODO: call `InvalidateCodeComments`
+
+	// Create and notify about the new commits.
+	comment, err := pull_service.CreatePushPullComment(ctx, pusher, pr, currentCommitID, newCommitID)
+	if err == nil && comment != nil {
+		notify_service.PullRequestPushCommits(ctx, pusher, pr, comment)
+	}
+	notify_service.PullRequestSynchronized(ctx, pusher, pr)
+
+	// this always seems to be false
+	isForcePush := comment != nil && comment.IsForcePush
+
+	return &private.HookProcReceiveRefResult{
+		OldOID:      currentCommitID,
+		NewOID:      newCommitID,
+		Ref:         pr.GetGitRefName(),
+		OriginalRef: refFullName,
+		IsForcePush: isForcePush,
+	}, nil
 }
 
 // UserNameChanged handle user name change for agit flow pull

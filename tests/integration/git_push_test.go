@@ -4,8 +4,10 @@
 package integration
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
+	"regexp"
 	"testing"
 
 	"forgejo.org/models/db"
@@ -378,5 +380,125 @@ func TestGitPushAllowMaintainerEditRestrictedHead(t *testing.T) {
 		doGitAddSomeCommits(baseRepoPath, branchName)(t)       // Ensure we have new commits ready to push
 		doGitAddSomeCommits(baseRepoPath, "another-branch")(t) // Ensure we have new commits ready to push
 		doGitPushTestRepositoryFail(t, baseRepoPath, "fork", branchName, "another-branch")
+	})
+}
+
+func TestGitPushMirror(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		owner := forgery.CreateUser(t, nil)
+		repo := forgery.CreateRepository(t, owner, &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{},
+		})
+
+		repoPath := t.TempDir()
+		u.Path = repo.FullName() + ".git"
+		u.User = url.UserPassword(owner.LowerName, userPassword)
+		doGitClone(repoPath, u)(t)
+
+		// create a PR
+		branchName := "local-branch"
+		doGitCreateBranch(repoPath, branchName)(t)
+		doGitAddSomeCommits(repoPath, branchName)(t)
+		err := git.NewCommand(git.DefaultContext, "push", "origin").
+			AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/first-pr", branchName)).Run(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+		err = git.NewCommand(git.DefaultContext, "push", "origin").
+			AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/second-pr", branchName)).Run(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+
+		// push --mirror
+		var stderr bytes.Buffer
+		err = git.NewCommand(git.DefaultContext, "push", "--mirror").Run(&git.RunOpts{Dir: repoPath, Stderr: &stderr})
+		assert.Contains(t, stderr.String(), "(Forgejo ignored PR deletion attempt)")
+		require.NoError(t, err)
+
+		// ensure the PRs can still be fetched
+		err = git.NewCommand(git.DefaultContext, "fetch", "origin").
+			AddDynamicArguments(fmt.Sprintf("refs/pull/%d/head:%s", 1, "first-agit-pr")).
+			Run(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+		err = git.NewCommand(git.DefaultContext, "fetch", "origin").
+			AddDynamicArguments(fmt.Sprintf("refs/pull/%d/head:%s", 2, "second-agit-pr")).
+			Run(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+	})
+}
+
+func TestGitPushAGit(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		owner := forgery.CreateUser(t, nil)
+		repo := forgery.CreateRepository(t, owner, &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{},
+		})
+
+		prRegex := regexp.MustCompile(`refs/pull/(\d+)/head`)
+
+		newAgitPR := func(repoPath string) (string, error) {
+			branchName := "agit-pr"
+			doGitCreateBranch(repoPath, branchName)(t)
+			doGitAddSomeCommits(repoPath, branchName)(t)
+			_, stdErr, err := git.NewCommand(git.DefaultContext, "push", "origin").
+				AddDynamicArguments(fmt.Sprintf("%s:refs/for/main/%s", branchName, branchName)).RunStdString(&git.RunOpts{Dir: repoPath})
+			if err != nil {
+				return "", err
+			}
+			require.NoError(t, err)
+			return prRegex.FindStringSubmatch(stdErr)[1], nil
+		}
+		fetchAgitPR := func(repoPath, branchName, prIndex string) error {
+			return git.NewCommand(git.DefaultContext, "fetch", "origin").
+				AddDynamicArguments(fmt.Sprintf("refs/pull/%s/head:%s", prIndex, branchName)).
+				Run(&git.RunOpts{Dir: repoPath})
+		}
+		pushAgitPR := func(repoPath, branchName, prIndex string) error {
+			_, stdErr, err := git.NewCommand(git.DefaultContext, "push", "origin").
+				AddDynamicArguments(fmt.Sprintf("%s:refs/pull/%s/head", branchName, prIndex)).
+				RunStdString(&git.RunOpts{Dir: repoPath})
+			if err != nil {
+				return fmt.Errorf("%s: %w", stdErr, err)
+			}
+			return nil
+		}
+
+		ownerPath := t.TempDir()
+		u.Path = repo.FullName() + ".git"
+		u.User = url.UserPassword(owner.LowerName, userPassword)
+		doGitClone(ownerPath, u)(t)
+
+		ownerPR, err := newAgitPR(ownerPath)
+		require.NoError(t, err)
+
+		// Fork the base repo
+		contributor := forgery.CreateUser(t, nil)
+		contributorPath := t.TempDir()
+		u.Path = repo.FullName() + ".git"
+		u.User = url.UserPassword(contributor.LowerName, userPassword)
+		doGitClone(contributorPath, u)(t)
+
+		// contributor PR
+		contributorPR, err := newAgitPR(contributorPath)
+		require.NoError(t, err)
+
+		t.Run("owner", func(t *testing.T) {
+			// pushing to any agit PR is fine
+			require.NoError(t, fetchAgitPR(ownerPath, "owner-pr", ownerPR))
+			doGitAddSomeCommits(ownerPath, "owner-pr")(t)
+			require.NoError(t, pushAgitPR(ownerPath, "owner-pr", ownerPR))
+
+			require.NoError(t, fetchAgitPR(ownerPath, "contributor-pr", contributorPR))
+			doGitAddSomeCommits(ownerPath, "contributor-pr")(t)
+			require.NoError(t, pushAgitPR(ownerPath, "contributor-pr", contributorPR))
+		})
+		t.Run("contributor", func(t *testing.T) {
+			// pushing to other agit PR fails
+			require.NoError(t, fetchAgitPR(contributorPath, "owner-pr", ownerPR))
+			doGitAddSomeCommits(contributorPath, "owner-pr")(t)
+			require.ErrorContains(t, pushAgitPR(contributorPath, "owner-pr", ownerPR), "not allowed to push to pull request")
+
+			// pushing to own PR is fine
+			require.NoError(t, fetchAgitPR(contributorPath, "contributor-pr", contributorPR))
+			doGitAddSomeCommits(contributorPath, "contributor-pr")(t)
+			require.NoError(t, pushAgitPR(contributorPath, "contributor-pr", contributorPR))
+		})
 	})
 }
