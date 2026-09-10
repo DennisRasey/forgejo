@@ -161,7 +161,10 @@ jobs:
           RUN_ALL: ${{steps.run-all.all}}
       - name: Upload test artifacts on failure
         if: failure()
-        uses: https://data.forgejo.org/forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
+        # upload-artifact must not be updated to a commit that doesn't have Forgejo's hack (for lack of GHES support in
+        # the action), https://code.forgejo.org/forgejo/upload-artifact/src/commit/cb8afe72b42edc798abfb8fcb556cf660d894245 or a
+        # later revision with this commit's specific patch.
+        uses: https://data.forgejo.org/forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245
         with:
           name: test-artifacts.zip
           path: tests/e2e/test-artifacts/
@@ -345,7 +348,10 @@ jobs:
           token: ${{ forgejo.TOKEN }}
       - if: forgejo.event_name != 'pull_request' && (steps.coverage-unit.outputs.cache-hit && steps.coverage-e2e.outputs.cache-hit && steps.coverage-sqlite.outputs.cache-hit)
         name: upload the converted coverage data (textfmt.out)
-        uses: https://data.forgejo.org/forgejo/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # v4.3.1
+        # upload-artifact must not be updated to a commit that doesn't have Forgejo's hack (for lack of GHES support in
+        # the action), https://code.forgejo.org/forgejo/upload-artifact/src/commit/cb8afe72b42edc798abfb8fcb556cf660d894245 or a
+        # later revision with this commit's specific patch.
+        uses: https://data.forgejo.org/forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245
         with:
           name: coverage
           path: coverage/textfmt.out
