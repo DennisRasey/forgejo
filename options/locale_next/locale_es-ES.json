@@ -215,9 +215,9 @@
 	"webauthn.sign_in": "Presione el botón en su clave de seguridad. Si su clave de seguridad no tiene ningún botón, vuelva a insertarla.",
 	"webauthn.insert_key": "Introduzca su clave de seguridad",
 	"counters.n_commits": {
-		"one": "% confirmación de cambios",
+		"one": "%s confirmación de cambios",
 		"many": "%s commits",
-		"other": "% confirmaciones de cambios"
+		"other": "%s confirmaciones de cambios"
 	},
 	"counters.n_branches": {
 		"one": "%s rama",

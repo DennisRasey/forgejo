@@ -202,9 +202,9 @@
 		"other": "Publicacions %s"
 	},
 	"fork.n_forks": {
-		"one": "%s fork",
+		"one": "%s bifurcació",
 		"many": "%s forks",
-		"other": "%s forks"
+		"other": "%s bifurcacions"
 	},
 	"stars.n_stars": {
 		"one": "%s estrella",
@@ -272,7 +272,7 @@
 	"migrate.items.milestones": "Fites",
 	"migrate.items.labels": "Etiquetes",
 	"migrate.items.issues": "Problemes",
-	"migrate.items.pull_requests": "Pull requests",
+	"migrate.items.pull_requests": "Sol·licituds d'extracció",
 	"migrate.items.merge_requests": "Sol·licituds de fusió",
 	"migrate.items.releases": "Publicacions",
 	"migrate.in_progress.git": "Migrant dades Git",
@@ -957,7 +957,7 @@
 	"editor.toggle_whole_word": "Commuta coincidir amb paraules senceres",
 	"repo.watching": "Vigilant",
 	"repo.watch.issues": "Incidències",
-	"repo.watch.pull_requests": "Pull requests",
+	"repo.watch.pull_requests": "Sol·licituds d'extracció",
 	"repo.watch.releases": "Publicacions",
 	"repo.watch.releases.hint": "(Només correu electrònic)",
 	"form.RunnerName": "Nom",
