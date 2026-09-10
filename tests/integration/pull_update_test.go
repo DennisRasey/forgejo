@@ -325,6 +325,122 @@ func TestAPIPullAllowMaintainerEditRestrictedHead(t *testing.T) {
 	})
 }
 
+func TestAPIPullAllowMaintainerEditRestrictedHeadRepoSpecific(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, giteaURL *url.URL) {
+		baseRepo := forgery.CreateRepository(t, nil, &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{}, // ensure an initial commit is present
+		})
+
+		forkUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		forkRepo, err := repo_service.ForkRepositoryAndUpdates(t.Context(), forkUser, forkUser, repo_service.ForkRepoOptions{
+			BaseRepo:    baseRepo,
+			Name:        "repo-pr-update",
+			Description: "desc",
+		})
+		require.NoError(t, err)
+		assert.NotNil(t, forkRepo)
+
+		_, err = files_service.ChangeRepoFiles(git.DefaultContext, forkRepo, forkUser, &files_service.ChangeRepoFilesOptions{
+			Files: []*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      "File_B",
+					ContentReader: strings.NewReader("File B"),
+				},
+			},
+			Message:   "Add File on PR branch",
+			OldBranch: "main",
+			NewBranch: "pull-request",
+			Author: &files_service.IdentityOptions{
+				Name:  forkUser.Name,
+				Email: forkUser.Email,
+			},
+			Committer: &files_service.IdentityOptions{
+				Name:  forkUser.Name,
+				Email: forkUser.Email,
+			},
+			Dates: &files_service.CommitDateOptions{
+				Author:    time.Now(),
+				Committer: time.Now(),
+			},
+		})
+		require.NoError(t, err)
+
+		// Create a pull request to merge fork into base...
+		pullIssue := &issues_model.Issue{
+			RepoID:   baseRepo.ID,
+			Title:    "Pull Base into Fork",
+			PosterID: forkUser.ID,
+			Poster:   forkUser,
+			IsPull:   true,
+		}
+		pullRequest := &issues_model.PullRequest{
+			BaseRepo:            baseRepo,
+			BaseRepoID:          baseRepo.ID,
+			BaseBranch:          "main",
+			HeadRepo:            forkRepo,
+			HeadRepoID:          forkRepo.ID,
+			HeadBranch:          "pull-request",
+			Type:                issues_model.PullRequestGitea,
+			AllowMaintainerEdit: true, // allow maintainers on baseRepo to edit -- therefore they can edit forkRepo's `main` branch.
+		}
+		err = pull_service.NewPullRequest(git.DefaultContext, baseRepo, pullIssue, nil, nil, pullRequest, nil)
+		require.NoError(t, err)
+
+		// Maintainers of baseRepo should be able to edit forkRepo's `main` branch, but not if they're using
+		// repo-specific access tokens which restrict the scope of what they're editing.
+		session := loginUser(t, baseRepo.OwnerName)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+		// Attempt modification by editing the realBase's main branch via API:
+		req := NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/contents/File_A", forkRepo.OwnerName, forkRepo.Name),
+			&api.CreateFileOptions{
+				FileOptions: api.FileOptions{
+					BranchName:    "pull-request",
+					NewBranchName: "pull-request",
+					Message:       "legal change, legal scope...",
+					Author: api.Identity{
+						Name:  baseRepo.Owner.FullName,
+						Email: baseRepo.Owner.Email,
+					},
+					Committer: api.Identity{
+						Name:  baseRepo.Owner.FullName,
+						Email: baseRepo.Owner.Email,
+					},
+				},
+				ContentBase64: base64.StdEncoding.EncodeToString([]byte("Some content.")),
+			}).
+			AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusCreated)
+
+		// Repo-specific access token allows writing to baseRepo, but should not permit writing to the fork repo through
+		// the open PR.
+		repoSpecificToken := createFineGrainedRepoAccessToken(t, baseRepo.OwnerName,
+			[]auth_model.AccessTokenScope{auth_model.AccessTokenScopeWriteRepository},
+			[]int64{baseRepo.ID},
+		)
+		req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/contents/File_C", forkRepo.OwnerName, forkRepo.Name),
+			&api.CreateFileOptions{
+				FileOptions: api.FileOptions{
+					BranchName:    "pull-request",
+					NewBranchName: "pull-request",
+					Message:       "legal change, but illegal scope...",
+					Author: api.Identity{
+						Name:  baseRepo.Owner.FullName,
+						Email: baseRepo.Owner.Email,
+					},
+					Committer: api.Identity{
+						Name:  baseRepo.Owner.FullName,
+						Email: baseRepo.Owner.Email,
+					},
+				},
+				ContentBase64: base64.StdEncoding.EncodeToString([]byte("Some content.")),
+			}).
+			AddTokenAuth(repoSpecificToken)
+		MakeRequest(t, req, http.StatusForbidden)
+	})
+}
+
 func TestAPIViewUpdateSettings(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, giteaURL *url.URL) {
 		// Create PR to test
