@@ -1,7 +1,7 @@
 // Copyright 2025 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-//go:build !unix
+//go:build !unix || openbsd
 
 package zoekt
 
@@ -39,4 +39,8 @@ func (b *Indexer) Delete(_ context.Context, repoID int64) error {
 
 func (b *Indexer) Search(ctx context.Context, opts *internal.SearchOptions) (int64, []*internal.SearchResult, []*internal.SearchResultLanguages, error) {
 	return 0, nil, nil, inner_zoekt.ErrNotImplemented
+}
+
+func (b *Indexer) Formatter() internal.ResultFormatter {
+	return nil
 }
