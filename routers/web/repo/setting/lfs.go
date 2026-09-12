@@ -105,7 +105,6 @@ func LFSLocks(ctx *context.Context) {
 	// Clone base repo.
 	tmpBasePath, err := repo_module.CreateTemporaryPath("locks")
 	if err != nil {
-		log.Error("Failed to create temporary path: %v", err)
 		ctx.ServerError("LFSLocks", err)
 		return
 	}
@@ -119,14 +118,12 @@ func LFSLocks(ctx *context.Context) {
 		Bare:   true,
 		Shared: true,
 	}); err != nil {
-		log.Error("Failed to clone repository: %s (%v)", ctx.Repo.Repository.FullName(), err)
 		ctx.ServerError("LFSLocks", fmt.Errorf("failed to clone repository: %s (%w)", ctx.Repo.Repository.FullName(), err))
 		return
 	}
 
 	gitRepo, err := git.OpenRepository(ctx, tmpBasePath)
 	if err != nil {
-		log.Error("Unable to open temporary repository: %s (%v)", tmpBasePath, err)
 		ctx.ServerError("LFSLocks", fmt.Errorf("failed to open new temporary repository in: %s %w", tmpBasePath, err))
 		return
 	}
@@ -139,21 +136,18 @@ func LFSLocks(ctx *context.Context) {
 	}
 
 	if err := gitRepo.ReadTreeToIndex(ctx.Repo.Repository.DefaultBranch); err != nil {
-		log.Error("Unable to read the default branch to the index: %s (%v)", ctx.Repo.Repository.DefaultBranch, err)
 		ctx.ServerError("LFSLocks", fmt.Errorf("unable to read the default branch to the index: %s (%w)", ctx.Repo.Repository.DefaultBranch, err))
 		return
 	}
 
 	ctx.Data["Lockables"], err = lockablesGitAttributes(gitRepo, lfsLocks)
 	if err != nil {
-		log.Error("Unable to get lockablesGitAttributes in %s (%v)", tmpBasePath, err)
 		ctx.ServerError("LFSLocks", err)
 		return
 	}
 
 	filelist, err := gitRepo.LsFiles(filenames...)
 	if err != nil {
-		log.Error("Unable to lsfiles in %s (%v)", tmpBasePath, err)
 		ctx.ServerError("LFSLocks", err)
 		return
 	}
@@ -280,7 +274,7 @@ func LFSFileGet(ctx *context.Context) {
 	buf := make([]byte, 1024)
 	n, err := util.ReadAtMost(dataRc, buf)
 	if err != nil {
-		ctx.ServerError("Data", err)
+		ctx.ServerError("LFSFileGet", err)
 		return
 	}
 	buf = buf[:n]
@@ -418,8 +412,7 @@ func LFSFileFind(ctx *context.Context) {
 
 	results, err := pipeline.FindLFSFile(ctx.Repo.GitRepo, objectID)
 	if err != nil && err != io.EOF {
-		log.Error("Failure in FindLFSFile: %v", err)
-		ctx.ServerError("LFSFind: FindLFSFile.", err)
+		ctx.ServerError("LFSFileFind", err)
 		return
 	}
 
