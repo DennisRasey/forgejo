@@ -139,6 +139,9 @@ func testAPIPushMirror(t *testing.T, u *url.URL) {
 				repo_model.DeletePushMirrors = deletePushMirrors
 				req = NewRequest(t, "DELETE", fmt.Sprintf("%s/%s", urlStr, pushMirror.RemoteName)).AddTokenAuth(token)
 				MakeRequest(t, req, http.StatusNoContent)
+
+				_, _, err := git.NewCommand(t.Context(), "remote", "get-url").AddDynamicArguments(pushMirror.RemoteName).RunStdString(&git.RunOpts{Dir: srcRepo.RepoPath()})
+				require.True(t, git.IsErrorExitCode(err, 2), "API deletion must remove the Git remote")
 			}
 		})
 	}

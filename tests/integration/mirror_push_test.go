@@ -110,8 +110,16 @@ func testMirrorPush(t *testing.T, u *url.URL) {
 	require.NoError(t, err)
 	assert.Len(t, mirrors, 2)
 
+	_, _, err = git.NewCommand(t.Context(), "config", "--get-all").AddDynamicArguments("remote." + mirrors[0].RemoteName + ".fetch").RunStdString(&git.RunOpts{Dir: srcRepo.RepoPath()})
+	require.True(t, git.IsErrorExitCode(err, 1), "push mirror remote must not have a fetch refspec")
+
+	_, _, err = git.NewCommand(t.Context(), "config", "--add").AddDynamicArguments("remote."+mirrors[0].RemoteName+".fetch", "+refs/*:refs/*").RunStdString(&git.RunOpts{Dir: srcRepo.RepoPath()})
+	require.NoError(t, err)
+
 	ok := mirror_service.SyncPushMirror(t.Context(), mirrors[0].ID)
 	assert.True(t, ok)
+	_, _, err = git.NewCommand(t.Context(), "config", "--get-all").AddDynamicArguments("remote." + mirrors[0].RemoteName + ".fetch").RunStdString(&git.RunOpts{Dir: srcRepo.RepoPath()})
+	require.True(t, git.IsErrorExitCode(err, 1), "sync must remove legacy fetch refspecs")
 
 	srcGitRepo, err := gitrepo.OpenRepository(git.DefaultContext, srcRepo)
 	require.NoError(t, err)
