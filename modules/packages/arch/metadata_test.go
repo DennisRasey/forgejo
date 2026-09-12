@@ -268,14 +268,33 @@ func TestValidatePackageSpec(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("invalid package name", func(t *testing.T) {
+	t.Run("valid package names", func(t *testing.T) {
 		p := newpkg()
-		p.Name = "!$%@^!*&()"
+		for _, name := range []string{
+			"a",
+			"Frogejo",
+			"@_+-.",
+		} {
+			p.Name = name
+			err := ValidatePackageSpec(&p)
+			require.NoErrorf(t, err, "name %s", name)
+		}
+	})
 
-		err := ValidatePackageSpec(&p)
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid package name")
+	t.Run("invalid package names", func(t *testing.T) {
+		p := newpkg()
+		for _, name := range []string{
+			"!$%^!*&()",
+			".Frogejo",
+			"-Frogejo",
+			"α",
+			"",
+		} {
+			p.Name = name
+			err := ValidatePackageSpec(&p)
+			require.Errorf(t, err, "name %s", name)
+			require.Contains(t, err.Error(), "invalid package name")
+		}
 	})
 
 	t.Run("invalid package base", func(t *testing.T) {
@@ -298,14 +317,40 @@ func TestValidatePackageSpec(t *testing.T) {
 		require.Contains(t, err.Error(), "invalid package base")
 	})
 
-	t.Run("invalid package version", func(t *testing.T) {
+	t.Run("valid package versions", func(t *testing.T) {
 		p := newpkg()
-		p.Version = "una-luna"
+		for _, version := range []string{
+			"1.2.3-1",
+			"1.2.3-10.2",
+			"Frogejo-1",
+			"!\"#$%&'()*+,.;<=>?@[\\]^_`{|}~-1",
+		} {
+			p.Version = version
+			err := ValidatePackageSpec(&p)
+			require.NoErrorf(t, err, "version %s", version)
+		}
+	})
 
-		err := ValidatePackageSpec(&p)
-
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid package version")
+	t.Run("invalid package versions", func(t *testing.T) {
+		p := newpkg()
+		for _, version := range []string{
+			":-1",
+			"/-1",
+			"--1",
+			" -1",
+			"🐸-1",
+			"1.2.3-a",
+			"1.2.3-1.2.3",
+			"1",
+			"-",
+			"1-",
+			"-1",
+		} {
+			p.Version = version
+			err := ValidatePackageSpec(&p)
+			require.Errorf(t, err, "version %s", version)
+			require.Contains(t, err.Error(), "invalid package version")
+		}
 	})
 
 	t.Run("missing architecture", func(t *testing.T) {
