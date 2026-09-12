@@ -1,7 +1,7 @@
 import {optimize} from 'svgo';
 import {readFile, writeFile} from 'node:fs/promises';
 import {exit} from 'node:process';
-import SharpConstructor from 'sharp';
+import SharpConstructor from 'sharp'; // eslint-disable-line import-x/no-named-as-default
 import {fileURLToPath} from 'node:url';
 
 function doExit(err) {
