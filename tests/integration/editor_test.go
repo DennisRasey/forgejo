@@ -15,14 +15,17 @@ import (
 	"path"
 	"testing"
 
+	auth_model "forgejo.org/models/auth"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/json"
+	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/translation"
 	app_context "forgejo.org/services/context"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
