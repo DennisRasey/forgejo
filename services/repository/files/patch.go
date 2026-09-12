@@ -6,6 +6,7 @@ package files
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"forgejo.org/models"
@@ -147,9 +148,24 @@ func ApplyDiffPatch(ctx context.Context, repo *repo_model.Repository, doer *user
 	stdout := &strings.Builder{}
 	stderr := &strings.Builder{}
 
-	cmdApply := git.NewCommand(ctx, "apply", "--index", "--recount", "--cached", "--ignore-whitespace", "--whitespace=fix", "--binary", "-3")
+	// `git apply --index` has strange behaviour when running on a bare repo.  As there is no working tree, it shouldn't
+	// attempt to change files in a working tree, and typically doesn't.  But when a conflict occurs between the patch
+	// and the index, `git apply --index` will drop conflicting files into the current working directory as if it were
+	// the working tree.  This creates security risks where the files are actually being dropped into the bare repo.  To
+	// avoid this, we create a temporary working directory for the command where those junk files can be dropped and
+	// then deleted:
+	applyWorkingDir, err := os.MkdirTemp("", "forgejo-applydiffpatch-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp directory: %w", err)
+	}
+	defer os.RemoveAll(applyWorkingDir)
+
+	cmdApply := git.NewCommand(ctx)
+	cmdApply.AddArguments("--git-dir") // sets the path to the repo, like env GIT_DIR; does not change working dir, like `-C` does
+	cmdApply.AddDynamicArguments(t.basePath)
+	cmdApply.AddArguments("apply", "--index", "--recount", "--cached", "--ignore-whitespace", "--whitespace=fix", "--binary", "-3")
 	if err := cmdApply.Run(&git.RunOpts{
-		Dir:    t.basePath,
+		Dir:    applyWorkingDir, // see note about applyWorkingDir above
 		Stdout: stdout,
 		Stderr: stderr,
 		Stdin:  strings.NewReader(opts.Content),
