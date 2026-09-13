@@ -77,15 +77,6 @@ function initPreInstall() {
       document.querySelector('#offline-mode input').checked = false;
     }
   });
-  document.querySelector('#enable-openid-signin input').addEventListener('change', function () {
-    if (this.checked) {
-      if (!document.querySelector('#disable-registration input').checked) {
-        document.querySelector('#enable-openid-signup input').checked = true;
-      }
-    } else {
-      document.querySelector('#enable-openid-signup input').checked = false;
-    }
-  });
   document.querySelector('#disable-registration input').addEventListener('change', function () {
     if (this.checked) {
       document.querySelector('#enable-captcha input').checked = false;

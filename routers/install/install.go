@@ -140,8 +140,6 @@ func Install(ctx *context.Context) {
 	form.DisableGravatar = setting.DisableGravatar             // when installing, there is no database connection so that given a default value
 	form.EnableFederatedAvatar = setting.EnableFederatedAvatar // when installing, there is no database connection so that given a default value
 
-	form.EnableOpenIDSignIn = setting.Service.EnableOpenIDSignIn
-	form.EnableOpenIDSignUp = setting.Service.EnableOpenIDSignUp
 	form.DisableRegistration = true // Force it to true, for the installation, to discourage creating instances with open registration, which invite all kinds of spam.
 	form.AllowOnlyExternalRegistration = setting.Service.AllowOnlyExternalRegistration
 	form.EnableCaptcha = setting.Service.EnableCaptcha
@@ -459,8 +457,8 @@ func SubmitInstall(ctx *context.Context) {
 		return
 	}
 
-	cfg.Section("openid").Key("ENABLE_OPENID_SIGNIN").SetValue(fmt.Sprint(form.EnableOpenIDSignIn))
-	cfg.Section("openid").Key("ENABLE_OPENID_SIGNUP").SetValue(fmt.Sprint(form.EnableOpenIDSignUp))
+	cfg.Section("openid").Key("ENABLE_OPENID_SIGNIN").SetValue("false")
+	cfg.Section("openid").Key("ENABLE_OPENID_SIGNUP").SetValue("false")
 	cfg.Section("service").Key("DISABLE_REGISTRATION").SetValue(fmt.Sprint(form.DisableRegistration))
 	cfg.Section("service").Key("ALLOW_ONLY_EXTERNAL_REGISTRATION").SetValue(fmt.Sprint(form.AllowOnlyExternalRegistration))
 	cfg.Section("service").Key("ENABLE_CAPTCHA").SetValue(fmt.Sprint(form.EnableCaptcha))

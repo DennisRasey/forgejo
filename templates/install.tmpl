@@ -237,25 +237,11 @@
 							<span class="help">{{ctx.Locale.Tr "install.federated_avatar_lookup.description"}}</span>
 						</div>
 						<div class="inline field">
-							<div class="ui checkbox" id="enable-openid-signin">
-								<label>{{ctx.Locale.Tr "install.openid_signin"}}</label>
-								<input name="enable_open_id_sign_in" type="checkbox" {{if .enable_open_id_sign_in}}checked{{end}}>
-							</div>
-							<span class="help">{{ctx.Locale.Tr "install.openid_signin.description"}}</span>
-						</div>
-						<div class="inline field">
 							<div class="ui checkbox" id="allow-only-external-registration">
 								<label>{{ctx.Locale.Tr "install.allow_only_external_registration"}}</label>
 								<input name="allow_only_external_registration" type="checkbox" {{if .allow_only_external_registration}}checked{{end}}>
 							</div>
 							<span class="help">{{ctx.Locale.Tr "install.allow_only_external_registration.description"}}</span>
-						</div>
-						<div class="inline field">
-							<div class="ui checkbox" id="enable-openid-signup">
-								<label>{{ctx.Locale.Tr "install.openid_signup"}}</label>
-								<input name="enable_open_id_sign_up" type="checkbox" {{if .enable_open_id_sign_up}}checked{{end}}>
-							</div>
-							<span class="help">{{ctx.Locale.Tr "install.openid_signup.description"}}</span>
 						</div>
 						<div class="inline field">
 							<div class="ui checkbox" id="enable-captcha">
