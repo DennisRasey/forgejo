@@ -69,3 +69,21 @@ func TestSignUpPostDisabled(t *testing.T) {
 	SignUpPost(ctx)
 	assert.Equal(t, http.StatusForbidden, resp.Code)
 }
+
+func TestSignUpWithUsernamePrefix(t *testing.T) {
+	ctx, resp := contexttest.MockContext(t, "/user/sign_up",
+		contexttest.MockContextOption{Render: templates.HTMLRenderer()})
+	defer test.MockVariableValue(&setting.Service.UsernamePrefix, "fbsd-")()
+	SignUp(ctx)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Contains(t, resp.Body.String(), "fbsd-")
+}
+
+func TestSignUpWithoutUsernamePrefix(t *testing.T) {
+	ctx, resp := contexttest.MockContext(t, "/user/sign_up",
+		contexttest.MockContextOption{Render: templates.HTMLRenderer()})
+	defer test.MockVariableValue(&setting.Service.UsernamePrefix, "")()
+	SignUp(ctx)
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.NotContains(t, resp.Body.String(), "ui labeled input")
+}

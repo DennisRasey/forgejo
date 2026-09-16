@@ -1,4 +1,5 @@
 {
+	"auth.signup.username.prefix.info": "This prefix (%s) will be prepended to your username and cannot be changed.",
 	"home.welcome.no_activity": "No activity",
 	"home.welcome.activity_hint": "There is nothing in your feed yet. Your actions and activity from repositories that you watch will show up here.",
 	"home.explore_repos": "Explore repositories",

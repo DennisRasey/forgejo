@@ -497,6 +497,62 @@ func TestCreateUserPlainWithFediverseHandle(t *testing.T) {
 	// has been omitted for now.
 }
 
+func TestCreateUserWithUsernamePrefix(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	defer test.MockVariableValue(&setting.Service.UsernamePrefix, "fbsd-")()
+
+	t.Run("Normal creation adds prefix", func(t *testing.T) {
+		user := &user_model.User{
+			Name:               "john",
+			Email:              "john-prefix@example.com",
+			Passwd:             "password123!",
+			MustChangePassword: false,
+		}
+		err := user_model.CreateUser(db.DefaultContext, user)
+		require.NoError(t, err)
+		assert.Equal(t, "fbsd-john", user.Name)
+	})
+
+	t.Run("Admin creation skips prefix", func(t *testing.T) {
+		user := &user_model.User{
+			Name:               "adminuser",
+			Email:              "adminuser-prefix@example.com",
+			Passwd:             "password123!",
+			MustChangePassword: false,
+		}
+		err := user_model.AdminCreateUser(db.DefaultContext, user)
+		require.NoError(t, err)
+		assert.Equal(t, "adminuser", user.Name)
+	})
+
+	t.Run("No double prefix", func(t *testing.T) {
+		user := &user_model.User{
+			Name:               "fbsd-already",
+			Email:              "already-prefix@example.com",
+			Passwd:             "password123!",
+			MustChangePassword: false,
+		}
+		err := user_model.CreateUser(db.DefaultContext, user)
+		require.NoError(t, err)
+		assert.Equal(t, "fbsd-already", user.Name)
+	})
+}
+
+func TestCreateUserWithoutUsernamePrefix(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	defer test.MockVariableValue(&setting.Service.UsernamePrefix, "")()
+
+	user := &user_model.User{
+		Name:               "noprefixuser",
+		Email:              "noprefix@example.com",
+		Passwd:             "password123!",
+		MustChangePassword: false,
+	}
+	err := user_model.CreateUser(db.DefaultContext, user)
+	require.NoError(t, err)
+	assert.Equal(t, "noprefixuser", user.Name)
+}
+
 func TestGetUserIDsByNames(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 

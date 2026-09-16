@@ -730,6 +730,11 @@ func AdminCreateUser(ctx context.Context, u *User, overwriteDefault ...*CreateUs
 func createUser(ctx context.Context, u *User, createdByAdmin bool, overwriteDefault ...*CreateUserOverwriteOptions) (err error) {
 	overwriteDefaultPresent := len(overwriteDefault) != 0 && overwriteDefault[0] != nil
 
+	// Apply username prefix for non-admin user creation if configured.
+	if !createdByAdmin && setting.Service.UsernamePrefix != "" && !strings.HasPrefix(u.Name, setting.Service.UsernamePrefix) {
+		u.Name = setting.Service.UsernamePrefix + u.Name
+	}
+
 	// If a username is invalid as-is, check whether the username is meant
 	// for an ActivityPub account. Username constraints that belong to "foreign"
 	// ActivityPub servers, whose implementations we cannot control, are expected

@@ -89,6 +89,7 @@ var Service = struct {
 	DefaultOrgMemberVisible                 bool
 	UserDeleteWithCommentsMaxTime           time.Duration
 	ValidSiteURLSchemes                     []string
+	UsernamePrefix                          string
 	UsernameCooldownPeriod                  int64
 	MaxUserRedirects                        int64
 
@@ -300,6 +301,7 @@ func loadServiceFrom(rootCfg ConfigProvider) {
 	// A pattern from ValidSiteURLSchemes must be valid for use in HTML <input pattern=""> validation
 	_ = regexp.MustCompile(`^(?:` + ValidSiteURLPattern() + `)$`)
 
+	Service.UsernamePrefix = sec.Key("USERNAME_PREFIX").MustString("")
 	Service.UsernameCooldownPeriod = sec.Key("USERNAME_COOLDOWN_PERIOD").MustInt64(0)
 
 	// Only set a default if USERNAME_COOLDOWN_PERIOD's feature is active.

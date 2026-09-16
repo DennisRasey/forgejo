@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"forgejo.org/modules/structs"
+	"forgejo.org/modules/test"
 
 	"github.com/gobwas/glob"
 	"github.com/stretchr/testify/assert"
@@ -165,6 +166,29 @@ EMAIL_DOMAIN_BLOCK_DISPOSABLE = true
 
 	expected := len(DisposableEmailDomains()) + 1
 	require.Len(t, Service.EmailDomainBlockList, expected)
+}
+
+func TestLoadServiceUsernamePrefix(t *testing.T) {
+	defer test.MockProtect(&Service)()
+
+	t.Run("Default empty", func(t *testing.T) {
+		cfg, err := NewConfigProviderFromData(`
+[service]
+`)
+		require.NoError(t, err)
+		loadServiceFrom(cfg)
+		assert.Empty(t, Service.UsernamePrefix)
+	})
+
+	t.Run("Set prefix", func(t *testing.T) {
+		cfg, err := NewConfigProviderFromData(`
+[service]
+USERNAME_PREFIX = fbsd-
+`)
+		require.NoError(t, err)
+		loadServiceFrom(cfg)
+		assert.Equal(t, "fbsd-", Service.UsernamePrefix)
+	})
 }
 
 func TestLoadServiceVisibilityModes(t *testing.T) {
