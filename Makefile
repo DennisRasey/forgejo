@@ -47,8 +47,8 @@ GO_LICENSES_PACKAGE ?= github.com/google/go-licenses/v2@v2.0.1 # renovate: datas
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasource=go
 DEADCODE_PACKAGE ?= golang.org/x/tools/cmd/deadcode@v0.43.0 # renovate: datasource=go
 ERRORTYPE_PACKAGE ?= fillmore-labs.com/errortype@v0.0.11 # renovate: datasource=go
-GOMOCK_PACKAGE ?= go.uber.org/mock/mockgen@v0.6.0 # renovate: datasource=go
 RENOVATE_NPM_PACKAGE ?= renovate@43.86.1 # renovate: datasource=docker packageName=data.forgejo.org/renovate/renovate
+MOCKERY_PACKAGE ?= github.com/vektra/mockery/v3@v3.7.4 # renovate: datasource=go
 
 # https://github.com/disposable-email-domains/disposable-email-domains/commits/main/
 DISPOSABLE_EMAILS_SHA ?= 0c27e671231d27cf66370034d7f6818037416989 # renovate: ...
@@ -245,7 +245,7 @@ help:
 	@echo " - generate-license                 update license files"
 	@echo " - generate-gitignore               update gitignore files"
 	@echo " - generate-manpage                 generate manpage"
-	@echo " - generate-gomock                  generate gomock files"
+	@echo " - generate-mockery                 generate mockery files"
 	@echo " - generate-forgejo-api             generate the forgejo API from spec"
 	@echo " - forgejo-api-validate             check if the forgejo API matches the specs"
 	@echo " - generate-swagger                 generate the swagger spec from code comments"
@@ -972,8 +972,8 @@ deps-tools:
 	$(GO) install $(XGO_PACKAGE)
 	$(GO) install $(GO_LICENSES_PACKAGE)
 	$(GO) install $(GOVULNCHECK_PACKAGE)
-	$(GO) install $(GOMOCK_PACKAGE)
 	$(GO) install $(ERRORTYPE_PACKAGE)
+	$(GO) install $(MOCKERY_PACKAGE)
 
 node_modules: package-lock.json
 	npm install --no-save
@@ -1028,9 +1028,9 @@ generate-license:
 generate-gitignore:
 	$(GO) run build/generate-gitignores.go
 
-.PHONY: generate-gomock
-generate-gomock:
-	$(GO) run $(GOMOCK_PACKAGE) -package mock -destination ./modules/queue/mock/redisuniversalclient.go forgejo.org/modules/nosql RedisClient
+.PHONY: generate-mockery
+generate-mockery:
+	$(GO) run $(MOCKERY_PACKAGE)
 
 .PHONY: generate-images
 generate-images: | node_modules

@@ -7,18 +7,17 @@ import (
 	"context"
 	"testing"
 
-	"forgejo.org/modules/queue/mock"
+	"forgejo.org/modules/nosql"
+	queue_mock "forgejo.org/modules/queue/mock"
 	"forgejo.org/modules/setting"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/mock/gomock"
 )
 
 type baseRedisUnitTestSuite struct {
 	suite.Suite
-
-	mockController *gomock.Controller
 }
 
 func TestBaseRedis(t *testing.T) {
@@ -26,7 +25,6 @@ func TestBaseRedis(t *testing.T) {
 }
 
 func (suite *baseRedisUnitTestSuite) SetupSuite() {
-	suite.mockController = gomock.NewController(suite.T())
 }
 
 func (suite *baseRedisUnitTestSuite) TestBasic() {
@@ -71,39 +69,47 @@ func (suite *baseRedisUnitTestSuite) TestBasic() {
 			}
 
 			// Configure expectations.
-			mockRedisStore := mock.NewInMemoryMockRedis()
-			redisClient := mock.NewMockRedisClient(suite.mockController)
+			mockRedisStore := queue_mock.NewInMemoryMockRedis()
+			redisClient := nosql.NewMockRedisClient(suite.T())
 
 			redisClient.EXPECT().
-				Ping(gomock.Any()).
-				Times(1).
-				Return(&redis.StatusCmd{})
+				Ping(mock.Anything).
+				Return(&redis.StatusCmd{}).
+				Times(1)
 			redisClient.EXPECT().
-				LLen(gomock.Any(), testCase.QueueName).
-				Times(1).
-				DoAndReturn(mockRedisStore.LLen)
+				LLen(mock.Anything, testCase.QueueName).
+				RunAndReturn(mockRedisStore.LLen).
+				Times(1)
 			redisClient.EXPECT().
-				LPop(gomock.Any(), testCase.QueueName).
-				Times(1).
-				DoAndReturn(mockRedisStore.LPop)
+				LPop(mock.Anything, testCase.QueueName).
+				RunAndReturn(mockRedisStore.LPop).
+				Times(1)
 			redisClient.EXPECT().
-				RPush(gomock.Any(), testCase.QueueName, gomock.Any()).
-				Times(1).
-				DoAndReturn(mockRedisStore.RPush)
+				RPush(mock.Anything, testCase.QueueName, mock.Anything).
+				RunAndReturn(func(ctx context.Context, key string, values ...any) *redis.IntCmd {
+					return mockRedisStore.RPush(ctx, key, values[0].([]byte))
+				}).
+				Times(1)
 
 			if testCase.Unique {
 				redisClient.EXPECT().
-					SAdd(gomock.Any(), testCase.QueueName+"_unique", gomock.Any()).
-					Times(1).
-					DoAndReturn(mockRedisStore.SAdd)
+					SAdd(mock.Anything, testCase.QueueName+"_unique", mock.Anything).
+					RunAndReturn(func(ctx context.Context, key string, members ...any) *redis.IntCmd {
+						return mockRedisStore.SAdd(ctx, key, members[0].([]byte))
+					}).
+					Times(1)
 				redisClient.EXPECT().
-					SRem(gomock.Any(), testCase.QueueName+"_unique", gomock.Any()).
-					Times(1).
-					DoAndReturn(mockRedisStore.SRem)
+					SRem(mock.Anything, testCase.QueueName+"_unique", mock.Anything).
+					RunAndReturn(func(ctx context.Context, key string, members ...any) *redis.IntCmd {
+						return mockRedisStore.SRem(ctx, key, members[0].([]byte))
+					}).
+					Times(1)
 				redisClient.EXPECT().
-					SIsMember(gomock.Any(), testCase.QueueName+"_unique", gomock.Any()).
-					Times(2).
-					DoAndReturn(mockRedisStore.SIsMember)
+					SIsMember(mock.Anything, testCase.QueueName+"_unique", mock.Anything).
+					RunAndReturn(func(ctx context.Context, key string, member any) *redis.BoolCmd {
+						return mockRedisStore.SIsMember(ctx, key, member.([]byte))
+					}).
+					Times(2)
 			}
 
 			client, err := newBaseRedisGeneric(

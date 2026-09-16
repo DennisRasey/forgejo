@@ -30,6 +30,8 @@ type Manager struct {
 // RedisClient is a subset of redis.UniversalClient, it exposes less methods
 // to avoid generating machine code for unused methods. New method definitions
 // should be copied from the definitions in the Redis library github.com/redis/go-redis.
+//
+//mockery:generate: true
 type RedisClient interface {
 	// redis.GenericCmdable
 	Del(ctx context.Context, keys ...string) *redis.IntCmd

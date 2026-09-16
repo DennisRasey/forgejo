@@ -1,0 +1,19 @@
+formatter: gofmt
+template: testify
+packages:
+  forgejo.org/modules/nosql:
+    config:
+      filename: mocks.go # make mocks public so that external packages can use
+  forgejo.org/services/authz:
+    config:
+      filename: authorization_reducer_mock.go # make mocks public so that external packages can use
+  code.forgejo.org/go-chi/cache:
+    interfaces:
+      Cache:
+        config:
+          pkgname: cache
+          dir: modules/cache
+          filename: mocks.go # make mocks public, not `_test.go`, so that external packages can mock caching
+  forgejo.org/modules/system:
+    config:
+      filename: mocks.go # make mocks public so that external packages can use
