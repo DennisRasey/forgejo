@@ -131,10 +131,22 @@ func prepareDeprecatedWarningsAlert(ctx *context.Context) {
 func Dashboard(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.dashboard")
 	ctx.Data["PageIsAdminDashboard"] = true
-	ctx.Data["NeedUpdate"] = updatechecker.GetNeedUpdate(ctx)
-	ctx.Data["RemoteVersion"] = updatechecker.GetRemoteVersion(ctx)
 	updateSystemStatus()
 	ctx.Data["SysStatus"] = sysStatus
+
+	update, err := updatechecker.GetReleaseState(ctx)
+	if err != nil {
+		ctx.Data["UpdateCheckerError"] = err.Error()
+	} else {
+		if update.MajorReleaseState == updatechecker.MajorReleaseUnsupported {
+			ctx.Data["NeedMajorUpdate"] = true
+		} else if update.MinorReleaseState == updatechecker.MinorReleaseOutOfDate {
+			ctx.Data["NeedMinorUpdate"] = true
+		}
+		if hasRec, rec := update.RecommendedUpgrade.Get(); hasRec {
+			ctx.Data["RemoteVersion"] = rec
+		}
+	}
 
 	entries := []string{
 		"delete_inactive_accounts",
