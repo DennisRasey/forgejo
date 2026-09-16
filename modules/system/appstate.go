@@ -6,6 +6,8 @@ package system
 import "context"
 
 // StateStore is the interface to get/set app state items
+//
+//mockery:generate: true
 type StateStore interface {
 	Get(ctx context.Context, item StateItem) error
 	Set(ctx context.Context, item StateItem) error
