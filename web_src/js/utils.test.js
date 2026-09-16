@@ -194,5 +194,5 @@ async function testSleep(ms) {
   await sleep(ms);
   const endTime = Date.now();    // Record the end time
   const actualSleepTime = endTime - startTime;
-  expect(actualSleepTime).toBeGreaterThanOrEqual(ms);
+  expect(actualSleepTime).toBeGreaterThanOrEqual(ms - 1); // allow for some rounding error
 }
