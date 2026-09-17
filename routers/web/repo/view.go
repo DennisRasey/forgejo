@@ -744,7 +744,7 @@ func renderFundingError(locale translation.Locale, err error) template.HTML {
 	if unknownProviderErr, ok := errors.AsType[funding_service.UnknownProviderError](err); ok {
 		return locale.Tr("funding.yaml_error.unknown_provider", unknownProviderErr.Name)
 	} else if tooManyErr, ok := errors.AsType[funding_service.TooManyProvidersError](err); ok {
-		return locale.Tr("funding.yaml_error.n_too_many_providers", tooManyErr.TotalLimit)
+		return locale.TrPluralString(tooManyErr.TotalLimit, "funding.yaml_error.n_too_many_providers", tooManyErr.TotalLimit)
 	} else if duplicateEntryErr, ok := errors.AsType[funding_service.DuplicateEntryError](err); ok {
 		return locale.Tr("funding.yaml_error.duplicate_entry", duplicateEntryErr.Name, duplicateEntryErr.Value)
 	} else if badInputErr, ok := errors.AsType[funding_service.BadInputError](err); ok {

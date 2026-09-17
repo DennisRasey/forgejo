@@ -43,6 +43,9 @@ type TooManyProvidersError struct {
 }
 
 func (err TooManyProvidersError) Error() string {
+	if err.TotalLimit == 1 {
+		return "Expected up to 1 funding provider"
+	}
 	return fmt.Sprintf("Expected up to %d funding providers", err.TotalLimit)
 }
 

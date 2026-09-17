@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"forgejo.org/modules/setting"
+	"forgejo.org/modules/test"
 	"forgejo.org/tests"
 	"forgejo.org/tests/forgery"
 
@@ -109,24 +111,43 @@ func TestRepoFundingModalLinksToFileViewOnError(t *testing.T) {
 
 func TestRepoFundingErrorReadoutOnFileView(t *testing.T) {
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
-		errors := [][4]any{
+		defer test.MockProtect(&setting.MaxFundingEntriesPerConfig)()
+
+		errors := [][5]any{
 			{
 				"duplicate YAML key",
 				"custom: localhost\ncustom: 'but what about second custom??'\n",
 				"Error parsing funding config: Duplicate YAML key: custom",
 				[]string{},
+				nil,
 			},
 			{
 				"unexpected root type",
 				"not_the_mapping_youre_looking_for\n",
 				"Error parsing funding config: Expected YAML mapping, got str",
 				[]string{},
+				nil,
 			},
 			{
 				"unexpected value type",
 				"custom:\n- localhost\n- [localhost]\n",
 				"Error parsing funding config: Invalid type for key \"custom\", expected a string or string array",
 				[]string{},
+				nil,
+			},
+			{
+				"too many entries (multiple)",
+				"custom: [test1, test2, test3]",
+				"Error parsing funding config: Expected up to 2 funding providers",
+				[]string{},
+				2, // MaxFundingEntriesPerConfig
+			},
+			{
+				"too many entries (single)",
+				"custom: [test1, test2]",
+				"Error parsing funding config: Expected up to 1 funding provider",
+				[]string{},
+				1, // MaxFundingEntriesPerConfig
 			},
 			{
 				"multiple errors",
@@ -136,6 +157,7 @@ func TestRepoFundingErrorReadoutOnFileView(t *testing.T) {
 					"Invalid type for key \"ko_fi\", expected a string or string array",
 					"Unknown funding provider: ko-fi",
 				},
+				nil,
 			},
 		}
 
@@ -163,6 +185,10 @@ func TestRepoFundingErrorReadoutOnFileView(t *testing.T) {
 			config := c[1].(string)
 			expectedErr := c[2].(string)
 			expectedSubErrs := c[3].([]string)
+
+			if max, ok := c[4].(int); ok {
+				setting.MaxFundingEntriesPerConfig = max
+			}
 
 			repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
 				Files: forgery.MapFS{

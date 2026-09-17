@@ -1100,7 +1100,10 @@
 	"funding.yaml_error.heading_few": "Errors parsing funding config:",
 	"funding.yaml_error.unknown_provider": "Unknown funding provider: %[1]s",
 	"funding.yaml_error.duplicate_entry": "Duplicate entry for key \"%[1]s\": %[2]s",
-	"funding.yaml_error.n_too_many_providers": "Expected up to %[1]d funding providers",
+	"funding.yaml_error.n_too_many_providers": {
+		"one": "Expected up to %[1]d funding provider",
+		"other": "Expected up to %[1]d funding providers"
+	},
 	"funding.yaml_error.bad_input": "Value for key \"%[1]s\" does not match pattern /%[2]s/",
 	"funding.yaml_error.parse_url": "Invalid URL value for key \"%[1]s\": %[2]v",
 	"funding.yaml_error.duplicate_yaml_key": "Duplicate YAML key: %[1]s",
