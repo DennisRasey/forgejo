@@ -2,7 +2,10 @@
 	"sync_fork.sync.button": "Sioncrónaigh",
 	"sync_fork.branch_behind": {
 		"one": "Tá an brainse seo %[1]d tiomantas taobh thiar de %[2]s",
-		"other": "Tá an brainse seo %[1]d tiomnuithe taobh thiar de %[2]s"
+		"two": "Tá an brainse seo %[1]d tiomnuithe taobh thiar de %[2]s",
+		"few": "",
+		"many": "",
+		"other": ""
 	},
 	"mirror_settings.direction.header": "Treo",
 	"mirror_settings.docs.summary": "Cuir do stóras ar bun chun tiomáintí, clibeanna agus brainsí a shioncronú go huathoibríoch le stóras eile.",
@@ -77,11 +80,17 @@
 	"quota.sizes.all": "Gach",
 	"counters.n_following": {
 		"one": "%d ag leanúint",
-		"other": "%d ag leanúint"
+		"two": "%d ag leanúint",
+		"few": "",
+		"many": "",
+		"other": ""
 	},
 	"counters.n_followers": {
 		"one": "%d leantóir",
-		"other": "%d leantóirí"
+		"two": "%d leantóirí",
+		"few": "",
+		"many": "",
+		"other": ""
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "Ní féidir ach leatsa agus le riarthóirí an cháis do ghníomhaíocht a fheiceáil mar go bhfuil do phróifíl príobháideach. <a href=\"%s\">Cumraigh</a>.",
 	"user.public_activity.visibility_hint.admin_private": "Tá an ghníomhaíocht seo le feiceáil agat mar is riarthóir thú, ach ba mhaith leis an úsáideoir go bhfanfadh sí príobháideach.",
@@ -257,7 +266,6 @@
 	"admin.dashboard.system_status": "Stádas an Chórais",
 	"admin.dashboard.operations": "Oibríochtaí cothabhála",
 	"admin.dashboard.statistic": "Achoimre",
-	"admin.dashboard.new_version_hint": "Tá Forgejo %s ar fáil anois, tá %s á rith agat. Seiceáil <a target=\"_blank\" rel=\"noreferrer\" href=\"%s\">an blag</a> le haghaidh tuilleadh sonraí.",
 	"admin.monitor.queue.settings.remove_all_items.success": "Baineadh na míreanna go léir sa scuaine.",
 	"admin.monitor.queue.settings.remove_all_items": "Bain gach",
 	"admin.monitor.queue.settings.changed": "Socruithe Nuashonraithe",
@@ -712,14 +720,6 @@
 	"moderation.submit_report": "Cuir isteach tuarascáil",
 	"moderation.reporting_failed": "Ní féidir an tuarascáil nua mí-úsáide a chur isteach: %v",
 	"moderation.reported_thank_you": "Go raibh maith agat as do thuairisc. Tá an riarachán curtha ar an eolas faoi.",
-	"mail.actions.successful_run_after_failure_subject": "Aisghafa sreabhadh oibre %[1]s i stórlann %[2]s",
-	"mail.actions.not_successful_run_subject": "Theip ar shreabhadh oibre %[1]s i stórlann %[2]s",
-	"mail.actions.successful_run_after_failure": "Aisghafa sreabhadh oibre %[1]s i stórlann %[2]s",
-	"mail.actions.not_successful_run": "Theip ar shreabhadh oibre %[1]s i stórlann %[2]s",
-	"mail.actions.run_info_cur_status": "Stádas an Rith seo: %[1]s (nuashonraithe díreach ó %[2]s)",
-	"mail.actions.run_info_previous_status": "Stádas an Rith Roimhe Seo: %[1]s",
-	"mail.actions.run_info_sha": "Tiomantas: %[1]s",
-	"mail.actions.run_info_trigger": "Spreagtha mar gheall ar: %[1]s ag: %[2]s",
 	"mail.issue.action.close_by_commit": "%[1]s dhún %[2]s i ngealltanas %[3]s.",
 	"repo.diff.commit.next-short": "Ar Aghaidh",
 	"repo.diff.commit.previous-short": "Roimh",

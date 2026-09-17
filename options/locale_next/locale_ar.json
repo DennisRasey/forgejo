@@ -1,8 +1,12 @@
 {
 	"sync_fork.sync.button": "مزامنة",
 	"sync_fork.branch_behind": {
-		"one": "هذا الفرع هو %[1]d إيداع خلف %[2]s",
-		"other": "هذا الفرع هو %[1]d إيداعات خلف %[2]s"
+		"zero": "هذا الفرع هو %[1]d إيداع خلف %[2]s",
+		"one": "هذا الفرع هو %[1]d إيداعات خلف %[2]s",
+		"two": "",
+		"few": "",
+		"many": "",
+		"other": ""
 	},
 	"mirror_settings.direction.header": "الاتجاه",
 	"mirror_settings.push_mirror.remote_url": "رابط مستودع جت البعيد",
@@ -33,12 +37,20 @@
 	"quota.sizes.repos.all": "المستودعات",
 	"quota.sizes.all": "الكل",
 	"counters.n_following": {
-		"one": "%d يُتابع",
-		"other": "%d يتابع"
+		"zero": "%d يُتابع",
+		"one": "%d يتابع",
+		"two": "",
+		"few": "",
+		"many": "",
+		"other": ""
 	},
 	"counters.n_followers": {
-		"one": "%d متابِع",
-		"other": "%d متابعين"
+		"zero": "%d متابِع",
+		"one": "%d متابعين",
+		"two": "",
+		"few": "",
+		"many": "",
+		"other": ""
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "نشاطك مرئي لك ولسُعاة المثيل فقط لأن ملفك الشخصي خاص. <a href=\"%s\">تعديل الإعدادات</a>.",
 	"user.public_activity.visibility_hint.admin_private": "هذا النشاط مرئي لك لأنك مسؤول، ولكن المستخدم يريد أن يظل خاصاً.",
@@ -390,7 +402,6 @@
 		"many": "يريد دمج %[1]d إيداعًا من <code>%[2]s</code> إلى <code id=\"%[4]s\">%[3]s</code>",
 		"other": "يريد دمج %[1]d إيداعًا من <code>%[2]s</code> إلى <code id=\"%[4]s\">%[3]s</code>"
 	},
-	"mail.actions.run_info_sha": "إيداع: %[1]s",
 	"keys.gpg.link": "مفاتيح GPG",
 	"moderation.abuse_category.spam": "غير مرغوب به",
 	"keys.ssh.link": "مفاتيح SSH",
@@ -401,14 +412,8 @@
 	"moderation.submit_report": "إرسال التقرير",
 	"moderation.reporting_failed": "تعذر إرسال تقرير إساءة الاستخدام الجديد: %v",
 	"moderation.reported_thank_you": "شكراُ لك على تقريرك. وقد تم إبلاغ الإدارة به.",
-	"mail.actions.run_info_trigger": "تم تشغيله بسبب: %[1]s عبر: %[2]s",
 	"install.invalid_lfs_path": "غير قادر على إنشاء جذر LFS في المسار المحدد: %[1]s",
 	"alert.range_error": " يجب أن يكون رقمًا بين %[1]s و %[2]s.",
-	"mail.actions.not_successful_run_subject": "سير العمل %[1]s فشل في المستودت %[2]s",
-	"mail.actions.successful_run_after_failure": "تم استعادة سير العمل %[1]s في المستودع %[2]s",
-	"mail.actions.not_successful_run": "فشل سير العمل %[1]s في المستودع %[2]s",
-	"mail.actions.run_info_cur_status": "حالة هذا التشغيل: %[1]s (تم تحديثها من %[2]s للتو)",
-	"mail.actions.run_info_previous_status": "حالة التشغيل السابقة: %[1]s",
 	"discussion.locked": "تم إغلاق هذه المناقشة. يقتصر التعليق على المساهمين فقط.",
 	"editor.textarea.tab_hint": "السطر مُزاح بالفعل. اضغط <kbd>Tab</kbd> مرة أخرى أو <kbd>Escape</kbd> لمغادرة المحرر.",
 	"editor.textarea.shift_tab_hint": "لا توجد مسافة بادئة في هذا السطر. اضغط <kbd>Shift</kbd> + <kbd>Tab</kbd> مرة أخرى أو <kbd>Escape</kbd> لمغادرة المحرر.",
@@ -421,7 +426,6 @@
 	"moderation.report_abuse": "الإبلاغ عن إساءة الاستخدام",
 	"feed.atom.link": "موجز Atom",
 	"admin.config.moderation_config": "تهيئة الإشراف",
-	"mail.actions.successful_run_after_failure_subject": "تم استعادة سير العمل %[1]s في المستودع %[2]s",
 	"discussion.sidebar.reference": "مرجع",
 	"admin.moderation.moderation_reports": "تقارير الإشراف",
 	"admin.moderation.reports": "التقارير",

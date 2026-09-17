@@ -19,7 +19,8 @@
 	"quota.sizes.all": "Sve",
 	"counters.n_followers": {
 		"one": "%d sljedbenik",
-		"many": "%d sljedbenici"
+		"few": "%d sljedbenika",
+		"other": "%d sljedbenika"
 	},
 	"issues.search.sort.oldest": "Najstariji",
 	"issues.search.sort.latest": "Najnoviji",
@@ -43,7 +44,7 @@
 	"mde.buttons.italic.tooltip": "Dodaj kurzivni tekst (Ctrl+I / ⌘I)",
 	"mde.buttons.bold.tooltip": "Dodaj podebljani tekst (Ctrl+B / ⌘B)",
 	"mde.buttons.heading.tooltip": "Dodaj naslov",
-	"home.welcome.no_activity": "Nema aktivnost",
+	"home.welcome.no_activity": "Nema aktivnosti",
 	"migrate.items.pull_requests": "Zahtjevi za povlačenje",
 	"migrate.items.merge_requests": "Spoji zahtjevi",
 	"migrate.items.releases": "Objavi",
@@ -424,7 +425,6 @@
 	"moderation.action.issue.delete": "Izbriši pitanje",
 	"moderation.unknown_action": "Nepoznata akcija",
 	"moderation.submit_report": "Predaj prijavu",
-	"mail.actions.run_info_sha": "Obveza: %[1]s",
 	"admin.dashboard.cron.process": "Cron: %[1]s",
 	"admin.config.security": "Konfiguracija sigurnosti",
 	"actions.runs.all_workflows": "Sve tijek radova",
@@ -510,5 +510,65 @@
 	"moderation.report.mark_as_handled": "Označi kao obrađeno",
 	"settings.authorized_integration.ui.forgejo_actions_local": "Forgejo Akcije (Lokalno)",
 	"settings.authorized_integration.edit_page_title": "Autorizirani integracija <b>%s</b>",
-	"actions.variables.update.failed": "Neuspješno urediti varijablu."
+	"actions.variables.update.failed": "Neuspješno urediti varijablu.",
+	"home.welcome.activity_hint": "Nema ništa na vašem feed-u još. Vaše akcije i aktivnosti od repozitorija koje pratite će se pokazati ovdje.",
+	"followers.outgoing.list.self.none": "Ne pratite nikoga.",
+	"followers.outgoing.list.none": "%s ne prati nikoga.",
+	"repo.files.caption": "Repozitorijski dokumenti (zadnja obveza prvo)",
+	"repo.files.last_commit_message": "Zadnja poruka obveze",
+	"repo.issues.filter_poster.hint": "Filtriraj po autoru",
+	"repo.issues.filter_assignee.hint": "Filtriraj po dodijeljenom korisniku",
+	"repo.issues.filter_reviewers.hint": "Filtriraj po korisniku koji je pregledao",
+	"repo.issues.filter_mention.hint": "Filtriraj po spomenutom korisniku",
+	"repo.issues.filter_modified.hint": "Filtriraj po datumu zadnje modifikacije",
+	"repo.pulls.auto_merge.no_permission": "Nemate dopuštenje da otkažete automatsko spajanje ovog zahtjeva za povlačenje.",
+	"repo.pulls.poster_requires_approval": "Neki tijekovi rada <a href=\"%[1]s\">čekaju pregled</a>.",
+	"repo.pulls.poster_is_trusted": "Autoru ovog zahtjeva za povlačenje je <a href=\"%[1]s\">uvijek vjerovano da pokreće tijekove radova</a>.",
+	"repo.pulls.poster_trust_deny.tooltip": "Tijekovi radova koji čekaju na odobrenje će biti otkazani.",
+	"repo.pulls.already_merged": "Spajanje neuspjelo: Ovaj zahtjev za povlačenje je već spojen.",
+	"repo.pulls.merged_title_desc": {
+		"one": "Spojena %[1]d obveza od <code>%[2]s</code> u <code>%[3]s</code> %[4]s",
+		"few": "Spojeno %[1]d obveza od <code>%[2]s</code> u <code>%[3]s</code> %[4]s",
+		"other": "Spojeno %[1]d obveza od <code>%[2]s</code> u <code>%[3]s</code> %[4]s"
+	},
+	"repo.pulls.title_desc": {
+		"one": "želi spojiti %[1]d obvezu od <code>%[2]s</code> u <code id=\"%[4]s\">%[3]s</code>",
+		"few": "želi spojiti %[1]d obveze od <code>%[2]s</code> u <code id=\"%[4]s\">%[3]s</code>",
+		"other": "želi spojiti %[1]d obveza od <code>%[2]s</code> u <code id=\"%[4]s\">%[3]s</code>"
+	},
+	"repo.form.cannot_create": "Sva mjesta u kojima možete stvoriti repozitorij su došli do ograničenja o granici repozitorija.",
+	"migrate.form.error.url_credentials": "URL sadrži uvjerenja, stavite ih u polja za korisničko ime i lozinku",
+	"migrate.git.description": "Migriraj repozitorij samo sa bilo kojeg Git servisa.",
+	"migrate.gitea.description": "Migriraj podatke sa gitea.com ili drugih Gitea instanci.",
+	"migrate.gitlab.description": "Migriraj podatke sa gitlab.com ili drugih GitLab instanci.",
+	"migrate.gogs.description": "Migriraj podatke sa notabug.com ili drugih Gogs instanci.",
+	"migrate.onedev.description": "Migriraj podatke sa code.onedev.io ili drugih OneDev instanci.",
+	"migrate.gitbucket.description": "Migriraj podatke sa GitBucket instanci.",
+	"migrate.codebase.description": "Migriraj podatke sa codebasehq.com.",
+	"migrate.forgejo.description": "Migriraj podatke sa codeberg.org ili drugih Forgejo instanci.",
+	"migrate.in_progress.issues.progress": {
+		"one": "Migriran %[1]d problem",
+		"few": "Migrirano %[1]d problema",
+		"other": "Migrirano %[1]d problema"
+	},
+	"migrate.in_progress.pulls.progress": {
+		"one": "Migriran %[1]d zahtjev za povlačenje",
+		"few": "Migrirano %[1]d zahtjeva za povlačenje",
+		"other": "Migrirano %[1]d zahtjeva za povlačenje"
+	},
+	"migrate.cancel.confirmation": "Želite li otkazati ovu migraciju?",
+	"repo.settings.push_mirror.branch_filter.label": "Filter grana (opcionalni)",
+	"repo.settings.push_mirror.branch_filter.description": "Grane moraju biti zrcaljene. Ostavi prazno za zrcaljene svih grana. Pogledaj <a href=\"%[1]s\">%[2]s dokumentaciju</a> za sintaksu. Primjeri: <code>glavno, objava/*</code>",
+	"repo.settings.units.more_units_disable_hint": "Savjet \"Uključi više\" može biti isključen u <a href=\"%s\">Korisničke postavke > Izgled</a>.",
+	"incorrect_root_url": "Ova Forgejo instanca je podešena da bude poslužena na \"%s\". Trenutno gledate Forgejo preko drugog URL-a, što može izazvati dijelove aplikacije da se pokvare. Kanonski URL je kontroliran od Forgejo administratora sa ROOT_URL postavke u app.ini.",
+	"themes.names.forgejo-auto": "Forgejo (prati temu sustava)",
+	"warning.repository.out_of_sync": "Reprezentacija baze podataka u ovom repozitoriju je izvan sinkronizacije. Ako je ovo upozorenje i dalje vidljivo nakon guranja obveze na ovom repozitoriju kontaktirajte administratora.",
+	"alert.asset_load_failed": "Neuspjelo učitavanje imovinskih datoteka sa {path}. Molim da osigurate da se imovinskim datotekama može pristupiti.",
+	"install.invalid_lfs_path": "Ne mogu stvoriti LFS korijen na traženoj putanji: %[1]s",
+	"install.ssh_authorized_keys_inspection_error": "Neuspjeo pregled postojeće authorized_keys datoteke: %v",
+	"install.ssh_authorized_keys_unexpected_key": "Uključivanje SSH za Forgejo se sukobljava sa datotekom koja se nalazi na %s i sadrži postojeće SSH ključeve. Savjet: koristite posvećenog sustavskog korisnika za Forgejo, ili isključite SSH.",
+	"feed.atom.link": "Atom prijenos",
+	"keys.verify.token.hint": "Token je samo valjan na 1 minutu. <a href=\"%[1]s\">Dobij novi ako istekne</a>.",
+	"admin.federation.hosts.manage_panel": "Upravljaj federacijskim domaćinima",
+	"admin.federation.users.show_local_user": "Pokaži detalje o lokalnom korisniku"
 }

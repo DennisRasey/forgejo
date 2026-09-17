@@ -2,7 +2,8 @@
 	"sync_fork.sync.button": "Sync",
 	"sync_fork.branch_behind": {
 		"one": "Cette branche a %[1]d commits de retard sur %[2]s",
-		"other": "Cettte branche a %[1]d commits de retard sur %[2]s"
+		"many": "Cettte branche a %[1]d commits de retard sur %[2]s",
+		"other": ""
 	},
 	"mirror_settings.direction.header": "Direction",
 	"mirror_settings.docs.summary": "Configurez votre dépôt pour synchroniser automatiquement les révisions, étiquettes et branches avec un autre dépôt.",
@@ -77,11 +78,13 @@
 	"quota.sizes.all": "Tout",
 	"counters.n_following": {
 		"one": "Suit %d personnes",
-		"other": "%d abonnements"
+		"many": "%d abonnements",
+		"other": ""
 	},
 	"counters.n_followers": {
 		"one": "%d abonné",
-		"other": "%d abonnés"
+		"many": "%d abonnés",
+		"other": ""
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "Votre profil est privé mais votre activité est aussi visible par les administrateurs·trices. <a href=\"%s\">Configure</a>.",
 	"user.public_activity.visibility_hint.admin_private": "Vous pouvez voir cette activité en tant qu'administrateur mais l'utilisateur veut qu'elle reste privée.",
@@ -257,7 +260,6 @@
 	"admin.dashboard.system_status": "État du système",
 	"admin.dashboard.operations": "Opérations de maintenance",
 	"admin.dashboard.statistic": "Résumé",
-	"admin.dashboard.new_version_hint": "Forgejo %s est maintenant disponible, vous utilisez %s. Consultez <a target=\"_blank\" rel=\"noreferrer\" href=\"%s\">le blog</a> pour plus de détails.",
 	"admin.monitor.queue.settings.remove_all_items.success": "Tous les éléments de la file d'attente ont été effacés.",
 	"admin.monitor.queue.settings.remove_all_items": "Tout effacer",
 	"admin.monitor.queue.settings.changed": "Paramètres mis à jour",
@@ -627,12 +629,6 @@
 	"relativetime.1month": "le mois dernier",
 	"incorrect_root_url": "Cette instance Forgejo est configuré pour être servi sur \"%s\". Vous êtes actuellement en train de regarder Forgejo avec une URL différente, ce qui pourrait casser certaines parties de cette application. L'URL canonique est controllée par les administrateurs Forgejo grâce au paramètre ROOT_URL dans le app.ini.",
 	"meta.last_line": "Merci de traduire Forgejo ! Cette ligne n'est pas vue par les utilisateurs mais sert à d'autres fins dans la gestion de la traduction. Vous pouvez mettre une fun fact dans la traduction au lieu de la traduire. Miaou.",
-	"mail.actions.successful_run_after_failure": "Workflow %[1]s récupéré dans le dépôt %[2]s",
-	"mail.actions.successful_run_after_failure_subject": "Workflow %[1]s récupéré dans le dépôt %[2]s",
-	"mail.actions.not_successful_run_subject": "Workflow %[1]s a raté dans le dépôt %[2]s",
-	"mail.actions.not_successful_run": "Workflow %[1]s raté dans le dépôt %[2]s",
-	"mail.actions.run_info_cur_status": "Statut de cette exécution : %[1]s (vient de se mettre à jour de %[2]s)",
-	"mail.actions.run_info_previous_status": "Précédent statut de l'éxecution : %[1]s",
 	"moderation.reported_thank_you": "Merci pour votre signalement. L'administration a été mise au courant.",
 	"admin.config.moderation_config": "Configuration de la modération",
 	"moderation.report_content": "Signaler le contenu",
@@ -660,7 +656,6 @@
 	"watch.list.none": "Personne ne suit ce dépôt.",
 	"repo.form.cannot_create": "Tous les espaces où vous pouvez créer des dépôts a atteint la limite de dépôts.",
 	"admin.dashboard.cleanup_offline_runners": "Nettoyer les exécuteurs hors ligne",
-	"mail.actions.run_info_trigger": "Activé parce que : %[1]s par : %[2]s",
 	"settings.visibility.description": "La visibilité du profil affecte la capacité des autres à accéder à vos dépôts non-privés. <a href=\"%s\" target=\"_blank\">Voir plus</a>.",
 	"editor.textarea.shift_tab_hint": "Pas d'indentation sur cette ligne. Appuyez sur <kbd>Maj</kbd> + <kbd>Tab</kbd> une nouvelle fois ou sur <kbd>Échap</kbd> pour quitter l'éditeur.",
 	"avatar.constraints_hint": "L'avatar personnalisé ne doit pas dépasser une taille de %[1]s ou être plus grand que %[2]dx%[3]d pixels",
@@ -675,7 +670,6 @@
 	"keys.gpg.link": "Clés GPG",
 	"compare.branches.title": "Comparer les branches",
 	"repo.settings.push_mirror.branch_filter.description": "Branches a répliquer. Laisser vide pour répliquer toutes les branches. Voir la documentation <a href=\"%[1]s\">%[2]s</a> pour la syntaxe. Exemples : <code>main, release/*</code>",
-	"mail.actions.run_info_sha": "Commit: %[1]s",
 	"admin.moderation.deleted_content_ref": "Le signalement avec le type %[1]v et l'identifiant %[2]d n'existe plus",
 	"error.must_enable_2fa": "Cette instance Forgejo exige que les utilisateurs activent l'authentification à deux facteurs avant qu'ils puissent accéder a leurs comptes. Activez-la sur  : %s",
 	"admin.config.global_2fa_requirement.admin": "Administrateurs",

@@ -2,7 +2,8 @@
 	"sync_fork.sync.button": "Sincronizza",
 	"sync_fork.branch_behind": {
 		"one": "Questo ramo è indietro di %[1]d commit rispetto a %[2]s",
-		"other": "Questo ramo è indietro di %[1]d commit rispetto a %[2]s"
+		"many": "Questo ramo è indietro di %[1]d commit rispetto a %[2]s",
+		"other": ""
 	},
 	"mirror_settings.direction.header": "Direzione",
 	"mirror_settings.docs.summary": "Imposta il tuo repo in modo che sincronizzi automaticamente commit, tag e rami con un altro repo.",
@@ -77,11 +78,13 @@
 	"quota.sizes.all": "Tutti",
 	"counters.n_following": {
 		"one": "%d seguito",
-		"other": "%d seguiti"
+		"many": "%d seguiti",
+		"other": ""
 	},
 	"counters.n_followers": {
 		"one": "%d seguace",
-		"other": "%d seguaci"
+		"many": "%d seguaci",
+		"other": ""
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "Poiché il tuo profilo è privato, la tua attività è visibile solo a te e agli amministratori dell'istanza. <a href=\"%s\">Configura</a>.",
 	"user.public_activity.visibility_hint.admin_private": "Questa attività è visibile a te perché sei un amministratore, ma l'utente desidera che rimanga privata.",
@@ -257,7 +260,6 @@
 	"admin.dashboard.system_status": "Stato del sistema",
 	"admin.dashboard.operations": "Operazioni di manutenzione",
 	"admin.dashboard.statistic": "Riepilogo",
-	"admin.dashboard.new_version_hint": "Forgejo %s è ora disponibile; stai eseguendo %s. Controlla <a target=\"_blank\" rel=\"noreferrer\" href=\"%s\">il blog</a> per ulteriori dettagli.",
 	"admin.monitor.queue.settings.remove_all_items.success": "Tutti gli elementi in coda sono stati rimossi.",
 	"admin.monitor.queue.settings.remove_all_items": "Rimuovi tutto",
 	"admin.monitor.queue.settings.changed": "Impostazioni aggiornate",
@@ -582,8 +584,6 @@
 	"home.explore_repos": "Esplora i repositori",
 	"home.explore_users": "Esplora l'utenza",
 	"home.explore_orgs": "Esplora le organizzazioni",
-	"mail.actions.successful_run_after_failure_subject": "Il flusso di lavoro %[1] ha ripreso a funzionare nel repositorio %[2]s",
-	"mail.actions.not_successful_run_subject": "Il flusso di lavoro %[1]s è fallito nel repositorio %[2]s",
 	"relativetime.future": "nel futuro",
 	"relativetime.days": {
 		"one": "ieri",
@@ -684,7 +684,6 @@
 	"repo.settings.push_mirror.branch_filter.label": "Filtro ramo (opzionale)",
 	"alert.range_error": " deve essere un numero tra %[1]s e %[2]s.",
 	"keys.gpg.link": "Chiavi GPG",
-	"mail.actions.successful_run_after_failure": "Flusso di lavoro %[1]s recuperato nel repositorio %[2]s",
 	"profile.actions.tooltip": "Altre azioni",
 	"profile.edit.link": "Modifica profilo",
 	"feed.atom.link": "Feed Atom",
@@ -693,21 +692,17 @@
 	"incorrect_root_url": "Questa istanza di Forgejo è configurata per operare su “%s”. Attualmente stai caricando Forgejo attraverso un URL differente, questo potrebbe causare il malfunzionamento di alcune parti dell'applicazione. L'URL canonico è definito dagli amministratori di Forgejo attraverso l'impostazione ROOT_URL in app.ini.",
 	"warning.repository.out_of_sync": "Lo stato del database di questo repositorio non è sincronizzato. Se questo avviso permane anche dopo aver inviato un commit a questo repositorio contattare l'amministratore.",
 	"migrate.form.error.url_credentials": "L'URL contiene delle credenziali, inseriscile rispettivamente nei campi nome utente e password",
-	"mail.actions.run_info_cur_status": "Stato di questa esecuzione: %[1]s (appena aggiornato da %[2]s)",
 	"compare.branches.title": "Confronta i rami",
-	"mail.actions.run_info_sha": "Commit: %[1]s",
 	"repo.settings.push_mirror.branch_filter.description": "Rami da essere specchiati. Lascia vuoto per specchiare tutti i rami. Consulta la <a href=\"%[1]s\">%[2]s documentazione</a> per la sintassi. Esempi: <code>main, release/*</code>",
 	"admin.moderation.reports": "Segnalazioni",
 	"admin.moderation.no_open_reports": "Attualmente non ci sono segnalazioni aperte.",
 	"admin.moderation.deleted_content_ref": "Il contenuto segnalato con tipo %[1]v e con id %[2]d non esiste più",
-	"mail.actions.run_info_previous_status": "Stato dell'esecuzione precedente: %[1]s",
 	"admin.auths.allow_username_change": "Consenti la modifica del nome utente",
 	"admin.auths.allow_username_change.description": "Consenti agli utenti di cambiare il proprio nome utente nelle impostazione del profilo",
 	"admin.dashboard.cleanup_offline_runners": "Elimina esecutori offline",
 	"admin.dashboard.remove_resolved_reports": "Rimuovi segnalazioni risolte",
 	"settings.twofa_unroll_unavailable": "La verifica in due passaggi è richiesta per il tuo account e non può essere disattivata.",
 	"settings.must_enable_2fa": "Questa istanza Forgejo richiede che gli utenti attivino la verifica in due passaggi prima di poter accedere ai propri account.",
-	"mail.actions.run_info_trigger": "Attivato perché: %[1]s da: %[2]s",
 	"repo.diff.commit.next-short": "Successivo",
 	"discussion.sidebar.reference": "Riferimento",
 	"editor.textarea.shift_tab_hint": "Nessuna indentazione su questa riga. Premi <kbd>Shift</kbd> + <kbd>Tab</kbd> di nuovo o <kbd>Escape</kbd> per uscire dall'editor.",
@@ -783,7 +778,6 @@
 	"migrate.pagure.incorrect_url": "È stato fornito un URL del repository sorgente errato",
 	"migrate.pagure.project_url": "URL del progetto Pagure",
 	"migrate.pagure.project_example": "L'URL del progetto Pagure, ad esempio https://pagure.io/pagure",
-	"mail.actions.not_successful_run": "Flusso di lavoro %[1]s non riuscito nel repositorio %[2]s",
 	"settings.twofa_reenroll.description": "Reinserisci la verifica in due passaggi",
 	"pulse.n_active_issues": {
 		"one": "%s segnalazione attiva",

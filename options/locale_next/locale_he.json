@@ -141,7 +141,6 @@
 	"moderation.submit_report": "הגש דיווח",
 	"moderation.reporting_failed": "דיווח התעללות נכשל: %v",
 	"moderation.reported_thank_you": "תודה על הדיווח שלך. ההנהלה עודכנה על כך.",
-	"mail.actions.run_info_sha": "קומיט: %[1]s",
 	"repo.diff.commit.next-short": "הבא",
 	"repo.diff.commit.previous-short": "הקודם",
 	"discussion.locked": "הדיון ננעל. היכולת להגיב מוגבלת לתורמים בלבד.",

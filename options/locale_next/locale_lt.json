@@ -70,13 +70,6 @@
 	"error.not_found.title": "Puslapis nerastas",
 	"alert.asset_load_failed": "Nepavyko įkelti išteklių failų iš {path}. Įsitikinkite, kad išteklių failai yra pasiekiami.",
 	"install.invalid_lfs_path": "Nepavyko sukurti LFS šakninio katalogo nurodytame kelyje: %[1]s",
-	"mail.actions.successful_run_after_failure_subject": "Darbo eiga %[1]s atkurta saugykloje %[2]s",
-	"mail.actions.not_successful_run_subject": "Darbo eiga %[1]s nepavyko saugykloje %[2]s",
-	"mail.actions.successful_run_after_failure": "Darbo eiga %[1]s atkurta saugykloje %[2]s",
-	"mail.actions.not_successful_run": "Darbo eiga %[1]s nepavyko saugykloje %[2]s",
-	"mail.actions.run_info_cur_status": "Šio vykdymo būsena: %[1]s (ką tik atnaujinta iš %[2]s)",
-	"mail.actions.run_info_previous_status": "Ankstesnio vykdymo būsena: %[1]s",
-	"mail.actions.run_info_trigger": "Paleista dėl: %[1]s, autorius: %[2]s",
 	"discussion.locked": "Ši diskusija buvo užrakinta. Komentuoti gali tik prisidėję naudotojai.",
 	"relativetime.days": {
 		"one": "prieš %d dieną",

@@ -2,7 +2,8 @@
 	"sync_fork.sync.button": "Sincronitza",
 	"sync_fork.branch_behind": {
 		"one": "Aquesta branca és %[1]d commit darrere de %[2]s",
-		"other": "Aquesta branca és %[1]d commits darrere de %[2]s"
+		"many": "Aquesta branca és %[1]d commits darrere de %[2]s",
+		"other": ""
 	},
 	"mirror_settings.direction.header": "Direcció",
 	"mirror_settings.docs.summary": "Configureu el vostre repositori per sincronitzar commits, etiquetes i branques automàticament amb un altre repositori.",
@@ -77,11 +78,13 @@
 	"quota.sizes.all": "Tot",
 	"counters.n_following": {
 		"one": "%d seguint",
-		"other": "%d seguint"
+		"many": "%d seguint",
+		"other": ""
 	},
 	"counters.n_followers": {
 		"one": "%d seguidor",
-		"other": "%d seguidors"
+		"many": "%d seguidors",
+		"other": ""
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "La vostra activitat és visible només per vós i pels administradors de la instància perquè el vostre perfil és privat. <a href=\"%s\">Configurar</a>.",
 	"user.public_activity.visibility_hint.admin_private": "Aquesta activitat és visible per vós perquè sou un administrador, però l'usuari vol que romangui privada.",
@@ -245,7 +248,6 @@
 	"admin.dashboard.system_status": "Estat del sistema",
 	"admin.dashboard.operations": "Operacions de manteniment",
 	"admin.dashboard.statistic": "Resum",
-	"admin.dashboard.new_version_hint": "Forgejo %s és ara disponible, esteu executant %s. Comprova <a target=\"_blank\" rel=\"noreferrer\" href=\"%s\">el blog</a> per més detalls.",
 	"admin.monitor.queue.type": "Tipus",
 	"admin.monitor.queue.name": "Nom",
 	"admin.users.list_status_filter.not_2fa_enabled": "A2F desactivada",
@@ -452,11 +454,6 @@
 	"moderation.submit_report": "Enviar la denúncia",
 	"moderation.reporting_failed": "No s'ha pogut enviar la nova denúncia d'abús: %v",
 	"moderation.reported_thank_you": "Gràcies per la vostra denúncia. L'administració n'ha estat informada.",
-	"mail.actions.successful_run_after_failure_subject": "S'ha recuperat el flux de treball %[1]s al repositori %[2]s",
-	"mail.actions.not_successful_run_subject": "El flux de treball %[1]s ha fallat al repositori %[2]s",
-	"mail.actions.successful_run_after_failure": "S'ha recuperat el flux de treball %[1]s al repositori %[2]s",
-	"mail.actions.not_successful_run": "El flux de treball %[1]s ha fallat al repositori %[2]s",
-	"mail.actions.run_info_previous_status": "Estat de l'execució anterior: %[1]s",
 	"repo.diff.commit.next-short": "Següent",
 	"discussion.locked": "Aquesta discussió s'ha bloquejat. Només els contribuïdors hi poden comentar.",
 	"discussion.sidebar.reference": "Referència",
@@ -475,13 +472,11 @@
 	"repo.settings.push_mirror.branch_filter.description": "Les branques a ser replicades. Deixeu-ho en blanc per replicar-les totes. Per saber més de la sintaxis, vegeu la <a href=\"%[1]s\">documentació de %[2]s</a>. Exemples: <code>main, release/*</code>",
 	"alert.range_error": " ha de ser un nombre entre %[1]s i %[2]s.",
 	"admin.moderation.deleted_content_ref": "El contingut denunciat amb tipus %[1]v i ID %[2]d ja no existeix",
-	"mail.actions.run_info_cur_status": "Estat d'aquesta execució: %[1]s (actualitzat ara mateix de %[2]s)",
 	"repo.diff.commit.previous-short": "Anterior",
 	"editor.textarea.shift_tab_hint": "No si ha sagnat en aquesta línia. Premeu <kbd>Shift</kbd> + <kbd>Tabulació</kbd> un altre cop o <kbd>Esc</kbd> per sortir de l'editor.",
 	"admin.auths.allow_username_change": "Permet el canvi de nom d'usuari",
 	"admin.auths.allow_username_change.description": "Permet als usuaris canviar el seu nom d'usuari a la configuració del perfil",
 	"admin.dashboard.remove_resolved_reports": "Eliminar les denúncies resoltes",
-	"mail.actions.run_info_sha": "Commit: %[1]s",
 	"home.welcome.activity_hint": "El vostre canal de notícies és buit. Aquí apareixeran les vostres accions i l'activitat dels repositoris que observeu.",
 	"repo.pulls.already_merged": "La fusió ha fallat: aquesta sol·licitud d'extracció ja s'ha fusionat.",
 	"alert.asset_load_failed": "No s'han pogut carregar els fitxers d'actiu de {path}. Si us plau, assegureu-vos que els fitxers d'actiu són accessibles.",
@@ -544,7 +539,6 @@
 	"actions.workflow.event_detection_error": "No s'han pogut analitzar els esdeveniments compatibles al flux de treball: %v",
 	"og.repo.summary_card.alt_description": "La targeta de resum del repositori %[1]s, descrita com a: %[2]s",
 	"stars.list.none": "Ningú ha destacat aquest repositori.",
-	"mail.actions.run_info_trigger": "Activat per: %[1]s per: %[2]s",
 	"watch.n_watchers": {
 		"one": "%s observador",
 		"many": "%s observadors",
@@ -1176,12 +1170,33 @@
 	"org.view_invite": "Mostra",
 	"keys.ssh.disabled": "La gestió de claus SSH en aquesta instància ha sigut deshabilitada per un administrador.",
 	"funding.yaml_error.duplicate_entry": "Entrada duplicada per la clau '%s': %s",
-	"funding.yaml_error.n_too_many_providers": "S'esperaven fins a %d proveïdors de finançament",
+	"funding.yaml_error.n_too_many_providers": {
+		"one": "S'esperaven fins a %d proveïdors de finançament",
+		"many": "",
+		"other": ""
+	},
 	"funding.yaml_error.bad_input": "El valor per la clau '%s' no coincideix amb el patró /%s/",
 	"funding.yaml_error.parse_url": "URL incorrecta per la clau '%s': %v",
 	"funding.yaml_error.invalid_yaml_type": "Tipus incorrecte per la clau '%s', s'esperava una cadena o una llista de cadenes",
 	"funding.yaml_error.unknown": "Error desconegut: %s",
 	"funding.yaml_error.heading_one": "Error en analitzar la configuració del finançament: %s",
 	"funding.yaml_error.heading_few": "Errors analitzant la configuració del finançament:",
-	"funding.yaml_error.unknown_provider": "Proveïdor de finançament desconegut: %s"
+	"funding.yaml_error.unknown_provider": "Proveïdor de finançament desconegut: %s",
+	"repo.rss.issue_feed_title": "Incidència %s: %s",
+	"repo.rss.pull_feed_title": "Pull request %s: %s",
+	"repo.rss.updates_on_issue": "Novetats sobre la incidència %s de %s",
+	"repo.rss.updates_on_pull": "Novetats en la «pull request» %s de %s",
+	"migrate.bitbucketdc.description": "Migrar dades des d'una instància Bitbucket Data Center.",
+	"migrate.bitbucketdc.auth_username_helper": "Obligatori amb un testimoni d'usuari (el nom d'usuari del propietari del testimoni). Deixeu-ho buit si és un testimoni de projecte o repositori.",
+	"search.verb": "Cerca",
+	"repo.settings.collaboration.change_access": "Canvia mode d'accés",
+	"repo.settings.collaboration.none": " Encara no hi ha coŀlaboradors.",
+	"user.visibility.label": "Visibilitat del perfil",
+	"org.members.no_public_members": "Encara no hi ha membres públics.",
+	"funding.yaml_error.duplicate_yaml_key": "Clau YAML duplicada: %[1]s",
+	"funding.action.button": "Dona",
+	"funding.action.title": "Dona a %[1]s",
+	"funding.config_has_errors": "La <a href=\"%[1]s\">configuració de pressupost</a> té errors.",
+	"funding.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Vegeu la documentació</a> per a més detalls sobre els enllaços de donació.",
+	"modal.close": "Tanca"
 }
