@@ -5,6 +5,7 @@ package security
 
 import (
 	"net/http"
+	"net/url"
 
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/auth/openid"
@@ -13,6 +14,8 @@ import (
 	"forgejo.org/modules/web"
 	"forgejo.org/services/context"
 	"forgejo.org/services/forms"
+
+	gouuid "github.com/google/uuid"
 )
 
 // OpenIDPost response for change user's openid
@@ -61,7 +64,15 @@ func OpenIDPost(ctx *context.Context) {
 		}
 	}
 
-	redirectTo := setting.AppURL + "user/settings/security"
+	// To ensure that any OpenID associations performed are generated as a result of the user's actions, attach a
+	// randomly generated value to the return URL and store it in the user's session.
+	openIDState := gouuid.New().String()
+	if err := ctx.Session.Set("openIDState", openIDState); err != nil {
+		ctx.ServerError("Session.Set", err)
+		return
+	}
+
+	redirectTo := setting.AppURL + "user/settings/security?s=" + url.QueryEscape(openIDState)
 	url, err := openid.RedirectURL(id, redirectTo, setting.AppURL)
 	if err != nil {
 		loadSecurityData(ctx)
@@ -73,10 +84,24 @@ func OpenIDPost(ctx *context.Context) {
 }
 
 func settingsOpenIDVerify(ctx *context.Context) {
-	log.Trace("Incoming call to: " + ctx.Req.URL.String())
+	log.Trace("Incoming call to: %s", ctx.Req.URL.String())
+
+	// To ensure that any OpenID associations performed are generated as a result of the user's actions, validate the
+	// `s` parameter that was generated when the association process started matches the one in the user's session.
+	// Remove it so it can be used only once.
+	incomingOpenIDState := ctx.FormString("s")
+	expectedOpenIDState := ctx.Session.Get("openIDState").(string)
+	if err := ctx.Session.Delete("openIDState"); err != nil {
+		// Treat as a fatal error, otherwise the state value could be reused with unknown risks.
+		ctx.ServerError("Session.Delete", err)
+		return
+	} else if incomingOpenIDState != expectedOpenIDState {
+		ctx.RenderWithErr("Invalid OpenID state parameter", tplSettingsSecurity, &forms.AddOpenIDForm{})
+		return
+	}
 
 	fullURL := setting.AppURL + ctx.Req.URL.String()[1:]
-	log.Trace("Full URL: " + fullURL)
+	log.Trace("Full URL: %q", fullURL)
 
 	id, err := openid.Verify(fullURL)
 	if err != nil {
@@ -86,7 +111,7 @@ func settingsOpenIDVerify(ctx *context.Context) {
 		return
 	}
 
-	log.Trace("Verified ID: " + id)
+	log.Trace("Verified ID: %s", id)
 
 	oid := &user_model.UserOpenID{UID: ctx.Doer.ID, URI: id}
 	if err = user_model.AddUserOpenID(ctx, oid); err != nil {
