@@ -186,7 +186,7 @@ func lockablesGitAttributes(gitRepo *git.Repository, lfsLocks []*git_model.LFSLo
 // LFSLockFile locks a file
 func LFSLockFile(ctx *context.Context) {
 	if !setting.LFS.StartServer {
-		ctx.NotFound("LFSLocks", nil)
+		ctx.NotFound("LFSLockFile", nil)
 		return
 	}
 	originalPath := ctx.FormString("path")
@@ -384,13 +384,13 @@ func LFSDelete(ctx *context.Context) {
 // LFSFileFind guesses a sha for the provided oid (or uses the provided sha) and then finds the commits that contain this sha
 func LFSFileFind(ctx *context.Context) {
 	if !setting.LFS.StartServer {
-		ctx.NotFound("LFSFind", nil)
+		ctx.NotFound("LFSFileFind", nil)
 		return
 	}
 	oid := ctx.FormString("oid")
 	size := ctx.FormInt64("size")
 	if len(oid) == 0 || size == 0 {
-		ctx.NotFound("LFSFind", nil)
+		ctx.NotFound("LFSFileFind", nil)
 		return
 	}
 	sha := ctx.FormString("sha")
