@@ -592,4 +592,12 @@ func TestAPIAddMemberGeneratesInvite(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, isMember)
 	unittest.AssertExistsAndLoadBean(t, &organization.TeamInvite{TeamID: team.ID, InviterID: 1, InvitedID: optional.Some(user5.ID)})
+
+	// try to invite the user again
+	req = NewRequestf(t, "PUT", "/api/v1/teams/%d/members/%s", team.ID, user5.Name).
+		AddTokenAuth(token)
+	resp := MakeRequest(t, req, http.StatusConflict)
+	var respBody map[string]any
+	DecodeJSON(t, resp, &respBody)
+	assert.Contains(t, respBody["message"], "team invite already exists")
 }

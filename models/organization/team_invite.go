@@ -284,6 +284,16 @@ func GetTeamsInvitedTo(ctx context.Context, orgID, userID int64) ([]*Team, error
 		Find(&teams)
 }
 
+// IsInvitedToOrganization returns whether a user has a pending invitation to any team in the organization
+func IsInvitedToOrganization(ctx context.Context, orgID, userID int64) (bool, error) {
+	invite := &TeamInvite{
+		OrgID:     orgID,
+		InvitedID: optional.Some(userID),
+	}
+
+	return db.GetEngine(ctx).Where("expiry_unix > ? OR expiry_unix = 0", timeutil.TimeStampNow()).Exist(invite)
+}
+
 func (i *TeamInvite) LoadInvitedUser(ctx context.Context) error {
 	if i.InvitedUser == nil {
 		hasInvitedUser, userID := i.InvitedID.Get()

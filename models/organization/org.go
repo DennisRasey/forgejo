@@ -105,6 +105,11 @@ func (org *Organization) IsOrgMember(ctx context.Context, uid int64) (bool, erro
 	return IsOrganizationMember(ctx, org.ID, uid)
 }
 
+// IsInvitedToOrg returns true if given user is invited to the organization.
+func (org *Organization) IsInvitedToOrg(ctx context.Context, uid int64) (bool, error) {
+	return IsInvitedToOrganization(ctx, org.ID, uid)
+}
+
 // CanCreateOrgRepo returns true if given user can create repo in organization
 func (org *Organization) CanCreateOrgRepo(ctx context.Context, uid int64) (bool, error) {
 	return CanCreateOrgRepo(ctx, org.ID, uid)

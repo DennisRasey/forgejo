@@ -160,4 +160,14 @@ func TestAddMembersByInvitations(t *testing.T) {
 	body = session.MakeRequest(t, NewRequest(t, "GET", teamURL), http.StatusOK).Body
 	doc = NewHTMLParser(t, body)
 	assert.Equal(t, "/user31", doc.Find("a:contains('user31')").AttrOr("href", ""))
+
+	// invite the same user again
+	req = NewRequestWithValues(t, "POST", fmt.Sprintf("%s/action/add", teamURL), map[string]string{
+		"uname": "user31",
+	})
+	resp = session.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Equal(t, teamURL, resp.Header().Get("Location"))
+	body = session.MakeRequest(t, NewRequest(t, "GET", teamURL), http.StatusOK).Body
+	doc = NewHTMLParser(t, body)
+	assert.Contains(t, strings.TrimSpace(doc.Find(".flash-error").Text()), "This user is already invited to the team.")
 }

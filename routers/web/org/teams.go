@@ -170,6 +170,14 @@ func TeamsAction(ctx *context.Context) {
 			ctx.Flash.Error(ctx.Tr("org.teams.add_duplicate_users"))
 		} else {
 			err = org_service.InviteOrAddTeamMember(ctx, ctx.Doer, u, ctx.Org.Team)
+			if org_model.IsErrTeamInviteAlreadyExist(err) {
+				ctx.Flash.Error(ctx.Tr("members.user_already_invited_to_team"))
+				ctx.Redirect(ctx.Org.OrgLink + "/teams/" + url.PathEscape(ctx.Org.Team.LowerName))
+				return
+			} else if err != nil {
+				ctx.ServerError("InviteOrAddTeamMember", err)
+				return
+			}
 		}
 
 		page = "team"

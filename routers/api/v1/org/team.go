@@ -490,6 +490,8 @@ func AddTeamMember(ctx *context.APIContext) {
 	// responses:
 	//   "204":
 	//     "$ref": "#/responses/empty"
+	//   "409":
+	//     "$ref": "#/responses/forbidden"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
@@ -498,7 +500,11 @@ func AddTeamMember(ctx *context.APIContext) {
 		return
 	}
 	if err := org_service.InviteOrAddTeamMember(ctx, ctx.Doer(), u, ctx.Org().Team); err != nil {
-		ctx.Error(http.StatusInternalServerError, "InviteOrAddTeamMember", err)
+		if organization.IsErrTeamInviteAlreadyExist(err) {
+			ctx.Error(http.StatusConflict, "InviteOrAddTeamMember", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "InviteOrAddTeamMember", err)
+		}
 		return
 	}
 	ctx.Status(http.StatusNoContent)

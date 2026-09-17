@@ -41,6 +41,9 @@ func TestTeamInvite(t *testing.T) {
 		// user 4 already added to team 2, should result in error
 		_, err := organization.CreateTeamInviteForUser(db.DefaultContext, user2, user4, team)
 		require.Error(t, err)
+		invited, err := organization.IsInvitedToOrganization(db.DefaultContext, team.OrgID, user4.ID)
+		require.NoError(t, err)
+		require.False(t, invited)
 	})
 
 	t.Run("CreateAndRemoveByUser", func(t *testing.T) {
@@ -54,6 +57,9 @@ func TestTeamInvite(t *testing.T) {
 		assert.True(t, hasExpiration)
 		assert.Greater(t, expirationDate, timeutil.TimeStampNow().AddDuration(13*24*time.Hour))
 		assert.Less(t, expirationDate, timeutil.TimeStampNow().AddDuration(15*24*time.Hour))
+		invited, err := organization.IsInvitedToOrganization(db.DefaultContext, team.OrgID, user5.ID)
+		require.NoError(t, err)
+		require.True(t, invited)
 
 		// Shouldn't allow duplicate invite by email
 		_, err = organization.CreateTeamInviteByEmail(db.DefaultContext, user1, team, user5.Email)
@@ -146,6 +152,11 @@ func TestTeamInvite(t *testing.T) {
 			&organization.TeamInvite{ExpiryUnix: optional.Some(timeutil.TimeStamp(int64(timeutil.TimeStampNow()) - 500))},
 		)
 		require.NoError(t, err)
+
+		// The user is not considered invited anymore
+		invited, err := organization.IsInvitedToOrganization(db.DefaultContext, team.OrgID, user12.ID)
+		require.NoError(t, err)
+		require.False(t, invited)
 
 		// Creating the invite again succeeds
 		newInvite, err := organization.CreateTeamInviteForUser(db.DefaultContext, user1, user12, team)
