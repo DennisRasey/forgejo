@@ -7,6 +7,10 @@
 				<div class="markup"><pre class="code-block"><code>{{if .PackageDescriptor.Metadata.Scope}}{{.PackageDescriptor.Metadata.Scope}}:{{end}}registry=<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/npm/"></origin-url></code></pre></div>
 			</div>
 			<div class="field">
+				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.npm.registry.cli"}}</label>
+				<div class="markup"><pre class="code-block"><code>npm config set {{if .PackageDescriptor.Metadata.Scope}}{{.PackageDescriptor.Metadata.Scope}}:{{end}}registry=<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/npm/"></origin-url></code></pre></div>
+			</div>
+			<div class="field">
 				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.npm.install"}}</label>
 				<div class="markup"><pre class="code-block"><code>npm install {{.PackageDescriptor.Package.Name}}@{{.PackageDescriptor.Version.Version}}</code></pre></div>
 			</div>

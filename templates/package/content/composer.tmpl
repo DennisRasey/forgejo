@@ -13,6 +13,10 @@
 }</code></pre></div>
 			</div>
 			<div class="field">
+				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.composer.registry.cli"}}</label>
+				<div class="markup"><pre class="code-block"><code>composer config repositories.{{.PackageDescriptor.Owner.Name}} composer <origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/composer"></origin-url></code></pre></div>
+			</div>
+			<div class="field">
 				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.composer.install"}}</label>
 				<div class="markup"><pre class="code-block"><code>composer require {{.PackageDescriptor.Package.Name}}:{{.PackageDescriptor.Version.Version}}</code></pre></div>
 			</div>
