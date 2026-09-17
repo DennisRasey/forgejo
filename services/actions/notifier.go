@@ -478,7 +478,9 @@ func (n *actionsNotifier) PullRequestReview(ctx context.Context, pr *issues_mode
 				Type:    string(reviewHookType),
 				Content: review.Content,
 			},
-		}).Notify(ctx)
+		}).
+		WithPullRequest(pr).
+		Notify(ctx)
 }
 
 func (n *actionsNotifier) PullRequestReviewRequest(ctx context.Context, doer *user_model.User, issue *issues_model.Issue, reviewer *user_model.User, isRequest bool, comment *issues_model.Comment) {
