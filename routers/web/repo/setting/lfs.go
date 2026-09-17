@@ -426,6 +426,7 @@ func LFSPointerFiles(ctx *context.Context) {
 		ctx.NotFound("LFSPointerFiles", nil)
 		return
 	}
+	ctx.Data["Title"] = ctx.Tr("repo.settings.lfs_findpointerfiles")
 	ctx.Data["PageIsSettingsLFS"] = true
 	ctx.Data["LFSFilesLink"] = ctx.Repo.RepoLink + "/settings/lfs"
 
