@@ -38,11 +38,9 @@
 	"quota.sizes.repos.all": "Kho mã",
 	"quota.sizes.all": "Tất cả",
 	"counters.n_following": {
-		"one": "%d đang theo dõi",
 		"other": "%d đang theo dõi"
 	},
 	"counters.n_followers": {
-		"one": "%d người theo dõi",
 		"other": "%d người theo dõi"
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "Hoạt động của bạn chỉ được hiển thị cho bạn và quản trị viên máy chủ vì hồ sơ của bạn là riêng tư. <a href=\"%s\">Thiết lập</a>.",
@@ -190,13 +188,6 @@
 	"moderation.submit_report": "Gửi báo cáo",
 	"moderation.reporting_failed": "Không thể gửi báo cáo lạm dụng mới: %v",
 	"moderation.reported_thank_you": "Cảm ơn vì đã báo cáo. Quản trị viên đã được biết về nó.",
-	"mail.actions.successful_run_after_failure_subject": "Đã khôi phục tiến trình %[1]s từ kho mã %[2]s",
-	"mail.actions.not_successful_run_subject": "Tiến trình %[1]s đã thất bại trong kho mã %[2]s",
-	"mail.actions.successful_run_after_failure": "Đã khôi phục tiến trình %[1]s trong kho mã %[2]s",
-	"mail.actions.not_successful_run": "Tiến trình %[1]s đã thất bại trong kho mã %[2]s",
-	"mail.actions.run_info_cur_status": "Trạng thái của Lần chạy này: %[1]s (vừa cập nhật từ %[2]s)",
-	"mail.actions.run_info_previous_status": "Trạng thái của Lần chạy trước: %[1]s",
-	"mail.actions.run_info_trigger": "Được kích hoạt vì: %[1]s bởi: %[2]s",
 	"repo.diff.commit.next-short": "Tiếp",
 	"repo.diff.commit.previous-short": "Trước",
 	"discussion.locked": "Cuộc thảo luận này đã bị khoá. Chỉ người đóng góp mới có thể bình luận.",

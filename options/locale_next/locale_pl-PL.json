@@ -2,7 +2,8 @@
 	"sync_fork.sync.button": "Synchronizuj",
 	"sync_fork.branch_behind": {
 		"one": "Ta gałąź jest %[1]d commit za %[2]s",
-		"many": "Ta gałąź jest %[1]d commitów za %[2]s"
+		"few": "Ta gałąź jest %[1]d commitów za %[2]s",
+		"many": ""
 	},
 	"mirror_settings.direction.header": "Kierunek",
 	"mirror_settings.docs.summary": "Skonfiguruj swoje repozytorium by automatycznie synchronizowało commity, tagi i gałęzie z innym repozytorium.",
@@ -77,11 +78,13 @@
 	"quota.sizes.all": "Wszystkie",
 	"counters.n_following": {
 		"one": "%d obserwowanych",
-		"many": "%d obserwowani"
+		"few": "%d obserwowani",
+		"many": ""
 	},
 	"counters.n_followers": {
 		"one": "%d obserwujących",
-		"many": "%d obserwujący"
+		"few": "%d obserwujący",
+		"many": ""
 	},
 	"user.public_activity.visibility_hint.self_private_profile": "Twoja aktywność jest widoczna tylko dla ciebie i administratorów tej instancji ponieważ twój profil jest prywatny. <a href=\"%s\">Konfiguruj</a>.",
 	"user.public_activity.visibility_hint.admin_private": "Ta aktywność jest dla ciebie widoczna ponieważ jesteś administratorem, ale użytkownik preferuje by ta aktywność była ukryta.",
@@ -257,7 +260,6 @@
 	"admin.dashboard.system_status": "Status strony",
 	"admin.dashboard.operations": "Operacje konserwacji",
 	"admin.dashboard.statistic": "Podsumowanie",
-	"admin.dashboard.new_version_hint": "Forgejo %s jest już dostępne, w tej chwili korzystasz z %s. Sprawdź szczegóły na <a target=\"_blank\" rel=\"noreferrer\" href=\"%s\">blogu</a>.",
 	"admin.monitor.queue.settings.remove_all_items.success": "Wszystkie elementy w kolejce zostały usunięte.",
 	"admin.monitor.queue.settings.remove_all_items": "Usuń wszystkie",
 	"admin.monitor.queue.settings.changed": "Zaktualizowano ustawienia",
@@ -720,10 +722,6 @@
 	"repo.pulls.poster_trust_once.tooltip": "Workflowy wyzwalane przez zdarzenie `pull_request` zostaną uruchomione dla tego commita, ale będą wymagały zatwierdzenia dla wszystkich przyszłych commitów pushowanych do tego pull requesta.",
 	"repo.pulls.poster_trust_always.tooltip": "Workflowy wyzwalane przez zdarzenie `pull_request` zostaną uruchomione dla tego commita i nie będzie potrzeby zatwierdzania uruchomień z tego pull requesta ani z przyszłych pull requestów utworzonych przez tego samego użytkownika.",
 	"repo.pulls.poster_trust_revoke.tooltip": "Autor tego pull requesta nie będzie już zaufany do uruchamiania workflowów wyzwalanych przez zdarzenie `pull_request`. Każde uruchomienie będzie musiało zostać zatwierdzone ręcznie.",
-	"mail.actions.successful_run_after_failure_subject": "Workflow %[1]s został przywrócony w repozytorium %[2]s",
-	"mail.actions.not_successful_run_subject": "Workflow %[1]s zakończył się niepowodzeniem w repozytorium %[2]s",
-	"mail.actions.successful_run_after_failure": "Workflow %[1]s został przywrócony w repozytorium %[2]s",
-	"mail.actions.not_successful_run": "Workflow %[1]s zakończył się niepowodzeniem w repozytorium %[2]s",
 	"actions.workflow.job_parsing_error": "Nie można przeanalizować zadań w workflow: %v",
 	"actions.workflow.event_detection_error": "Nie można przeanalizować obsługiwanych zdarzeń w workflow: %v",
 	"actions.workflow.persistent_incomplete_matrix": "Nie można ocenić `strategy.matrix` zadania %[1]s z powodu nieprawidłowego wyrażenia `needs`. Może ono odwoływać się do zadania, które nie znajduje się na liście 'needs' (%[2]s), lub do wyniku, który nie istnieje w żadnym z tych zadań.",
@@ -766,9 +764,6 @@
 	"actions.runners.none": "Brak dostępnych runnerów",
 	"actions.runners.reset_registration_token.button": "Resetuj token rejestracji",
 	"actions.runners.reset_registration_token.success": "Rejestracja tokenu resetu runnera pomyślna",
-	"mail.actions.run_info_cur_status": "Stan tego uruchomienia: %[1]s (dopiero zmieniony z %[2]s)",
-	"mail.actions.run_info_previous_status": "Stan poprzedniego uruchomienia: %[1]s",
-	"mail.actions.run_info_trigger": "Wyzwolony ponieważ: %[1]s przez: %[2]s",
 	"discussion.locked": "Ta dyskusja została ograniczona. Komentowanie dozwolone jest jedynie kontrybutorom.",
 	"moderation.report_abuse_form.details": "Ten formularz powinien być używany do zgłaszania użytkowników, którzy tworzą spamowe profile, repozytoria, zgłoszenia lub komentarze albo zachowują się nieodpowiednio.",
 	"moderation.report_abuse_form.already_reported": "Już to zgłosiłeś",
@@ -778,7 +773,6 @@
 	"admin.dashboard.cleanup_offline_runners": "Wyczyść runners offline",
 	"avatar.constraints_hint": "Własny awatar nie może przekraczać %[1]s rozmiaru pliku lub być większym niż %[2]dx%[3]d pikseli",
 	"og.repo.summary_card.alt_description": "Karta podsumowująca repozytorium %[1]s, opisana jako: %[2]s",
-	"mail.actions.run_info_sha": "Commit: %[1]s",
 	"discussion.sidebar.reference": "Referencja",
 	"admin.dashboard.remove_resolved_reports": "Usuń rozwiązane zgłoszenia",
 	"compare.branches.title": "Porównaj gałęzie",
@@ -934,5 +928,14 @@
 	"admin.federation.users": "Użytkownicy",
 	"mail.issue.action.close_by_commit": "%[1]s zamknięty %[2]s w commicie %[3]s.",
 	"editor.textarea.tab_hint": "Linia jest już wcięta. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora.",
-	"editor.textarea.shift_tab_hint": "Brak wcięcia dla tej linii. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora."
+	"editor.textarea.shift_tab_hint": "Brak wcięcia dla tej linii. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora.",
+	"repo.rss.issue_feed_title": "Zgłoszenie %s: %s",
+	"repo.rss.pull_feed_title": "Pull request %s: %s",
+	"repo.rss.updates_on_issue": "Aktualizacje zgłoszenia %s przez %s",
+	"repo.rss.updates_on_pull": "Aktualizacje pull requesta %s przez %s",
+	"migrate.bitbucketdc.description": "Migruj dane z instancji Bitbucket Data Center.",
+	"repo.settings.collaboration.change_access": "Zmień tryb dostępu",
+	"repo.settings.collaboration.none": " Nie ma jeszcze współpracowników.",
+	"keys.ssh.disabled": "Zarządzanie kluczami SSH jest wyłączone na tej instancji przez administratora.",
+	"admin.federation.host.schema": "Schemat"
 }

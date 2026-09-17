@@ -191,5 +191,65 @@
 	"error.must_enable_2fa": "Selle Forgejo serveri reeglid eeldavad, et kasutajad lülitavad enne ligipääsu oma kasutajakontole sisse kaheastmelise autentimise. Seda saad teha siin: %s",
 	"settings.twofa_unroll_unavailable": "Kaheastmeline autentimine on sinu kasutajakonto puhul nõutav ja seda ei saa lülitada välja.",
 	"settings.twofa_reenroll": "Võta kaheastmeline autentimine uuesti kasutusele",
-	"settings.twofa_reenroll.description": "Võta oma kaheastmeline autentimine uuesti kasutusele"
+	"settings.twofa_reenroll.description": "Võta oma kaheastmeline autentimine uuesti kasutusele",
+	"relativetime.duration.secs": {
+		"one": "%d sekund",
+		"other": "%d sekundit"
+	},
+	"relativetime.duration.mins": {
+		"one": "%d minut",
+		"other": "%d minutit"
+	},
+	"relativetime.duration.hours": {
+		"one": "%d tund",
+		"other": "%d tundi"
+	},
+	"relativetime.duration.days": {
+		"one": "%d päev",
+		"other": "%d päeva"
+	},
+	"relativetime.duration.weeks": {
+		"one": "%d nädal",
+		"other": "%d nädalat"
+	},
+	"relativetime.duration.months": {
+		"one": "%d kuu",
+		"other": "%d kuud"
+	},
+	"relativetime.duration.years": {
+		"one": "%d aasta",
+		"other": "%d aastat"
+	},
+	"repo.empty_commit_message": "Tühi commit-i sõnum",
+	"repo.issues.context.copy_markdown": "Kopeeri Markdown",
+	"repo.signing.will_sign": "See commit allkirjastatakse võtmega \"%s\".",
+	"repo.signing.wont_sign.error": "Commiti allkirjastatavuse kontrollimisel esines viga.",
+	"repo.signing.wont_sign.nokey": "Sellel eksemplaril pole võtit, millega seda committi allkirjastada.",
+	"repo.signing.wont_sign.never": "Committe ei allkirjastata kunagi.",
+	"repo.signing.wont_sign.always": "Committe alkirjastatakse alati.",
+	"repo.signing.wont_sign.pubkey": "Committi ei allkirjastata, sest Sul pole Su kontoga seotud avalikku võtit.",
+	"repo.signing.wont_sign.parentsigned": "Committi ei allkirjastata, sest vanem-commit pole allkirjastatud.",
+	"repo.signing.wont_sign.basesigned": "Liitmist ei allkirjastata, sest baas-commit pole allkirjastatud.",
+	"repo.signing.wont_sign.headsigned": "Liitmist ei allkirjastata, sest pea-commit ei ole allkirjastatud.",
+	"repo.signing.wont_sign.commitssigned": "Liitmist ei allkirjastat, sest kõiki seotud committe pole allkirjastatud.",
+	"repo.signing.wont_sign.approved": "Liitmist ei allkirjastata, sest PR-i ei ole heaks kiidetud.",
+	"repo.signing.wont_sign.not_signed_in": "Sa pole sisse logitud.",
+	"issues.search.filter.assignees": "Filtreeri vastutaja",
+	"issues.search.filter.milestones": "Filtreeri vaheetapp",
+	"issues.search.filter.projects": "Filtreeri projekt",
+	"issues.search.filter.labels": "Filtreeri silt",
+	"issues.search.filter.reviewers": "Filtreeri ülevaataja",
+	"issues.search.no_results.title": "Tulemused puuduvad",
+	"issues.search.no_results.hint": "Proovi otsingufiltreid muuta.",
+	"issues.search.sort.relevance": "Asjakohasus",
+	"issues.search.sort.latest": "Uusim",
+	"issues.search.sort.oldest": "Vanim",
+	"issues.search.sort.recentupdate": "Hiljuti uuendatud",
+	"issues.search.sort.mostcomment": "Enim kommenteeritud",
+	"issues.search.sort.leastcomment": "Vähim kommenteeritud",
+	"issues.search.sort.leastupdate": "Viimati värskendatud",
+	"issues.search.sort.nearduedate": "Lähim tähtaeg",
+	"issues.search.sort.farduedate": "Kaugeim tähtaeg",
+	"repo.pulls.poster_manage_approval": "Halda heakskiitu",
+	"repo.pulls.poster_requires_approval.tooltip": "Selle tõmbepäringu autorit ei usaldata käivitama töövooge, mis on algatatud hargnenud hoidlast või AGit-i kaudu loodud tõmbetaotlusega. `pull_request`-sündmusega käivitatavad töövood ei käivitu enne, kui need on heaks kiidetud."
 }
