@@ -542,3 +542,45 @@ index 0000000000000000000000000000000000000000..be399c4b817c2fd9e1e6781ed6af75ef
 		assert.False(t, gitRepo.IsBranchExist("output-301cd34159"))
 	})
 }
+
+func TestDiffPatchCorruption(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		user := forgery.CreateUser(t, nil)
+		token := getUserToken(t, user.Name, auth_model.AccessTokenScopeAll)
+
+		repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{
+			Files: forgery.FilesInit{},
+		})
+
+		for range 2 {
+			// If `git apply` is run in a bare repository, writing a patch to the file `commondir` twice will cause the
+			// second one to output a local file `commondir` which will act in the place of `.git/commondir`
+			// (https://git-scm.com/docs/gitrepository-layout/2.5.6#Documentation/gitrepository-layout.txt-commondir).
+			// As this patch references a directory that doesn't exist (new-git-dir), it will cause an error on the
+			// second patch when the commondir file is leftover.  The success case for this test won't cause any errors.
+			req := NewRequestWithJSON(t, "POST", "/api/v1/repos/"+repo.FullName()+"/diffpatch", &api.ApplyDiffPatchFileOptions{
+				Content: `diff --git a/commondir b/commondir
+new file mode 100755
+index 0000000000000000000000000000000000000000..be399c4b817c2fd9e1e6781ed6af75ef9db4c53c
+--- /dev/null
++++ b/commondir
+@@ -0,0 +1,14 @@
++new-git-dir
+`,
+				DeleteFileOptions: api.DeleteFileOptions{
+					SHA: "1111",
+					FileOptions: api.FileOptions{
+						Message:       "Hello git-apply bug?",
+						BranchName:    "main",
+						NewBranchName: "main",
+					},
+				},
+			}).AddTokenAuth(token)
+			MakeRequest(t, req, http.StatusCreated)
+		}
+
+		gitRepo, err := git.OpenRepository(t.Context(), repo.RepoPath())
+		require.NoError(t, err)
+		defer gitRepo.Close()
+	})
+}
