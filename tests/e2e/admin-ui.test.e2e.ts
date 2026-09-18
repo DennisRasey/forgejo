@@ -82,3 +82,29 @@ test('Admin: delete a user', async ({page}) => {
   // endpoint without causing e2e retry headache
   await expect(page.locator('#flash-message')).toBeVisible();
 });
+
+test('Admin: delete a user from their public profile', async ({page, request}) => {
+  // Reload the fixtures in case of an already deleting the user
+  await request.patch('/_e2e/fixtures/reload');
+
+  // Using the imported user to delete because it doesn't own any repositories
+  const response = await page.goto('/imported');
+  expect(await response?.status()).toBe(200);
+
+  const modal = page.locator('#delete-user-modal');
+  const okButton = page.locator('#delete-user-modal .primary.button');
+
+  // Check that modal appears after clicking
+  await expect(modal).toBeHidden();
+  await expect(okButton).toBeHidden();
+  await page.locator('#profile-avatar-card .dropdown').click();
+  await page.locator('[data-modal="#delete-user-modal"]').click();
+  await expect(modal).toBeVisible();
+  await expect(okButton).toBeVisible();
+
+  // Agree with deletion
+  await okButton.click();
+
+  // Should have been redirected to /admin/users
+  await expect(page).toHaveURL(/\/admin\/users$/);
+});

@@ -240,7 +240,9 @@ func prepareUserInfo(ctx *context.Context) *user_model.User {
 		}
 		return nil
 	}
+
 	ctx.Data["User"] = u
+	ctx.Data["ContextUser"] = u
 
 	if u.LoginSource > 0 {
 		ctx.Data["LoginSource"], err = auth.GetSourceByID(ctx, u.LoginSource)

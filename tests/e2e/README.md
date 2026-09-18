@@ -339,6 +339,11 @@ and a set of files with a certain ending:
 The patterns are evaluated on a "first-match" basis.
 Under the hood, [gobwas/glob](https://github.com/gobwas/glob) is used.
 
+### Reloading fixtures
+
+When writing tests that may modify or delete a fixture, they can be reloaded by
+making a PATCH request to `/_e2e/fixtures/reload`.
+
 ## Grouped retry for interactions
 
 Sometimes, it can be necessary to retry certain interactions together.

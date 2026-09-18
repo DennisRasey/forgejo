@@ -10,6 +10,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -41,19 +42,27 @@ func TestMain(m *testing.M) {
 
 	tests.InitTest()
 	initChangedFiles()
-	testE2eWebRoutes = routers.NormalRoutes()
 
-	err := unittest.InitFixtures(
-		unittest.FixturesOptions{
-			Dir:  filepath.Join(setting.AppWorkPath, "models/fixtures/"),
-			Base: setting.AppWorkPath,
-			Dirs: []string{"tests/e2e/fixtures/"},
-		},
-	)
+	fixtureOptions := unittest.FixturesOptions{
+		Dir:  filepath.Join(setting.AppWorkPath, "models/fixtures/"),
+		Base: setting.AppWorkPath,
+		Dirs: []string{"tests/e2e/fixtures/"},
+	}
+
+	err := unittest.InitFixtures(fixtureOptions)
 	if err != nil {
 		fmt.Printf("Error initializing test database: %v\n", err)
 		os.Exit(1)
 	}
+
+	testE2eWebRoutes = routers.NormalRoutes()
+	testE2eWebRoutes.R.Patch("/_e2e/fixtures/reload", func(_ http.ResponseWriter, _ *http.Request) {
+		err := unittest.LoadFixtures()
+		if err != nil {
+			fmt.Printf("Error reloading fixtures: %s\n", err)
+			os.Exit(1)
+		}
+	})
 
 	exitVal := m.Run()
 

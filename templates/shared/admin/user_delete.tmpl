@@ -1,0 +1,18 @@
+<dialog id="delete-user-modal">
+	<article>
+		<header>{{svg "octicon-trash"}} {{ctx.Locale.Tr "settings.delete_account_title"}}</header>
+		<form class="ui form" method="post" action="/admin/users/{{.ContextUser.ID}}/delete">
+			<div class="content">
+				<p>{{ctx.Locale.Tr "settings.delete_account_desc"}}</p>
+				<div class="field">
+					<div class="ui checkbox">
+						<label for="purge">{{ctx.Locale.Tr "admin.users.purge"}}</label>
+						<input name="purge" type="checkbox">
+					</div>
+					<p class="help">{{ctx.Locale.Tr "admin.users.purge_help"}}</p>
+				</div>
+			</div>
+			{{template "base/modal_actions_confirm" .}}
+		</form>
+	</article>
+</dialog>

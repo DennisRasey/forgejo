@@ -76,9 +76,17 @@ func TestAdminViewUser(t *testing.T) {
 	req := NewRequest(t, "GET", "/admin/users/1")
 	session.MakeRequest(t, req, http.StatusOK)
 
+	req = NewRequest(t, "GET", "/user4")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	assert.Contains(t, resp.Body.String(), "data-modal=\"#delete-user-modal\"")
+
 	session = loginUser(t, "user2")
 	req = NewRequest(t, "GET", "/admin/users/1")
 	session.MakeRequest(t, req, http.StatusForbidden)
+
+	req = NewRequest(t, "GET", "/user4")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	assert.NotContains(t, resp.Body.String(), "data-modal=\"#delete-user-modal\"")
 }
 
 func TestAdminEditUser(t *testing.T) {

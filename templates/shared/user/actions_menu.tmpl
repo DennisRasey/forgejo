@@ -49,6 +49,16 @@
 					</li>
 				{{end}}
 			</ul>
+			{{if $.IsAdmin}}
+				<hr>
+				<ul>
+					<li>
+						<button class="red text show-modal" data-modal="#delete-user-modal">
+							{{svg "octicon-trash"}}{{ctx.Locale.Tr "admin.users.delete_account"}}
+						</button>
+					</li>
+				</ul>
+			{{end}}
 		{{end}}
 	</div>
 </details>
