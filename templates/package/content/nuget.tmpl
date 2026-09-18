@@ -11,7 +11,7 @@
 				<div class="markup"><pre class="code-block"><code>dotnet add package --source {{.PackageDescriptor.Owner.Name}} --version {{.PackageDescriptor.Version.Version}} {{.PackageDescriptor.Package.Name}}</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{ctx.Locale.Tr "packages.registry.documentation" "NuGet" "https://forgejo.org/docs/latest/user/packages/nuget/"}}</label>
+				<label>{{ctx.Locale.Tr "packages.registry.documentation" "NuGet" (AppDocsURL "user/packages/nuget/")}}</label>
 			</div>
 		</div>
 	</div>

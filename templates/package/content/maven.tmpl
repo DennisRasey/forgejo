@@ -41,7 +41,7 @@
 					<div class="markup"><pre class="code-block"><code>mvn dependency:get -DremoteRepositories=<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/maven"></origin-url> -Dartifact={{.PackageDescriptor.Metadata.GroupID}}:{{.PackageDescriptor.Metadata.ArtifactID}}:{{.PackageDescriptor.Version.Version}}</code></pre></div>
 				</div>
 				<div class="field">
-					<label>{{ctx.Locale.Tr "packages.registry.documentation" "Maven" "https://forgejo.org/docs/latest/user/packages/maven/"}}</label>
+					<label>{{ctx.Locale.Tr "packages.registry.documentation" "Maven" (AppDocsURL "user/packages/maven/")}}</label>
 				</div>
 			{{end}}
 		</div>

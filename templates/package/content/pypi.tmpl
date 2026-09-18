@@ -7,7 +7,7 @@
 				<div class="markup"><pre class="code-block"><code>pip install --index-url <origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/pypi/simple/"></origin-url> {{.PackageDescriptor.Package.Name}}</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{ctx.Locale.Tr "packages.registry.documentation" "PyPI" "https://forgejo.org/docs/latest/user/packages/pypi/"}}</label>
+				<label>{{ctx.Locale.Tr "packages.registry.documentation" "PyPI" (AppDocsURL "user/packages/pypi/")}}</label>
 			</div>
 		</div>
 	</div>

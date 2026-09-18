@@ -47,7 +47,7 @@
 					{{$packagesUrl := URLJoin .Owner.HomeLink "-" "packages"}}
 					<p>{{ctx.Locale.Tr "packages.empty.repo" $packagesUrl}}</p>
 				{{end}}
-				<p>{{ctx.Locale.Tr "packages.empty.documentation" "https://forgejo.org/docs/latest/user/packages/"}}</p>
+				<p>{{ctx.Locale.Tr "packages.empty.documentation" (AppDocsURL "user/packages/")}}</p>
 			</div>
 		{{else}}
 			<p class="tw-py-4">{{ctx.Locale.Tr "packages.filter.no_result"}}</p>

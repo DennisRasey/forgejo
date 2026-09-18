@@ -7,7 +7,7 @@
 				<div class="markup"><pre class="code-block"><code>vagrant box add --box-version {{.PackageDescriptor.Version.Version}} "<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/vagrant/{{.PackageDescriptor.Package.Name}}"></origin-url>"</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{ctx.Locale.Tr "packages.registry.documentation" "Vagrant" "https://forgejo.org/docs/latest/user/packages/vagrant/"}}</label>
+				<label>{{ctx.Locale.Tr "packages.registry.documentation" "Vagrant" (AppDocsURL "user/packages/vagrant/")}}</label>
 			</div>
 		</div>
 	</div>

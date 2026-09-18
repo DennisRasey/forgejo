@@ -108,18 +108,18 @@
 				{{else}}
 					{{if $newMirrorsEntirelyEnabled}}
 						{{ctx.Locale.Tr "mirror_settings.docs.summary"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pushing-to-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br><br>
+						<a target="_blank" rel="noopener noreferrer" href="{{AppDocsURL "user/repo-mirror/#pushing-to-a-remote-repository"}}">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br><br>
 						{{ctx.Locale.Tr "mirror_settings.docs.pull_mirror_instructions"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_pull_section"}}</a><br>
+						<a target="_blank" rel="noopener noreferrer" href="{{AppDocsURL "user/repo-mirror/#pulling-from-a-remote-repository"}}">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_pull_section"}}</a><br>
 					{{else if $onlyNewPushMirrorsEnabled}}
 						{{ctx.Locale.Tr "mirror_settings.docs.disabled_pull_mirror.instructions"}}
 						{{ctx.Locale.Tr "mirror_settings.docs.more_information_if_disabled"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br>
+						<a target="_blank" rel="noopener noreferrer" href="{{AppDocsURL "user/repo-mirror/#pulling-from-a-remote-repository"}}">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br>
 					{{else if $onlyNewPullMirrorsEnabled}}
 						{{ctx.Locale.Tr "mirror_settings.docs.disabled_push_mirror.instructions"}}
 						{{ctx.Locale.Tr "mirror_settings.docs.disabled_push_mirror.pull_mirror_warning"}}
 						{{ctx.Locale.Tr "mirror_settings.docs.more_information_if_disabled"}}
-						<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/user/repo-mirror#pulling-from-a-remote-repository">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br><br>
+						<a target="_blank" rel="noopener noreferrer" href="{{AppDocsURL "user/repo-mirror/#pulling-from-a-remote-repository"}}">{{ctx.Locale.Tr "mirror_settings.docs.doc_link_title"}}</a><br><br>
 						{{ctx.Locale.Tr "mirror_settings.docs.disabled_push_mirror.info"}}
 						{{if $existingPushMirror}}
 							{{ctx.Locale.Tr "mirror_settings.docs.can_still_use"}}
@@ -285,7 +285,7 @@
 											<div class="field {{if .Err_PushMirrorBranchFilter}}error{{end}}">
 												<label for="push_mirror_branch_filter">{{ctx.Locale.Tr "repo.settings.push_mirror.branch_filter.label"}}</label>
 												<input id="push_mirror_branch_filter" name="push_mirror_branch_filter" value="{{.push_mirror_branch_filter}}" maxlength="2048">
-												<p class="help">{{ctx.Locale.Tr "repo.settings.push_mirror.branch_filter.description" "https://forgejo.org/docs/latest/user/repo-mirror/#branch-filter" "Forgejo"}}</p>
+												<p class="help">{{ctx.Locale.Tr "repo.settings.push_mirror.branch_filter.description" (AppDocsURL "user/repo-mirror/#branch-filter") "Forgejo"}}</p>
 											</div>
 											<details class="ui optional field" {{if or .Err_PushMirrorAuth .push_mirror_username}}open{{end}}>
 												<summary class="tw-p-1">

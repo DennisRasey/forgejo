@@ -15,7 +15,7 @@ Template Attributes:
 			<div class="divider"></div>
 			<div class="item item-section">
 				<div data-tooltip-content="{{ctx.Locale.Tr "repo.pulls.poster_is_trusted.tooltip"}}">
-					{{ctx.Locale.Tr "repo.pulls.poster_is_trusted" "https://forgejo.org/docs/latest/user/actions/security-pull-request/"}}
+					{{ctx.Locale.Tr "repo.pulls.poster_is_trusted" (AppDocsURL "user/actions/security-pull-request/")}}
 				</div>
 				<form id="pull-request-trust-panel-revoke" method="post" action="{{.Link}}/action-user-trust">
 					<input type="hidden" name="trust" value="revoke">
@@ -29,7 +29,7 @@ Template Attributes:
 			<div class="item item-section">
 				<div data-tooltip-content="{{ctx.Locale.Tr "repo.pulls.poster_requires_approval.tooltip"}}">
 					{{svg "octicon-alert" 16 "text red"}}
-					{{ctx.Locale.Tr "repo.pulls.poster_requires_approval" "https://forgejo.org/docs/latest/user/actions/security-pull-request/"}}
+					{{ctx.Locale.Tr "repo.pulls.poster_requires_approval" (AppDocsURL "user/actions/security-pull-request/")}}
 				</div>
 				{{if .UserCanDelegateTrustWithPullRequest}}
 					<div class="button-sequence">

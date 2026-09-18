@@ -16,7 +16,7 @@ default_channels:
 				<div class="markup"><pre class="code-block"><code>conda install{{if $channel}} -c {{$channel}}{{end}} {{.PackageDescriptor.PackageProperties.GetByName "conda.name"}}={{.PackageDescriptor.Version.Version}}</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{ctx.Locale.Tr "packages.registry.documentation" "Conda" "https://forgejo.org/docs/latest/user/packages/conda/"}}</label>
+				<label>{{ctx.Locale.Tr "packages.registry.documentation" "Conda" (AppDocsURL "user/packages/conda/")}}</label>
 			</div>
 		</div>
 	</div>

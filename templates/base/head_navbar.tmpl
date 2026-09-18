@@ -48,7 +48,7 @@
 		{{template "custom/extra_links" .}}
 
 		{{if not .IsSigned}}
-			<a class="item" target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/">{{ctx.Locale.Tr "help"}}</a>
+			<a class="item" target="_blank" rel="noopener noreferrer" href="{{AppDocsURL "/"}}">{{ctx.Locale.Tr "help"}}</a>
 		{{end}}
 	</div>
 
@@ -189,7 +189,7 @@
 							</a>
 						</li>
 						<li>
-							<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/latest/">
+							<a target="_blank" rel="noopener noreferrer" href="{{AppDocsURL "/"}}">
 								{{svg "octicon-question"}}
 								{{ctx.Locale.Tr "help"}}
 							</a>

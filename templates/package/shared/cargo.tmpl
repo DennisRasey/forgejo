@@ -4,7 +4,7 @@
 <div class="ui attached segment">
 	<div class="ui form">
 		<div class="field">
-			<label>{{ctx.Locale.Tr "packages.registry.documentation" "Cargo" "https://forgejo.org/docs/latest/user/packages/cargo/"}}</label>
+			<label>{{ctx.Locale.Tr "packages.registry.documentation" "Cargo" (AppDocsURL "user/packages/cargo/")}}</label>
 		</div>
 		{{if .CargoIndexExists}}
 		<form class="field" action="{{.Link}}/cargo/rebuild" method="post">

@@ -20,7 +20,7 @@
 										<div class="ui input">
 											<input id="tag-pattern" aria-describedby="tag-pattern-desc" class="prompt" name="name_pattern" autocomplete="off" value="{{.name_pattern}}" placeholder="v*" autofocus required>
 										</div>
-										<div id="tag-pattern-desc" class="help">{{ctx.Locale.Tr "tag_protection.pattern.description" "https://forgejo.org/docs/latest/user/protection/#protected-tags"}}</div>
+										<div id="tag-pattern-desc" class="help">{{ctx.Locale.Tr "tag_protection.pattern.description" (AppDocsURL "user/protection/#protected-tags")}}</div>
 									</div>
 								</div>
 								<div class="whitelist field">

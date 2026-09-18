@@ -122,3 +122,13 @@ func TestBaseTemplateTitle(t *testing.T) {
 		})
 	}
 }
+
+func TestRobotsTxt(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/robots.txt")
+	resp := MakeRequest(t, req, http.StatusOK)
+
+	robotsTxt := resp.Body.String()
+	assert.Contains(t, robotsTxt, "https://forgejo.org/docs/latest/admin/advanced/search-engines/")
+}
