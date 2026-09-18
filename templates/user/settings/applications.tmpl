@@ -1,74 +1,74 @@
 {{template "user/settings/layout_head" (dict "ctxData" . "pageClass" "user settings applications")}}
-	<div class="user-setting-content">
-		<h4 class="ui top attached header">
-			{{ctx.Locale.Tr "settings.manage_access_token"}}
-			<div class="ui right">
-				<a class="ui primary tiny button" href="{{AppSubUrl}}/user/settings/applications/tokens/new">{{ctx.Locale.Tr "settings.new_access_token"}}</a>
+<div class="user-setting-content">
+	<h4 class="ui top attached header">
+		{{ctx.Locale.Tr "settings.manage_access_token"}}
+		<div class="ui right">
+			<a class="ui primary tiny button" href="{{AppSubUrl}}/user/settings/applications/tokens/new">{{ctx.Locale.Tr "settings.new_access_token"}}</a>
+		</div>
+	</h4>
+	<div class="ui attached segment">
+		<div class="flex-list">
+			<div class="flex-item">
+				{{ctx.Locale.Tr "settings.tokens_desc"}}
 			</div>
-		</h4>
-		<div class="ui attached segment">
-			<div class="flex-list">
+			{{range .TokensWithResources}}
 				<div class="flex-item">
-					{{ctx.Locale.Tr "settings.tokens_desc"}}
-				</div>
-				{{range .TokensWithResources}}
-					<div class="flex-item">
-						<div class="flex-item-leading">
-							<span class="text {{if .Token.HasRecentActivity}}green{{end}}" {{if .Token.HasRecentActivity}}data-tooltip-content="{{ctx.Locale.Tr "settings.token_state_desc"}}"{{end}}>
-								{{svg "fontawesome-send" 32}}
-							</span>
-						</div>
-						<div class="flex-item-main">
-							<details>
-								<summary><span class="flex-item-title">{{.Token.Name}}</span></summary>
-								{{if .Token.ResourceAllRepos}}
-									<p class="tw-my-1">{{ctx.Locale.Tr "settings.repo_and_org_access"}}:</p>
-									{{if .Token.DisplayPublicOnly}}
-										{{ctx.Locale.Tr "settings.permissions_public_only"}}
-									{{else}}
-										{{ctx.Locale.Tr "settings.permissions_access_all"}}
-									{{end}}
+					<div class="flex-item-leading">
+						<span class="text {{if .Token.HasRecentActivity}}green{{end}}" {{if .Token.HasRecentActivity}}data-tooltip-content="{{ctx.Locale.Tr "settings.token_state_desc"}}"{{end}}>
+							{{svg "fontawesome-send" 32}}
+						</span>
+					</div>
+					<div class="flex-item-main">
+						<details>
+							<summary><span class="flex-item-title">{{.Token.Name}}</span></summary>
+							{{if .Token.ResourceAllRepos}}
+								<p class="tw-my-1">{{ctx.Locale.Tr "settings.repo_and_org_access"}}:</p>
+								{{if .Token.DisplayPublicOnly}}
+									{{ctx.Locale.Tr "settings.permissions_public_only"}}
 								{{else}}
-									<p class="tw-my-1">{{ctx.Locale.Tr "settings.specific_repo_access"}}:</p>
-									<ul class="tw-my-1">
-										{{range .Repositories}}
-											<li><a href="{{.HTMLURL}}">{{.FullName}}</a></li>
-										{{end}}
-									</ul>
+									{{ctx.Locale.Tr "settings.permissions_access_all"}}
 								{{end}}
-								<p class="tw-my-1">{{ctx.Locale.Tr "settings.permissions_list"}}</p>
+							{{else}}
+								<p class="tw-my-1">{{ctx.Locale.Tr "settings.specific_repo_access"}}:</p>
 								<ul class="tw-my-1">
-								{{range .Token.Scope.StringSlice}}
-									{{if (ne . $.AccessTokenScopePublicOnly)}}
-										<li>{{.}}</li>
+									{{range .Repositories}}
+										<li><a href="{{.HTMLURL}}">{{.FullName}}</a></li>
 									{{end}}
-								{{end}}
 								</ul>
-							</details>
-							<div class="flex-item-body">
-								<p>{{ctx.Locale.Tr "settings.added_on" (DateUtils.AbsoluteShort .Token.CreatedUnix)}} — {{svg "octicon-info"}} {{if .Token.HasUsed}}{{ctx.Locale.Tr "settings.last_used"}} <span {{if .Token.HasRecentActivity}}class="text green"{{end}}>{{DateUtils.AbsoluteShort .Token.UpdatedUnix}}</span>{{else}}{{ctx.Locale.Tr "settings.no_activity"}}{{end}}</p>
-							</div>
-						</div>
-						<div class="flex-item-trailing">
-								<button class="ui primary tiny button delete-button" data-modal-id="regenerate-token" data-url="{{$.Link}}/tokens/regenerate" data-id="{{.Token.ID}}">
-									{{svg "octicon-issue-reopened" 16 "tw-mr-1"}}
-									{{ctx.Locale.Tr "settings.regenerate_token"}}
-								</button>
-								<button class="ui red tiny button delete-button" data-modal-id="delete-token" data-url="{{$.Link}}/tokens/delete" data-id="{{.Token.ID}}">
-									{{svg "octicon-trash" 16 "tw-mr-1"}}
-									{{ctx.Locale.Tr "settings.delete_token"}}
-								</button>
+							{{end}}
+							<p class="tw-my-1">{{ctx.Locale.Tr "settings.permissions_list"}}</p>
+							<ul class="tw-my-1">
+							{{range .Token.Scope.StringSlice}}
+								{{if (ne . $.AccessTokenScopePublicOnly)}}
+									<li>{{.}}</li>
+								{{end}}
+							{{end}}
+							</ul>
+						</details>
+						<div class="flex-item-body">
+							<p>{{ctx.Locale.Tr "settings.added_on" (DateUtils.AbsoluteShort .Token.CreatedUnix)}} — {{svg "octicon-info"}} {{if .Token.HasUsed}}{{ctx.Locale.Tr "settings.last_used"}} <span {{if .Token.HasRecentActivity}}class="text green"{{end}}>{{DateUtils.AbsoluteShort .Token.UpdatedUnix}}</span>{{else}}{{ctx.Locale.Tr "settings.no_activity"}}{{end}}</p>
 						</div>
 					</div>
-				{{end}}
-			</div>
+					<div class="flex-item-trailing">
+							<button class="ui primary tiny button delete-button" data-modal-id="regenerate-token" data-url="{{$.Link}}/tokens/regenerate" data-id="{{.Token.ID}}">
+								{{svg "octicon-issue-reopened" 16 "tw-mr-1"}}
+								{{ctx.Locale.Tr "settings.regenerate_token"}}
+							</button>
+							<button class="ui red tiny button delete-button" data-modal-id="delete-token" data-url="{{$.Link}}/tokens/delete" data-id="{{.Token.ID}}">
+								{{svg "octicon-trash" 16 "tw-mr-1"}}
+								{{ctx.Locale.Tr "settings.delete_token"}}
+							</button>
+					</div>
+				</div>
+			{{end}}
 		</div>
-
-		{{if .EnableOAuth2}}
-			{{template "user/settings/grants_oauth2" .}}
-			{{template "user/settings/applications_oauth2" .}}
-		{{end}}
 	</div>
+
+	{{if .EnableOAuth2}}
+		{{template "user/settings/grants_oauth2" .}}
+		{{template "user/settings/applications_oauth2" .}}
+	{{end}}
+</div>
 
 <div class="ui g-modal-confirm delete modal" id="regenerate-token">
 	<div class="header">

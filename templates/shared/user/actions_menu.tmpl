@@ -32,13 +32,13 @@
 		{{if and .IsSigned (ne .SignedUserID .ContextUser.ID)}}
 			<hr>
 			<ul>
-				<li hx-target="#profile-avatar-card" hx-indicator="#profile-avatar-card" id="action-block">
+				<li id="action-block">
 					{{if .IsBlocked}}
-						<button class="orange text" hx-post="{{.ContextUser.HomeLink}}?action=unblock">
+						<button class="orange text" hx-post="{{.ContextUser.HomeLink}}?action=unblock" hx-target="#profile-avatar-card" hx-indicator="#profile-avatar-card">
 							{{svg "octicon-person"}} {{ctx.Locale.Tr "user.unblock"}}
 						</button>
 					{{else}}
-						<button class="orange text" data-modal-id="block-user" hx-post="{{.ContextUser.HomeLink}}?action=block" hx-confirm="-">
+						<button type="button" class="orange text" command="show-modal" commandfor="block-user">
 							{{svg "octicon-blocked"}} {{ctx.Locale.Tr "user.block"}}
 						</button>
 					{{end}}
@@ -62,3 +62,25 @@
 		{{end}}
 	</div>
 </details>
+
+{{if not .IsBlocked}}
+	<dialog closedby="any" id="block-user">
+		<article>
+			<header>
+				{{ctx.Locale.Tr "user.block_user"}}
+			</header>
+			<div class="content">
+				<p>{{ctx.Locale.Tr "user.block_user.detail"}}</p>
+				<ul>
+					<li>{{ctx.Locale.Tr "user.block_user.detail_1"}}</li>
+					<li>{{ctx.Locale.Tr "user.block_user.detail_2"}}</li>
+					<li>{{ctx.Locale.Tr "user.block_user.detail_3"}}</li>
+				</ul>
+			</div>
+			<div class="actions">
+				<button type="button" command="close" commandfor="block-user" class="ui cancel button">{{svg "octicon-x"}}{{ctx.Locale.Tr "modal.no"}}</button>
+				<button type="button" class="ui red button" hx-post="{{.ContextUser.HomeLink}}?action=block" hx-target="#profile-avatar-card" hx-indicator="#profile-avatar-card">{{svg "octicon-check"}}{{ctx.Locale.Tr "modal.yes"}}</button>
+			</div>
+		</article>
+	</dialog>
+{{end}}

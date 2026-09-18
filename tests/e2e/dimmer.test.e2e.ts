@@ -10,35 +10,36 @@ import {screenshot} from './shared/screenshots.ts';
 
 test.use({user: 'user2'});
 
-test('Dimmed modal', async ({page}) => {
-  await page.goto('/user1');
+test('Dimmed modal (regenerate access token)', async ({page}) => {
+  await page.goto('/user/settings/applications');
 
-  await expect(page.locator('#action-block')).toContainText('Block');
+  const modalOpener = page.locator('button[data-modal-id="regenerate-token"]');
+  await expect(modalOpener).toContainText('Regenerate');
 
   // Ensure the modal is hidden
-  await expect(page.locator('#block-user')).toBeHidden();
+  const modal = page.locator('#regenerate-token');
+  const dimmer = page.locator('.ui.dimmer');
+  await expect(modal).toBeHidden();
 
-  await page.locator('.actions .dropdown').click();
-  await page.locator('#action-block').click();
+  await modalOpener.click();
 
   // Modal and dimmer should be visible.
-  await expect(page.locator('#block-user')).toBeVisible();
-  await expect(page.locator('.ui.dimmer')).toBeVisible();
-  await screenshot(page, page.locator('.ui.g-modal-confirm.delete.modal'), 50);
+  await expect(modal).toBeVisible();
+  await expect(dimmer).toBeVisible();
+  await screenshot(page, modal, 50);
 
   // After canceling, modal and dimmer should be hidden.
-  await page.locator('#block-user .cancel').click();
-  await expect(page.locator('.ui.dimmer')).toBeHidden();
-  await expect(page.locator('#block-user')).toBeHidden();
+  await modal.locator('.cancel.button').click();
+  await expect(modal).toBeHidden();
+  await expect(dimmer).toBeHidden();
   await screenshot(page);
 
   // Open the block modal and make the dimmer visible again.
-  await page.locator('.actions .dropdown').click();
-  await page.locator('#action-block').click();
-  await expect(page.locator('#block-user')).toBeVisible();
-  await expect(page.locator('.ui.dimmer')).toBeVisible();
-  await expect(page.locator('.ui.dimmer')).toHaveCount(1);
-  await screenshot(page, page.locator('.ui.g-modal-confirm.delete.modal'), 50);
+  await modalOpener.click();
+  await expect(modal).toBeVisible();
+  await expect(dimmer).toBeVisible();
+  await expect(dimmer).toHaveCount(1);
+  await screenshot(page, modal, 50);
 });
 
 test('Dimmed overflow', async ({page}) => {
