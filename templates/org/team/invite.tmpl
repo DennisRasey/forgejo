@@ -19,9 +19,11 @@
 						<label for="hide_membership">{{ctx.Locale.Tr "org.teams.hide_membership_to_org" .Organization.Name}}</label>
 					</div>
 				</div>
-				<button class="ui primary button" form="accept_form">{{ctx.Locale.Tr "org.teams.join"}}</button>
-				<button class="ui button" form="decline_form">{{ctx.Locale.Tr "org.teams.decline_invitation"}}</button>
-			</form>
+				<div class="button-sequence tw-justify-center">
+					<button class="secondary button" form="decline_form">{{ctx.Locale.Tr "org.teams.decline_invitation"}}</button>
+					<button class="primary button" form="accept_form">{{ctx.Locale.Tr "org.teams.join"}}</button>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
