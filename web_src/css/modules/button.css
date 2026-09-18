@@ -32,6 +32,10 @@
   border-radius: var(--border-radius);
   font-weight: var(--font-weight-medium);
 
+  background: var(--button-background);
+  border: 1px solid var(--button-border-color);
+  color: var(--button-color);
+
   &:hover,
   &:focus {
     text-decoration: none;
@@ -41,38 +45,50 @@
     opacity: var(--opacity-disabled);
     pointer-events: none;
   }
+
+  &:focus-visible {
+    /* Outline colors are defined by styles individually since there isn't a
+     * single consistent parameter to use as an anchor */
+    outline: 3px solid var(--button-outline-color);
+    /* Ensure outline shows over nearby elements */
+    z-index: 20;
+  }
 }
 
 .button.primary {
-  background: var(--color-primary);
-  color: var(--color-primary-contrast);
+  --button-background: var(--color-primary);
+  --button-border-color: var(--color-primary-dark-2);
+  --button-color: var(--color-primary-contrast);
+  --button-outline-color: oklch(from var(--button-background) l c h / 0.3);
 
   &:hover,
   &:focus {
-    background-color: var(--color-primary-hover);
+    --button-background: var(--color-primary-hover);
   }
 }
 
 .button.secondary {
-  background: var(--color-button);
-  border: 1px solid var(--color-light-border);
-  color: var(--color-text-light);
+  --button-background: var(--color-button);
+  --button-border-color: var(--color-light-border);
+  --button-color: var(--color-text-light);
+  --button-outline-color: oklch(from var(--button-border-color) l c h / 0.1);
 
   &:hover,
   &:focus {
-    color: var(--color-text);
+    --button-color: var(--color-text);
   }
 }
 
 .button.danger {
-  /* Fallbacks are needed while -thin vars are not supplied by all themes */
-  background: var(--color-danger-bg, var(--color-error-bg));
-  border: 1px solid var(--color-thin-red);
-  color: var(--color-thin-red);
+  /* Fallback is needed while --color-danger-bg is not supplied by all themes */
+  --button-background: var(--color-danger-bg, var(--color-error-bg));
+  --button-border-color: var(--color-thin-red);
+  --button-color: var(--color-thin-red);
+  --button-outline-color: oklch(from var(--button-border-color) l c h / 0.3);
 
   &:hover,
   &:focus {
-    color: var(--color-thin-red-highlight, var(--color-red));
+    --button-color: var(--color-thin-red-highlight, var(--color-red));
   }
 }
 
