@@ -483,7 +483,7 @@ func TestOrgTeamEmailInviteExistingUser(t *testing.T) {
 	assert.False(t, isMember)
 }
 
-// Test that a user cannot accept an invite if it was meant for another user
+// Test that a user cannot accept or decline an invite if it was meant for another user
 func TestOrgTeamEmailInviteCannotBeAcceptedByOtherUser(t *testing.T) {
 	if setting.MailService == nil {
 		t.Skip()
@@ -520,6 +520,10 @@ func TestOrgTeamEmailInviteCannotBeAcceptedByOtherUser(t *testing.T) {
 	req = NewRequest(t, "POST", inviteURL)
 	session.MakeRequest(t, req, http.StatusNotFound)
 
+	// accepting the invite doesn't either
+	req = NewRequest(t, "POST", inviteURL+"/decline")
+	session.MakeRequest(t, req, http.StatusNotFound)
+
 	// neither the invited user nor the attacker are part of the team
 	isMember, err = organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, invited.ID)
 	require.NoError(t, err)
@@ -529,7 +533,7 @@ func TestOrgTeamEmailInviteCannotBeAcceptedByOtherUser(t *testing.T) {
 	assert.False(t, isMember)
 }
 
-// Test that a user cannot accept an invite if it is expired
+// Test that a user cannot accept or decline an invite if it is expired
 func TestOrgTeamEmailInviteExpired(t *testing.T) {
 	if setting.MailService == nil {
 		t.Skip()
@@ -569,7 +573,60 @@ func TestOrgTeamEmailInviteExpired(t *testing.T) {
 	req = NewRequest(t, "POST", inviteURL)
 	session.MakeRequest(t, req, http.StatusNotFound)
 
+	// attempt to decline the invite despite the 404
+	req = NewRequest(t, "POST", inviteURL+"/decline")
+	session.MakeRequest(t, req, http.StatusNotFound)
+
 	isMember, err = organization.IsTeamMember(db.DefaultContext, team.OrgID, team.ID, user.ID)
+	require.NoError(t, err)
+	assert.False(t, isMember)
+}
+
+// Test that an invite can be declined
+func TestOrgTeamDeclineInvitation(t *testing.T) {
+	if setting.MailService == nil {
+		t.Skip()
+		return
+	}
+
+	defer tests.PrepareTestEnv(t)()
+
+	team1 := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 1})
+	inviter := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+
+	isMember, err := organization.IsTeamMember(db.DefaultContext, team1.OrgID, team1.ID, user.ID)
+	require.NoError(t, err)
+	assert.False(t, isMember)
+
+	// create the invite
+	invite1, err := organization.CreateTeamInviteForUser(db.DefaultContext, inviter, user, team1)
+	require.NoError(t, err)
+
+	// log in the invited user
+	session := loginUser(t, "user5")
+
+	// view the invite
+	inviteURL1 := fmt.Sprintf("/org/invite/%s", invite1.Token)
+	req := NewRequest(t, "GET", inviteURL1)
+	doc := NewHTMLParser(t, session.MakeRequest(t, req, http.StatusOK).Body)
+
+	// there is a decline button
+	doc.AssertElement(t, "button:contains('Decline')", true)
+
+	// decline the invite
+	declineURL := doc.Find("#decline_form").AttrOr("action", "")
+	assert.Equal(t, fmt.Sprintf("/org/invite/%s/decline", invite1.Token), declineURL)
+	req = NewRequest(t, "POST", declineURL)
+	resp := session.MakeRequest(t, req, http.StatusSeeOther)
+	req = NewRequest(t, "GET", test.RedirectURL(resp))
+	doc = NewHTMLParser(t, session.MakeRequest(t, req, http.StatusOK).Body)
+	assert.Contains(t, strings.TrimSpace(doc.Find(".flash-success").Text()), "Invitation declined.")
+
+	// the invite doesn't exist anymore
+	unittest.AssertNotExistsBean(t, &organization.TeamInvite{ID: invite1.ID})
+	// the user hasn't joined the team
+	isMember, err = organization.IsTeamMember(db.DefaultContext, team1.OrgID, team1.ID, user.ID)
 	require.NoError(t, err)
 	assert.False(t, isMember)
 }

@@ -10,14 +10,17 @@
 
 			<p>{{ctx.Locale.Tr "org.teams.invite.by" .Inviter.Name}}</p>
 
-			<form class="ui form" action="" method="post">
+			<div class="ui form">
+				<form id="accept_form" action="" method="post"></form>
+				<form id="decline_form" action="{{.DeclineURL}}" method="post"></form>
 				<div class="inline field">
 					<div class="ui checkbox">
-						<input type="checkbox" name="hide_membership" id="hide_membership" {{if .HiddenMembership}}checked{{end}} />
+						<input type="checkbox" form="accept_form" name="hide_membership" id="hide_membership" {{if .HiddenMembership}}checked{{end}} />
 						<label for="hide_membership">{{ctx.Locale.Tr "org.teams.hide_membership_to_org" .Organization.Name}}</label>
 					</div>
 				</div>
-				<button class="ui primary button">{{ctx.Locale.Tr "org.teams.join"}}</button>
+				<button class="ui primary button" form="accept_form">{{ctx.Locale.Tr "org.teams.join"}}</button>
+				<button class="ui button" form="decline_form">{{ctx.Locale.Tr "org.teams.decline_invitation"}}</button>
 			</form>
 		</div>
 	</div>

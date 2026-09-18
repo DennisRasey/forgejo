@@ -631,11 +631,12 @@ func TeamInvite(ctx *context.Context) {
 	ctx.Data["Team"] = team
 	ctx.Data["Inviter"] = inviter
 	ctx.Data["HiddenMembership"] = hiddenMembership
+	ctx.Data["DeclineURL"] = fmt.Sprintf("/org/invite/%s/decline", invite.Token)
 
 	ctx.HTML(http.StatusOK, tplTeamInvite)
 }
 
-// TeamInvitePost handles the team invitation
+// TeamInvitePost accepts the team invitation
 func TeamInvitePost(ctx *context.Context) {
 	invite, org, team, _, err := getTeamInviteFromContext(ctx)
 	if err != nil {
@@ -682,6 +683,45 @@ func TeamInvitePost(ctx *context.Context) {
 	}
 	// otherwise redirect them to the page of the team they joined
 	ctx.Redirect(org.OrganisationLink() + "/teams/" + url.PathEscape(team.LowerName))
+}
+
+// DeclineTeamInvite declines an invitation to a team
+func DeclineTeamInvite(ctx *context.Context) {
+	invite, org, _, _, err := getTeamInviteFromContext(ctx)
+	if err != nil {
+		if org_model.IsErrTeamInviteNotFound(err) || org_model.IsErrTeamInviteExpired(err) {
+			ctx.NotFound("ErrTeamInviteNotFound", err)
+		} else {
+			ctx.ServerError("getTeamInviteFromContext", err)
+		}
+		return
+	}
+
+	linkedToUser, invitedUserID := invite.InvitedID.Get()
+	if linkedToUser && invitedUserID != ctx.Doer.ID {
+		ctx.NotFound("ErrTeamInviteNotFound", nil)
+		return
+	}
+
+	if err := org_service.DeclineInvite(ctx, invite); err != nil {
+		ctx.ServerError("DeclineInvite", err)
+		return
+	}
+	ctx.Flash.Success(ctx.Tr("org.teams.invitation_declined"))
+
+	// if there is another invite in the same org for the same user, redirect them to that
+	if linkedToUser {
+		nextInvite, err := org_model.GetInviteByOrgAndUser(ctx, org.ID, invitedUserID)
+		if err != nil && !org_model.IsErrTeamInviteNotFound(err) {
+			log.Error("GetInviteByOrgAndUser: %v", err)
+		}
+		if nextInvite != nil {
+			ctx.Redirect("/org/invite/" + nextInvite.Token)
+			return
+		}
+	}
+	// otherwise redirect them to their dashboard (they might not be able to view the org)
+	ctx.Redirect(ctx.Doer.DashboardLink())
 }
 
 func getTeamInviteFromContext(ctx *context.Context) (*org_model.TeamInvite, *org_model.Organization, *org_model.Team, *user_model.User, error) {

@@ -1072,6 +1072,7 @@ func registerRoutes(m *web.Route) {
 		m.Group("/invite/{token}", func() {
 			m.Get("", org.TeamInvite)
 			m.Post("", org.TeamInvitePost)
+			m.Post("/decline", org.DeclineTeamInvite)
 		})
 
 		m.Group("/{org}", func() {

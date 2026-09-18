@@ -40,3 +40,9 @@ func InviteOrAddTeamMember(ctx context.Context, inviter, invited *user_model.Use
 	}
 	return models.AddTeamMember(ctx, team, invited.ID)
 }
+
+// DeclineInvite turns down an invitation to a team
+func DeclineInvite(ctx context.Context, invite *org_model.TeamInvite) error {
+	// TODO: notify the inviter here
+	return org_model.RemoveInviteByID(ctx, invite.ID, invite.TeamID)
+}
