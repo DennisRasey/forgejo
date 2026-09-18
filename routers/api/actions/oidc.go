@@ -49,7 +49,7 @@ type OIDCContext struct {
 
 func InitOIDC() error {
 	var err error
-	jwtSigningKey, err = jwtx.InitSigningKey(&setting.Actions.KeyCfg.Signing)
+	jwtSigningKey, err = jwtx.InitSigningKey(&setting.Actions.IDTokenKeyCfg.Signing)
 	if err != nil {
 		return err
 	}

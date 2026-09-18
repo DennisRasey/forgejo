@@ -130,7 +130,7 @@ func loadOAuth2From(rootCfg ConfigProvider) {
 	// Including: CSRF token, account validation token, etc ...
 	// In main branch, the signing token should be refactored (eg: one unique for LFS/OAuth2/etc ...)
 	if InstallLock {
-		signingKey, err := loadSymmeticSigningKeyCfg(rootCfg, sec, "JWT_")
+		signingKey, err := loadSymmetricSigningKeyCfg(rootCfg, sec, "JWT_")
 		if err != nil {
 			log.Fatal("%v", err)
 		}

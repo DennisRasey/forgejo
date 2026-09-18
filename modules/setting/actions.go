@@ -29,7 +29,7 @@ var (
 		ConcurrencyGroupQueueEnabled bool              `ini:"CONCURRENCY_GROUP_QUEUE_ENABLED"`
 		IDTokenExpirationTime        int64             `ini:"ID_TOKEN_EXPIRATION_TIME"`
 
-		KeyCfg *jwtx.KeyCfg
+		IDTokenKeyCfg *jwtx.KeyCfg
 	}{
 		Enabled:                      true,
 		DefaultActionsURL:            defaultActionsURLForgejo,
@@ -122,7 +122,7 @@ func loadActionsFrom(rootCfg ConfigProvider) error {
 		return fmt.Errorf("invalid [actions] LOG_COMPRESSION: %q", Actions.LogCompression)
 	}
 
-	Actions.KeyCfg, err = loadKeyCfg(rootCfg, secName, "ID_TOKEN_", "RS256", "actions_id_token/private.pem", onlyAsymmetric())
+	Actions.IDTokenKeyCfg, err = loadKeyCfg(rootCfg, secName, "ID_TOKEN_", "RS256", "actions_id_token/private.pem", onlyAsymmetric())
 	if err != nil {
 		return err
 	}

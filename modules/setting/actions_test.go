@@ -175,8 +175,8 @@ func Test_getIDTokenSettingsForActions(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, loadActionsFrom(cfg))
 
-	assert.Equal(t, "RS256", Actions.KeyCfg.Signing.Algorithm)
-	assert.Equal(t, "/home/app/data/actions_id_token/private.pem", *Actions.KeyCfg.Signing.PrivateKeyPath)
+	assert.Equal(t, "RS256", Actions.IDTokenKeyCfg.Signing.Algorithm)
+	assert.Equal(t, "/home/app/data/actions_id_token/private.pem", *Actions.IDTokenKeyCfg.Signing.PrivateKeyPath)
 	assert.EqualValues(t, 3600, Actions.IDTokenExpirationTime)
 
 	iniStr = `
@@ -189,8 +189,8 @@ func Test_getIDTokenSettingsForActions(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, loadActionsFrom(cfg))
 
-	assert.Equal(t, "ES256", Actions.KeyCfg.Signing.Algorithm)
-	assert.Equal(t, "/test/test.pem", *Actions.KeyCfg.Signing.PrivateKeyPath)
+	assert.Equal(t, "ES256", Actions.IDTokenKeyCfg.Signing.Algorithm)
+	assert.Equal(t, "/test/test.pem", *Actions.IDTokenKeyCfg.Signing.PrivateKeyPath)
 	assert.EqualValues(t, 120, Actions.IDTokenExpirationTime)
 
 	iniStr = `
@@ -203,8 +203,8 @@ func Test_getIDTokenSettingsForActions(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, loadActionsFrom(cfg))
 
-	assert.Equal(t, "EdDSA", Actions.KeyCfg.Signing.Algorithm)
-	assert.Equal(t, "/home/app/data/test/test.pem", *Actions.KeyCfg.Signing.PrivateKeyPath)
+	assert.Equal(t, "EdDSA", Actions.IDTokenKeyCfg.Signing.Algorithm)
+	assert.Equal(t, "/home/app/data/test/test.pem", *Actions.IDTokenKeyCfg.Signing.PrivateKeyPath)
 	assert.EqualValues(t, 123, Actions.IDTokenExpirationTime)
 
 	iniStr = `

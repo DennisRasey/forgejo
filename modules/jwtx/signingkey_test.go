@@ -229,7 +229,7 @@ func TestCannotCreatePrivateKey(t *testing.T) {
 	require.ErrorContains(t, err, "Error generating private key")
 }
 
-// test symmetic algorithms used via the SigningKey and VerificationKey
+// test symmetric algorithms used via the SigningKey and VerificationKey
 // interfaces
 func TestSymmetricKey(t *testing.T) {
 	algorithms := []string{"HS256", "HS384", "HS512"}
