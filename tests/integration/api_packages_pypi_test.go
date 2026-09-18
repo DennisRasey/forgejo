@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/packages"
 	"forgejo.org/models/unittest"
@@ -335,5 +336,25 @@ func TestPackagePyPI(t *testing.T) {
 
 		// `*/*` matches any representation, fall back to HTML
 		checkMetadataHTML(t, "*/*", "text/html")
+	})
+
+	t.Run("Upload basic auth w/ Authorized Integration", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		ait := newAITester(t, func(ai *auth_model.AuthorizedIntegration) {
+			ai.Scope = auth_model.AccessTokenScopeWritePackage
+		})
+		defer ait.close()
+		token := ait.signedJWT()
+
+		// Clone of uploadFile & uploadHelper, but with the Authorized Integration token
+		body, writer, closeFunc := createBasicMultipartFile("test.whl", packageName+"-2", content)
+		writer.WriteField("project_urls", "DOCUMENTATION , https://readthedocs.org")
+		writer.WriteField("project_urls", fmt.Sprintf("Home-page, %s", projectURL))
+		_ = closeFunc()
+		req := NewRequestWithBody(t, "POST", root, body).
+			SetHeader("Content-Type", writer.FormDataContentType())
+		req.SetBasicAuth(user.Name, token)
+		MakeRequest(t, req, http.StatusCreated)
 	})
 }
