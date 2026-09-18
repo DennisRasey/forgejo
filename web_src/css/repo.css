@@ -1010,10 +1010,6 @@ citation-information .tab:not(.active) {
   clear: none;
 }
 
-.repository.view.issue .comment-list .comment .ui.form .field.footer {
-  overflow: hidden;
-}
-
 .repository.view.issue .comment-list .comment .ui.form .field .tab.markup {
   min-height: 5rem;
 }

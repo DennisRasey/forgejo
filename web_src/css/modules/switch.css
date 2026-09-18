@@ -50,6 +50,10 @@
   &button {
     background: transparent;
   }
+
+  &:focus-visible {
+    outline: 1px solid var(--color-primary);
+  }
 }
 
 /* Corner rounding aid: item that has to crawl under it's active neighbor,
