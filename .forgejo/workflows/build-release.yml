@@ -28,14 +28,21 @@ on:
       - 'v*/forgejo'
 
 jobs:
-  release:
+  build:
     runs-on: lxc-bookworm
+    # outputs used by release job
+    outputs:
+      version: ${{ steps.release-info.outputs.version }}
+      override: ${{ steps.release-info.outputs.override }}
+      sha: ${{ steps.release-info.outputs.sha }}
     # root is used for testing, allow it
     if: vars.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
     steps:
       - uses: https://data.forgejo.org/actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          fetch-depth: 0
+          show-progress: false
+          persist-credentials: false # don't want to push anything
+          fetch-depth: 0 # needed to calculate release-info
 
       - name: Sanitize the name of the repository
         id: repository
@@ -199,6 +206,17 @@ jobs:
           verify-labels: "maintainer=contact@forgejo.org,org.opencontainers.image.version=${{ steps.release-info.outputs.version }}"
           verbose: ${{ vars.VERBOSE || secrets.VERBOSE || 'false' }}
 
+  e2e:
+    needs:
+      - build
+    runs-on: docker
+    # root is used for testing, allow it
+    if: vars.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          show-progress: false
+
       - name: end-to-end tests
         if: ${{ secrets.TOKEN != '' && vars.ROLE == 'forgejo-integration' && vars.SKIP_END_TO_END != 'true' }}
         uses: https://data.forgejo.org/actions/cascading-pr@b52d5b1f4f7bc3dd8b9f6ceca3a05aea6e9920be # v2.3.2
@@ -215,27 +233,35 @@ jobs:
           close: true
           update: .forgejo/cascading-release-end-to-end
 
+  release:
+    needs:
+      - build # need outputs
+      - e2e
+    runs-on: docker
+    # root is used for testing, allow it
+    if: vars.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
+    steps:
+      - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          show-progress: false
+          fetch-depth: 0 # needed to push all changes to experimental
+          persist-credentials: false # so we can use our token to push to experimental
+
       - name: copy to experimental
         if: vars.ROLE == 'forgejo-integration' && secrets.TOKEN != ''
         run: |
           if test "${{ vars.VERBOSE }}" = true ; then
             set -x
           fi
-          tag=v${{ steps.release-info.outputs.version }}
+          tag=v${{ needs.build.outputs.version }}
           url=https://any:${{ secrets.TOKEN }}@codeberg.org
-          if test "${{ steps.release-info.outputs.override }}" = "true" ; then
+          if test "${{ needs.build.outputs.override }}" = "true" ; then
             curl -sS -X DELETE $url/api/v1/repos/forgejo-experimental/forgejo/releases/tags/$tag > /dev/null
             curl -sS -X DELETE $url/api/v1/repos/forgejo-experimental/forgejo/tags/$tag > /dev/null
           fi
-          # actions/checkout@v6 sets http.https://codeberg.org/.extraheader with the automatic token. Get rid of it so
-          # it does not prevent using the token that has write permissions. As of @v6, it is stored in
-          # $RUNNER_TEMP/git-credentials-(uuid).config and included in the repo via
-          # includeif.gitdir:...=$RUNNER_TEMP/git-credentials-(uuid).config. Since we don't need these credentials
-          # anymore we can just remove the generated config file.
-          rm -f $RUNNER_TEMP/git-credentials-*
           if test -f .git/shallow ; then
             echo "unexpected .git/shallow file is present"
             echo "it suggests a checkout --depth X was used which may prevent pushing the commit"
             echo "it happens when actions/checkout is called without depth: 0"
           fi
-          git push $url/forgejo-experimental/forgejo ${{ steps.release-info.outputs.sha }}:refs/tags/$tag
+          git push $url/forgejo-experimental/forgejo ${{ needs.build.outputs.sha }}:refs/tags/$tag
