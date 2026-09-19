@@ -3,8 +3,8 @@ import emojis from '../../../assets/emoji.json';
 const {assetUrlPrefix, customEmojis} = window.config;
 
 const tempMap = Object.assign(...Array.from(customEmojis, (v) => ({[v]: `:${v}:`})));
-for (const {emoji, aliases} of emojis) {
-  for (const alias of aliases || []) {
+for (const [emoji, aliases] of emojis) {
+  for (const alias of aliases) {
     tempMap[alias] = emoji;
   }
 }

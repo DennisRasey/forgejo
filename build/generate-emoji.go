@@ -1,3 +1,4 @@
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // Copyright 2020 The Gitea Authors. All rights reserved.
 // Copyright 2015 Kenneth Shaw
 // SPDX-License-Identifier: MIT
@@ -7,15 +8,15 @@
 package main
 
 import (
+	"cmp"
 	"flag"
 	"fmt"
 	"go/format"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -23,10 +24,7 @@ import (
 	"forgejo.org/modules/json"
 )
 
-const (
-	gemojiURL         = "https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json"
-	maxUnicodeVersion = 15
-)
+const gemojiURL = "https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json"
 
 var flagOut = flag.String("o", "modules/emoji/emoji_data.go", "out")
 
@@ -35,21 +33,17 @@ type Gemoji []Emoji
 
 // Emoji represents a single emoji and associated data.
 type Emoji struct {
-	Emoji          string   `json:"emoji"`
-	Description    string   `json:"description,omitempty"`
-	Aliases        []string `json:"aliases"`
-	UnicodeVersion string   `json:"unicode_version,omitempty"`
-	SkinTones      bool     `json:"skin_tones,omitempty"`
+	Emoji       string   `json:"emoji"`
+	Description string   `json:"description,omitempty"`
+	Aliases     []string `json:"aliases"`
+	SkinTones   bool     `json:"skin_tones,omitempty"`
 }
 
-// Don't include some fields in JSON
 func (e Emoji) MarshalJSON() ([]byte, error) {
-	type emoji Emoji
-	x := emoji(e)
-	x.UnicodeVersion = ""
-	x.Description = ""
-	x.SkinTones = false
-	return json.Marshal(x)
+	return json.Marshal([2]any{
+		e.Emoji,
+		e.Aliases,
+	})
 }
 
 func main() {
@@ -82,22 +76,15 @@ var emojiRE = regexp.MustCompile(`\{Emoji:"([^"]*)"`)
 
 func generate() ([]byte, error) {
 	// load gemoji data
-	res, err := http.Get(gemojiURL)
+	resp, err := http.Get(gemojiURL)
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-
-	// read all
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
+	defer resp.Body.Close()
 
 	// unmarshal
 	var data Gemoji
-	err = json.Unmarshal(body, &data)
-	if err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
 
@@ -109,19 +96,8 @@ func generate() ([]byte, error) {
 	skinTones["\U0001f3fe"] = "Medium-Dark Skin Tone"
 	skinTones["\U0001f3ff"] = "Dark Skin Tone"
 
-	var tmp Gemoji
-
-	// filter out emoji that require greater than max unicode version
-	for i := range data {
-		val, _ := strconv.ParseFloat(data[i].UnicodeVersion, 64)
-		if int(val) <= maxUnicodeVersion {
-			tmp = append(tmp, data[i])
-		}
-	}
-	data = tmp
-
-	sort.Slice(data, func(i, j int) bool {
-		return data[i].Aliases[0] < data[j].Aliases[0]
+	slices.SortFunc(data, func(a, b Emoji) int {
+		return cmp.Compare(a.Aliases[0], b.Aliases[0])
 	})
 
 	aliasMap := make(map[string]int, len(data))
@@ -179,14 +155,14 @@ func generate() ([]byte, error) {
 				newDescription = data[i].Description + ": " + v
 				newAlias := data[i].Aliases[0] + "_" + strings.ReplaceAll(v, " ", "_")
 
-				newData = Emoji{newEmoji, newDescription, []string{newAlias}, "12.0", false}
+				newData = Emoji{newEmoji, newDescription, []string{newAlias}, false}
 				data = append(data, newData)
 			}
 		}
 	}
 
-	sort.Slice(data, func(i, j int) bool {
-		return data[i].Aliases[0] < data[j].Aliases[0]
+	slices.SortFunc(data, func(a, b Emoji) int {
+		return cmp.Compare(a.Aliases[0], b.Aliases[0])
 	})
 
 	// add header

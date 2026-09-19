@@ -16,11 +16,10 @@ type Gemoji []Emoji
 
 // Emoji represents a single emoji and associated data.
 type Emoji struct {
-	Emoji          string
-	Description    string
-	Aliases        []string
-	UnicodeVersion string
-	SkinTones      bool
+	Emoji       string
+	Description string
+	Aliases     []string
+	SkinTones   bool
 }
 
 var (
