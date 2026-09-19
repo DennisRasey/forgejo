@@ -485,7 +485,7 @@ func TestUserHints(t *testing.T) {
 			assert.Equal(t, enabled, hintChecked)
 
 			link, _ := htmlDoc.Find("form[action='/user/settings/appearance/language'] a").Attr("href")
-			assert.Equal(t, "https://forgejo.org/docs/next/contributor/localization/", link)
+			assert.Equal(t, "https://forgejo.org/docs/next/contributor/localization/", link) // NOT derived from setting.AppDocsVer (contrib docs aren't tied to the present version!)
 		}
 
 		t.Run("view", func(t *testing.T) {

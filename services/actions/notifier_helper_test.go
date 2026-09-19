@@ -17,6 +17,7 @@ import (
 	user_model "forgejo.org/models/user"
 	actions_module "forgejo.org/modules/actions"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
 	webhook_module "forgejo.org/modules/webhook"
@@ -414,6 +415,7 @@ func TestActionsNotifier_ExpandReusableWorkflow(t *testing.T) {
 
 func TestActionsNotifier_PermissionsWarning(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
+	defer test.MockVariableValue(&setting.AppDocsVer, func() string { return "v0.0" })()
 
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 10})
 	pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{ID: 3})
@@ -432,5 +434,5 @@ func TestActionsNotifier_PermissionsWarning(t *testing.T) {
 	assert.EqualValues(t, 0, run.PreExecutionErrorCode, "pre execution error details: %#v", run.PreExecutionErrorDetails)
 
 	assert.Equal(t, []actions_model.PreExecutionWarning{1}, run.PreExecutionWarningCodes)
-	assert.Equal(t, [][]any{{"j1", "https://forgejo.org/docs/latest/user/api/authorized-integrations/"}}, run.PreExecutionWarningDetails)
+	assert.Equal(t, [][]any{{"j1", "https://forgejo.org/docs/v0.0/user/api/authorized-integrations/"}}, run.PreExecutionWarningDetails) // derived from setting.AppDocsVer
 }

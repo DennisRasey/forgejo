@@ -176,3 +176,38 @@ func TestAppVersionDocsURL(t *testing.T) {
 		})
 	}
 }
+
+func TestAppDocsURL(t *testing.T) {
+	defer test.MockProtect(&AppVer)()
+	defer test.MockVariableValue(&AppDocsVer, initialAppDocsVer)() // instead of OnceValue
+
+	cases := [][2]string{
+		{"", "https://forgejo.org/docs/latest/user/getting-started/first-repository/"},
+		{"dev", "https://forgejo.org/docs/latest/user/getting-started/first-repository/"},
+		{"foo", "https://forgejo.org/docs/latest/user/getting-started/first-repository/"},
+		{"あ", "https://forgejo.org/docs/latest/user/getting-started/first-repository/"},
+		{"0.", "https://forgejo.org/docs/latest/user/getting-started/first-repository/"},
+		{"0.zero.four", "https://forgejo.org/docs/latest/user/getting-started/first-repository/"},
+		{"0.0.four", "https://forgejo.org/docs/latest/user/getting-started/first-repository/"},
+		{"0.0.0", "https://forgejo.org/docs/v0.0/user/getting-started/first-repository/"},
+		{"0.0.1", "https://forgejo.org/docs/v0.0/user/getting-started/first-repository/"},
+		{"0.0.1", "https://forgejo.org/docs/v0.0/user/getting-started/first-repository/"},
+		{"0.0", "https://forgejo.org/docs/v0.0/user/getting-started/first-repository/"},
+		{"0", "https://forgejo.org/docs/v0.0/user/getting-started/first-repository/"},
+		{"17.0.0", "https://forgejo.org/docs/v17.0/user/getting-started/first-repository/"},
+		{"17.0.9", "https://forgejo.org/docs/v17.0/user/getting-started/first-repository/"},
+		{"17.1.9", "https://forgejo.org/docs/v17.1/user/getting-started/first-repository/"},
+		{"    17.1.9", "https://forgejo.org/docs/v17.1/user/getting-started/first-repository/"},
+		{"17.1.9+prerelease", "https://forgejo.org/docs/v17.1/user/getting-started/first-repository/"},
+		{"16.0.0-dev-753-6bcc6da0+gitea-1.22.0", "https://forgejo.org/docs/v16.0/user/getting-started/first-repository/"},
+	}
+	for _, c := range cases {
+		appVersion := c[0]
+		expectedURL := c[1]
+
+		t.Run(appVersion, func(t *testing.T) {
+			AppVer = appVersion
+			assert.Equal(t, expectedURL, AppDocsURL("user/getting-started/first-repository/"))
+		})
+	}
+}

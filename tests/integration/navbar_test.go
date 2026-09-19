@@ -84,6 +84,7 @@ func TestNavbarItems(t *testing.T) {
 
 	t.Run(`User dropdown - default conditions`, func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.AppDocsVer, func() string { return "v0.0" })()
 
 		// What regular user sees
 		assertions := []struct {
@@ -96,7 +97,7 @@ func TestNavbarItems(t *testing.T) {
 			{`details.dropdown a[href="/user/settings"]`, true},
 			{`details.dropdown a[href="/admin"]`, false},
 			{`details.dropdown a[href="/-/demo"]`, false},
-			{`details.dropdown a[href="https://forgejo.org/docs/latest/"]`, true},
+			{`details.dropdown a[href="https://forgejo.org/docs/v0.0/"]`, true}, // derived from setting.AppDocsVer
 			{`details.dropdown button[form="logout-user-action"]`, true},
 			{`form#logout-user-action[action="/user/logout"]`, true},
 		}
@@ -116,7 +117,7 @@ func TestNavbarItems(t *testing.T) {
 			{`details.dropdown a[href="/user/settings"]`, true},
 			{`details.dropdown a[href="/admin"]`, true},
 			{`details.dropdown a[href="/-/demo"]`, false},
-			{`details.dropdown a[href="https://forgejo.org/docs/latest/"]`, true},
+			{`details.dropdown a[href="https://forgejo.org/docs/v0.0/"]`, true},
 			{`details.dropdown button[form="logout-user-action"]`, true},
 			{`form#logout-user-action[action="/user/logout"]`, true},
 		}

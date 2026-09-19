@@ -125,10 +125,11 @@ func TestBaseTemplateTitle(t *testing.T) {
 
 func TestRobotsTxt(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.AppDocsVer, func() string { return "v0.1" })()
 
 	req := NewRequest(t, "GET", "/robots.txt")
 	resp := MakeRequest(t, req, http.StatusOK)
 
 	robotsTxt := resp.Body.String()
-	assert.Contains(t, robotsTxt, "https://forgejo.org/docs/latest/admin/advanced/search-engines/")
+	assert.Contains(t, robotsTxt, "https://forgejo.org/docs/v0.1/admin/advanced/search-engines/") // derived from setting.AppDocsVer
 }

@@ -18,6 +18,8 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
 	repo_module "forgejo.org/modules/repository"
+	"forgejo.org/modules/setting"
+	"forgejo.org/modules/test"
 	pull_service "forgejo.org/services/pull"
 	repo_service "forgejo.org/services/repository"
 	"forgejo.org/tests"
@@ -269,6 +271,7 @@ func testOptionsGitPush(t *testing.T, u *url.URL) {
 		doGitAddRemote(gitPath, "collaborator", u)(t)
 
 		t.Run("User without write access is not allowed to push", func(t *testing.T) {
+			defer test.MockVariableValue(&setting.AppDocsVer, func() string { return "v0.0" })()
 			branchName := "branch3"
 			doGitCreateBranch(gitPath, branchName)(t)
 			stderr := doGitPushTestRepositoryFail(t, gitPath, "collaborator", branchName)
@@ -277,7 +280,7 @@ func testOptionsGitPush(t *testing.T, u *url.URL) {
 			assert.Contains(t, stderr, `remote: If you instead wanted to create a pull request to the branch 'branch3', please use:`)
 			assert.Contains(t, stderr, `remote: git push origin HEAD:refs/for/branch3/choose-a-descriptor`)
 			assert.Contains(t, stderr, `remote: You might want to replace 'origin' with the name of your Git remote if it is different from origin. You can freely choose the descriptor to set it to a topic.`)
-			assert.Contains(t, stderr, `remote: You can learn about creating pull requests with AGit in the documentation: https://forgejo.org/docs/latest/user/git-cli/agit-support/`)
+			assert.Contains(t, stderr, `remote: You can learn about creating pull requests with AGit in the documentation: https://forgejo.org/docs/v0.0/user/git-cli/agit-support/`) // derived from setting.AppDocsVer
 		})
 
 		// give write access to the collaborator
