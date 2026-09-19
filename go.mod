@@ -72,7 +72,7 @@ require (
 	github.com/klauspost/compress v1.20.0
 	github.com/markbates/goth v1.82.0
 	github.com/mattn/go-isatty v0.0.24
-	github.com/mattn/go-sqlite3 v1.14.50
+	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/meilisearch/meilisearch-go v0.36.2
 	github.com/mholt/archives v0.1.5
 	github.com/microcosm-cc/bluemonday v1.0.27
