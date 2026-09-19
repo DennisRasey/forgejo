@@ -112,7 +112,7 @@
     "happy-dom": "20.11.2",
     "license-checker-rseidelsohn": "5.0.1",
     "markdownlint-cli": "0.49.1",
-    "postcss-html": "1.8.1",
+    "postcss-html": "2.0.0",
     "sharp": "0.35.4",
     "stylelint": "16.26.1",
     "stylelint-declaration-block-no-ignored-properties": "2.8.0",
