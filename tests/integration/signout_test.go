@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"testing"
 
+	"forgejo.org/modules/test"
 	"forgejo.org/tests"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSignOut(t *testing.T) {
@@ -16,7 +19,8 @@ func TestSignOut(t *testing.T) {
 	session := loginUser(t, "user2")
 
 	req := NewRequest(t, "POST", "/user/logout")
-	session.MakeRequest(t, req, http.StatusOK)
+	resp := session.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Equal(t, "/", test.RedirectURL(resp))
 
 	// try to view a private repo, should fail
 	req = NewRequest(t, "GET", "/user2/repo2")

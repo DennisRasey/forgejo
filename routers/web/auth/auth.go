@@ -433,7 +433,7 @@ func SignOut(ctx *context.Context) {
 		})
 	}
 	HandleSignOut(ctx)
-	ctx.JSONRedirect(setting.AppSubURL + "/")
+	ctx.Redirect(setting.AppSubURL + "/")
 }
 
 // check if registration is allowed and set Data for template

@@ -176,7 +176,7 @@ func TestAPIPrivateServAndNoServWithRequiredTwoFactor(t *testing.T) {
 			if useTOTP {
 				session := loginUser(t, user.Name)
 				session.EnrollTOTP(t)
-				session.MakeRequest(t, NewRequest(t, "POST", "/user/logout"), http.StatusOK)
+				session.MakeRequest(t, NewRequest(t, "POST", "/user/logout"), http.StatusSeeOther)
 				defer unittest.AssertSuccessfulDelete(t, &auth.TwoFactor{UID: user.ID})
 			}
 

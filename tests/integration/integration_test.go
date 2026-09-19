@@ -434,7 +434,7 @@ func loginUserMaybeTOTP(t testing.TB, user *user_model.User, useTOTP bool) *Test
 	if useTOTP {
 		sess := loginUser(t, user.Name)
 		sess.EnrollTOTP(t)
-		sess.MakeRequest(t, NewRequest(t, "POST", "/user/logout"), http.StatusOK)
+		sess.MakeRequest(t, NewRequest(t, "POST", "/user/logout"), http.StatusSeeOther)
 
 		return loginUserWithTOTP(t, user)
 	}

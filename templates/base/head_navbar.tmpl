@@ -54,6 +54,9 @@
 
 	<!-- the full dropdown menus -->
 	<div class="navbar-right ui secondary menu">
+		{{if .IsSigned}}
+			<form id="logout-user-action" action="{{AppSubUrl}}/user/logout" method="POST" class="tw-hidden"></form>
+		{{end}}
 		{{if and .IsSigned .HideNavbarLinks}}
 			<details class="dropdown dir-rtl">
 				<summary data-tooltip-content="{{ctx.Locale.Tr "user_profile_and_more"}}">
@@ -68,10 +71,10 @@
 					<hr>
 					<ul>
 						<li>
-							<a class="link-action" href data-url="{{AppSubUrl}}/user/logout">
+							<button form="logout-user-action">
 								{{svg "octicon-sign-out"}}
 								{{ctx.Locale.Tr "sign_out"}}
-							</a>
+							</button>
 						</li>
 					</ul>
 				</div>
@@ -216,10 +219,10 @@
 						{{end}}
 						<hr>
 						<li>
-							<a class="link-action" href data-url="{{AppSubUrl}}/user/logout">
+							<button form="logout-user-action">
 								{{svg "octicon-sign-out"}}
 								{{ctx.Locale.Tr "sign_out"}}
-							</a>
+							</button>
 						</li>
 					</ul>
 				</div>

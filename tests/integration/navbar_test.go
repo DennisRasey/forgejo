@@ -97,7 +97,8 @@ func TestNavbarItems(t *testing.T) {
 			{`details.dropdown a[href="/admin"]`, false},
 			{`details.dropdown a[href="/-/demo"]`, false},
 			{`details.dropdown a[href="https://forgejo.org/docs/latest/"]`, true},
-			{`details.dropdown a[data-url="/user/logout"]`, true},
+			{`details.dropdown button[form="logout-user-action"]`, true},
+			{`form#logout-user-action[action="/user/logout"]`, true},
 		}
 		page := NewHTMLParser(t, regularUser.MakeRequest(t, NewRequest(t, "GET", testPage), http.StatusOK).Body)
 		for _, assertion := range assertions {
@@ -116,7 +117,8 @@ func TestNavbarItems(t *testing.T) {
 			{`details.dropdown a[href="/admin"]`, true},
 			{`details.dropdown a[href="/-/demo"]`, false},
 			{`details.dropdown a[href="https://forgejo.org/docs/latest/"]`, true},
-			{`details.dropdown a[data-url="/user/logout"]`, true},
+			{`details.dropdown button[form="logout-user-action"]`, true},
+			{`form#logout-user-action[action="/user/logout"]`, true},
 		}
 		page = NewHTMLParser(t, adminUser.MakeRequest(t, NewRequest(t, "GET", testPage), http.StatusOK).Body)
 		for _, assertion := range assertions {

@@ -221,7 +221,7 @@ func TestGlobalTwoFactorRequirement(t *testing.T) {
 			htmlDoc := NewHTMLParser(t, resp.Body)
 			assert.Equal(t, 1, htmlDoc.Find(".navbar-left > a.item").Length()) // only show the Logo, no other links
 
-			userLinks := htmlDoc.Find(".navbar-right details.dropdown a")
+			userLinks := htmlDoc.Find(".navbar-right details.dropdown button")
 			assert.Equal(t, 1, userLinks.Length()) // only logout link
 			assert.Equal(t, "Sign out", strings.TrimSpace(userLinks.Text()))
 
@@ -240,7 +240,7 @@ func TestGlobalTwoFactorRequirement(t *testing.T) {
 			assert.Equal(t, locale.TrString("settings.must_enable_2fa"), htmlDoc.Find(".ui.red.message").Text())
 			assert.Equal(t, 1, htmlDoc.Find(".navbar-left > a.item").Length()) // only show the Logo, no other links
 
-			userLinks = htmlDoc.Find(".navbar-right details.dropdown a")
+			userLinks = htmlDoc.Find(".navbar-right details.dropdown button")
 			assert.Equal(t, 1, userLinks.Length()) // only logout link
 			assert.Equal(t, "Sign out", strings.TrimSpace(userLinks.Text()))
 
