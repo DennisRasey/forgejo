@@ -22,9 +22,6 @@ export function showModal(modalID: string | HTMLDialogElement, onApprove: () => 
   }, {once: true, passive: true});
   modal.querySelector('.ok')?.addEventListener('click', onApprove, {passive: true});
 
-  // Call a `onShow` callback if one is registered for this element.
-  modal?.$modal?.onShow();
-
   // The modal is ready to be shown.
   modal.showModal();
 }

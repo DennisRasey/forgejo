@@ -295,7 +295,7 @@ class ComboMarkdownEditor {
     replaceTextareaSelection(document.getElementById(`_combo_markdown_editor_${elementId}`), code);
 
     // Close the modal
-    newTableModal.querySelector('button[data-selector-name="cancel-button"]').click();
+    newTableModal.close();
   }
 
   setupTableInserter() {
@@ -311,27 +311,27 @@ class ComboMarkdownEditor {
   addNewLink(event) {
     const elementId = event.target.getAttribute('data-element-id');
     const newLinkModal = document.querySelector(`dialog[data-markdown-link-modal-id="${elementId}"]`);
-    const form = newLinkModal.querySelector('div[data-selector-name="form"]');
+    const fieldset = newLinkModal.querySelector('fieldset[data-selector-name="form"]');
 
     // Validate input fields
-    for (const currentInput of form.querySelectorAll('input')) {
+    for (const currentInput of fieldset.querySelectorAll('input')) {
       if (!currentInput.checkValidity()) {
         currentInput.reportValidity();
         return;
       }
     }
 
-    const url = form.querySelector('input[name="link-url"]').value;
-    const description = form.querySelector('input[name="link-description"]').value;
+    const url = fieldset.querySelector('input[name="link-url"]').value;
+    const description = fieldset.querySelector('input[name="link-description"]').value;
 
     const code = `[${description}](${url})`;
 
     replaceTextareaSelection(document.getElementById(`_combo_markdown_editor_${elementId}`), code);
 
     // Close the modal then clear its fields in case the user wants to add another one.
-    newLinkModal.querySelector('button[data-selector-name="cancel-button"]').click();
-    form.querySelector('input[name="link-url"]').value = '';
-    form.querySelector('input[name="link-description"]').value = '';
+    newLinkModal.close();
+    fieldset.querySelector('input[name="link-url"]').value = '';
+    fieldset.querySelector('input[name="link-description"]').value = '';
   }
 
   setupLinkInserter() {
@@ -340,7 +340,10 @@ class ComboMarkdownEditor {
     const textarea = document.getElementById(`_combo_markdown_editor_${this.elementIdSuffix}`);
     document.body.append(newLinkModal); // Contains form elements, avoid conflict with form of comment editor.
 
-    newLinkModal.$modal = {onShow: () => {
+    newLinkModal.addEventListener('toggle', (e) => {
+      if (!e.target.open) {
+        return;
+      }
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
@@ -350,7 +353,7 @@ class ComboMarkdownEditor {
       } else {
         newLinkModal.querySelector('input[name="link-description"]').value = '';
       }
-    }};
+    });
 
     const button = newLinkModal.querySelector('button[data-selector-name="ok-button"]');
     button.setAttribute('data-element-id', this.elementIdSuffix);

@@ -29,7 +29,7 @@ Template Attributes:
 		<div class="markdown-toolbar-group">
 			<md-quote class="markdown-toolbar-button" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.quote.tooltip"}}">{{svg "octicon-quote"}}</md-quote>
 			<md-code class="markdown-toolbar-button" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.code.tooltip"}}">{{svg "octicon-code"}}</md-code>
-			<button class="markdown-toolbar-button show-modal" data-md-button data-md-action="new-link" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.link.tooltip"}}" data-md-ctrl-shortcut="k">{{svg "octicon-link"}}</button>
+			<button type="button" class="markdown-toolbar-button show-modal" data-md-button data-md-action="new-link" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.link.tooltip"}}" data-md-ctrl-shortcut="k">{{svg "octicon-link"}}</button>
 		</div>
 		<div class="markdown-toolbar-group">
 			<md-unordered-list class="markdown-toolbar-button" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.list.unordered.tooltip"}}">{{svg "octicon-list-unordered"}}</md-unordered-list>
@@ -44,9 +44,9 @@ Template Attributes:
 			<md-ref class="markdown-toolbar-button" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.ref.tooltip"}}">{{svg "octicon-cross-reference"}}</md-ref>
 		</div>
 		<div class="markdown-toolbar-group">
-			<button class="markdown-toolbar-button markdown-switch-monospace" data-md-button role="switch" data-enable-text="{{ctx.Locale.Tr "editor.buttons.enable_monospace_font"}}" data-disable-text="{{ctx.Locale.Tr "editor.buttons.disable_monospace_font"}}">{{svg "octicon-typography"}}</button>
+			<button type="button" class="markdown-toolbar-button markdown-switch-monospace" data-md-button role="switch" data-enable-text="{{ctx.Locale.Tr "editor.buttons.enable_monospace_font"}}" data-disable-text="{{ctx.Locale.Tr "editor.buttons.disable_monospace_font"}}">{{svg "octicon-typography"}}</button>
 			{{if .EasyMDE}}
-				<button class="markdown-toolbar-button markdown-switch-easymde" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.switch_to_legacy.tooltip"}}">{{svg "octicon-arrow-switch"}}</button>
+				<button type="button" class="markdown-toolbar-button markdown-switch-easymde" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.switch_to_legacy.tooltip"}}">{{svg "octicon-arrow-switch"}}</button>
 			{{end}}
 		</div>
 	</markdown-toolbar>
@@ -64,6 +64,7 @@ Template Attributes:
 		{{ctx.Locale.Tr "loading"}}
 	</div>
 
+	{{/* TODO: Add closedby="any" here when removing initModalClose */}}
 	<dialog data-modal-name="new-markdown-table">
 		<article>
 			<header>{{ctx.Locale.Tr "editor.table_modal.header"}}</header>
@@ -86,34 +87,36 @@ Template Attributes:
 			</div>
 
 			<div class="actions">
-				<button class="ui cancel button" data-selector-name="cancel-button">{{ctx.Locale.Tr "cancel"}}</button>
-				<button class="ui primary button" data-selector-name="ok-button">{{ctx.Locale.Tr "ok"}}</button>
+				<button class="secondary button cancel">{{ctx.Locale.Tr "cancel"}}</button>
+				<button class="primary button" data-selector-name="ok-button">{{ctx.Locale.Tr "ok"}}</button>
 			</div>
 		</article>
 	</dialog>
 
+	{{/* TODO: Add closedby="any" here when removing initModalClose */}}
 	<dialog data-modal-name="new-markdown-link">
 		<article>
 			<header>{{ctx.Locale.Tr "editor.link_modal.header"}}</header>
-			<div class="ui form" data-selector-name="form">
-				<div class="content">
+
+			<fieldset class="ui form content" data-selector-name="form">
+				<div class="field">
 					<label>
 						{{ctx.Locale.Tr "editor.link_modal.url"}}
 						<input name="link-url" class="js-enable" disabled required dir="auto" autocomplete="off">
 					</label>
+				</div>
+				<div class="field">
 					<label>
 						{{ctx.Locale.Tr "editor.link_modal.description"}}
 						<input name="link-description" class="js-enable" disabled required dir="auto" autocomplete="off">
 					</label>
+					<p class="help">{{ctx.Locale.Tr "editor.link_modal.paste_reminder"}}</p>
+				</div>
+			</fieldset>
 
-					<div class="help">
-						{{ctx.Locale.Tr "editor.link_modal.paste_reminder"}}
-					</div>
-				</div>
-				<div class="text right actions">
-					<button class="ui cancel button" data-selector-name="cancel-button">{{ctx.Locale.Tr "cancel"}}</button>
-					<button class="ui primary button" data-selector-name="ok-button">{{ctx.Locale.Tr "ok"}}</button>
-				</div>
+			<div class="actions">
+				<button class="secondary button cancel">{{ctx.Locale.Tr "cancel"}}</button>
+				<button class="primary button" data-selector-name="ok-button">{{ctx.Locale.Tr "ok"}}</button>
 			</div>
 		</article>
 	</dialog>

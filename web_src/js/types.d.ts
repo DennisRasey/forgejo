@@ -14,9 +14,3 @@ type CodeMirrorLanguage = typeof import('@codemirror/language');
 type CodeMirrorSearch = typeof import('@codemirror/search');
 type CodeMirrorState = typeof import('@codemirror/state');
 type CodeMirrorView = typeof import('@codemirror/view');
-
-interface HTMLDialogElement {
-  $modal?: {
-    onShow?: () => void;
-  }
-}
