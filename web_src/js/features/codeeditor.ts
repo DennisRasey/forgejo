@@ -1,20 +1,12 @@
+import type {EditorView} from '@codemirror/view';
 import {basename, extname} from '../utils.js';
 import {hideElem, onInputDebounce, showElem} from '../utils/dom.js';
 import {createCodemirror, type CodemirrorEditor, type EditorOptions} from './codemirror.ts';
-import {EditorView} from '@codemirror/view';
 import type {LanguageSupport} from '@codemirror/language';
 
 interface EditorConfig {
   indent_style: string;
   indent_size: string;
-}
-
-export class SettableEditorView extends EditorView {
-  public setValue(value: string) {
-    // Replace \n with the actual newline character and unescape escaped \n
-    value = value.replaceAll(/(?<!\\)\\n/g, '\n').replaceAll(/\\\\n/g, '\\n');
-    this.dispatch({changes: {from: 0, to: this.state.doc.length, insert: value}});
-  }
 }
 
 function getEditorconfig(input: HTMLInputElement): null | EditorConfig {
@@ -65,7 +57,7 @@ function togglePreviewDisplay(previewable: boolean) {
   }
 }
 
-export async function createCodeEditor(textarea: HTMLTextAreaElement, filenameInput: HTMLInputElement): Promise<SettableEditorView> {
+export async function createCodeEditor(textarea: HTMLTextAreaElement, filenameInput: HTMLInputElement): Promise<EditorView> {
   const filename = basename(filenameInput.value);
   const previewableExts = new Set((textarea.getAttribute('data-previewable-extensions') || '').split(','));
   const lineWrapExts = (textarea.getAttribute('data-line-wrap-extensions') || '').split(',');
@@ -107,7 +99,7 @@ export async function createCodeEditor(textarea: HTMLTextAreaElement, filenameIn
     }
   });
 
-  return Object.setPrototypeOf(editor.view, SettableEditorView.prototype);
+  return editor.view;
 }
 
 function getEditorConfigOptions(ec: null | EditorConfig): Pick<EditorOptions, 'indentSize' | 'tabSize' | 'indentStyle'> {

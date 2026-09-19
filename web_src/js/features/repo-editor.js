@@ -1,12 +1,12 @@
 import $ from 'jquery';
 import {htmlEscape} from 'escape-goat';
-import {createCodeEditor} from './codeeditor.ts';
 import {hideElem, showElem, createElementFromHTML} from '../utils/dom.js';
 import {initMarkupContent} from '../markup/content.js';
 import {attachRefIssueContextPopup} from './contextpopup.js';
 import {POST} from '../modules/fetch.js';
 import {initTab} from '../modules/tab.ts';
 import {showModal} from '../modules/modal.ts';
+import {createCodeEditor} from './codeeditor.ts';
 
 function initEditPreviewTab($form) {
   const $tabMenu = $form.find('.switch');
@@ -176,9 +176,11 @@ export function initRepoEditor() {
     // Update the editor from query params, if available,
     // only after the dirtyFileClass initialization
     const params = new URLSearchParams(window.location.search);
-    const value = params.get('value');
+    let value = params.get('value');
     if (value) {
-      editor.setValue(value);
+      // Replace \n with the actual newline character and unescape escaped \n
+      value = value.replaceAll(/(?<!\\)\\n/g, '\n').replaceAll(/\\\\n/g, '\\n');
+      editor.dispatch({changes: {from: 0, to: editor.state.doc.length, insert: value}});
     }
 
     commitButton?.addEventListener('click', (e) => {
