@@ -16,8 +16,9 @@ import vue from 'eslint-plugin-vue';
 import vueScopedCss from 'eslint-plugin-vue-scoped-css';
 import toml from 'eslint-plugin-toml';
 import tseslint from 'typescript-eslint';
+import {defineConfig} from 'eslint/config';
 
-export default tseslint.config(
+export default defineConfig(
   ...tseslint.configs.recommended,
   eslintPluginImportX.flatConfigs.typescript,
   {
