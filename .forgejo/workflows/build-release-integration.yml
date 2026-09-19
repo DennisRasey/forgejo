@@ -27,7 +27,7 @@ on:
 jobs:
   release-simulation:
     if: vars.ROLE == 'forgejo-coding'
-    runs-on: lxc-bookworm
+    runs-on: lxc-trixie
     steps:
       - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

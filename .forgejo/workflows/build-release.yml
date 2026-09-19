@@ -29,7 +29,7 @@ on:
 
 jobs:
   build:
-    runs-on: lxc-bookworm
+    runs-on: lxc-trixie
     # outputs used by release job
     outputs:
       version: ${{ steps.release-info.outputs.version }}
