@@ -278,7 +278,7 @@ func extractAsset(d string, a assetFile, overwrite, rename bool) error {
 	return nil
 }
 
-func collectAssetFilesByPattern(c *cli.Command, globs []glob.Glob, path string, layer *assetfs.Layer) {
+func collectAssetFilesByPattern(c *cli.Command, globs []*glob.Pattern, path string, layer *assetfs.Layer) {
 	fs := assetfs.Layered(layer)
 	files, err := fs.ListAllFiles(".", true)
 	if err != nil {
@@ -301,11 +301,11 @@ func collectAssetFilesByPattern(c *cli.Command, globs []glob.Glob, path string, 
 	}
 }
 
-func compileCollectPatterns(args []string) ([]glob.Glob, error) {
+func compileCollectPatterns(args []string) ([]*glob.Pattern, error) {
 	if len(args) == 0 {
 		args = []string{"**"}
 	}
-	pat := make([]glob.Glob, len(args))
+	pat := make([]*glob.Pattern, len(args))
 	for i := range args {
 		if g, err := glob.Compile(args[i], '/'); err != nil {
 			return nil, fmt.Errorf("'%s': Invalid glob pattern: %w", args[i], err)

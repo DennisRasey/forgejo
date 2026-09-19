@@ -167,7 +167,7 @@ func Deliver(ctx context.Context, t *webhook_model.HookTask) error {
 var (
 	webhookHTTPClient *http.Client
 	once              sync.Once
-	hostMatchers      []glob.Glob
+	hostMatchers      []*glob.Pattern
 )
 
 func webhookProxy(allowList *hostmatcher.HostMatchList) func(req *http.Request) (*url.URL, error) {

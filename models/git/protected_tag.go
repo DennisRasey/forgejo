@@ -22,7 +22,7 @@ type ProtectedTag struct {
 	RepoID           int64
 	NamePattern      string
 	RegexPattern     *regexp.Regexp `xorm:"-"`
-	GlobPattern      glob.Glob      `xorm:"-"`
+	GlobPattern      *glob.Pattern  `xorm:"-"`
 	AllowlistUserIDs []int64        `xorm:"JSON TEXT"`
 	AllowlistTeamIDs []int64        `xorm:"JSON TEXT"`
 

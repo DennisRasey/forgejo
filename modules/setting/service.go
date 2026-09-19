@@ -38,8 +38,8 @@ var Service = struct {
 	ResetPwdCodeLives                       int
 	RegisterEmailConfirm                    bool
 	RegisterManualConfirm                   bool
-	EmailDomainAllowList                    []glob.Glob
-	EmailDomainBlockList                    []glob.Glob
+	EmailDomainAllowList                    []*glob.Pattern
+	EmailDomainBlockList                    []*glob.Pattern
 	EmailDomainBlockDisposable              bool
 	DisableRegistration                     bool
 	AllowOnlyInternalRegistration           bool
@@ -131,7 +131,7 @@ func (a AllowedVisibility) ToVisibleTypeSlice() (result []structs.VisibleType) {
 	return result
 }
 
-func CompileEmailGlobList(sec ConfigSection, keys ...string) (globs []glob.Glob) {
+func CompileEmailGlobList(sec ConfigSection, keys ...string) (globs []*glob.Pattern) {
 	for _, key := range keys {
 		list := sec.Key(key).Strings(",")
 		for _, s := range list {
@@ -150,7 +150,7 @@ func LoadServiceSetting() {
 	loadServiceFrom(CfgProvider)
 }
 
-func appURLAsGlob(fqdn string) (glob.Glob, error) {
+func appURLAsGlob(fqdn string) (*glob.Pattern, error) {
 	localFqdn, err := url.ParseRequestURI(fqdn)
 	if err != nil {
 		log.Error("Error in EmailDomainAllowList: %v", err)
@@ -195,11 +195,11 @@ func loadServiceFrom(rootCfg ConfigProvider) {
 	Service.EmailDomainBlockList = CompileEmailGlobList(sec, "EMAIL_DOMAIN_BLOCKLIST")
 	Service.EmailDomainBlockDisposable = sec.Key("EMAIL_DOMAIN_BLOCK_DISPOSABLE").MustBool(false)
 	if Service.EmailDomainBlockDisposable {
-		toAdd := make([]glob.Glob, 0, len(DisposableEmailDomains()))
+		toAdd := make([]*glob.Pattern, 0, len(DisposableEmailDomains()))
 		for _, domain := range DisposableEmailDomains() {
 			domain = strings.ToLower(domain)
 			// Only add domains that aren't blocked yet.
-			if !slices.ContainsFunc(Service.EmailDomainBlockList, func(g glob.Glob) bool { return g.Match(domain) }) {
+			if !slices.ContainsFunc(Service.EmailDomainBlockList, func(g *glob.Pattern) bool { return g.Match(domain) }) {
 				if g, err := glob.Compile(domain); err != nil {
 					log.Error("Error in disposable domain %s: %v", domain, err)
 				} else {

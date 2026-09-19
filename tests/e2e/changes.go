@@ -45,7 +45,7 @@ func initChangedFiles() {
 		"templates/base/**",
 		"modules/templates/**",
 	}
-	fullRunPatterns := []glob.Glob{}
+	fullRunPatterns := []*glob.Pattern{}
 	for _, expr := range globalPatterns {
 		fullRunPatterns = append(fullRunPatterns, glob.MustCompile(expr, '.', '/'))
 	}
@@ -80,7 +80,7 @@ func canSkipTest(testFile string) bool {
 	return true
 }
 
-func getWatchPatterns(filename string) []glob.Glob {
+func getWatchPatterns(filename string) []*glob.Pattern {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -89,7 +89,7 @@ func getWatchPatterns(filename string) []glob.Glob {
 	scanner := bufio.NewScanner(file)
 
 	watchSection := false
-	patterns := []glob.Glob{}
+	patterns := []*glob.Pattern{}
 	for scanner.Scan() {
 		line := scanner.Text()
 		// check for watch block

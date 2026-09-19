@@ -18,7 +18,7 @@ import (
 func TestEmailBlocklist(t *testing.T) {
 	defer test.MockVariableValue(
 		&setting.Service.EmailDomainBlockList,
-		[]glob.Glob{glob.MustCompile("evil")},
+		[]*glob.Pattern{glob.MustCompile("evil")},
 	)()
 
 	defer tests.PrepareTestEnv(t)()
@@ -43,7 +43,7 @@ func TestEmailBlocklist(t *testing.T) {
 func TestEmailAllowlist(t *testing.T) {
 	defer test.MockVariableValue(
 		&setting.Service.EmailDomainAllowList,
-		[]glob.Glob{glob.MustCompile("pond")},
+		[]*glob.Pattern{glob.MustCompile("pond")},
 	)()
 
 	defer tests.PrepareTestEnv(t)()

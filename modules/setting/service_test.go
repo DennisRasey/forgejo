@@ -18,7 +18,7 @@ import (
 	"golang.org/x/net/publicsuffix"
 )
 
-func match(globs []glob.Glob, s string) bool {
+func match(globs []*glob.Pattern, s string) bool {
 	for _, g := range globs {
 		if g.Match(s) {
 			return true

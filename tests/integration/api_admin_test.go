@@ -128,7 +128,8 @@ func TestAPISudoUserAuthorizationReducer(t *testing.T) {
 	})
 
 	t.Run("specific repo access token", func(t *testing.T) {
-		repo2OnlyToken := createFineGrainedRepoAccessToken(t, adminUsername,
+		repo2OnlyToken := createFineGrainedRepoAccessToken(
+			t, adminUsername,
 			[]auth_model.AccessTokenScope{auth_model.AccessTokenScopeReadUser},
 			[]int64{2},
 		)
@@ -467,9 +468,9 @@ func TestAPICron(t *testing.T) {
 func TestAPICreateUser_NotAllowedEmailDomain(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	setting.Service.EmailDomainAllowList = []glob.Glob{glob.MustCompile("example.org")}
+	setting.Service.EmailDomainAllowList = []*glob.Pattern{glob.MustCompile("example.org")}
 	defer func() {
-		setting.Service.EmailDomainAllowList = []glob.Glob{}
+		setting.Service.EmailDomainAllowList = []*glob.Pattern{}
 	}()
 
 	adminUsername := "user1"
@@ -492,9 +493,9 @@ func TestAPICreateUser_NotAllowedEmailDomain(t *testing.T) {
 func TestAPIEditUser_NotAllowedEmailDomain(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	setting.Service.EmailDomainAllowList = []glob.Glob{glob.MustCompile("example.org")}
+	setting.Service.EmailDomainAllowList = []*glob.Pattern{glob.MustCompile("example.org")}
 	defer func() {
-		setting.Service.EmailDomainAllowList = []glob.Glob{}
+		setting.Service.EmailDomainAllowList = []*glob.Pattern{}
 	}()
 
 	adminUsername := "user1"

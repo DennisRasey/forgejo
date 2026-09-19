@@ -34,7 +34,7 @@ type ProtectedBranch struct {
 	RepoID                        int64                  `xorm:"UNIQUE(s)"`
 	Repo                          *repo_model.Repository `xorm:"-"`
 	RuleName                      string                 `xorm:"'branch_name' UNIQUE(s)"` // a branch name or a glob match to branch name
-	globRule                      glob.Glob              `xorm:"-"`
+	globRule                      *glob.Pattern          `xorm:"-"`
 	isPlainName                   bool                   `xorm:"-"`
 	CanPush                       bool                   `xorm:"NOT NULL DEFAULT false"`
 	EnableWhitelist               bool
@@ -71,7 +71,7 @@ func init() {
 // IsRuleNameSpecial return true if it contains special character
 func IsRuleNameSpecial(ruleName string) bool {
 	for i := 0; i < len(ruleName); i++ {
-		if syntax.Special(ruleName[i]) {
+		if syntax.IsSpecial(ruleName[i]) {
 			return true
 		}
 	}
@@ -201,18 +201,18 @@ func IsUserOfficialReviewer(ctx context.Context, protectBranch *ProtectedBranch,
 	return inTeam, nil
 }
 
-// GetProtectedFilePatterns parses a semicolon separated list of protected file patterns and returns a glob.Glob slice
-func (protectBranch *ProtectedBranch) GetProtectedFilePatterns() []glob.Glob {
+// GetProtectedFilePatterns parses a semicolon separated list of protected file patterns and returns a *glob.Pattern slice
+func (protectBranch *ProtectedBranch) GetProtectedFilePatterns() []*glob.Pattern {
 	return getFilePatterns(protectBranch.ProtectedFilePatterns)
 }
 
-// GetUnprotectedFilePatterns parses a semicolon separated list of unprotected file patterns and returns a glob.Glob slice
-func (protectBranch *ProtectedBranch) GetUnprotectedFilePatterns() []glob.Glob {
+// GetUnprotectedFilePatterns parses a semicolon separated list of unprotected file patterns and returns a *glob.Pattern slice
+func (protectBranch *ProtectedBranch) GetUnprotectedFilePatterns() []*glob.Pattern {
 	return getFilePatterns(protectBranch.UnprotectedFilePatterns)
 }
 
-func getFilePatterns(filePatterns string) []glob.Glob {
-	extarr := make([]glob.Glob, 0, 10)
+func getFilePatterns(filePatterns string) []*glob.Pattern {
+	extarr := make([]*glob.Pattern, 0, 10)
 	for expr := range strings.SplitSeq(strings.ToLower(filePatterns), ";") {
 		expr = strings.TrimSpace(expr)
 		if expr != "" {
@@ -237,7 +237,7 @@ func (protectBranch *ProtectedBranch) MergeBlockedByProtectedFiles(changedProtec
 }
 
 // IsProtectedFile return if path is protected
-func (protectBranch *ProtectedBranch) IsProtectedFile(patterns []glob.Glob, path string) bool {
+func (protectBranch *ProtectedBranch) IsProtectedFile(patterns []*glob.Pattern, path string) bool {
 	if len(patterns) == 0 {
 		patterns = protectBranch.GetProtectedFilePatterns()
 		if len(patterns) == 0 {
@@ -259,7 +259,7 @@ func (protectBranch *ProtectedBranch) IsProtectedFile(patterns []glob.Glob, path
 }
 
 // IsUnprotectedFile return if path is unprotected
-func (protectBranch *ProtectedBranch) IsUnprotectedFile(patterns []glob.Glob, path string) bool {
+func (protectBranch *ProtectedBranch) IsUnprotectedFile(patterns []*glob.Pattern, path string) bool {
 	if len(patterns) == 0 {
 		patterns = protectBranch.GetUnprotectedFilePatterns()
 		if len(patterns) == 0 {

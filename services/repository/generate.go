@@ -103,16 +103,16 @@ type GiteaTemplate struct {
 	Path    string
 	Content []byte
 
-	globs []glob.Glob
+	globs []*glob.Pattern
 }
 
 // Globs parses the .gitea/template globs or returns them if they were already parsed
-func (gt *GiteaTemplate) Globs() []glob.Glob {
+func (gt *GiteaTemplate) Globs() []*glob.Pattern {
 	if gt.globs != nil {
 		return gt.globs
 	}
 
-	gt.globs = make([]glob.Glob, 0)
+	gt.globs = make([]*glob.Pattern, 0)
 	scanner := bufio.NewScanner(bytes.NewReader(gt.Content))
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())

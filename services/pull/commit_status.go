@@ -26,7 +26,7 @@ func MergeRequiredContextsCommitStatus(commitStatuses []*git_model.CommitStatus,
 	returnedStatus := structs.CommitStatusSuccess
 
 	if len(requiredContexts) > 0 {
-		requiredContextsGlob := make(map[string]glob.Glob, len(requiredContexts))
+		requiredContextsGlob := make(map[string]*glob.Pattern, len(requiredContexts))
 		for _, ctx := range requiredContexts {
 			if gp, err := glob.Compile(ctx); err != nil {
 				log.Error("glob.Compile %s failed. Error: %v", ctx, err)

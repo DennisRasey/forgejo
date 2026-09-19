@@ -43,9 +43,9 @@ func TestAdminAddOrSetPrimaryEmailAddress(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, emails, 2)
 
-	setting.Service.EmailDomainAllowList = []glob.Glob{glob.MustCompile("example.org")}
+	setting.Service.EmailDomainAllowList = []*glob.Pattern{glob.MustCompile("example.org")}
 	defer func() {
-		setting.Service.EmailDomainAllowList = []glob.Glob{}
+		setting.Service.EmailDomainAllowList = []*glob.Pattern{}
 	}()
 
 	require.NoError(t, AdminAddOrSetPrimaryEmailAddress(db.DefaultContext, user, "new-primary2@example2.com"))

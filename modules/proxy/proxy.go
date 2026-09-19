@@ -18,7 +18,7 @@ import (
 
 var (
 	once         sync.Once
-	hostMatchers []glob.Glob
+	hostMatchers []*glob.Pattern
 )
 
 // GetProxyURL returns proxy url

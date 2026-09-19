@@ -504,7 +504,7 @@ func checkConflicts(ctx context.Context, pr *issues_model.PullRequest, testPatch
 }
 
 // CheckFileProtection check file Protection
-func CheckFileProtection(repo *git.Repository, oldCommitID, newCommitID string, patterns []glob.Glob, limit int, env []string) ([]string, error) {
+func CheckFileProtection(repo *git.Repository, oldCommitID, newCommitID string, patterns []*glob.Pattern, limit int, env []string) ([]string, error) {
 	if len(patterns) == 0 {
 		return nil, nil
 	}
@@ -534,7 +534,7 @@ func CheckFileProtection(repo *git.Repository, oldCommitID, newCommitID string, 
 }
 
 // CheckUnprotectedFiles check if the commit only touches unprotected files
-func CheckUnprotectedFiles(repo *git.Repository, oldCommitID, newCommitID string, patterns []glob.Glob, env []string) (bool, error) {
+func CheckUnprotectedFiles(repo *git.Repository, oldCommitID, newCommitID string, patterns []*glob.Pattern, env []string) (bool, error) {
 	if len(patterns) == 0 {
 		return false, nil
 	}

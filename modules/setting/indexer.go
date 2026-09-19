@@ -55,7 +55,7 @@ var Indexer = struct {
 }
 
 type Glob struct {
-	glob    glob.Glob
+	glob    *glob.Pattern
 	pattern string
 }
 
@@ -170,7 +170,7 @@ func loadIndexerFrom(rootCfg ConfigProvider) {
 	}
 }
 
-// IndexerGlobFromString parses a comma separated list of patterns and returns a glob.Glob slice suited for repo indexing
+// IndexerGlobFromString parses a comma separated list of patterns and returns a *glob.Pattern slice suited for repo indexing
 func IndexerGlobFromString(globstr string) []Glob {
 	extarr := make([]Glob, 0, 10)
 	for expr := range strings.SplitSeq(strings.ToLower(globstr), ",") {

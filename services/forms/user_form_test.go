@@ -26,7 +26,7 @@ func TestRegisterForm_IsDomainAllowed_Empty(t *testing.T) {
 }
 
 func TestRegisterForm_IsDomainAllowed_InvalidEmail(t *testing.T) {
-	defer test.MockVariableValue(&setting.Service.EmailDomainAllowList, []glob.Glob{glob.MustCompile("gitea.io")})()
+	defer test.MockVariableValue(&setting.Service.EmailDomainAllowList, []*glob.Pattern{glob.MustCompile("gitea.io")})()
 
 	tt := []struct {
 		email string
@@ -44,7 +44,7 @@ func TestRegisterForm_IsDomainAllowed_InvalidEmail(t *testing.T) {
 }
 
 func TestRegisterForm_IsDomainAllowed_AllowedEmail(t *testing.T) {
-	defer test.MockVariableValue(&setting.Service.EmailDomainAllowList, []glob.Glob{glob.MustCompile("gitea.io"), glob.MustCompile("*.allow")})()
+	defer test.MockVariableValue(&setting.Service.EmailDomainAllowList, []*glob.Pattern{glob.MustCompile("gitea.io"), glob.MustCompile("*.allow")})()
 
 	tt := []struct {
 		email string
@@ -68,7 +68,7 @@ func TestRegisterForm_IsDomainAllowed_AllowedEmail(t *testing.T) {
 }
 
 func TestRegisterForm_IsDomainAllowed_BlockedEmail(t *testing.T) {
-	defer test.MockVariableValue(&setting.Service.EmailDomainBlockList, []glob.Glob{glob.MustCompile("gitea.io"), glob.MustCompile("*.block")})()
+	defer test.MockVariableValue(&setting.Service.EmailDomainBlockList, []*glob.Pattern{glob.MustCompile("gitea.io"), glob.MustCompile("*.block")})()
 
 	tt := []struct {
 		email string

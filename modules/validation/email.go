@@ -96,8 +96,8 @@ func IsEmailDomainAllowed(email string) (validEmail, ok bool) {
 
 func isEmailDomainAllowedInternal(
 	email string,
-	emailDomainAllowList []glob.Glob,
-	emailDomainBlockList []glob.Glob,
+	emailDomainAllowList []*glob.Pattern,
+	emailDomainBlockList []*glob.Pattern,
 ) bool {
 	var result bool
 
@@ -111,7 +111,7 @@ func isEmailDomainAllowedInternal(
 
 // isEmailDomainListed checks whether the domain of an email address
 // matches a list of domains
-func isEmailDomainListed(globs []glob.Glob, email string) bool {
+func isEmailDomainListed(globs []*glob.Pattern, email string) bool {
 	if len(globs) == 0 {
 		return false
 	}
