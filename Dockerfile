@@ -1,6 +1,6 @@
 FROM --platform=$BUILDPLATFORM data.forgejo.org/oci/xx AS xx
 
-FROM --platform=$BUILDPLATFORM data.forgejo.org/oci/golang:1.26-alpine3.24 AS build-env
+FROM --platform=$BUILDPLATFORM data.forgejo.org/oci/golang:1.27-alpine3.24 AS build-env
 
 ARG GOPROXY
 ENV GOPROXY=${GOPROXY:-https://proxy.golang.org,direct}
