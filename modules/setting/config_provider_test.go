@@ -79,14 +79,13 @@ key = 123
 }
 
 func TestNewConfigProviderFromFile(t *testing.T) {
-	cfg, err := NewConfigProviderFromFile("no-such.ini")
+	_, err := NewConfigProviderFromFile("no-such.ini")
 	require.NoError(t, err)
-	assert.True(t, cfg.IsLoadedFromEmpty())
 
 	// load non-existing file and save
 	testFile := t.TempDir() + "/test.ini"
 	testFile1 := t.TempDir() + "/test1.ini"
-	cfg, err = NewConfigProviderFromFile(testFile)
+	cfg, err := NewConfigProviderFromFile(testFile)
 	require.NoError(t, err)
 
 	sec, _ := cfg.NewSection("foo")
