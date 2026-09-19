@@ -89,5 +89,5 @@
 @import "./migrate.css";
 @import "./issues.css";
 
-@tailwind utilities;
 @import "./helpers.css";
+@tailwind utilities;
