@@ -21,6 +21,7 @@ import (
 	"forgejo.org/modules/markup"
 	"forgejo.org/modules/markup/markdown"
 	"forgejo.org/modules/optional"
+	project_module "forgejo.org/modules/project"
 	"forgejo.org/modules/setting"
 	"forgejo.org/routers/web/repo"
 	"forgejo.org/services/context"
@@ -167,11 +168,11 @@ func LoadHeaderCount(ctx *context.Context) error {
 		return err
 	}
 
-	var projectType project_model.Type
+	var projectType project_module.OwnerType
 	if ctx.ContextUser.IsOrganization() {
-		projectType = project_model.TypeOrganization
+		projectType = project_module.TypeOrganization
 	} else {
-		projectType = project_model.TypeIndividual
+		projectType = project_module.TypeIndividual
 	}
 	ctx.Data["ProjectCount"], err = db.Count[project_model.Project](ctx, project_model.SearchOptions{
 		OwnerID:  ctx.ContextUser.ID,

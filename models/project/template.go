@@ -24,24 +24,3 @@ const (
 	// TemplateTypeBugTriage is a project template type that has predefined columns suited to hunting down bugs
 	TemplateTypeBugTriage
 )
-
-// GetTemplateConfigs retrieves the template configs of configurations project columns could have
-//
-//llu:returnsTrKeyWeak
-func GetTemplateConfigs() []TemplateConfig {
-	return []TemplateConfig{
-		{TemplateTypeNone, "repo.projects.type.none"},
-		{TemplateTypeBasicKanban, "repo.projects.type.basic_kanban"},
-		{TemplateTypeBugTriage, "repo.projects.type.bug_triage"},
-	}
-}
-
-// IsTemplateTypeValid checks if the project template type is valid
-func IsTemplateTypeValid(p TemplateType) bool {
-	switch p {
-	case TemplateTypeNone, TemplateTypeBasicKanban, TemplateTypeBugTriage:
-		return true
-	default:
-		return false
-	}
-}

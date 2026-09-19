@@ -10,28 +10,13 @@ import (
 	"forgejo.org/models/db"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
+	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/optional"
+	project_module "forgejo.org/modules/project"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestIsProjectTypeValid(t *testing.T) {
-	const UnknownType Type = 15
-
-	cases := []struct {
-		typ   Type
-		valid bool
-	}{
-		{TypeIndividual, true},
-		{TypeRepository, true},
-		{TypeOrganization, true},
-		{UnknownType, false},
-	}
-
-	for _, v := range cases {
-		assert.Equal(t, v.valid, IsTypeValid(v.typ))
-	}
-}
 
 func TestGetProjects(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
@@ -47,6 +32,64 @@ func TestGetProjects(t *testing.T) {
 
 	// 1 value for this repo exists in the fixtures
 	assert.Len(t, projects, 1)
+}
+
+func TestCreateDeleteProject(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	user1 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	// wanted project settings
+	wantTitle := "Testproject"
+	wantDescription := "Test"
+	wantOwnerID := user1.ID
+	wantRepoID := int64(0)
+	wantIsClosed := false
+	wantTemplateType := project_module.TemplateTypeNone
+	wantCardType := project_module.CardTypeTextOnly
+	wantType := project_module.TypeIndividual
+
+	// create project
+	project := &Project{
+		Title:        wantTitle,
+		Description:  wantDescription,
+		OwnerID:      wantOwnerID,
+		Owner:        user1,
+		RepoID:       wantRepoID,
+		Repo:         &repo_model.Repository{},
+		CreatorID:    wantOwnerID,
+		IsClosed:     wantIsClosed,
+		TemplateType: wantTemplateType,
+		CardType:     wantCardType,
+		Type:         wantType,
+	}
+	err := CreateProject(t.Context(), project)
+	require.NoError(t, err)
+
+	// check project in db
+	projects, err := db.Find[Project](db.DefaultContext, SearchOptions{
+		OwnerID:  wantOwnerID,
+		RepoID:   wantRepoID,
+		IsClosed: optional.Some(wantIsClosed),
+		Type:     wantType,
+		Title:    wantTitle,
+	})
+	require.NoError(t, err)
+	assert.Len(t, projects, 1)
+	assert.Equal(t, project.ID, projects[0].ID)
+	assert.Equal(t, wantDescription, projects[0].Description)
+	assert.Equal(t, wantOwnerID, projects[0].CreatorID)
+	assert.Equal(t, wantTemplateType, projects[0].TemplateType)
+	assert.Equal(t, wantCardType, projects[0].CardType)
+
+	// try to create duplicate project
+	err = CreateProject(t.Context(), project)
+	require.ErrorContains(t, err, "unique constraint violation")
+
+	// delete project
+	err = DeleteProjectByID(t.Context(), project.ID, optional.None[int64]())
+	require.NoError(t, err)
+	unittest.AssertNotExistsBean(t, project)
 }
 
 func TestProjectsSort(t *testing.T) {
@@ -76,47 +119,16 @@ func TestProjectsSort(t *testing.T) {
 
 	for _, tt := range tests {
 		projects, count, err := db.FindAndCount[Project](db.DefaultContext, SearchOptions{
-			OrderBy: GetSearchOrderByBySortType(tt.sortType),
+			OrderBy: GetSearchOrderBySortType(tt.sortType),
 		})
 		require.NoError(t, err)
-		assert.Equal(t, int64(7), count)
+		assert.EqualValues(t, 7, count)
 		if assert.Len(t, projects, 7) {
 			for i := range projects {
 				assert.Equal(t, tt.wants[i], projects[i].ID)
 			}
 		}
 	}
-}
-
-func TestGetProjectForUserByID(t *testing.T) {
-	require.NoError(t, unittest.PrepareTestDatabase())
-
-	found := func(t *testing.T, uid, id int64) {
-		t.Helper()
-
-		p, err := GetProjectForUserByID(t.Context(), uid, id)
-		require.NoError(t, err)
-		if assert.NotNil(t, p) {
-			assert.Equal(t, id, p.ID)
-		}
-	}
-
-	notFound := func(t *testing.T, uid, id int64) {
-		t.Helper()
-
-		p, err := GetProjectForUserByID(t.Context(), uid, id)
-		require.ErrorIs(t, err, ErrProjectNotExist{ID: id})
-		assert.Nil(t, p)
-	}
-
-	found(t, 2, 4)
-	found(t, 2, 5)
-	found(t, 2, 6)
-	found(t, 3, 7)
-	notFound(t, 1, 4)
-	notFound(t, 1, 5)
-	notFound(t, 1, 6)
-	notFound(t, 1, 7)
 }
 
 func TestChangeProjectStatus(t *testing.T) {
@@ -157,4 +169,25 @@ func TestChangeProjectStatus(t *testing.T) {
 		assert.Equal(t, repo.NumOpenProjects, repoAfter.NumOpenProjects)
 		assert.Equal(t, repo.NumClosedProjects, repoAfter.NumClosedProjects)
 	})
+}
+
+func TestProjectLink(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
+	repo2 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
+
+	for _, tt := range []struct {
+		name    string
+		project *Project
+		url     string
+	}{
+		{"User", &Project{OwnerID: user2.ID}, "/user2/-/projects/0"},
+		{"Org", &Project{OwnerID: org3.ID}, "/org3/-/projects/0"},
+		{"Repo", &Project{RepoID: repo2.ID}, "/user2/repo2/projects/0"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.url, tt.project.Link(t.Context()))
+		})
+	}
 }

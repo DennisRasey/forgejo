@@ -10,12 +10,5 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	unittest.MainTest(m, &unittest.TestOptions{
-		FixtureFiles: []string{
-			"project.yml",
-			"project_board.yml",
-			"project_issue.yml",
-			"repository.yml",
-		},
-	})
+	unittest.MainTest(m)
 }

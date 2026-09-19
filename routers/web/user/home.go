@@ -29,6 +29,7 @@ import (
 	"forgejo.org/modules/markup"
 	"forgejo.org/modules/markup/markdown"
 	"forgejo.org/modules/optional"
+	project_module "forgejo.org/modules/project"
 	"forgejo.org/modules/setting"
 	"forgejo.org/routers/web/feed"
 	"forgejo.org/services/context"
@@ -549,11 +550,11 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 			ListOptions: db.ListOptionsAll,
 			OwnerID:     ctxUser.ID,
 			IsClosed:    optional.None[bool](),
-			Type:        project_model.TypeIndividual,
+			Type:        project_module.TypeIndividual,
 		}
 		if org != nil {
 			projOpts.OwnerID = org.ID
-			projOpts.Type = project_model.TypeOrganization
+			projOpts.Type = project_module.TypeOrganization
 		}
 
 		projects, err := db.Find[project_model.Project](ctx, projOpts)

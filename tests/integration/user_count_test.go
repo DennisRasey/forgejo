@@ -17,6 +17,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/optional"
+	project_module "forgejo.org/modules/project"
 	"forgejo.org/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -50,11 +51,11 @@ func (countTest *userCountTest) Init(t *testing.T, doerID, userID int64) {
 	})
 	require.NoError(t, err)
 
-	var projectType project_model.Type
+	var projectType project_module.OwnerType
 	if countTest.user.IsOrganization() {
-		projectType = project_model.TypeOrganization
+		projectType = project_module.TypeOrganization
 	} else {
-		projectType = project_model.TypeIndividual
+		projectType = project_module.TypeIndividual
 	}
 	countTest.projectCount, err = db.Count[project_model.Project](db.DefaultContext, &project_model.SearchOptions{
 		OwnerID:  countTest.user.ID,

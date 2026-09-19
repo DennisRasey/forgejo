@@ -98,9 +98,14 @@ func LoadIssuesFromColumnList(ctx context.Context, bs project_model.ColumnList, 
 	return issuesMap, nil
 }
 
-// IssueAssignOrRemoveProject changes the project associated with an issue
-// If newProjectID is 0, the issue is removed from the project
-func IssueAssignOrRemoveProject(ctx context.Context, issue *Issue, doer *user_model.User, newProjectID, newColumnID int64) error {
+// issueAssignOrRemoveProject changes the project associated with an issue.
+// If projectIssue.ProjectID is 0, the issue is removed from the project.
+func issueAssignOrRemoveProject(
+	ctx context.Context,
+	issue *Issue,
+	doer *user_model.User,
+	projectIssue *project_model.ProjectIssue,
+) error {
 	return db.WithTx(ctx, func(ctx context.Context) error {
 		oldProjectID := issue.projectID(ctx)
 
@@ -109,20 +114,20 @@ func IssueAssignOrRemoveProject(ctx context.Context, issue *Issue, doer *user_mo
 		}
 
 		// Only check if we add a new project and not remove it.
-		if newProjectID > 0 {
-			newProject, err := project_model.GetProjectByID(ctx, newProjectID)
+		if projectIssue.ProjectID > 0 {
+			newProject, err := project_model.GetProjectByID(ctx, projectIssue.ProjectID)
 			if err != nil {
 				return err
 			}
 			if !newProject.CanBeAccessedByOwnerRepo(issue.Repo.OwnerID, issue.Repo) {
 				return util.NewPermissionDeniedErrorf("issue %d can't be accessed by project %d", issue.ID, newProject.ID)
 			}
-			if newColumnID == 0 {
+			if projectIssue.ProjectColumnID == 0 {
 				newDefaultColumn, err := newProject.GetDefaultColumn(ctx)
 				if err != nil {
 					return err
 				}
-				newColumnID = newDefaultColumn.ID
+				projectIssue.ProjectColumnID = newDefaultColumn.ID
 			}
 		}
 
@@ -130,22 +135,22 @@ func IssueAssignOrRemoveProject(ctx context.Context, issue *Issue, doer *user_mo
 			return err
 		}
 
-		if oldProjectID > 0 || newProjectID > 0 {
+		if oldProjectID > 0 || projectIssue.ProjectID > 0 {
 			if _, err := CreateComment(ctx, &CreateCommentOptions{
 				Type:         CommentTypeProject,
 				Doer:         doer,
 				Repo:         issue.Repo,
 				Issue:        issue,
 				OldProjectID: oldProjectID,
-				ProjectID:    newProjectID,
+				ProjectID:    projectIssue.ProjectID,
 			}); err != nil {
 				return err
 			}
 		}
-		if newProjectID == 0 {
+		if projectIssue.ProjectID == 0 {
 			return nil
 		}
-		if newColumnID == 0 {
+		if projectIssue.ProjectColumnID == 0 {
 			panic("newColumnID must not be zero") // shouldn't happen
 		}
 
@@ -154,19 +159,26 @@ func IssueAssignOrRemoveProject(ctx context.Context, issue *Issue, doer *user_mo
 			IssueCount int64
 		}{}
 		if _, err := db.GetEngine(ctx).Select("max(sorting) as max_sorting, count(*) as issue_count").Table("project_issue").
-			Where("project_id=?", newProjectID).
-			And("project_board_id=?", newColumnID).
+			Where("project_id=?", projectIssue.ProjectID).
+			And("project_board_id=?", projectIssue.ProjectColumnID).
 			Get(&res); err != nil {
 			return err
 		}
 		newSorting := util.Iif(res.IssueCount > 0, res.MaxSorting+1, 0)
-		return db.Insert(ctx, &project_model.ProjectIssue{
-			IssueID:         issue.ID,
-			ProjectID:       newProjectID,
-			ProjectColumnID: newColumnID,
-			Sorting:         newSorting,
-		})
+		projectIssue.IssueID = issue.ID
+		projectIssue.Sorting = newSorting
+		return db.Insert(ctx, projectIssue)
 	})
+}
+
+// IssueAssignOrRemoveProject changes the project associated with an issue
+// If newProjectID is 0, the issue is removed from the project
+func IssueAssignOrRemoveProject(ctx context.Context, issue *Issue, doer *user_model.User, newProjectID, newColumnID int64) error {
+	projIssue := &project_model.ProjectIssue{
+		ProjectID:       newProjectID,
+		ProjectColumnID: newColumnID,
+	}
+	return issueAssignOrRemoveProject(ctx, issue, doer, projIssue)
 }
 
 // NumIssuesInProjects returns the amount of issues assigned to one of the project
@@ -188,7 +200,9 @@ func NumIssuesInProjects(ctx context.Context, pl []*project_model.Project, doer 
 // the doer can access.
 func NumIssuesInProject(ctx context.Context, p *project_model.Project, doer *user_model.User, org *org_model.Organization, isClosed optional.Option[bool]) (int, error) {
 	numIssuesInProject := int(0)
-	bs, err := p.GetColumns(ctx)
+	bs, err := db.Find[project_model.Column](ctx, project_model.FindColumnOptions{
+		ListOptions: db.ListOptionsAll, ProjectID: p.ID,
+	})
 	if err != nil {
 		return 0, err
 	}

@@ -745,6 +745,43 @@ func getHTMLDoc(t testing.TB, session *TestSession, urlStr string, expectedStatu
 	return NewHTMLParser(t, resp.Body)
 }
 
+func sessionJSONMethod(t testing.TB, session *TestSession, method, endpoint string, opts any, expectedStatus int,
+) *httptest.ResponseRecorder {
+	req := NewRequestWithJSON(t, method, endpoint, &opts)
+	return session.MakeRequest(t, req, expectedStatus)
+}
+
+func sessionJSONPOST(t testing.TB, session *TestSession, endpoint string, opts any, expectedStatus int,
+) *httptest.ResponseRecorder {
+	return sessionJSONMethod(t, session, "POST", endpoint, opts, expectedStatus)
+}
+
+func sessionJSONPUT(t testing.TB, session *TestSession, endpoint string, opts any, expectedStatus int,
+) *httptest.ResponseRecorder {
+	return sessionJSONMethod(t, session, "PUT", endpoint, opts, expectedStatus)
+}
+
+func sessionMethod(t testing.TB, session *TestSession, method, endpoint string, expectedStatus int,
+) *httptest.ResponseRecorder {
+	req := NewRequest(t, method, endpoint)
+	return session.MakeRequest(t, req, expectedStatus)
+}
+
+func sessionPOST(t testing.TB, session *TestSession, endpoint string, expectedStatus int,
+) *httptest.ResponseRecorder {
+	return sessionMethod(t, session, "POST", endpoint, expectedStatus)
+}
+
+func sessionGET(t testing.TB, session *TestSession, endpoint string, expectedStatus int,
+) *httptest.ResponseRecorder {
+	return sessionMethod(t, session, "GET", endpoint, expectedStatus)
+}
+
+func sessionDELETE(t testing.TB, session *TestSession, endpoint string, expectedStatus int,
+) *httptest.ResponseRecorder {
+	return sessionMethod(t, session, "DELETE", endpoint, expectedStatus)
+}
+
 func SortMailerMessages(msgs []*mailer.Message) {
 	slices.SortFunc(msgs, func(a, b *mailer.Message) int {
 		return strings.Compare(b.To, a.To)

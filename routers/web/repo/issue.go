@@ -42,6 +42,7 @@ import (
 	"forgejo.org/modules/markup"
 	"forgejo.org/modules/markup/markdown"
 	"forgejo.org/modules/optional"
+	project_module "forgejo.org/modules/project"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/templates"
@@ -602,16 +603,16 @@ func RetrieveRepoMilestonesAndAssignees(ctx *context.Context, repo *repo_model.R
 func retrieveProjects(ctx *context.Context, repo *repo_model.Repository) {
 	// Distinguish whether the owner of the repository
 	// is an individual or an organization
-	repoOwnerType := project_model.TypeIndividual
+	repoOwnerType := project_module.TypeIndividual
 	if repo.Owner.IsOrganization() {
-		repoOwnerType = project_model.TypeOrganization
+		repoOwnerType = project_module.TypeOrganization
 	}
 	var err error
 	repositoryProjects, err := db.Find[project_model.Project](ctx, project_model.SearchOptions{
 		ListOptions: db.ListOptionsAll,
 		RepoID:      repo.ID,
 		IsClosed:    optional.Some(false),
-		Type:        project_model.TypeRepository,
+		Type:        project_module.TypeRepository,
 	})
 	if err != nil {
 		ctx.ServerError("GetProjects", err)
@@ -635,7 +636,7 @@ func retrieveProjects(ctx *context.Context, repo *repo_model.Repository) {
 		ListOptions: db.ListOptionsAll,
 		RepoID:      repo.ID,
 		IsClosed:    optional.Some(true),
-		Type:        project_model.TypeRepository,
+		Type:        project_module.TypeRepository,
 	})
 	if err != nil {
 		ctx.ServerError("GetProjects", err)
@@ -1295,10 +1296,10 @@ func NewIssuePost(ctx *context.Context) {
 	if ctx.FormString("redirect_after_creation") == "project" && projectID > 0 {
 		project, err := project_model.GetProjectByID(ctx, projectID)
 		if err == nil {
-			if project.Type == project_model.TypeOrganization {
-				ctx.JSONRedirect(project_model.ProjectLinkForOrg(ctx.Repo.Owner, project.ID))
+			if project.Type == project_module.TypeOrganization {
+				ctx.JSONRedirect(project_module.ProjectLinkForOrg(ctx.Repo.Owner.HomeLink(), project.ID))
 			} else {
-				ctx.JSONRedirect(project_model.ProjectLinkForRepo(repo, project.ID))
+				ctx.JSONRedirect(project_module.ProjectLinkForRepo(repo.Link(), project.ID))
 			}
 			return
 		}

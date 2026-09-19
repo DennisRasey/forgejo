@@ -39,7 +39,7 @@ func MoveColumns(ctx *context.Context) {
 		sortedColumnIDs[column.Sorting] = column.ColumnID
 	}
 
-	if err = project_model.MoveColumnsOnProject(ctx, project, sortedColumnIDs); err != nil {
+	if err = project_model.MoveColumnsOnProject(ctx, project.ID, sortedColumnIDs); err != nil {
 		ctx.ServerError("MoveColumnsOnProject", err)
 		return
 	}

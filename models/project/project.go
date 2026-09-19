@@ -5,6 +5,7 @@ package project
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 
@@ -13,33 +14,12 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
+	project_module "forgejo.org/modules/project"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
 	"xorm.io/builder"
-)
-
-type (
-	// CardConfig is used to identify the type of column card that is being used
-	CardConfig struct {
-		CardType    CardType
-		Translation string
-	}
-
-	// Type is used to identify the type of project in question and ownership
-	Type uint8
-)
-
-const (
-	// TypeIndividual is a type of project column that is owned by an individual
-	TypeIndividual Type = iota + 1
-
-	// TypeRepository is a project that is tied to a repository
-	TypeRepository
-
-	// TypeOrganization is a project that is tied to an organisation
-	TypeOrganization
 )
 
 // ErrProjectNotExist represents a "ProjectNotExist" kind of error.
@@ -50,51 +30,32 @@ type ErrProjectNotExist struct {
 
 // IsErrProjectNotExist checks if an error is a ErrProjectNotExist
 func IsErrProjectNotExist(err error) bool {
-	_, ok := err.(ErrProjectNotExist)
+	_, ok := errors.AsType[ErrProjectNotExist](err)
 	return ok
 }
 
 func (err ErrProjectNotExist) Error() string {
-	return fmt.Sprintf("projects does not exist [id: %d]", err.ID)
+	return fmt.Sprintf("project does not exist [id: %d]", err.ID)
 }
 
 func (err ErrProjectNotExist) Unwrap() error {
 	return util.ErrNotExist
 }
 
-// ErrProjectColumnNotExist represents a "ErrProjectColumnNotExist" kind of error.
-type ErrProjectColumnNotExist struct {
-	ColumnID int64
-}
-
-// IsErrProjectColumnNotExist checks if an error is a ErrProjectColumnNotExist
-func IsErrProjectColumnNotExist(err error) bool {
-	_, ok := err.(ErrProjectColumnNotExist)
-	return ok
-}
-
-func (err ErrProjectColumnNotExist) Error() string {
-	return fmt.Sprintf("project column does not exist [id: %d]", err.ColumnID)
-}
-
-func (err ErrProjectColumnNotExist) Unwrap() error {
-	return util.ErrNotExist
-}
-
 // Project represents a project
 type Project struct {
-	ID           int64                  `xorm:"pk autoincr"`
-	Title        string                 `xorm:"INDEX NOT NULL"`
-	Description  string                 `xorm:"TEXT"`
-	OwnerID      int64                  `xorm:"INDEX"`
-	Owner        *user_model.User       `xorm:"-"`
-	RepoID       int64                  `xorm:"INDEX"`
-	Repo         *repo_model.Repository `xorm:"-"`
-	CreatorID    int64                  `xorm:"NOT NULL"`
-	IsClosed     bool                   `xorm:"INDEX"`
-	TemplateType TemplateType           `xorm:"'board_type'"` // TODO: rename the column to template_type
-	CardType     CardType
-	Type         Type
+	ID           int64                       `xorm:"pk autoincr"`
+	Title        string                      `xorm:"INDEX NOT NULL"`
+	Description  string                      `xorm:"TEXT"`
+	OwnerID      int64                       `xorm:"INDEX"`
+	Owner        *user_model.User            `xorm:"-"`
+	RepoID       int64                       `xorm:"INDEX"`
+	Repo         *repo_model.Repository      `xorm:"-"`
+	CreatorID    int64                       `xorm:"NOT NULL"`
+	IsClosed     bool                        `xorm:"INDEX"`
+	TemplateType project_module.TemplateType `xorm:"'board_type'"` // TODO: rename the column to template_type
+	CardType     project_module.CardType
+	Type         project_module.OwnerType
 
 	RenderedContent template.HTML `xorm:"-"`
 
@@ -126,14 +87,6 @@ func (p *Project) LoadRepo(ctx context.Context) (err error) {
 	return err
 }
 
-func ProjectLinkForOrg(org *user_model.User, projectID int64) string { //nolint
-	return fmt.Sprintf("%s/-/projects/%d", org.HomeLink(), projectID)
-}
-
-func ProjectLinkForRepo(repo *repo_model.Repository, projectID int64) string { //nolint
-	return fmt.Sprintf("%s/projects/%d", repo.Link(), projectID)
-}
-
 // Link returns the project's relative URL.
 func (p *Project) Link(ctx context.Context) string {
 	// nosemgrep: forgejo-logic-suspicious-OwnerID-check (system users are not stored in the database)
@@ -143,7 +96,7 @@ func (p *Project) Link(ctx context.Context) string {
 			log.Error("LoadOwner: %v", err)
 			return ""
 		}
-		return ProjectLinkForOrg(p.Owner, p.ID)
+		return project_module.ProjectLinkForOrg(p.Owner.HomeLink(), p.ID)
 	}
 	if p.RepoID > 0 {
 		err := p.LoadRepo(ctx)
@@ -151,7 +104,7 @@ func (p *Project) Link(ctx context.Context) string {
 			log.Error("LoadRepo: %v", err)
 			return ""
 		}
-		return ProjectLinkForRepo(p.Repo, p.ID)
+		return project_module.ProjectLinkForRepo(p.Repo.Link(), p.ID)
 	}
 	return ""
 }
@@ -164,15 +117,15 @@ func (p *Project) IconName() string {
 }
 
 func (p *Project) IsOrganizationProject() bool {
-	return p.Type == TypeOrganization
+	return p.Type == project_module.TypeOrganization
 }
 
 func (p *Project) IsRepositoryProject() bool {
-	return p.Type == TypeRepository
+	return p.Type == project_module.TypeRepository
 }
 
 func (p *Project) CanBeAccessedByOwnerRepo(ownerID int64, repo *repo_model.Repository) bool {
-	if p.Type == TypeRepository {
+	if p.Type == project_module.TypeRepository {
 		return repo != nil && p.RepoID == repo.ID // if a project belongs to a repository, then its OwnerID is 0 and can be ignored
 	}
 	return p.OwnerID == ownerID && p.RepoID == 0
@@ -182,26 +135,6 @@ func init() {
 	db.RegisterModel(new(Project))
 }
 
-// GetCardConfig retrieves the types of configurations project column cards could have
-//
-//llu:returnsTrKeyWeak
-func GetCardConfig() []CardConfig {
-	return []CardConfig{
-		{CardTypeTextOnly, "repo.projects.card_type.text_only"},
-		{CardTypeImagesAndText, "repo.projects.card_type.images_and_text"},
-	}
-}
-
-// IsTypeValid checks if a project type is valid
-func IsTypeValid(p Type) bool {
-	switch p {
-	case TypeIndividual, TypeRepository, TypeOrganization:
-		return true
-	default:
-		return false
-	}
-}
-
 // SearchOptions are options for GetProjects
 type SearchOptions struct {
 	db.ListOptions
@@ -209,7 +142,7 @@ type SearchOptions struct {
 	RepoID   int64
 	IsClosed optional.Option[bool]
 	OrderBy  db.SearchOrderBy
-	Type     Type
+	Type     project_module.OwnerType
 	Title    string
 }
 
@@ -239,7 +172,7 @@ func (opts SearchOptions) ToOrders() string {
 	return opts.OrderBy.String()
 }
 
-func GetSearchOrderByBySortType(sortType string) db.SearchOrderBy {
+func GetSearchOrderBySortType(sortType string) db.SearchOrderBy {
 	switch sortType {
 	case "oldest":
 		return db.SearchOrderByOldest
@@ -252,21 +185,9 @@ func GetSearchOrderByBySortType(sortType string) db.SearchOrderBy {
 	}
 }
 
-// NewProject creates a new Project
+// CreateProject Creates a new Project and expects a valid project which is generated in the respective service function.
 // The title will be cut off at 255 characters if it's longer than 255 characters.
-func NewProject(ctx context.Context, p *Project) error {
-	if !IsTemplateTypeValid(p.TemplateType) {
-		p.TemplateType = TemplateTypeNone
-	}
-
-	if !IsCardTypeValid(p.CardType) {
-		p.CardType = CardTypeTextOnly
-	}
-
-	if !IsTypeValid(p.Type) {
-		return util.NewInvalidArgumentErrorf("project type is not valid")
-	}
-
+func CreateProject(ctx context.Context, p *Project) error {
 	p.Title, _ = util.SplitStringAtByteN(p.Title, 255)
 
 	return db.WithTx(ctx, func(ctx context.Context) error {
@@ -284,7 +205,7 @@ func NewProject(ctx context.Context, p *Project) error {
 	})
 }
 
-// GetProjectByID returns the projects in a repository
+// GetProjectByID Fetches a Project by it ID.
 func GetProjectByID(ctx context.Context, id int64) (*Project, error) {
 	p := new(Project)
 
@@ -298,36 +219,9 @@ func GetProjectByID(ctx context.Context, id int64) (*Project, error) {
 	return p, nil
 }
 
-// GetProjectForRepoByID returns the projects in a repository
-func GetProjectForRepoByID(ctx context.Context, repoID, id int64) (*Project, error) {
-	p := new(Project)
-	has, err := db.GetEngine(ctx).Where("id=? AND repo_id=?", id, repoID).Get(p)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, ErrProjectNotExist{ID: id}
-	}
-	return p, nil
-}
-
-// GetProjectForUserByID returns the project by id that belongs to the specified user.
-func GetProjectForUserByID(ctx context.Context, uid, id int64) (*Project, error) {
-	p := new(Project)
-	has, err := db.GetEngine(ctx).Where("id=? AND owner_id=?", id, uid).Get(p)
-	if err != nil {
-		return nil, err
-	} else if !has {
-		return nil, ErrProjectNotExist{ID: id}
-	}
-	return p, nil
-}
-
-// UpdateProject updates project properties
+// UpdateProject Updates only the following Project properties: Title, Description, CardType.
+// Expects a valid project which is generated in the respective service function.
 func UpdateProject(ctx context.Context, p *Project) error {
-	if !IsCardTypeValid(p.CardType) {
-		p.CardType = CardTypeTextOnly
-	}
-
 	p.Title, _ = util.SplitStringAtByteN(p.Title, 255)
 	_, err := db.GetEngine(ctx).ID(p.ID).Cols(
 		"title",
@@ -342,7 +236,7 @@ func updateRepositoryProjectCount(ctx context.Context, repoID int64) error {
 		builder.Eq{
 			"`num_projects`": builder.Select("count(*)").From("`project`").
 				Where(builder.Eq{"`project`.`repo_id`": repoID}.
-					And(builder.Eq{"`project`.`type`": TypeRepository})),
+					And(builder.Eq{"`project`.`type`": project_module.TypeRepository})),
 		},
 	).From("`repository`").Where(builder.Eq{"id": repoID})); err != nil {
 		return err
@@ -352,7 +246,7 @@ func updateRepositoryProjectCount(ctx context.Context, repoID int64) error {
 		builder.Eq{
 			"`num_closed_projects`": builder.Select("count(*)").From("`project`").
 				Where(builder.Eq{"`project`.`repo_id`": repoID}.
-					And(builder.Eq{"`project`.`type`": TypeRepository}).
+					And(builder.Eq{"`project`.`type`": project_module.TypeRepository}).
 					And(builder.Eq{"`project`.`is_closed`": true})),
 		},
 	).From("`repository`").Where(builder.Eq{"id": repoID})); err != nil {
@@ -361,8 +255,8 @@ func updateRepositoryProjectCount(ctx context.Context, repoID int64) error {
 	return nil
 }
 
-// ChangeProjectStatus changes the status of the specified project to the state
-// specified via the `isClosed` argument.
+// ChangeProjectStatus Changes the status of the specified project to the given state.
+// Specified via the `isClosed` argument.
 func ChangeProjectStatus(ctx context.Context, p *Project, isClosed bool) error {
 	if p.IsClosed == isClosed {
 		return nil
@@ -383,18 +277,12 @@ func ChangeProjectStatus(ctx context.Context, p *Project, isClosed bool) error {
 	})
 }
 
-// DeleteProjectByID deletes a project from a repository. if it's not in a database
-// transaction, it will start a new database transaction
-func DeleteProjectByID(ctx context.Context, id int64) error {
+// DeleteProjectByID Deletes a project by ID.
+// If it's not in a database transaction, it will start a new database transaction.
+// repoID is optional and only needed, when updating a Project that belongs to a repository.
+// Leave empty if the ProjectType is not repository.
+func DeleteProjectByID(ctx context.Context, id int64, repoID optional.Option[int64]) error {
 	return db.WithTx(ctx, func(ctx context.Context) error {
-		p, err := GetProjectByID(ctx, id)
-		if err != nil {
-			if IsErrProjectNotExist(err) {
-				return nil
-			}
-			return err
-		}
-
 		if err := deleteProjectIssuesByProjectID(ctx, id); err != nil {
 			return err
 		}
@@ -403,11 +291,15 @@ func DeleteProjectByID(ctx context.Context, id int64) error {
 			return err
 		}
 
-		if _, err = db.GetEngine(ctx).ID(p.ID).Delete(new(Project)); err != nil {
+		if _, err := db.GetEngine(ctx).ID(id).Delete(new(Project)); err != nil {
 			return err
 		}
 
-		return updateRepositoryProjectCount(ctx, p.RepoID)
+		has, id := repoID.Get()
+		if has {
+			return updateRepositoryProjectCount(ctx, id)
+		}
+		return nil
 	})
 }
 

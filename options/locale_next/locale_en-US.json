@@ -1203,5 +1203,6 @@
 	},
 	"sync_fork.sync.button": "Sync",
 	"modal.close": "Close",
+	"project.missing_issues_in_list": "Could not find all issues in list. Check if they were deleted.",
 	"meta.last_line": "Thank you for translating Forgejo! This line isn't seen by the users but it serves other purposes in the translation management. You can place a fun fact in the translation instead of translating it."
 }

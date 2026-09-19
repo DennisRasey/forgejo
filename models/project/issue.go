@@ -11,6 +11,8 @@ import (
 	"forgejo.org/models/db"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/util"
+
+	"xorm.io/builder"
 )
 
 // ProjectIssue saves relation from issue to a project
@@ -24,6 +26,28 @@ type ProjectIssue struct { //revive:disable-line:exported
 
 	// the sorting order on the column
 	Sorting int64 `xorm:"NOT NULL DEFAULT 0 unique(column_sorting)"`
+}
+
+// FindProjectIssueOptions contains options to find project issues.
+type FindProjectIssueOptions struct {
+	db.ListOptions
+	ProjectID       int64
+	ProjectColumnID int64
+}
+
+func (opts FindProjectIssueOptions) ToConds() builder.Cond {
+	cond := builder.NewCond()
+	if opts.ProjectID != 0 {
+		cond = cond.And(builder.Eq{"project_id": opts.ProjectID})
+	}
+	if opts.ProjectColumnID != 0 {
+		cond = cond.And(builder.Eq{"project_board_id": opts.ProjectColumnID})
+	}
+	return cond
+}
+
+func (opts FindProjectIssueOptions) ToOrders() string {
+	return "sorting, id"
 }
 
 func init() {
@@ -168,7 +192,9 @@ func (c *Column) moveIssuesToAnotherColumn(ctx context.Context, newColumn *Colum
 		return err
 	}
 
-	issues, err := c.GetIssues(ctx)
+	issues, err := db.Find[ProjectIssue](ctx, FindProjectIssueOptions{
+		ListOptions: db.ListOptionsAll, ProjectID: c.ProjectID, ProjectColumnID: c.ID,
+	})
 	if err != nil {
 		return err
 	}

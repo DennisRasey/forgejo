@@ -15,7 +15,7 @@ import (
 	ap "github.com/go-ap/activitypub"
 )
 
-// ErrNotValid represents an validation error
+// ErrNotValid represents a validation error
 type ErrNotValid struct {
 	Message string
 }
@@ -24,7 +24,7 @@ func (err ErrNotValid) Error() string {
 	return fmt.Sprintf("Validation Error: %v", err.Message)
 }
 
-// IsErrNotValid checks if an error is a ErrNotValid.
+// IsErrNotValid checks if an error is an ErrNotValid.
 func IsErrNotValid(err error) bool {
 	_, ok := err.(ErrNotValid)
 	return ok

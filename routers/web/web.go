@@ -1222,9 +1222,9 @@ func registerRoutes(m *web.Route) {
 			}, reqUnitAccess(unit.TypeProjects, perm.AccessModeRead, true))
 			m.Group("", func() { //nolint:dupl
 				m.Get("/new", org.RenderNewProject)
-				m.Post("/new", web.Bind(forms.CreateProjectForm{}), org.NewProjectPost)
+				m.Post("/new", web.Bind(forms.CreateProjectForm{}), org.CreateProject)
 				m.Group("/{id}", func() {
-					m.Post("", web.Bind(forms.EditProjectColumnForm{}), org.AddColumnToProjectPost)
+					m.Post("", web.Bind(forms.EditProjectColumnForm{}), org.CreateColumnInProject)
 					m.Post("/move", project.MoveColumns)
 					m.Post("/delete", org.DeleteProject)
 
@@ -1605,9 +1605,9 @@ func registerRoutes(m *web.Route) {
 			m.Get("/{id}", repo.ViewProject)
 			m.Group("", func() { //nolint:dupl
 				m.Get("/new", repo.RenderNewProject)
-				m.Post("/new", web.Bind(forms.CreateProjectForm{}), repo.NewProjectPost)
+				m.Post("/new", web.Bind(forms.CreateProjectForm{}), repo.CreateProject)
 				m.Group("/{id}", func() {
-					m.Post("", web.Bind(forms.EditProjectColumnForm{}), repo.AddColumnToProjectPost)
+					m.Post("", web.Bind(forms.EditProjectColumnForm{}), repo.CreateColumnInProject)
 					m.Post("/move", project.MoveColumns)
 					m.Post("/delete", repo.DeleteProject)
 
