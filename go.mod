@@ -63,7 +63,7 @@ require (
 	github.com/gorilla/sessions v1.4.0
 	github.com/hashicorp/go-version v1.8.0
 	github.com/hashicorp/golang-lru/v2 v2.0.7
-	github.com/huandu/xstrings v1.5.0
+	github.com/huandu/xstrings v1.6.0
 	github.com/inbucket/html2text v1.0.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jhillyerd/enmime/v2 v2.2.0
