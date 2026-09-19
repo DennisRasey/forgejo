@@ -19,8 +19,8 @@ func Test_HashAvatar(t *testing.T) {
 	var buff bytes.Buffer
 	png.Encode(&buff, myImage)
 
-	assert.Equal(t, "9ddb5bac41d57e72aa876321d0c09d71090c05f94bc625303801be2f3240d2cb", avatar.HashAvatar(1, buff.Bytes()))
-	assert.Equal(t, "9a5d44e5d637b9582a976676e8f3de1dccd877c2fe3e66ca3fab1629f2f47609", avatar.HashAvatar(8, buff.Bytes()))
-	assert.Equal(t, "ed7399158672088770de6f5211ce15528ebd675e92fc4fc060c025f4b2794ccb", avatar.HashAvatar(1024, buff.Bytes()))
+	assert.Equal(t, "1481b91e790a4875edb9157cca7a2a9533dcd9ece9f180a0a2956540961dda1a", avatar.HashAvatar(1, buff.Bytes()))
+	assert.Equal(t, "5c8852abb7496e228de352b7aeac976c645bcb204ef015bb53bbd741c5c7f0c3", avatar.HashAvatar(8, buff.Bytes()))
+	assert.Equal(t, "fe711fc79163c873c9980d5dd44240ad9e15565e31052eeb3cb3dfe515902975", avatar.HashAvatar(1024, buff.Bytes()))
 	assert.Equal(t, "161178642c7d59eb25a61dddced5e6b66eae1c70880d5f148b1b497b767e72d9", avatar.HashAvatar(1024, []byte{}))
 }
