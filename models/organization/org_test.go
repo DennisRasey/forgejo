@@ -7,6 +7,7 @@ import (
 	"sort"
 	"testing"
 
+	"forgejo.org/models/avatars"
 	"forgejo.org/models/db"
 	"forgejo.org/models/organization"
 	"forgejo.org/models/perm"
@@ -14,11 +15,64 @@ import (
 	"forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/avatar"
+	"forgejo.org/modules/setting"
 	"forgejo.org/modules/structs"
+	"forgejo.org/modules/test"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestOrganizationUploadedAvatarLink(t *testing.T) {
+	defer test.MockVariableValue(&setting.AppSubURL, "")()
+	defer test.MockVariableValue(&setting.Avatar.RenderedSizeFactor, 2)()
+
+	uploadedHash := avatar.HashAvatar(1, []byte("uploaded avatar"))
+	for _, testCase := range []struct {
+		name            string
+		useCustomAvatar bool
+		avatar          string
+		size            int
+		expected        string
+	}{
+		{"disabled custom avatar", false, uploadedHash, 16, ""},
+		{"empty avatar", true, "", 16, ""},
+		{"generated avatar", true, avatars.HashEmail("org"), 16, ""},
+		{"short avatar hash", true, uploadedHash[:len(uploadedHash)-1], 16, ""},
+		{"long avatar hash", true, uploadedHash + "a", 16, ""},
+		{"uploaded avatar", true, uploadedHash, 16, "/avatars/" + uploadedHash + "?size=64"},
+		{"larger display size", true, uploadedHash, 64, "/avatars/" + uploadedHash + "?size=128"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			org := &organization.Organization{
+				UseCustomAvatar: testCase.useCustomAvatar,
+				Avatar:          testCase.avatar,
+			}
+			assert.Equal(t, testCase.expected, org.UploadedAvatarLink(testCase.size))
+		})
+	}
+
+	t.Run("installation subpath", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.AppSubURL, "/sub-path")()
+
+		org := &organization.Organization{
+			UseCustomAvatar: true,
+			Avatar:          uploadedHash,
+		}
+		assert.Equal(t, "/sub-path/avatars/"+uploadedHash+"?size=64", org.UploadedAvatarLink(16))
+	})
+
+	t.Run("rendered size factor", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Avatar.RenderedSizeFactor, 5)()
+
+		org := &organization.Organization{
+			UseCustomAvatar: true,
+			Avatar:          uploadedHash,
+		}
+		assert.Equal(t, "/avatars/"+uploadedHash+"?size=128", org.UploadedAvatarLink(16))
+	})
+}
 
 func TestUser_IsOwnedBy(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())

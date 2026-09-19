@@ -445,7 +445,17 @@ export default {
         <ul class="repo-owner-name-list">
           <li class="tw-flex tw-items-center tw-py-2" v-for="org in organizations" :key="org.name">
             <a class="repo-list-link muted" :href="subUrl + '/' + encodeURIComponent(org.name)">
-              <svg-icon name="octicon-organization" :size="16" class="repo-list-icon"/>
+              <img
+                v-if="org.avatar_url"
+                class="ui avatar repo-list-icon"
+                :src="org.avatar_url"
+                alt=""
+                width="16"
+                height="16"
+                loading="lazy"
+                @error="org.avatar_url = ''"
+              >
+              <svg-icon v-else name="octicon-organization" :size="16" class="repo-list-icon"/>
               <div class="text truncate">{{ org.name }}</div>
               <div><!-- div to prevent underline of label on hover -->
                 <span class="ui label" v-if="org.org_visibility !== 'public'">
