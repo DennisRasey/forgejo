@@ -85,24 +85,27 @@ func genVerificationKey(t *testing.T, skey SigningKey) VerificationKey {
 func TestVerfifier(t *testing.T) {
 	privKeyVerifier := NewVerifier()
 	pubKeyVerifier := NewVerifier()
-	signingKeys := make(map[string]SigningKey, len(allowedAlgorithms))
+	signingKeys := make(map[string][2]SigningKey, len(allowedAlgorithms))
 	notinVerifierKeys := make(map[string]SigningKey, len(allowedAlgorithms))
 	for algo := range allowedAlgorithms {
-		skey := genKey(t, algo)
-		signingKeys[algo] = skey
+		skeys := [2]SigningKey{genKey(t, algo), genKey(t, algo)}
+		signingKeys[algo] = skeys
 
-		err := privKeyVerifier.AddKey(skey)
+		err := privKeyVerifier.AddKey(skeys[0])
 		require.NoError(t, err)
 
-		err = pubKeyVerifier.AddKey(genVerificationKey(t, skey))
+		err = pubKeyVerifier.AddKey(genVerificationKey(t, skeys[0]))
+		require.NoError(t, err)
+		err = pubKeyVerifier.AddKey(genVerificationKey(t, skeys[1]))
 		require.NoError(t, err)
 
 		notinVerifierKeys[algo] = genKey(t, algo)
 	}
-	for algo, skey := range signingKeys {
+	for algo, skeys := range signingKeys {
 		t.Run(algo, func(t *testing.T) {
-			testSignVerifier(t, skey, privKeyVerifier)
-			testSignVerifier(t, skey, pubKeyVerifier)
+			testSignVerifier(t, skeys[0], privKeyVerifier)
+			testSignVerifier(t, skeys[0], pubKeyVerifier)
+			testSignVerifier(t, skeys[1], pubKeyVerifier)
 		})
 	}
 	// test signed by key not in privKeyVerifier

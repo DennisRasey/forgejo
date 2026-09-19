@@ -4,8 +4,8 @@
 package jwtx
 
 import (
+	"bytes"
 	"fmt"
-	"slices"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -27,7 +27,7 @@ type (
 
 type Verifier struct {
 	Parser          *jwt.Parser
-	KeysByMethod    map[byMethod]jwt.VerificationKeySet
+	KeysByMethod    map[byMethod]*jwt.VerificationKeySet
 	KeysByMethodKid map[byMethodKid]jwt.VerificationKey
 }
 
@@ -36,7 +36,7 @@ type Verifier struct {
 func NewVerifierWithParser(parser *jwt.Parser) *Verifier {
 	return &Verifier{
 		Parser:          parser,
-		KeysByMethod:    make(map[byMethod]jwt.VerificationKeySet),
+		KeysByMethod:    make(map[byMethod]*jwt.VerificationKeySet),
 		KeysByMethodKid: make(map[byMethodKid]jwt.VerificationKey),
 	}
 }
@@ -74,12 +74,13 @@ func (verifier *Verifier) AddKey(vkey VerificationKey) error {
 		if kid == "" {
 			keySet, found := verifier.KeysByMethod[method]
 			if !found {
-				verifier.KeysByMethod[method] = jwt.VerificationKeySet{Keys: []jwt.VerificationKey{key}}
+				verifier.KeysByMethod[method] = &jwt.VerificationKeySet{Keys: []jwt.VerificationKey{key}}
 				return nil
 			}
-
-			if slices.Contains(keySet.Keys, key) {
-				return nil
+			for _, has := range keySet.Keys {
+				if bytes.Equal(has.([]uint8), key.([]uint8)) {
+					return nil
+				}
 			}
 			keySet.Keys = append(keySet.Keys, key)
 			return nil
@@ -137,7 +138,7 @@ func (verifier *Verifier) ParseWithClaims(tokenString string, claims jwt.Claims)
 		}
 		keys, found := verifier.KeysByMethod[token.Method]
 		if found {
-			return keys, nil
+			return *keys, nil
 		}
 		return nil, fmt.Errorf("No %s keys found", token.Method.Alg())
 	})
