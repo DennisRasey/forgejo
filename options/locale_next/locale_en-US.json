@@ -207,6 +207,8 @@
 	"search.sort.feweststars": "Fewest stars",
 	"search.sort.mostforks": "Most forks",
 	"search.sort.fewestforks": "Fewest forks",
+	"repo.settings.event_action_do_not_use_label": "do not use",
+	"repo.settings.event_action_do_not_use_tooltip": "Do not use action run events. Use workflow run instead.",
 	"repo.settings.event_header_workflow_job": "Workflow job events",
 	"repo.settings.event_workflow_job_blocked": "Blocked",
 	"repo.settings.event_workflow_job_blocked_desc": "The job cannot run until a condition is fulfilled.",

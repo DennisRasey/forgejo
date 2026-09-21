@@ -155,7 +155,10 @@
 			</fieldset>
 			<!-- Action Run Events -->
 			<fieldset class="simple-grid grid-2">
-				<legend>{{ctx.Locale.Tr "repo.settings.event_header_action"}}</legend>
+				<legend>
+					{{ctx.Locale.Tr "repo.settings.event_header_action"}}
+					<div class="ui red label" data-tooltip-content="{{ctx.Locale.Tr "repo.settings.event_action_do_not_use_tooltip"}}">{{ctx.Locale.Tr "repo.settings.event_action_do_not_use_label"}}</div>
+				</legend>
 				<!-- Action Run Failure -->
 				<label>
 					<input name="action_failure" type="checkbox" {{if .Webhook.ActionRunFailure}}checked{{end}}>
