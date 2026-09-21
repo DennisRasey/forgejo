@@ -37,6 +37,7 @@ type PayloadConvertor[T any] interface {
 	Wiki(*api.WikiPayload) (T, error)
 	Package(*api.PackagePayload) (T, error)
 	Action(*api.ActionPayload) (T, error)
+	WorkflowRun(*api.WorkflowRunPayload) (T, error)
 	WorkflowJob(*api.WorkflowJobPayload) (T, error)
 }
 
@@ -90,6 +91,11 @@ func NewPayload[T any](rc PayloadConvertor[T], data []byte, event webhook_module
 		return convertUnmarshalledJSON(rc.Package, data)
 	case webhook_module.HookEventActionRunFailure, webhook_module.HookEventActionRunSuccess:
 		return convertUnmarshalledJSON(rc.Action, data)
+	case webhook_module.HookEventWorkflowRunBlocked, webhook_module.HookEventWorkflowRunCancelled,
+		webhook_module.HookEventWorkflowRunFailure, webhook_module.HookEventWorkflowRunRunning,
+		webhook_module.HookEventWorkflowRunSkipped, webhook_module.HookEventWorkflowRunSuccess,
+		webhook_module.HookEventWorkflowRunWaiting:
+		return convertUnmarshalledJSON(rc.WorkflowRun, data)
 	case webhook_module.HookEventWorkflowJobBlocked, webhook_module.HookEventWorkflowJobCancelled,
 		webhook_module.HookEventWorkflowJobFailure, webhook_module.HookEventWorkflowJobRunning,
 		webhook_module.HookEventWorkflowJobSkipped, webhook_module.HookEventWorkflowJobSuccess,

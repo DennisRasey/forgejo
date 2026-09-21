@@ -328,6 +328,31 @@ func (s slackConvertor) Action(p *api.ActionPayload) (SlackPayload, error) {
 	return s.createPayload(text, nil), nil
 }
 
+func (s slackConvertor) WorkflowRun(p *api.WorkflowRunPayload) (SlackPayload, error) {
+	title, body, colour := slackPayloadFormatter.getWorkflowRunPayloadInfo(p)
+
+	var attachmentTitle string
+	switch p.Action {
+	case api.HookNewWorkflowRunAttempt:
+		attachmentTitle = fmt.Sprintf("New attempt of run %q with status %s", p.Run.Title, p.Run.Status)
+	case api.HookWorkflowRunStatusChanged:
+		attachmentTitle = fmt.Sprintf("The status of run %q is now %s", p.Run.Title, p.Run.Status)
+	case api.HookWorkflowRunCompleted:
+		attachmentTitle = fmt.Sprintf("The run %q has completed with status %s", p.Run.Title, p.Run.Status)
+	}
+
+	attachments := []SlackAttachment{
+		{
+			Color:     fmt.Sprintf("%x", colour),
+			Text:      SlackTextFormatter(body),
+			Title:     attachmentTitle,
+			TitleLink: p.Run.HTMLURL,
+		},
+	}
+
+	return s.createPayload(title, attachments), nil
+}
+
 func (s slackConvertor) WorkflowJob(p *api.WorkflowJobPayload) (SlackPayload, error) {
 	title, body, colour := slackPayloadFormatter.getWorkflowJobPayloadInfo(p)
 

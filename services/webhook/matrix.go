@@ -282,6 +282,12 @@ func (m matrixConvertor) Action(p *api.ActionPayload) (MatrixPayload, error) {
 	return m.newPayload(text)
 }
 
+func (m matrixConvertor) WorkflowRun(p *api.WorkflowRunPayload) (MatrixPayload, error) {
+	title, _, _ := feishuPayloadFormatter.getWorkflowRunPayloadInfo(p)
+	link := htmlLinkFormatter(p.Run.HTMLURL, "View details")
+	return m.newPayload(fmt.Sprintf("%s. %s.", title, link))
+}
+
 func (m matrixConvertor) WorkflowJob(p *api.WorkflowJobPayload) (MatrixPayload, error) {
 	title, _, _ := feishuPayloadFormatter.getWorkflowJobPayloadInfo(p)
 	link := htmlLinkFormatter(p.Job.HTMLURL, "View details")

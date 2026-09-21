@@ -376,6 +376,79 @@ func TestMSTeamsPayload(t *testing.T) {
 		assert.Equal(t, "http://localhost:3000/test/repo/releases/tag/v1.0", pl.Actions[0].URL)
 	})
 
+	t.Run("WorkflowRun", func(t *testing.T) {
+		testCases := []struct {
+			runStatus    actions_model.Status
+			expectedText string
+		}{
+			{
+				runStatus:    actions_model.StatusBlocked,
+				expectedText: `Workflow run "Update README.md" is blocked, triggered by @jane`,
+			},
+			{
+				runStatus:    actions_model.StatusCancelled,
+				expectedText: `Workflow run "Update README.md" was cancelled, triggered by @jane`,
+			},
+			{
+				runStatus:    actions_model.StatusFailure,
+				expectedText: `Workflow run "Update README.md" has failed, triggered by @jane`,
+			},
+			{
+				runStatus:    actions_model.StatusRunning,
+				expectedText: `Workflow run "Update README.md" has started running, triggered by @jane`,
+			},
+			{
+				runStatus:    actions_model.StatusSkipped,
+				expectedText: `Workflow run "Update README.md" was skipped, triggered by @jane`,
+			},
+			{
+				runStatus:    actions_model.StatusSuccess,
+				expectedText: `Workflow run "Update README.md" has completed successfully, triggered by @jane`,
+			},
+			{
+				runStatus:    actions_model.StatusWaiting,
+				expectedText: `Workflow run "Update README.md" is waiting, triggered by @jane`,
+			},
+		}
+
+		for _, testCase := range testCases {
+			t.Run(testCase.runStatus.String(), func(t *testing.T) {
+				inputPayload := &api.WorkflowRunPayload{
+					Action: api.HookNewWorkflowRunAttempt,
+					Run: &api.ActionRun{
+						Title:   "Update README.md",
+						Status:  testCase.runStatus.String(),
+						HTMLURL: "https://example.com/acme/test/actions/runs/197719",
+						Repo: &api.Repository{
+							FullName: "acme/test",
+							HTMLURL:  "https://example.com/acme/test",
+						},
+						TriggerUser: &api.User{
+							UserName:  "jane",
+							AvatarURL: "https://example.com/avatars/7dc9cf?size=64",
+						},
+					},
+				}
+
+				payload, err := mc.WorkflowRun(inputPayload)
+				require.NoError(t, err)
+
+				assert.Equal(t, "AdaptiveCard", payload.Type)
+				assert.Len(t, payload.Body, 3)
+
+				assert.True(t, findTextInBody(payload, "💬 Update | [acme/test](https://example.com/acme/test)"))
+				assert.True(t, findTextInBody(payload, testCase.expectedText))
+				assert.True(t, findTextInBody(payload, "Repository: acme/test"))
+				assert.True(t, findTextInBody(payload, "Run: Update README.md"))
+
+				assert.Len(t, payload.Actions, 1)
+				assert.Equal(t, "View in Forgejo", payload.Actions[0].Title)
+				assert.Equal(t, "https://example.com/acme/test/actions/runs/197719",
+					payload.Actions[0].URL)
+			})
+		}
+	})
+
 	t.Run("WorkflowJob", func(t *testing.T) {
 		testCases := []struct {
 			jobStatus    actions_model.Status

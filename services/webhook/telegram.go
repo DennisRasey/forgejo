@@ -218,6 +218,12 @@ func (telegramConvertor) Action(p *api.ActionPayload) (TelegramPayload, error) {
 	return createTelegramPayload(text), nil
 }
 
+func (t telegramConvertor) WorkflowRun(p *api.WorkflowRunPayload) (TelegramPayload, error) {
+	title, body, _ := telegramPayloadFormatter.getWorkflowRunPayloadInfo(p)
+
+	return createTelegramPayload(title + "\n\n" + body), nil
+}
+
 func (t telegramConvertor) WorkflowJob(p *api.WorkflowJobPayload) (TelegramPayload, error) {
 	title, body, _ := telegramPayloadFormatter.getWorkflowJobPayloadInfo(p)
 

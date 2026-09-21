@@ -220,6 +220,12 @@ func (dc dingtalkConvertor) Action(p *api.ActionPayload) (DingtalkPayload, error
 	return createDingtalkPayload(text, text, "view action", p.Run.HTMLURL), nil
 }
 
+func (dc dingtalkConvertor) WorkflowRun(p *api.WorkflowRunPayload) (DingtalkPayload, error) {
+	title, body, _ := dingtalkPayloadFormatter.getWorkflowRunPayloadInfo(p)
+
+	return createDingtalkPayload(title, body, "view run", p.Run.HTMLURL), nil
+}
+
 func (dc dingtalkConvertor) WorkflowJob(p *api.WorkflowJobPayload) (DingtalkPayload, error) {
 	title, body, _ := dingtalkPayloadFormatter.getWorkflowJobPayloadInfo(p)
 

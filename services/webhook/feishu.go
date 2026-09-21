@@ -205,6 +205,12 @@ func (fc feishuConvertor) Action(p *api.ActionPayload) (FeishuPayload, error) {
 	return newFeishuTextPayload(text), nil
 }
 
+func (fc feishuConvertor) WorkflowRun(p *api.WorkflowRunPayload) (FeishuPayload, error) {
+	title, body, _ := feishuPayloadFormatter.getWorkflowRunPayloadInfo(p)
+
+	return newFeishuTextPayload(title + "\n\n" + body), nil
+}
+
 func (fc feishuConvertor) WorkflowJob(p *api.WorkflowJobPayload) (FeishuPayload, error) {
 	title, body, _ := feishuPayloadFormatter.getWorkflowJobPayloadInfo(p)
 

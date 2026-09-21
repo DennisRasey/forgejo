@@ -326,6 +326,12 @@ func (d discordConvertor) Action(p *api.ActionPayload) (DiscordPayload, error) {
 	return d.createPayload(p.Run.TriggerUser, text, "", p.Run.HTMLURL, color), nil
 }
 
+func (d discordConvertor) WorkflowRun(p *api.WorkflowRunPayload) (DiscordPayload, error) {
+	title, body, colour := discordPayloadFormatter.getWorkflowRunPayloadInfo(p)
+
+	return d.createPayload(p.Run.TriggerUser, title, body, p.Run.HTMLURL, colour), nil
+}
+
 func (d discordConvertor) WorkflowJob(p *api.WorkflowJobPayload) (DiscordPayload, error) {
 	title, body, colour := discordPayloadFormatter.getWorkflowJobPayloadInfo(p)
 

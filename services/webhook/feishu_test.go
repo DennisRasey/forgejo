@@ -156,6 +156,102 @@ func TestFeishuPayload(t *testing.T) {
 		assert.Equal(t, "[test/repo] Release created: v1.0 by user1", pl.Content.Text)
 	})
 
+	t.Run("WorkflowRun", func(t *testing.T) {
+		testCases := []struct {
+			runStatus    actions_model.Status
+			expectedText string
+		}{
+			{
+				runStatus: actions_model.StatusBlocked,
+				expectedText: `[acme/test] Workflow run "Update README.md" is blocked
+
+Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus: actions_model.StatusCancelled,
+				expectedText: `[acme/test] Workflow run "Update README.md" was cancelled
+
+Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus: actions_model.StatusFailure,
+				expectedText: `[acme/test] Workflow run "Update README.md" has failed
+
+Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus: actions_model.StatusRunning,
+				expectedText: `[acme/test] Workflow run "Update README.md" has started running
+
+Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus: actions_model.StatusSkipped,
+				expectedText: `[acme/test] Workflow run "Update README.md" was skipped
+
+Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus: actions_model.StatusSuccess,
+				expectedText: `[acme/test] Workflow run "Update README.md" has completed successfully
+
+Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus: actions_model.StatusWaiting,
+				expectedText: `[acme/test] Workflow run "Update README.md" is waiting
+
+Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+		}
+
+		for _, testCase := range testCases {
+			t.Run(testCase.runStatus.String(), func(t *testing.T) {
+				inputPayload := &api.WorkflowRunPayload{
+					Action: api.HookNewWorkflowRunAttempt,
+					Run: &api.ActionRun{
+						Title:   "Update README.md",
+						Status:  testCase.runStatus.String(),
+						HTMLURL: "https://example.com/acme/test/actions/runs/197719",
+						Repo: &api.Repository{
+							FullName: "acme/test",
+						},
+						TriggerUser: &api.User{
+							UserName:  "jane",
+							AvatarURL: "https://example.com/avatars/7dc9cf?size=64",
+						},
+					},
+				}
+
+				payload, err := fc.WorkflowRun(inputPayload)
+				require.NoError(t, err)
+
+				assert.Equal(t, testCase.expectedText, payload.Content.Text)
+			})
+		}
+	})
+
 	t.Run("WorkflowJob", func(t *testing.T) {
 		testCases := []struct {
 			jobStatus    actions_model.Status

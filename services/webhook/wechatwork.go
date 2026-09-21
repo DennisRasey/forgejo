@@ -214,6 +214,12 @@ func (wc wechatworkConvertor) Action(p *api.ActionPayload) (WechatworkPayload, e
 	return newWechatworkMarkdownPayload(text), nil
 }
 
+func (wc wechatworkConvertor) WorkflowRun(p *api.WorkflowRunPayload) (WechatworkPayload, error) {
+	title, body, _ := wechatworkPayloadFormatter.getWorkflowRunPayloadInfo(p)
+
+	return newWechatworkMarkdownPayload(title + "\n\n" + body), nil
+}
+
 func (wc wechatworkConvertor) WorkflowJob(p *api.WorkflowJobPayload) (WechatworkPayload, error) {
 	title, body, _ := wechatworkPayloadFormatter.getWorkflowJobPayloadInfo(p)
 

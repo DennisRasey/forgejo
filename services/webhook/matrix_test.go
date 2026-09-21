@@ -191,6 +191,76 @@ func TestMatrixPayload(t *testing.T) {
 		assert.Equal(t, `[test/repo] Release created: <a href="http://localhost:3000/test/repo/releases/tag/v1.0">v1.0</a> by user1`, pl.FormattedBody)
 	})
 
+	t.Run("WorkflowRun", func(t *testing.T) {
+		testCases := []struct {
+			runStatus    actions_model.Status
+			markdownBody string
+			htmlBody     string
+		}{
+			{
+				runStatus:    actions_model.StatusBlocked,
+				markdownBody: `[acme/test] Workflow run "Update README.md" is blocked. [View details](https://example.com/acme/test/actions/runs/197719).`,
+				htmlBody:     `[acme/test] Workflow run "Update README.md" is blocked. <a href="https://example.com/acme/test/actions/runs/197719">View details</a>.`,
+			},
+			{
+				runStatus:    actions_model.StatusCancelled,
+				markdownBody: `[acme/test] Workflow run "Update README.md" was cancelled. [View details](https://example.com/acme/test/actions/runs/197719).`,
+				htmlBody:     `[acme/test] Workflow run "Update README.md" was cancelled. <a href="https://example.com/acme/test/actions/runs/197719">View details</a>.`,
+			},
+			{
+				runStatus:    actions_model.StatusFailure,
+				markdownBody: `[acme/test] Workflow run "Update README.md" has failed. [View details](https://example.com/acme/test/actions/runs/197719).`,
+				htmlBody:     `[acme/test] Workflow run "Update README.md" has failed. <a href="https://example.com/acme/test/actions/runs/197719">View details</a>.`,
+			},
+			{
+				runStatus:    actions_model.StatusRunning,
+				markdownBody: `[acme/test] Workflow run "Update README.md" has started running. [View details](https://example.com/acme/test/actions/runs/197719).`,
+				htmlBody:     `[acme/test] Workflow run "Update README.md" has started running. <a href="https://example.com/acme/test/actions/runs/197719">View details</a>.`,
+			},
+			{
+				runStatus:    actions_model.StatusSkipped,
+				markdownBody: `[acme/test] Workflow run "Update README.md" was skipped. [View details](https://example.com/acme/test/actions/runs/197719).`,
+				htmlBody:     `[acme/test] Workflow run "Update README.md" was skipped. <a href="https://example.com/acme/test/actions/runs/197719">View details</a>.`,
+			},
+			{
+				runStatus:    actions_model.StatusSuccess,
+				markdownBody: `[acme/test] Workflow run "Update README.md" has completed successfully. [View details](https://example.com/acme/test/actions/runs/197719).`,
+				htmlBody:     `[acme/test] Workflow run "Update README.md" has completed successfully. <a href="https://example.com/acme/test/actions/runs/197719">View details</a>.`,
+			},
+			{
+				runStatus:    actions_model.StatusWaiting,
+				markdownBody: `[acme/test] Workflow run "Update README.md" is waiting. [View details](https://example.com/acme/test/actions/runs/197719).`,
+				htmlBody:     `[acme/test] Workflow run "Update README.md" is waiting. <a href="https://example.com/acme/test/actions/runs/197719">View details</a>.`,
+			},
+		}
+
+		for _, testCase := range testCases {
+			t.Run(testCase.runStatus.String(), func(t *testing.T) {
+				inputPayload := &api.WorkflowRunPayload{
+					Action: api.HookNewWorkflowRunAttempt,
+					Run: &api.ActionRun{
+						Title:   "Update README.md",
+						Status:  testCase.runStatus.String(),
+						HTMLURL: "https://example.com/acme/test/actions/runs/197719",
+						Repo: &api.Repository{
+							FullName: "acme/test",
+						},
+						TriggerUser: &api.User{
+							UserName:  "jane",
+							AvatarURL: "https://example.com/avatars/7dc9cf?size=64",
+						},
+					},
+				}
+
+				payload, err := mc.WorkflowRun(inputPayload)
+				require.NoError(t, err)
+
+				assert.Equal(t, testCase.markdownBody, payload.Body)
+				assert.Equal(t, testCase.htmlBody, payload.FormattedBody)
+			})
+		}
+	})
+
 	t.Run("WorkflowJob", func(t *testing.T) {
 		testCases := []struct {
 			jobStatus    actions_model.Status

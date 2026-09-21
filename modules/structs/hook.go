@@ -515,6 +515,28 @@ func (p *ActionPayload) JSONPayload() ([]byte, error) {
 	return json.MarshalIndent(p, "", "  ")
 }
 
+type HookWorkflowRunAction string
+
+const (
+	HookNewWorkflowRunAttempt    HookWorkflowRunAction = "new_run_attempt"
+	HookWorkflowRunStatusChanged HookWorkflowRunAction = "run_status_changed"
+	HookWorkflowRunCompleted     HookWorkflowRunAction = "run_completed"
+)
+
+var _ Payloader = &WorkflowRunPayload{}
+
+type WorkflowRunPayload struct {
+	// Action that caused the webhook to trigger.
+	Action HookWorkflowRunAction `json:"action"`
+	// Run that triggered the webhook.
+	Run *ActionRun `json:"run"`
+}
+
+// JSONPayload marshals this WorkflowRunPayload to JSON.
+func (p *WorkflowRunPayload) JSONPayload() ([]byte, error) {
+	return json.MarshalIndent(p, "", "  ")
+}
+
 type HookWorkflowJobAction string
 
 const (
@@ -536,7 +558,7 @@ type WorkflowJobPayload struct {
 	Repository *Repository `json:"repository"`
 }
 
-// JSONPayload return payload information
+// JSONPayload marshals this WorkflowJobPayload to JSON.
 func (p *WorkflowJobPayload) JSONPayload() ([]byte, error) {
 	return json.MarshalIndent(p, "", "  ")
 }

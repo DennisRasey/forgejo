@@ -316,6 +316,34 @@ func (w *Webhook) HasPullRequestReviewRequestEvent() bool {
 		(w.ChooseEvents && w.PullRequestReviewRequest)
 }
 
+func (w *Webhook) HasWorkflowRunBlockedEvent() bool {
+	return w.SendEverything || (w.ChooseEvents && w.WorkflowRunBlocked)
+}
+
+func (w *Webhook) HasWorkflowRunCancelledEvent() bool {
+	return w.SendEverything || (w.ChooseEvents && w.WorkflowRunCancelled)
+}
+
+func (w *Webhook) HasWorkflowRunFailureEvent() bool {
+	return w.SendEverything || (w.ChooseEvents && w.WorkflowRunFailure)
+}
+
+func (w *Webhook) HasWorkflowRunRunningEvent() bool {
+	return w.SendEverything || (w.ChooseEvents && w.WorkflowRunRunning)
+}
+
+func (w *Webhook) HasWorkflowRunSkippedEvent() bool {
+	return w.SendEverything || (w.ChooseEvents && w.WorkflowRunSkipped)
+}
+
+func (w *Webhook) HasWorkflowRunSuccessEvent() bool {
+	return w.SendEverything || (w.ChooseEvents && w.WorkflowRunSuccess)
+}
+
+func (w *Webhook) HasWorkflowRunWaitingEvent() bool {
+	return w.SendEverything || (w.ChooseEvents && w.WorkflowRunWaiting)
+}
+
 func (w *Webhook) HasWorkflowJobBlockedEvent() bool {
 	return w.SendEverything || (w.ChooseEvents && w.WorkflowJobBlocked)
 }
@@ -378,6 +406,13 @@ func (w *Webhook) EventCheckers() []struct {
 		{w.HasPullRequestReviewRequestEvent, webhook_module.HookEventPullRequestReviewRequest},
 		{w.HasActionRunFailureEvent, webhook_module.HookEventActionRunFailure},
 		{w.HasActionRunSuccessEvent, webhook_module.HookEventActionRunSuccess},
+		{w.HasWorkflowRunBlockedEvent, webhook_module.HookEventWorkflowRunBlocked},
+		{w.HasWorkflowRunCancelledEvent, webhook_module.HookEventWorkflowRunCancelled},
+		{w.HasWorkflowRunFailureEvent, webhook_module.HookEventWorkflowRunFailure},
+		{w.HasWorkflowRunRunningEvent, webhook_module.HookEventWorkflowRunRunning},
+		{w.HasWorkflowRunSkippedEvent, webhook_module.HookEventWorkflowRunSkipped},
+		{w.HasWorkflowRunSuccessEvent, webhook_module.HookEventWorkflowRunSuccess},
+		{w.HasWorkflowRunWaitingEvent, webhook_module.HookEventWorkflowRunWaiting},
 		{w.HasWorkflowJobBlockedEvent, webhook_module.HookEventWorkflowJobBlocked},
 		{w.HasWorkflowJobCancelledEvent, webhook_module.HookEventWorkflowJobCancelled},
 		{w.HasWorkflowJobFailureEvent, webhook_module.HookEventWorkflowJobFailure},

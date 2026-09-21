@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 	"testing/fstest"
+	"time"
 
 	actions_model "forgejo.org/models/actions"
 	repo_model "forgejo.org/models/repo"
@@ -16,6 +17,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/container"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 	"forgejo.org/tests/forgery"
 
@@ -418,5 +420,109 @@ jobs:
 		require.NotNil(t, task)
 		assert.Contains(t, string(task.GetWorkflowPayload()), "name: job2")
 		require.Len(t, additionalTasks, 1)
+	})
+}
+
+func TestActionFetchTask_RunAndJobPropertyChanges(t *testing.T) {
+	if !setting.Database.Type.IsSQLite3() {
+		// mock repo runner only supported on SQLite testing
+		t.Skip()
+	}
+
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		startDate1 := time.Date(2026, 9, 20, 19, 30, 44, 0, time.UTC)
+
+		timeutil.MockSet(startDate1)
+		defer timeutil.MockUnset()
+
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+		// create the repo
+		repo := createFetchTaskTestRepository(t, user2, "simple.yml", `
+on:
+  push:
+jobs:
+  job1:
+    runs-on: debian
+    steps:
+      - run: echo OK
+  job2:
+    runs-on: debian
+    steps:
+      - run: echo OK
+`)
+
+		runner := newMockRunner()
+		runner.registerAsRepoRunner(t, user2.Name, repo.Name, "debian-runner", []string{"debian"})
+
+		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{RepoID: repo.ID})
+		job1 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job1"})
+		job2 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job2"})
+
+		assert.Zero(t, run.Started)
+		assert.Zero(t, run.Stopped)
+		assert.Zero(t, run.Duration())
+
+		assert.Zero(t, job1.Started)
+		assert.Zero(t, job1.Stopped)
+		assert.Zero(t, job1.Duration())
+
+		assert.Zero(t, job2.Started)
+		assert.Zero(t, job2.Stopped)
+		assert.Zero(t, job2.Duration())
+
+		task1 := runner.maybeFetchSingleTask(t, nil)
+		require.NotNil(t, task1)
+
+		// Move the clock forward to simulate a job that has taken 18 seconds.
+		endDate1 := startDate1.Add(18 * time.Second)
+		timeutil.MockSet(endDate1)
+
+		runner.succeedAtTask(t, task1)
+
+		run = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{RepoID: repo.ID})
+		job1 = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job1"})
+		job2 = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job2"})
+
+		assert.Equal(t, startDate1.UTC(), run.Started.AsTime().UTC())
+		assert.Zero(t, run.Stopped)
+		assert.NotZero(t, run.Duration()) // Depends on time.Since.
+
+		assert.Equal(t, startDate1.UTC(), job1.Started.AsTime().UTC())
+		assert.Equal(t, endDate1.UTC(), job1.Stopped.AsTime().UTC())
+		assert.Equal(t, 18*time.Second, job1.Duration())
+
+		assert.Zero(t, job2.Started)
+		assert.Zero(t, job2.Stopped)
+		assert.Zero(t, job2.Duration())
+
+		// Move the clock forward to simulate a delay of 5 seconds.
+		startDate2 := endDate1.Add(5 * time.Second)
+		timeutil.MockSet(startDate2)
+
+		task2 := runner.maybeFetchSingleTask(t, nil)
+		require.NotNil(t, task2)
+
+		// Move the clock forward to simulate a job that has taken 25 seconds.
+		endDate2 := startDate2.Add(25 * time.Second)
+		timeutil.MockSet(endDate2)
+
+		runner.succeedAtTask(t, task2)
+
+		run = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{RepoID: repo.ID})
+		job1 = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job1"})
+		job2 = unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{RepoID: repo.ID, Name: "job2"})
+
+		assert.Equal(t, startDate1.UTC(), run.Started.AsTime().UTC())
+		assert.Equal(t, endDate2.UTC(), run.Stopped.AsTime().UTC())
+		assert.Equal(t, 48*time.Second, run.Duration())
+
+		assert.Equal(t, startDate1.UTC(), job1.Started.AsTime().UTC())
+		assert.Equal(t, endDate1.UTC(), job1.Stopped.AsTime().UTC())
+		assert.Equal(t, 18*time.Second, job1.Duration())
+
+		assert.Equal(t, startDate2.UTC(), job2.Started.AsTime().UTC())
+		assert.Equal(t, endDate2.UTC(), job2.Stopped.AsTime().UTC())
+		assert.Equal(t, 25*time.Second, job2.Duration())
 	})
 }

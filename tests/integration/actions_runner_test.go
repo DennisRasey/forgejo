@@ -12,6 +12,7 @@ import (
 
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/timeutil"
 
 	pingv1 "code.forgejo.org/forgejo/actions-proto/ping/v1"
 	"code.forgejo.org/forgejo/actions-proto/ping/v1/pingv1connect"
@@ -281,7 +282,7 @@ func (r *mockRunner) execTask(t *testing.T, task *runnerv1.Task, outcome *mockTa
 		State: &runnerv1.TaskState{
 			Id:        task.Id,
 			Result:    outcome.result,
-			StoppedAt: timestamppb.Now(),
+			StoppedAt: timestamppb.New(timeutil.TimeStampNow().AsTime()),
 			Steps:     outcome.stepStates,
 		},
 	}))
@@ -296,7 +297,7 @@ func (r *mockRunner) succeedAtTask(t *testing.T, task *runnerv1.Task) {
 		State: &runnerv1.TaskState{
 			Id:        task.Id,
 			Result:    runnerv1.Result_RESULT_SUCCESS,
-			StoppedAt: timestamppb.Now(),
+			StoppedAt: timestamppb.New(timeutil.TimeStampNow().AsTime()),
 		},
 	}))
 	require.NoError(t, err)
@@ -309,7 +310,7 @@ func (r *mockRunner) failAtTask(t *testing.T, task *runnerv1.Task) {
 		State: &runnerv1.TaskState{
 			Id:        task.Id,
 			Result:    runnerv1.Result_RESULT_FAILURE,
-			StoppedAt: timestamppb.Now(),
+			StoppedAt: timestamppb.New(timeutil.TimeStampNow().AsTime()),
 		},
 	}))
 	require.NoError(t, err)

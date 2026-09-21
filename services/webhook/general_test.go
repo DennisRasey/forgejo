@@ -808,6 +808,115 @@ func TestWebhookPayloadTextFormatter(t *testing.T) {
 	}
 }
 
+func TestGetWorkflowRunPayloadInfo(t *testing.T) {
+	formatter := webhookPayloadFormatter{
+		linkFormatter: noneLinkFormatter,
+		nameFormatter: noneNameFormatter,
+		withSender:    true,
+		withRepoName:  true,
+	}
+
+	testCases := []struct {
+		runStatus      actions_model.Status
+		expectedColour int
+		expectedTitle  string
+		expectedBody   string
+	}{
+		{
+			runStatus:      actions_model.StatusBlocked,
+			expectedColour: yellowColor,
+			expectedTitle:  `[acme/test] Workflow run "Update README.md" is blocked`,
+			expectedBody: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+		},
+		{
+			runStatus:      actions_model.StatusCancelled,
+			expectedColour: greyColor,
+			expectedTitle:  `[acme/test] Workflow run "Update README.md" was cancelled`,
+			expectedBody: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+		},
+		{
+			runStatus:      actions_model.StatusFailure,
+			expectedColour: redColor,
+			expectedTitle:  `[acme/test] Workflow run "Update README.md" has failed`,
+			expectedBody: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+		},
+		{
+			runStatus:      actions_model.StatusRunning,
+			expectedColour: greenColorLight,
+			expectedTitle:  `[acme/test] Workflow run "Update README.md" has started running`,
+			expectedBody: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+		},
+		{
+			runStatus:      actions_model.StatusSkipped,
+			expectedColour: greyColor,
+			expectedTitle:  `[acme/test] Workflow run "Update README.md" was skipped`,
+			expectedBody: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+		},
+		{
+			runStatus:      actions_model.StatusSuccess,
+			expectedColour: greenColor,
+			expectedTitle:  `[acme/test] Workflow run "Update README.md" has completed successfully`,
+			expectedBody: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+		},
+		{
+			runStatus:      actions_model.StatusWaiting,
+			expectedColour: blueColor,
+			expectedTitle:  `[acme/test] Workflow run "Update README.md" is waiting`,
+			expectedBody: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.runStatus.String(), func(t *testing.T) {
+			payload := &api.WorkflowRunPayload{
+				Action: api.HookNewWorkflowRunAttempt,
+				Run: &api.ActionRun{
+					Title:   "Update README.md",
+					HTMLURL: "https://example.com/acme/test/actions/runs/197719",
+					Status:  testCase.runStatus.String(),
+					Repo: &api.Repository{
+						FullName: "acme/test",
+					},
+				},
+			}
+
+			title, body, colour := formatter.getWorkflowRunPayloadInfo(payload)
+
+			assert.Equal(t, testCase.expectedColour, colour)
+			assert.Equal(t, testCase.expectedTitle, title)
+			assert.Equal(t, testCase.expectedBody, body)
+		})
+	}
+}
+
 func TestGetWorkflowJobPayloadInfo(t *testing.T) {
 	formatter := webhookPayloadFormatter{
 		linkFormatter: noneLinkFormatter,

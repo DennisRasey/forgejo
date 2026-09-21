@@ -215,6 +215,96 @@ func TestDingTalkPayload(t *testing.T) {
 		assert.Equal(t, "http://localhost:3000/test/repo/releases/tag/v1.0", parseRealSingleURL(pl.ActionCard.SingleURL))
 	})
 
+	t.Run("WorkflowRun", func(t *testing.T) {
+		testCases := []struct {
+			runStatus     actions_model.Status
+			expectedTitle string
+			expectedText  string
+		}{
+			{
+				runStatus:     actions_model.StatusBlocked,
+				expectedTitle: `[acme/test] Workflow run "Update README.md" is blocked`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus:     actions_model.StatusCancelled,
+				expectedTitle: `[acme/test] Workflow run "Update README.md" was cancelled`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus:     actions_model.StatusFailure,
+				expectedTitle: `[acme/test] Workflow run "Update README.md" has failed`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus:     actions_model.StatusRunning,
+				expectedTitle: `[acme/test] Workflow run "Update README.md" has started running`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus:     actions_model.StatusSkipped,
+				expectedTitle: `[acme/test] Workflow run "Update README.md" was skipped`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus:     actions_model.StatusSuccess,
+				expectedTitle: `[acme/test] Workflow run "Update README.md" has completed successfully`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+			{
+				runStatus:     actions_model.StatusWaiting,
+				expectedTitle: `[acme/test] Workflow run "Update README.md" is waiting`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.`,
+			},
+		}
+
+		for _, testCase := range testCases {
+			t.Run(testCase.runStatus.String(), func(t *testing.T) {
+				inputPayload := &api.WorkflowRunPayload{
+					Action: api.HookNewWorkflowRunAttempt,
+					Run: &api.ActionRun{
+						Title:   "Update README.md",
+						Status:  testCase.runStatus.String(),
+						HTMLURL: "https://example.com/acme/test/actions/runs/197719",
+						Repo: &api.Repository{
+							FullName: "acme/test",
+						},
+					},
+				}
+
+				payload, err := dc.WorkflowRun(inputPayload)
+				require.NoError(t, err)
+
+				assert.Equal(t, testCase.expectedTitle, payload.ActionCard.Title)
+				assert.Equal(t, testCase.expectedText, payload.ActionCard.Text)
+				assert.Equal(t, "view run", payload.ActionCard.SingleTitle)
+				assert.Equal(t, "https://example.com/acme/test/actions/runs/197719",
+					parseRealSingleURL(payload.ActionCard.SingleURL))
+			})
+		}
+	})
+
 	t.Run("WorkflowJob", func(t *testing.T) {
 		testCases := []struct {
 			jobStatus     actions_model.Status

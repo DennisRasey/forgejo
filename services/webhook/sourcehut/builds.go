@@ -194,6 +194,10 @@ func (pc sourcehutConvertor) Action(_ *api.ActionPayload) (graphqlPayload[builds
 	return graphqlPayload[buildsVariables]{}, shared.ErrPayloadTypeNotSupported
 }
 
+func (pc sourcehutConvertor) WorkflowRun(_ *api.WorkflowRunPayload) (graphqlPayload[buildsVariables], error) {
+	return graphqlPayload[buildsVariables]{}, shared.ErrPayloadTypeNotSupported
+}
+
 func (pc sourcehutConvertor) WorkflowJob(_ *api.WorkflowJobPayload) (graphqlPayload[buildsVariables], error) {
 	return graphqlPayload[buildsVariables]{}, shared.ErrPayloadTypeNotSupported
 }

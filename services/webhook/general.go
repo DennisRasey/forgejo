@@ -360,6 +360,40 @@ func (wpf webhookPayloadFormatter) getActionPayloadInfo(p *api.ActionPayload) (t
 	return text, color
 }
 
+func (wpf webhookPayloadFormatter) getWorkflowRunPayloadInfo(p *api.WorkflowRunPayload) (title, body string, colour int) {
+	switch p.Run.Status {
+	case actions_model.StatusBlocked.String():
+		title = fmt.Sprintf("[%[2]s] Workflow run %[1]q is blocked", p.Run.Title, p.Run.Repo.FullName)
+		colour = yellowColor
+	case actions_model.StatusCancelled.String():
+		title = fmt.Sprintf("[%[2]s] Workflow run %[1]q was cancelled", p.Run.Title, p.Run.Repo.FullName)
+		colour = greyColor
+	case actions_model.StatusFailure.String():
+		title = fmt.Sprintf("[%[2]s] Workflow run %[1]q has failed", p.Run.Title, p.Run.Repo.FullName)
+		colour = redColor
+	case actions_model.StatusRunning.String():
+		title = fmt.Sprintf("[%[2]s] Workflow run %[1]q has started running", p.Run.Title, p.Run.Repo.FullName)
+		colour = greenColorLight
+	case actions_model.StatusSkipped.String():
+		title = fmt.Sprintf("[%[2]s] Workflow run %[1]q was skipped", p.Run.Title, p.Run.Repo.FullName)
+		colour = greyColor
+	case actions_model.StatusSuccess.String():
+		title = fmt.Sprintf("[%[2]s] Workflow run %[1]q has completed successfully", p.Run.Title, p.Run.Repo.FullName)
+		colour = greenColor
+	case actions_model.StatusWaiting.String():
+		title = fmt.Sprintf("[%[2]s] Workflow run %[1]q is waiting", p.Run.Title, p.Run.Repo.FullName)
+		colour = blueColor
+	}
+
+	body = fmt.Sprintf(`Repository: %s
+Run: %s
+
+View details on %s.
+`, p.Run.Repo.FullName, p.Run.Title, p.Run.HTMLURL)
+
+	return title, body, colour
+}
+
 func (wpf webhookPayloadFormatter) getWorkflowJobPayloadInfo(p *api.WorkflowJobPayload) (title, body string, colour int) {
 	switch p.Job.Status {
 	case actions_model.StatusBlocked.String():

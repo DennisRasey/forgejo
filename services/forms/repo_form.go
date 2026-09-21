@@ -283,6 +283,13 @@ type WebhookCoreForm struct {
 	Package                  bool
 	ActionFailure            bool
 	ActionSuccess            bool
+	WorkflowRunBlocked       bool
+	WorkflowRunCancelled     bool
+	WorkflowRunFailure       bool
+	WorkflowRunRunning       bool
+	WorkflowRunSkipped       bool
+	WorkflowRunSuccess       bool
+	WorkflowRunWaiting       bool
 	WorkflowJobBlocked       bool
 	WorkflowJobCancelled     bool
 	WorkflowJobFailure       bool

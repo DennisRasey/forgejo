@@ -158,6 +158,135 @@ func TestSlackPayload(t *testing.T) {
 		assert.Equal(t, "[test/repo] Release created: <http://localhost:3000/test/repo/releases/tag/v1.0|v1.0> by `user1`", pl.Text)
 	})
 
+	t.Run("WorkflowRun", func(t *testing.T) {
+		testCases := []struct {
+			action                  api.HookWorkflowRunAction
+			runStatus               actions_model.Status
+			expectedColour          string
+			expectedTitle           string
+			expectedText            string
+			expectedLink            string
+			expectedAttachmentTitle string
+		}{
+			{
+				action:         api.HookNewWorkflowRunAttempt,
+				runStatus:      actions_model.StatusBlocked,
+				expectedColour: fmt.Sprintf("%x", yellowColor),
+				expectedTitle:  `[acme/test] Workflow run "Update README.md" is blocked`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+				expectedAttachmentTitle: `New attempt of run "Update README.md" with status blocked`,
+			},
+			{
+				action:         api.HookWorkflowRunCompleted,
+				runStatus:      actions_model.StatusCancelled,
+				expectedColour: fmt.Sprintf("%x", greyColor),
+				expectedTitle:  `[acme/test] Workflow run "Update README.md" was cancelled`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+				expectedAttachmentTitle: `The run "Update README.md" has completed with status cancelled`,
+			},
+			{
+				action:         api.HookWorkflowRunCompleted,
+				runStatus:      actions_model.StatusFailure,
+				expectedColour: fmt.Sprintf("%x", redColor),
+				expectedTitle:  `[acme/test] Workflow run "Update README.md" has failed`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+				expectedAttachmentTitle: `The run "Update README.md" has completed with status failure`,
+			},
+			{
+				action:         api.HookWorkflowRunStatusChanged,
+				runStatus:      actions_model.StatusRunning,
+				expectedColour: fmt.Sprintf("%x", greenColorLight),
+				expectedTitle:  `[acme/test] Workflow run "Update README.md" has started running`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+				expectedAttachmentTitle: `The status of run "Update README.md" is now running`,
+			},
+			{
+				action:         api.HookWorkflowRunCompleted,
+				runStatus:      actions_model.StatusSkipped,
+				expectedColour: fmt.Sprintf("%x", greyColor),
+				expectedTitle:  `[acme/test] Workflow run "Update README.md" was skipped`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+				expectedAttachmentTitle: `The run "Update README.md" has completed with status skipped`,
+			},
+			{
+				action:         api.HookWorkflowRunCompleted,
+				runStatus:      actions_model.StatusSuccess,
+				expectedColour: fmt.Sprintf("%x", greenColor),
+				expectedTitle:  `[acme/test] Workflow run "Update README.md" has completed successfully`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+				expectedAttachmentTitle: `The run "Update README.md" has completed with status success`,
+			},
+			{
+				action:         api.HookNewWorkflowRunAttempt,
+				runStatus:      actions_model.StatusWaiting,
+				expectedColour: fmt.Sprintf("%x", blueColor),
+				expectedTitle:  `[acme/test] Workflow run "Update README.md" is waiting`,
+				expectedText: `Repository: acme/test
+Run: Update README.md
+
+View details on https://example.com/acme/test/actions/runs/197719.
+`,
+				expectedAttachmentTitle: `New attempt of run "Update README.md" with status waiting`,
+			},
+		}
+
+		for _, testCase := range testCases {
+			t.Run(testCase.runStatus.String(), func(t *testing.T) {
+				inputPayload := &api.WorkflowRunPayload{
+					Action: testCase.action,
+					Run: &api.ActionRun{
+						Title:   "Update README.md",
+						HTMLURL: "https://example.com/acme/test/actions/runs/197719",
+						Status:  testCase.runStatus.String(),
+						Repo: &api.Repository{
+							FullName: "acme/test",
+						},
+						TriggerUser: &api.User{
+							UserName:  "jane",
+							AvatarURL: "https://example.com/avatars/7dc9cf?size=64",
+						},
+					},
+				}
+
+				payload, err := sc.WorkflowRun(inputPayload)
+				require.NoError(t, err)
+
+				assert.Equal(t, testCase.expectedTitle, payload.Text)
+
+				assert.Len(t, payload.Attachments, 1)
+				assert.Equal(t, testCase.expectedColour, payload.Attachments[0].Color)
+				assert.Equal(t, testCase.expectedText, payload.Attachments[0].Text)
+				assert.Equal(t, testCase.expectedAttachmentTitle, payload.Attachments[0].Title)
+				assert.Equal(t, "https://example.com/acme/test/actions/runs/197719",
+					payload.Attachments[0].TitleLink)
+			})
+		}
+	})
+
 	t.Run("WorkflowJob", func(t *testing.T) {
 		testCases := []struct {
 			action                  api.HookWorkflowJobAction

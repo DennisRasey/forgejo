@@ -204,6 +204,150 @@ func TestAction(t *testing.T) {
 	})
 }
 
+func TestWebhookNotifier_NewWorkflowRunAttempt(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo62 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 62, OwnerID: user2.ID})
+
+	webhook := webhook_model.Webhook{
+		OwnerID:     user2.ID,
+		RepoID:      repo62.ID,
+		URL:         "https://example.com/",
+		HTTPMethod:  "POST",
+		ContentType: webhook_model.ContentTypeJSON,
+		Events:      `{"send_everything":true}`,
+		IsActive:    true,
+		Type:        webhook_module.FORGEJO,
+	}
+
+	unittest.AssertSuccessfulInsert(t, webhook)
+
+	run := &actions_model.ActionRun{
+		Title:       "Update package.json",
+		RepoID:      repo62.ID,
+		OwnerID:     user2.ID,
+		TriggerUser: user2,
+		Status:      actions_model.StatusWaiting,
+		Index:       29,
+	}
+
+	unittest.AssertSuccessfulInsert(t, run)
+
+	require.NoError(t, run.LoadAttributes(t.Context()))
+
+	notifier := webhookNotifier{}
+	notifier.NewWorkflowRunAttempt(t.Context(), run)
+
+	hookTask := unittest.AssertExistsAndLoadBean(t,
+		&webhook_model.HookTask{EventType: webhook_module.HookEventWorkflowRunWaiting})
+
+	var payloadContent structs.WorkflowRunPayload
+	require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
+
+	assert.Equal(t, structs.HookNewWorkflowRunAttempt, payloadContent.Action)
+	assert.Equal(t, run.ID, payloadContent.Run.ID)
+	assert.Equal(t, repo62.ID, payloadContent.Run.Repo.ID)
+}
+
+func TestWebhookNotifier_WorkflowRunStatusChanged(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo62 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 62, OwnerID: user2.ID})
+
+	webhook := webhook_model.Webhook{
+		OwnerID:     user2.ID,
+		RepoID:      repo62.ID,
+		URL:         "https://example.com/",
+		HTTPMethod:  "POST",
+		ContentType: webhook_model.ContentTypeJSON,
+		Events:      `{"send_everything":true}`,
+		IsActive:    true,
+		Type:        webhook_module.FORGEJO,
+	}
+
+	unittest.AssertSuccessfulInsert(t, webhook)
+
+	run := &actions_model.ActionRun{
+		Title:       "Update package.json",
+		RepoID:      repo62.ID,
+		OwnerID:     user2.ID,
+		TriggerUser: user2,
+		Status:      actions_model.StatusRunning,
+		Index:       29,
+	}
+
+	unittest.AssertSuccessfulInsert(t, run)
+
+	require.NoError(t, run.LoadAttributes(t.Context()))
+
+	notifier := webhookNotifier{}
+	notifier.WorkflowRunStatusChanged(t.Context(), run, actions_model.StatusWaiting)
+
+	hookTask := unittest.AssertExistsAndLoadBean(t,
+		&webhook_model.HookTask{EventType: webhook_module.HookEventWorkflowRunRunning})
+
+	var payloadContent structs.WorkflowRunPayload
+	require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
+
+	assert.Equal(t, structs.HookWorkflowRunStatusChanged, payloadContent.Action)
+	assert.Equal(t, run.ID, payloadContent.Run.ID)
+	assert.Equal(t, repo62.ID, payloadContent.Run.Repo.ID)
+}
+
+func TestWebhookNotifier_WorkflowRunCompleted(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	defer test.MockVariableValue(&setting.Webhook.PayloadCommitLimit, 10)()
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo62 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 62, OwnerID: user2.ID})
+
+	webhook := webhook_model.Webhook{
+		OwnerID:     user2.ID,
+		RepoID:      repo62.ID,
+		URL:         "https://example.com/",
+		HTTPMethod:  "POST",
+		ContentType: webhook_model.ContentTypeJSON,
+		Events:      `{"send_everything":true}`,
+		IsActive:    true,
+		Type:        webhook_module.FORGEJO,
+	}
+
+	unittest.AssertSuccessfulInsert(t, webhook)
+
+	run := &actions_model.ActionRun{
+		Title:       "Update package.json",
+		RepoID:      repo62.ID,
+		OwnerID:     user2.ID,
+		TriggerUser: user2,
+		Status:      actions_model.StatusCancelled,
+		Index:       29,
+	}
+
+	unittest.AssertSuccessfulInsert(t, run)
+
+	require.NoError(t, run.LoadAttributes(t.Context()))
+
+	notifier := webhookNotifier{}
+	notifier.WorkflowRunCompleted(t.Context(), run, actions_model.StatusRunning)
+
+	hookTask := unittest.AssertExistsAndLoadBean(t,
+		&webhook_model.HookTask{EventType: webhook_module.HookEventWorkflowRunCancelled})
+
+	var payloadContent structs.WorkflowRunPayload
+	require.NoError(t, json.Unmarshal([]byte(hookTask.PayloadContent), &payloadContent))
+
+	assert.Equal(t, structs.HookWorkflowRunCompleted, payloadContent.Action)
+	assert.Equal(t, run.ID, payloadContent.Run.ID)
+	assert.Equal(t, repo62.ID, payloadContent.Run.Repo.ID)
+}
+
 func TestWebhookNotifier_NewWorkflowJobAttempt(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
