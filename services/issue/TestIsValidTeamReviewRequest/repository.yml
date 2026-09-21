@@ -1,0 +1,26 @@
+-
+  id: 900
+  owner_id: 900
+  owner_name: reviewreqorg900
+  lower_name: review_request_test_repo
+  name: review_request_test_repo
+  num_watches: 0
+  num_stars: 0
+  num_forks: 0
+  num_milestones: 0
+  num_closed_milestones: 0
+  num_projects: 0
+  num_closed_projects: 0
+  is_private: true
+  is_empty: true
+  is_archived: false
+  is_mirror: false
+  status: 0
+  is_fork: false
+  fork_id: 0
+  is_template: false
+  template_id: 0
+  size: 0
+  is_fsck_enabled: true
+  close_issues_via_commit_in_any_branch: false
+  topics: '[]'
