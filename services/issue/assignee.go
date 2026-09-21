@@ -280,7 +280,10 @@ func CanDoerChangeReviewRequests(ctx context.Context, doer *user_model.User, rep
 	if isCollaborator {
 		return true
 	}
-
+	if err := repo.LoadOwner(ctx); err != nil {
+		log.Error("LoadOwner: %v", err)
+		return false
+	}
 	// If the repo's owner is an organization, members of teams with read permission on pull requests can change reviewers
 	if repo.Owner.IsOrganization() {
 		teams, err := organization.GetTeamsWithAccessToRepo(ctx, repo.OwnerID, repo.ID, perm.AccessModeRead)

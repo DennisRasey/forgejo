@@ -1,0 +1,5 @@
+-
+  id: 900
+  team_id: 900
+  type: 3 # pull requests
+  access_mode: 1 # read
