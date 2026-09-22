@@ -61,6 +61,10 @@ func TestActionScheduleSpec_Parse(t *testing.T) {
 	}()
 	time.Local = tz
 
+	isError := func(t assert.TestingT, err error, log ...any) bool {
+		return assert.ErrorIs(t, err, ErrPersistentScheduling, log...)
+	}
+
 	tests := []struct {
 		name     string
 		refTime  time.Time
@@ -81,7 +85,7 @@ func TestActionScheduleSpec_Parse(t *testing.T) {
 			refTime: time.Date(2024, 7, 31, 15, 47, 55, 0, time.Local),
 			spec:    "0 10 * *",
 			want:    "",
-			wantErr: assert.Error,
+			wantErr: isError,
 		},
 		{
 			name:    "with TZ in cron schedule",
@@ -119,6 +123,13 @@ func TestActionScheduleSpec_Parse(t *testing.T) {
 			spec:    "@every 5m",
 			want:    "2024-07-31T07:52:55Z",
 			wantErr: assert.NoError,
+		},
+		{
+			name:    "time zone irrelevant",
+			refTime: time.Date(2024, 7, 31, 15, 47, 55, 0, time.Local),
+			spec:    "TZ=Europe/Canada 0 10 * * *", // invalid TZ
+			want:    "",
+			wantErr: isError,
 		},
 		{
 			// The various cron implementations handle the DST jump forwards differently. The most popular approaches
