@@ -413,7 +413,7 @@ func TestWebhookNotifier_NewWorkflowJobAttempt(t *testing.T) {
 	assert.Equal(t, structs.HookNewWorkflowJobAttempt, payloadContent.Action)
 	assert.Equal(t, job.ID, payloadContent.Job.ID)
 	assert.Equal(t, run.ID, payloadContent.Run.ID)
-	assert.Equal(t, repo62.ID, payloadContent.Repository.ID)
+	assert.Equal(t, repo62.ID, payloadContent.Run.Repo.ID)
 }
 
 func TestWebhookNotifier_WorkflowJobStatusChanged(t *testing.T) {
@@ -481,7 +481,7 @@ func TestWebhookNotifier_WorkflowJobStatusChanged(t *testing.T) {
 	assert.Equal(t, structs.HookWorkflowJobStatusChanged, payloadContent.Action)
 	assert.Equal(t, job.ID, payloadContent.Job.ID)
 	assert.Equal(t, run.ID, payloadContent.Run.ID)
-	assert.Equal(t, repo62.ID, payloadContent.Repository.ID)
+	assert.Equal(t, repo62.ID, payloadContent.Run.Repo.ID)
 }
 
 func TestWebhookNotifier_WorkflowJobCompleted(t *testing.T) {
@@ -549,5 +549,5 @@ func TestWebhookNotifier_WorkflowJobCompleted(t *testing.T) {
 	assert.Equal(t, structs.HookWorkflowJobCompleted, payloadContent.Action)
 	assert.Equal(t, job.ID, payloadContent.Job.ID)
 	assert.Equal(t, run.ID, payloadContent.Run.ID)
-	assert.Equal(t, repo62.ID, payloadContent.Repository.ID)
+	assert.Equal(t, repo62.ID, payloadContent.Run.Repo.ID)
 }

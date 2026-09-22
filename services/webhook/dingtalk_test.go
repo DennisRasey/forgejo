@@ -387,9 +387,9 @@ View details on https://example.com/acme/test/actions/runs/196540/jobs/3/attempt
 					},
 					Run: &api.ActionRun{
 						Title: "Update README.md",
-					},
-					Repository: &api.Repository{
-						FullName: "acme/test",
+						Repo: &api.Repository{
+							FullName: "acme/test",
+						},
 					},
 				}
 

@@ -214,13 +214,13 @@ View details on https://example.com/acme/test/actions/runs/196540/jobs/3/attempt
 					},
 					Run: &api.ActionRun{
 						Title: "Update README.md",
+						Repo: &api.Repository{
+							FullName: "acme/test",
+						},
 						TriggerUser: &api.User{
 							UserName:  "jane",
 							AvatarURL: "https://example.com/avatars/7dc9cf?size=64",
 						},
-					},
-					Repository: &api.Repository{
-						FullName: "acme/test",
 					},
 				}
 

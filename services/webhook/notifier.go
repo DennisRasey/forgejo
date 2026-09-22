@@ -996,12 +996,6 @@ func (m *webhookNotifier) NewWorkflowJobAttempt(ctx context.Context, job *action
 		Owner:      doer,
 	}
 
-	permission, err := access_model.GetUserRepoPermission(ctx, job.Run.Repo, doer)
-	if err != nil {
-		log.Error("GetUserRepoPermission: %v", err)
-		return
-	}
-
 	payloadJob, err := convert.ToActionRunJob(ctx, job, nil)
 	if err != nil {
 		log.Error("ToActionRunJob: %v", err)
@@ -1009,10 +1003,9 @@ func (m *webhookNotifier) NewWorkflowJobAttempt(ctx context.Context, job *action
 	}
 
 	payload := &api.WorkflowJobPayload{
-		Action:     api.HookNewWorkflowJobAttempt,
-		Job:        payloadJob,
-		Run:        convert.ToActionRun(ctx, job.Run, doer),
-		Repository: convert.ToRepo(ctx, job.Run.Repo, permission),
+		Action: api.HookNewWorkflowJobAttempt,
+		Job:    payloadJob,
+		Run:    convert.ToActionRun(ctx, job.Run, doer),
 	}
 
 	event, err := convertJobStatusToHookEventType(job.Status)
@@ -1039,12 +1032,6 @@ func (m *webhookNotifier) WorkflowJobStatusChanged(
 		Owner:      doer,
 	}
 
-	permission, err := access_model.GetUserRepoPermission(ctx, job.Run.Repo, doer)
-	if err != nil {
-		log.Error("GetUserRepoPermission: %v", err)
-		return
-	}
-
 	payloadJob, err := convert.ToActionRunJob(ctx, job, nil)
 	if err != nil {
 		log.Error("ToActionRunJob: %v", err)
@@ -1052,10 +1039,9 @@ func (m *webhookNotifier) WorkflowJobStatusChanged(
 	}
 
 	payload := &api.WorkflowJobPayload{
-		Action:     api.HookWorkflowJobStatusChanged,
-		Job:        payloadJob,
-		Run:        convert.ToActionRun(ctx, job.Run, doer),
-		Repository: convert.ToRepo(ctx, job.Run.Repo, permission),
+		Action: api.HookWorkflowJobStatusChanged,
+		Job:    payloadJob,
+		Run:    convert.ToActionRun(ctx, job.Run, doer),
 	}
 
 	event, err := convertJobStatusToHookEventType(job.Status)
@@ -1082,12 +1068,6 @@ func (m *webhookNotifier) WorkflowJobCompleted(
 		Owner:      doer,
 	}
 
-	permission, err := access_model.GetUserRepoPermission(ctx, job.Run.Repo, doer)
-	if err != nil {
-		log.Error("GetUserRepoPermission: %v", err)
-		return
-	}
-
 	payloadJob, err := convert.ToActionRunJob(ctx, job, nil)
 	if err != nil {
 		log.Error("ToActionRunJob: %v", err)
@@ -1095,10 +1075,9 @@ func (m *webhookNotifier) WorkflowJobCompleted(
 	}
 
 	payload := &api.WorkflowJobPayload{
-		Action:     api.HookWorkflowJobCompleted,
-		Job:        payloadJob,
-		Run:        convert.ToActionRun(ctx, job.Run, doer),
-		Repository: convert.ToRepo(ctx, job.Run.Repo, permission),
+		Action: api.HookWorkflowJobCompleted,
+		Job:    payloadJob,
+		Run:    convert.ToActionRun(ctx, job.Run, doer),
 	}
 
 	event, err := convertJobStatusToHookEventType(job.Status)

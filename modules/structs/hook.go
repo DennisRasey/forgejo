@@ -554,8 +554,6 @@ type WorkflowJobPayload struct {
 	Job *ActionRunJob `json:"job"`
 	// Run that the job is part of.
 	Run *ActionRun `json:"run"`
-	// Repository that the job is run for.
-	Repository *Repository `json:"repository"`
 }
 
 // JSONPayload marshals this WorkflowJobPayload to JSON.

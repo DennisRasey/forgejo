@@ -1090,13 +1090,13 @@ func (m msteamsConvertor) WorkflowJob(p *api.WorkflowJobPayload) (MSTeamsPayload
 			p.Job.Status,
 			"PlayCircle",
 			badgeStyle,
-			fmt.Sprintf("Repository: %s", p.Repository.FullName),
+			fmt.Sprintf("Repository: %s", p.Run.Repo.FullName),
 			fmt.Sprintf("Run: %s", p.Run.Title),
 			fmt.Sprintf("Job: %s", p.Job.Name),
 		),
 	}
 
-	return createMSTeamsPayload(p.Repository, p.Run.TriggerUser, title, body, p.Job.HTMLURL, defaultStyle), nil
+	return createMSTeamsPayload(p.Run.Repo, p.Run.TriggerUser, title, body, p.Job.HTMLURL, defaultStyle), nil
 }
 
 func createMSTeamsPayload(r *api.Repository, s *api.User, actionTitle string, bodySections []MSTeamsContainer, actionTarget, style string) MSTeamsPayload {

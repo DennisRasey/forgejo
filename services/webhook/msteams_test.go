@@ -495,14 +495,14 @@ func TestMSTeamsPayload(t *testing.T) {
 					},
 					Run: &api.ActionRun{
 						Title: "Update README.md",
+						Repo: &api.Repository{
+							FullName: "acme/test",
+							HTMLURL:  "https://example.com/acme/test",
+						},
 						TriggerUser: &api.User{
 							UserName:  "jane",
 							AvatarURL: "https://example.com/avatars/7dc9cf?size=64",
 						},
-					},
-					Repository: &api.Repository{
-						FullName: "acme/test",
-						HTMLURL:  "https://example.com/acme/test",
 					},
 				}
 
