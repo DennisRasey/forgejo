@@ -121,7 +121,6 @@ func buildAuthGroup() *auth_method.Group {
 func buildMixedAuthGroup() *auth_method.Group {
 	group := auth_method.NewGroup()
 	group.Add(&auth_method.OAuth2{})
-	group.Add(&auth_method.Basic{})
 	group.Add(&auth_method.AccessToken{
 		PermitBasic:  true,
 		PermitBearer: true,
@@ -136,6 +135,7 @@ func buildMixedAuthGroup() *auth_method.Group {
 		group.Add(&auth_method.ReverseProxy{}) // reverseproxy should before Session, otherwise the header will be ignored if user has login
 	}
 	group.Add(&auth_method.Session{})
+	group.Add(&auth_method.Basic{})
 	return group
 }
 
@@ -145,7 +145,6 @@ func buildGitLfsAuthGroup() *auth_method.Group {
 	group := auth_method.NewGroup()
 	group.Add(&auth_method.LFSToken{})
 	group.Add(&auth_method.OAuth2{})
-	group.Add(&auth_method.Basic{})
 	group.Add(&auth_method.AccessToken{
 		PermitBasic: true,
 		// PermitBearer is left at default `false`.  This behaviour is maintained from when one auth method performed
@@ -168,6 +167,7 @@ func buildGitLfsAuthGroup() *auth_method.Group {
 			CreateSession: true,
 		})
 	}
+	group.Add(&auth_method.Basic{})
 	return group
 }
 
@@ -176,7 +176,6 @@ func buildGitLfsAuthGroup() *auth_method.Group {
 func buildGitAuthGroup() *auth_method.Group {
 	group := auth_method.NewGroup()
 	group.Add(&auth_method.OAuth2{})
-	group.Add(&auth_method.Basic{})
 	group.Add(&auth_method.AccessToken{
 		PermitBasic:  true,
 		PermitBearer: true,
@@ -197,6 +196,7 @@ func buildGitAuthGroup() *auth_method.Group {
 			CreateSession: true,
 		})
 	}
+	group.Add(&auth_method.Basic{})
 	return group
 }
 

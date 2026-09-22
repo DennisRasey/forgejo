@@ -21,7 +21,17 @@ type Group struct {
 	methods []auth.Method
 }
 
-// NewGroup creates a new auth group
+// NewGroup creates a new auth group, which allows authenticating an HTTP request via multiple different methods.  The
+// first method to return a success or an internal error will be considered authoritative, and no other authentication
+// methods will be attempted.  Authentication methods can also return "not attempted" (the HTTP request lacked anything
+// that triggered that method) and "attempted with incorrect credentials" (the HTTP request appeared to attempt that
+// method but it didn't authenticate correctly); in those cases the next authentication method is attempted.
+//
+// The slower performing authentication methods should be provided later in the group.  For example, `Authorization:
+// Basic ...` in an HTTP request could be an access token or a username/password.  The basic password authentication
+// method will have to execute a password hash in order to validate the request.  Basic password authentication should
+// therefore be later in the list of methods so that the password hash is not executed if an earlier method such as the
+// access token successfully authenticates the request.
 func NewGroup(methods ...auth.Method) *Group {
 	return &Group{
 		methods: methods,
