@@ -50,7 +50,6 @@ func buildAuthGroup() *auth_method.Group {
 	group := auth_method.NewGroup(
 		&auth_method.OAuth2{},
 		&auth_method.HTTPSign{},
-		&auth_method.Basic{}, // FIXME: this should be removed once we don't allow basic auth in API
 		&auth_method.AccessToken{
 			PermitBasic:  true,
 			PermitBearer: true,
@@ -61,6 +60,7 @@ func buildAuthGroup() *auth_method.Group {
 			PermitBearer: true,
 		},
 		&auth_method.AuthorizedIntegration{},
+		&auth_method.Basic{}, // FIXME: this should be removed once we don't allow basic auth in API
 	)
 	if setting.Service.EnableReverseProxyAuthAPI {
 		group.Add(&auth_method.ReverseProxy{})

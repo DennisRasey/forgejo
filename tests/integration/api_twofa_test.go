@@ -83,7 +83,7 @@ func TestAPIWebAuthn(t *testing.T) {
 
 	DecodeJSON(t, resp, &userParsed)
 
-	assert.Contains(t, userParsed.Message, "Basic authorization is not allowed while having security keys enrolled\n")
+	assert.Contains(t, userParsed.Message, "Basic authorization is not allowed while having security keys enrolled")
 }
 
 func TestAPIWithRequiredTwoFactor(t *testing.T) {
