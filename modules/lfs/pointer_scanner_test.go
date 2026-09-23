@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"testing"
+	"time"
 
 	"forgejo.org/modules/git"
 
@@ -31,17 +32,13 @@ func TestSearchPointerBlobs(t *testing.T) {
 	}
 
 	// Check that no errors were reported.
-	errChanClosed := false
 	select {
 	case err, ok := <-errChan:
-		if ok {
-			require.NoError(t, err)
-		} else {
-			errChanClosed = true
-		}
-	default:
+		require.NoError(t, err)
+		assert.False(t, ok, "errChan should have been closed")
+	case <-time.After(10 * time.Second):
+		t.Fatal("SearchPointerBlobs took too long to return")
 	}
-	assert.True(t, errChanClosed)
 
 	// Sort them, they might arrive in any order
 	slices.SortFunc(pointerBlobs, func(a, b PointerBlob) int {
