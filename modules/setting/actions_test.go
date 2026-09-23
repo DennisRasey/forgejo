@@ -1,9 +1,11 @@
 // Copyright 2023 The Gitea Authors. All rights reserved.
+// Copyright 2026 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package setting
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -13,90 +15,87 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func storageType(defaultStorageType, override string) string {
+	storageType := defaultStorageType
+	if storageType == "" {
+		storageType = "local"
+	}
+	if override != "" {
+		storageType = "minio"
+	}
+	return storageType
+}
+
+func assertActionsLog(t *testing.T, storageType string) {
+	assert.EqualValues(t, storageType, Actions.LogStorage.Type)
+	if storageType == "local" {
+		assert.Equal(t, "actions_log", filepath.Base(Actions.LogStorage.Path))
+	} else if storageType == "minio" {
+		assert.Equal(t, "actions_log/", Actions.LogStorage.MinioConfig.BasePath)
+	} else {
+		panic("test bug")
+	}
+}
+
+func assertActionsArtifacts(t *testing.T, storageType string) {
+	assert.EqualValues(t, storageType, Actions.ArtifactStorage.Type)
+	if storageType == "local" {
+		assert.Equal(t, "actions_artifacts", filepath.Base(Actions.ArtifactStorage.Path))
+	} else if storageType == "minio" {
+		assert.Equal(t, "actions_artifacts/", Actions.ArtifactStorage.MinioConfig.BasePath)
+	} else {
+		panic("test bug")
+	}
+}
+
+type actionsStorageCase struct {
+	defaultStorageType      string
+	actionsLogStorage       string
+	actionsArtifactsStorage string
+}
+
 func Test_getStorageInheritNameSectionTypeForActions(t *testing.T) {
-	iniStr := `
-	[storage]
-	STORAGE_TYPE = minio
-	`
-	cfg, err := NewConfigProviderFromData(iniStr)
-	require.NoError(t, err)
-	require.NoError(t, loadActionsFrom(cfg))
+	defaultStorageTypes := []string{"", "local", "minio"}
+	actionsLogStorages := []string{"", "local", "minio", "mystorageA", "mystorageB"}
+	actionsArtifactsStorages := []string{"", "local", "minio", "mystorageA", "mystorageB"}
 
-	assert.EqualValues(t, "minio", Actions.LogStorage.Type)
-	assert.Equal(t, "actions_log/", Actions.LogStorage.MinioConfig.BasePath)
-	assert.EqualValues(t, "minio", Actions.ArtifactStorage.Type)
-	assert.Equal(t, "actions_artifacts/", Actions.ArtifactStorage.MinioConfig.BasePath)
+	// for clarity and to reduce nesting, build cartesian product first
+	var tCase []actionsStorageCase
+	for _, defaultStorageType := range defaultStorageTypes {
+		for _, actionsLogStorage := range actionsLogStorages {
+			for _, actionsArtifactsStorage := range actionsArtifactsStorages {
+				tCase = append(tCase, actionsStorageCase{defaultStorageType, actionsLogStorage, actionsArtifactsStorage})
+			}
+		}
+	}
 
-	iniStr = `
-[storage.actions_log]
-STORAGE_TYPE = minio
-`
-	cfg, err = NewConfigProviderFromData(iniStr)
-	require.NoError(t, err)
-	require.NoError(t, loadActionsFrom(cfg))
+	for _, c := range tCase {
+		iniStr := ""
 
-	assert.EqualValues(t, "minio", Actions.LogStorage.Type)
-	assert.Equal(t, "actions_log/", Actions.LogStorage.MinioConfig.BasePath)
-	assert.EqualValues(t, "local", Actions.ArtifactStorage.Type)
-	assert.Equal(t, "actions_artifacts", filepath.Base(Actions.ArtifactStorage.Path))
-
-	iniStr = `
-[storage.actions_log]
-STORAGE_TYPE = my_storage
-
-[storage.my_storage]
-STORAGE_TYPE = minio
-`
-	cfg, err = NewConfigProviderFromData(iniStr)
-	require.NoError(t, err)
-	require.NoError(t, loadActionsFrom(cfg))
-
-	assert.EqualValues(t, "minio", Actions.LogStorage.Type)
-	assert.Equal(t, "actions_log/", Actions.LogStorage.MinioConfig.BasePath)
-	assert.EqualValues(t, "local", Actions.ArtifactStorage.Type)
-	assert.Equal(t, "actions_artifacts", filepath.Base(Actions.ArtifactStorage.Path))
-
-	iniStr = `
-[storage.actions_artifacts]
-STORAGE_TYPE = my_storage
-
-[storage.my_storage]
-STORAGE_TYPE = minio
-`
-	cfg, err = NewConfigProviderFromData(iniStr)
-	require.NoError(t, err)
-	require.NoError(t, loadActionsFrom(cfg))
-
-	assert.EqualValues(t, "local", Actions.LogStorage.Type)
-	assert.Equal(t, "actions_log", filepath.Base(Actions.LogStorage.Path))
-	assert.EqualValues(t, "minio", Actions.ArtifactStorage.Type)
-	assert.Equal(t, "actions_artifacts/", Actions.ArtifactStorage.MinioConfig.BasePath)
-
-	iniStr = `
-[storage.actions_artifacts]
-STORAGE_TYPE = my_storage
-
-[storage.my_storage]
-STORAGE_TYPE = minio
-`
-	cfg, err = NewConfigProviderFromData(iniStr)
-	require.NoError(t, err)
-	require.NoError(t, loadActionsFrom(cfg))
-
-	assert.EqualValues(t, "local", Actions.LogStorage.Type)
-	assert.Equal(t, "actions_log", filepath.Base(Actions.LogStorage.Path))
-	assert.EqualValues(t, "minio", Actions.ArtifactStorage.Type)
-	assert.Equal(t, "actions_artifacts/", Actions.ArtifactStorage.MinioConfig.BasePath)
-
-	iniStr = ``
-	cfg, err = NewConfigProviderFromData(iniStr)
-	require.NoError(t, err)
-	require.NoError(t, loadActionsFrom(cfg))
-
-	assert.EqualValues(t, "local", Actions.LogStorage.Type)
-	assert.Equal(t, "actions_log", filepath.Base(Actions.LogStorage.Path))
-	assert.EqualValues(t, "local", Actions.ArtifactStorage.Type)
-	assert.Equal(t, "actions_artifacts", filepath.Base(Actions.ArtifactStorage.Path))
+		if c.defaultStorageType != "" {
+			iniStr += fmt.Sprintf("[storage]\nSTORAGE_TYPE = %s\n", c.defaultStorageType)
+		}
+		if c.actionsLogStorage != "" {
+			iniStr += fmt.Sprintf("[storage.%s]\nSTORAGE_TYPE = %s\n", "actions_log", c.actionsLogStorage)
+		}
+		if c.actionsArtifactsStorage != "" {
+			iniStr += fmt.Sprintf("[storage.%s]\nSTORAGE_TYPE = %s\n", "actions_artifacts", c.actionsArtifactsStorage)
+		}
+		if c.actionsLogStorage != "" {
+			iniStr += fmt.Sprintf("[storage.%s]\nSTORAGE_TYPE = minio\n", c.actionsLogStorage)
+		}
+		if c.actionsArtifactsStorage != "" && c.actionsLogStorage != c.actionsArtifactsStorage {
+			iniStr += fmt.Sprintf("[storage.%s]\nSTORAGE_TYPE = minio\n", c.actionsArtifactsStorage)
+		}
+		t.Run(fmt.Sprintf("%q.%q.%q", c.defaultStorageType, c.actionsLogStorage, c.actionsArtifactsStorage), func(t *testing.T) {
+			cfg, err := NewConfigProviderFromData(iniStr)
+			require.NoError(t, err)
+			require.NoError(t, loadActionsFrom(cfg))
+			t.Log("\n" + iniStr)
+			assertActionsLog(t, storageType(c.defaultStorageType, c.actionsLogStorage))
+			assertActionsArtifacts(t, storageType(c.defaultStorageType, c.actionsArtifactsStorage))
+		})
+	}
 }
 
 func Test_getDefaultActionsURLForActions(t *testing.T) {
