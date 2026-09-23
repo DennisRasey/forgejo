@@ -261,13 +261,22 @@ func (key ecdsaSigningKey) VerifyKey() any {
 func (key ecdsaSigningKey) ToJWK() (map[string]string, error) {
 	pubKey := key.key.Public().(*ecdsa.PublicKey)
 
+	byteLen := (pubKey.Params().BitSize + 7) / 8
+
+	// Per RFC7518 6.2.1.2 & 6.2.1.3, return the 'x' and 'y' field with length of
+	// the full size of a coordinate.
+	xBytes := make([]byte, byteLen)
+	pubKey.X.FillBytes(xBytes) //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to x, even if unsafe.
+	yBytes := make([]byte, byteLen)
+	pubKey.Y.FillBytes(yBytes) //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to y, even if unsafe.
+
 	return map[string]string{
 		"kty": "EC",
 		"alg": key.SigningMethod().Alg(),
 		"kid": key.id,
 		"crv": pubKey.Params().Name,
-		"x":   base64.RawURLEncoding.EncodeToString(pubKey.X.Bytes()), //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to x, even if unsafe.
-		"y":   base64.RawURLEncoding.EncodeToString(pubKey.Y.Bytes()), //nolint:staticcheck // no easy replacement. JWTX specification mandates marshalling to y, even if unsafe.
+		"x":   base64.RawURLEncoding.EncodeToString(xBytes),
+		"y":   base64.RawURLEncoding.EncodeToString(yBytes),
 	}, nil
 }
 
@@ -591,20 +600,31 @@ func ParseJWKToPublicKey(jwk map[string]any) (any, error) {
 		default:
 			return nil, fmt.Errorf("unsupported ECDSA curve in JWK: %s", jwk["crv"])
 		}
-		xBytes, err := base64.RawURLEncoding.DecodeString(xStr)
-		if err != nil {
+
+		byteLen := (curve.Params().BitSize + 7) / 8
+		maxBase64Len := base64.RawURLEncoding.EncodedLen(byteLen)
+		if len(xStr) != maxBase64Len {
+			return nil, fmt.Errorf("invalid ECDSA JWK 'x' field: length of base64url encoding is unexpected")
+		}
+		if len(yStr) != maxBase64Len {
+			return nil, fmt.Errorf("invalid ECDSA JWK 'y' field: length of base64url encoding is unexpected")
+		}
+
+		// Represent the public key as X9.62 uncompressed format, the format that
+		// the `crypto/ecdsa` module recognizes for parsing. The format is fairly
+		// simple: 4 || xCoord || yCoord. Whereas xCoord and yCoord is always of
+		// length `byteLen`, which is different for each curve.
+		uncompressedPublicKey := make([]byte, 1+byteLen*2)
+		uncompressedPublicKey[0] = 4
+
+		if _, err := base64.RawURLEncoding.Decode(uncompressedPublicKey[1:1+byteLen], []byte(xStr)); err != nil {
 			return nil, fmt.Errorf("invalid ECDSA JWK 'x' field: %w", err)
 		}
-		yBytes, err := base64.RawURLEncoding.DecodeString(yStr)
-		if err != nil {
+		if _, err := base64.RawURLEncoding.Decode(uncompressedPublicKey[1+byteLen:1+byteLen*2], []byte(yStr)); err != nil {
 			return nil, fmt.Errorf("invalid ECDSA JWK 'y' field: %w", err)
 		}
-		pubKey := &ecdsa.PublicKey{
-			Curve: curve,
-			X:     new(big.Int).SetBytes(xBytes),
-			Y:     new(big.Int).SetBytes(yBytes),
-		}
-		return pubKey, nil
+
+		return ecdsa.ParseUncompressedPublicKey(curve, uncompressedPublicKey)
 	default:
 		return nil, fmt.Errorf("unsupported key type in JWK: %s", kty)
 	}
