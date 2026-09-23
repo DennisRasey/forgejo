@@ -41,8 +41,8 @@ func ToActionRun(ctx context.Context, run *actions_model.ActionRun, doer *user_m
 		EventPayload:      run.EventPayload,
 		TriggerEvent:      run.TriggerEvent,
 		Status:            run.Status.String(),
-		Started:           run.Started.AsTime(),
-		Stopped:           run.Stopped.AsTime(),
+		Started:           run.Started.AsOptionalTime(),
+		Stopped:           run.Stopped.AsOptionalTime(),
 		Created:           run.Created.AsTime(),
 		Updated:           run.Updated.AsTime(),
 		Duration:          run.Duration(),
@@ -109,8 +109,8 @@ func ToActionRunJob(ctx context.Context, job *actions_model.ActionRunJob, steps 
 			Number:  int64(i),
 			Name:    s.Name,
 			Status:  s.Status.String(),
-			Started: s.Started.AsTime(),
-			Stopped: s.Stopped.AsTime(),
+			Started: s.Started.AsOptionalTime(),
+			Stopped: s.Stopped.AsOptionalTime(),
 		}
 	}
 	return out, nil

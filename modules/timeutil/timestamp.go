@@ -6,6 +6,7 @@ package timeutil
 import (
 	"time"
 
+	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
 )
 
@@ -77,6 +78,16 @@ func (ts TimeStamp) AsTimePtr() *time.Time {
 func (ts TimeStamp) AsTimePtrInLocation(loc *time.Location) *time.Time {
 	tm := time.Unix(int64(ts), 0).In(loc)
 	return &tm
+}
+
+// AsOptionalTime converts this timestamp to time.Time wrapped in an optional.Some. If this timestamp is zero, it
+// will be converted into optional.None.
+func (ts TimeStamp) AsOptionalTime() optional.Option[time.Time] {
+	if ts.IsZero() {
+		return optional.None[time.Time]()
+	}
+
+	return optional.Some(ts.AsTime())
 }
 
 // Format formats timestamp as given format

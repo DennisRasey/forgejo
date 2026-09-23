@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	actions_model "forgejo.org/models/actions"
 	auth_model "forgejo.org/models/auth"
@@ -21,6 +22,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
+	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 	"forgejo.org/modules/webhook"
 	"forgejo.org/routers/api/v1/shared"
@@ -325,56 +327,113 @@ func TestActionsAPIGetActionRun(t *testing.T) {
 
 	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 63})
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
-	token := getUserToken(t, user.LowerName, auth_model.AccessTokenScopeWriteRepository)
+	run892 := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: 892, RepoID: repo.ID})
 
-	testqueries := []struct {
-		name           string
-		runID          int64
-		expectedStatus int
-	}{
-		{
-			name:           "existing return ok",
-			runID:          892,
-			expectedStatus: http.StatusOK,
-		},
-		{
-			name:           "non existing run",
-			runID:          9876543210, // I hope this run will not exists, else just change it to another.
-			expectedStatus: http.StatusNotFound,
-		},
-		{
-			name:           "existing run but wrong repo should not be found",
-			runID:          891,
-			expectedStatus: http.StatusNotFound,
-		},
-	}
+	token := getUserToken(t, user.LowerName, auth_model.AccessTokenScopeReadRepository)
 
-	for _, tt := range testqueries {
-		t.Run(tt.name, func(t *testing.T) {
-			req := NewRequest(t, http.MethodGet,
-				fmt.Sprintf("/api/v1/repos/%s/%s/actions/runs/%d",
-					repo.OwnerName, repo.Name, tt.runID,
-				),
-			)
-			req.AddTokenAuth(token)
+	t.Run("Waiting run", func(t *testing.T) {
+		run := &actions_model.ActionRun{
+			Title:             "Update README.md",
+			RepoID:            repo.ID,
+			OwnerID:           user.ID,
+			WorkflowID:        "test.yaml",
+			Index:             4,
+			Ref:               "refs/heads/main",
+			IsRefDeleted:      false,
+			CommitSHA:         "dd7ec6d7d24b0718cf1832984dadfad4b7113620",
+			IsForkPullRequest: true,
+			NeedApproval:      true,
+			ApprovedBy:        28,
+			Event:             "push",
+			EventPayload:      `{"payload":true}`,
+			TriggerEvent:      "push",
+			Status:            actions_model.StatusWaiting,
+			TriggerUserID:     user.ID,
+		}
+		unittest.AssertSuccessfulInsert(t, run)
 
-			res := MakeRequest(t, req, tt.expectedStatus)
+		requestURL := fmt.Sprintf("/api/v1/repos/%s/actions/runs/%d", repo.FullName(), run.ID)
 
-			// Only interested in the data if 200 OK
-			if tt.expectedStatus != http.StatusOK {
-				return
-			}
+		req := NewRequest(t, http.MethodGet, requestURL)
+		req.AddTokenAuth(token)
 
-			dbRun := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{ID: tt.runID})
-			apiRun := new(api.ActionRun)
-			DecodeJSON(t, res, apiRun)
+		res := MakeRequest(t, req, http.StatusOK)
+		var receivedRun map[string]any
+		DecodeJSON(t, res, &receivedRun)
 
-			assert.Equal(t, dbRun.Index, apiRun.Index)
-			assert.Equal(t, dbRun.Status.String(), apiRun.Status)
-			assert.Equal(t, dbRun.CommitSHA, apiRun.CommitSHA)
-			assert.Equal(t, dbRun.TriggerUserID, apiRun.TriggerUser.ID)
-		})
-	}
+		assert.EqualValues(t, run.ID, receivedRun["id"])
+		assert.Equal(t, "Update README.md", receivedRun["title"])
+		assert.NotNil(t, receivedRun["repository"])
+		assert.Equal(t, "test.yaml", receivedRun["workflow_id"])
+		assert.EqualValues(t, 4, receivedRun["index_in_repo"])
+		assert.NotNil(t, receivedRun["trigger_user"])
+		assert.Equal(t, "main", receivedRun["prettyref"])
+		assert.Equal(t, false, receivedRun["is_ref_deleted"])
+		assert.Equal(t, "dd7ec6d7d24b0718cf1832984dadfad4b7113620", receivedRun["commit_sha"])
+		assert.Equal(t, true, receivedRun["is_fork_pull_request"])
+		assert.Equal(t, true, receivedRun["need_approval"])
+		assert.EqualValues(t, 28, receivedRun["approved_by"])
+		assert.Equal(t, "push", receivedRun["event"])
+		assert.Equal(t, `{"payload":true}`, receivedRun["event_payload"])
+		assert.Equal(t, "push", receivedRun["trigger_event"])
+		assert.Equal(t, "waiting", receivedRun["status"])
+		assert.Nil(t, receivedRun["started"])
+		assert.Nil(t, receivedRun["stopped"])
+		assert.Equal(t, run.Created.AsLocalTime().Format(time.RFC3339), receivedRun["created"])
+		assert.Equal(t, run.Updated.AsLocalTime().Format(time.RFC3339), receivedRun["updated"])
+		assert.Nil(t, receivedRun["duration"])
+		assert.Equal(t, setting.AppURL+"user2/test_action_run_search/actions/runs/4", receivedRun["html_url"])
+	})
+
+	t.Run("Completed run", func(t *testing.T) {
+		run := &actions_model.ActionRun{
+			Title:      "Update package.json",
+			RepoID:     repo.ID,
+			OwnerID:    user.ID,
+			WorkflowID: "build.yaml",
+			Index:      5,
+			Status:     actions_model.StatusFailure,
+			Started:    timeutil.TimeStamp(1790017528),
+			Stopped:    timeutil.TimeStamp(1790018019),
+		}
+		unittest.AssertSuccessfulInsert(t, run)
+
+		requestURL := fmt.Sprintf("/api/v1/repos/%s/actions/runs/%d", repo.FullName(), run.ID)
+
+		req := NewRequest(t, http.MethodGet, requestURL)
+		req.AddTokenAuth(token)
+
+		res := MakeRequest(t, req, http.StatusOK)
+		var receivedRun map[string]any
+		DecodeJSON(t, res, &receivedRun)
+
+		assert.EqualValues(t, run.ID, receivedRun["id"])
+		assert.Equal(t, "Update package.json", receivedRun["title"])
+		assert.NotNil(t, receivedRun["repository"])
+		assert.Equal(t, "build.yaml", receivedRun["workflow_id"])
+		assert.Equal(t, "failure", receivedRun["status"])
+		assert.Equal(t, run.Started.AsLocalTime().Format(time.RFC3339), receivedRun["started"])
+		assert.Equal(t, run.Stopped.AsLocalTime().Format(time.RFC3339), receivedRun["stopped"])
+		assert.Equal(t, run.Created.AsLocalTime().Format(time.RFC3339), receivedRun["created"])
+		assert.Equal(t, run.Updated.AsLocalTime().Format(time.RFC3339), receivedRun["updated"])
+		assert.InEpsilon(t, 491*10e8 /* 491 seconds */, receivedRun["duration"], 1.0)
+	})
+
+	t.Run("Wrong repository", func(t *testing.T) {
+		requestURL := fmt.Sprintf("/api/v1/repos/%s/actions/runs/%d", repo.FullName(), run892.ID)
+
+		req := NewRequest(t, http.MethodGet, requestURL)
+		req.AddTokenAuth(token)
+
+		MakeRequest(t, req, http.StatusOK)
+
+		requestURL = fmt.Sprintf("/api/v1/repos/%s/actions/runs/%d", "wrong/repository", run892.ID)
+
+		req = NewRequest(t, http.MethodGet, requestURL)
+		req.AddTokenAuth(token)
+
+		MakeRequest(t, req, http.StatusNotFound)
+	})
 }
 
 func TestAPIRepoActionsRunnerRegistrationTokenOperations(t *testing.T) {
