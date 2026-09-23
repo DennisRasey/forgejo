@@ -5,6 +5,8 @@ package actions
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -50,6 +52,8 @@ func NewActionScheduleSpec(cron string, tz optional.Option[string], referenceTim
 	return spec, nil
 }
 
+var ErrPersistentScheduling = errors.New("persistent scheduling error")
+
 // Parse parses the spec and returns a cron.Schedule
 // Unlike the default cron parser, Parse uses UTC timezone as the default if none is specified.
 func (s *ActionScheduleSpec) Parse() (cron.Schedule, error) {
@@ -60,7 +64,7 @@ func (s *ActionScheduleSpec) Parse() (cron.Schedule, error) {
 
 	schedule, err := parser.Parse(s.Spec)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("spec parse error: %w (%w)", err, ErrPersistentScheduling)
 	}
 
 	// If `timezone` is not defined in the workflow, but the spec includes a timezone, use it.
@@ -72,7 +76,7 @@ func (s *ActionScheduleSpec) Parse() (cron.Schedule, error) {
 	if present, tz := s.TimeZone.Get(); present {
 		location, err = time.LoadLocation(tz)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to load time zone: %w (%w)", err, ErrPersistentScheduling)
 		}
 	} else {
 		// UTC is the default time zone.
