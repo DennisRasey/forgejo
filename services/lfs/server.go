@@ -513,7 +513,10 @@ func writeStatusMessage(ctx *context.Context, status int, message string) {
 	ctx.Resp.Header().Set("Content-Type", lfs_module.MediaType)
 	ctx.Resp.WriteHeader(status)
 
-	er := lfs_module.ErrorResponse{Message: message}
+	er := lfs_module.ErrorResponse{
+		Message:          message,
+		DocumentationURL: "https://codeberg.org/forgejo/forgejo/issues",
+	}
 
 	enc := json.NewEncoder(ctx.Resp)
 	if err := enc.Encode(er); err != nil {
