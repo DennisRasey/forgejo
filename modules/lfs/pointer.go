@@ -16,7 +16,10 @@ import (
 )
 
 const (
-	blobSizeCutoff = 1024
+	// LFS pointer files must be less than 1024 bytes
+	//
+	// See: https://github.com/git-lfs/git-lfs/blob/f0bffc4fe998fe5cb004dbca9e8951ea662ff66b/docs/spec.md?plain=1#L22-L23
+	BlobSizeCutoff = 1024
 
 	// MetaFileIdentifier is the string appearing at the first line of LFS pointer files.
 	// https://github.com/git-lfs/git-lfs/blob/master/docs/spec.md
@@ -39,7 +42,7 @@ var (
 
 // ReadPointer tries to read LFS pointer data from the reader
 func ReadPointer(reader io.Reader) (Pointer, error) {
-	buf := make([]byte, blobSizeCutoff)
+	buf := make([]byte, BlobSizeCutoff)
 	n, err := io.ReadFull(reader, buf)
 	if err != nil && err != io.ErrUnexpectedEOF {
 		return Pointer{}, err

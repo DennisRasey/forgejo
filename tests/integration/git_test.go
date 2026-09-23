@@ -279,8 +279,8 @@ func rawTest(t *testing.T, ctx *APITestContext, little, big, littleLFS, bigLFS s
 			req = NewRequest(t, "GET", path.Join("/", username, reponame, "/raw/branch/master/", littleLFS))
 			resp := session.MakeRequest(t, req, http.StatusOK)
 			assert.NotEqual(t, littleSize, resp.Body.Len())
-			assert.LessOrEqual(t, resp.Body.Len(), 1024)
-			if resp.Body.Len() != littleSize && resp.Body.Len() <= 1024 {
+			assert.Less(t, resp.Body.Len(), lfs.BlobSizeCutoff)
+			if resp.Body.Len() != littleSize && resp.Body.Len() < lfs.BlobSizeCutoff {
 				assert.Contains(t, resp.Body.String(), lfs.MetaFileIdentifier)
 			}
 		}
@@ -294,7 +294,7 @@ func rawTest(t *testing.T, ctx *APITestContext, little, big, littleLFS, bigLFS s
 				req = NewRequest(t, "GET", path.Join("/", username, reponame, "/raw/branch/master/", bigLFS))
 				resp := session.MakeRequest(t, req, http.StatusOK)
 				assert.NotEqual(t, bigSize, resp.Body.Len())
-				if resp.Body.Len() != bigSize && resp.Body.Len() <= 1024 {
+				if resp.Body.Len() != bigSize && resp.Body.Len() < lfs.BlobSizeCutoff {
 					assert.Contains(t, resp.Body.String(), lfs.MetaFileIdentifier)
 				}
 			}

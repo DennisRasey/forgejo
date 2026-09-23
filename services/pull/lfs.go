@@ -75,7 +75,7 @@ func createLFSMetaObjectsFromCatFileBatch(ctx context.Context, catFileBatchReade
 	contentStore := lfs.NewContentStore()
 
 	bufferedReader := bufio.NewReader(catFileBatchReader)
-	buf := make([]byte, 1025)
+	buf := make([]byte, lfs.BlobSizeCutoff+1)
 	for {
 		// File descriptor line: sha
 		_, err := bufferedReader.ReadString(' ')

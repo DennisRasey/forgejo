@@ -51,7 +51,7 @@ func createPointerResultsFromCatFileBatch(ctx context.Context, catFileBatchReade
 	defer catFileBatchReader.Close()
 
 	bufferedReader := bufio.NewReader(catFileBatchReader)
-	buf := make([]byte, 1025)
+	buf := make([]byte, BlobSizeCutoff)
 
 loop:
 	for {

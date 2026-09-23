@@ -131,8 +131,9 @@ func GetRawFileOrLFS(ctx *context.APIContext) {
 	ctx.RespHeader().Set(giteaObjectTypeHeader, string(files_service.GetObjectTypeFromTreeEntry(entry)))
 	ctx.RespHeader().Set(forgejoObjectTypeHeader, string(files_service.GetObjectTypeFromTreeEntry(entry)))
 
-	// LFS Pointer files are at most 1024 bytes - so any blob greater than 1024 bytes cannot be an LFS file
-	if blob.Size() > 1024 {
+	// Any blob equal or greater than 1024 bytes cannot be an LFS file pointer
+	// See: https://github.com/git-lfs/git-lfs/blob/f0bffc4fe998fe5cb004dbca9e8951ea662ff66b/docs/spec.md?plain=1#L22-L23
+	if blob.Size() >= lfs.BlobSizeCutoff {
 		// First handle caching for the blob
 		if httpcache.HandleGenericETagTimeCache(ctx.Req, ctx.Resp, `"`+blob.ID.String()+`"`, lastModified) {
 			return
