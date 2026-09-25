@@ -44,7 +44,7 @@ func indexExists(x *xorm.Engine, tableName, indexName string) (bool, error) {
 	case setting.Database.Type.IsPostgreSQL():
 		return x.SQL("SELECT indexname FROM pg_indexes WHERE schemaname = ? AND tablename = ? AND indexname = ?", setting.Database.Schema, tableName, indexName).Exist()
 	case setting.Database.Type.IsMySQL():
-		databaseName := strings.SplitN(setting.Database.Name, "?", 2)[0]
+		databaseName, _, _ := strings.Cut(setting.Database.Name, "?")
 		return x.SQL("SELECT `INDEX_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ? AND `INDEX_NAME` = ?", databaseName, tableName, indexName).Exist()
 	}
 

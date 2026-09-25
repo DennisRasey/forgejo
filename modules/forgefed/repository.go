@@ -89,7 +89,7 @@ func ToRepository(it ap.Item) (*Repository, error) {
 	default:
 		// NOTE(marius): this is an ugly way of dealing with the interface conversion error: types from different scopes
 		typ := reflect.TypeFor[*Repository]()
-		if i, ok := reflect.ValueOf(it).Convert(typ).Interface().(*Repository); ok {
+		if i, ok := reflect.TypeAssert[*Repository](reflect.ValueOf(it).Convert(typ)); ok {
 			return i, nil
 		}
 	}

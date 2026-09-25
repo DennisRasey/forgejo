@@ -584,7 +584,7 @@ func searchRepositoryByCondition(ctx context.Context, opts *SearchRepoOptions, c
 		args = append(args, opts.PriorityOwnerID)
 	} else if strings.Count(opts.Keyword, "/") == 1 {
 		// With "owner/repo" search times, prioritise results which match the owner field
-		orgName := strings.Split(opts.Keyword, "/")[0]
+		orgName, _, _ := strings.Cut(opts.Keyword, "/")
 		opts.OrderBy = db.SearchOrderBy(fmt.Sprintf("CASE WHEN owner_name LIKE ? THEN 0 ELSE 1 END, %s", opts.OrderBy))
 		args = append(args, orgName)
 	}

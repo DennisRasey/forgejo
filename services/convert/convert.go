@@ -157,7 +157,7 @@ func ToBranchProtection(ctx context.Context, bp *git_model.ProtectedBranch, repo
 	}
 
 	return &api.BranchProtection{
-		BranchName:                    branchName,
+		BranchName:                    branchName, //nolint:staticcheck
 		RuleName:                      bp.RuleName,
 		EnablePush:                    bp.CanPush,
 		EnablePushWhitelist:           bp.EnableWhitelist,
@@ -377,7 +377,7 @@ func ToTeams(ctx context.Context, teams []*organization.Team, loadOrgs bool) ([]
 			IncludesAllRepositories: t.IncludesAllRepositories,
 			CanCreateOrgRepo:        t.CanCreateOrgRepo,
 			Permission:              t.AccessMode.String(),
-			Units:                   t.GetUnitNames(),
+			Units:                   t.GetUnitNames(), //nolint:staticcheck
 			UnitsMap:                t.GetUnitsMap(),
 		}
 

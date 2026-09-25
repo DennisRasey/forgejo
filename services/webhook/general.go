@@ -460,7 +460,7 @@ func ToHook(repoLink string, w *webhook_model.Webhook) (*api.Hook, error) {
 		Type:                w.Type,
 		BranchFilter:        w.BranchFilter,
 		URL:                 w.URL,
-		Config:              config,
+		Config:              config, //nolint:staticcheck
 		Events:              w.EventsArray(),
 		AuthorizationHeader: authorizationHeader,
 		ContentType:         w.ContentType.Name(),
