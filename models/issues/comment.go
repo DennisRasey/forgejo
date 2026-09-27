@@ -820,7 +820,7 @@ func (c *Comment) ResolveCurrentLine(ctx context.Context, repo *repo_model.Repos
 	// - cache miss (~1000 commit repo) took 1,671,223 ns
 	// - cache hit (in-memory adapter)  took     3,710 ns
 	// - cache hit (redis adapter)      took    77,311 ns
-	resolveJSON, err := cache.GetString(fmt.Sprintf("comment.Resolve;ID=%d;HEAD=%s", c.ID, currentHead), func() (string, error) {
+	resolveJSON, err := cache.GetString(fmt.Sprintf("comment.Resolve;Repo=%d;ID=%d;HEAD=%s", repo.ID, c.ID, currentHead), func() (string, error) {
 		gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, repo)
 		if err != nil {
 			return "", fmt.Errorf("failed to open repo: %w", err)
@@ -868,7 +868,7 @@ func (c *Comment) CheckLineRangeValid(ctx context.Context, repo *repo_model.Repo
 		return true, nil
 	}
 
-	resultJSON, err := cache.GetString(fmt.Sprintf("comment.ResolveRange;ID=%d;HEAD=%s", c.ID, currentHead), func() (string, error) {
+	resultJSON, err := cache.GetString(fmt.Sprintf("comment.ResolveRange;Repo=%d;ID=%d;HEAD=%s", repo.ID, c.ID, currentHead), func() (string, error) {
 		gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, repo)
 		if err != nil {
 			return "", fmt.Errorf("failed to open repo: %w", err)

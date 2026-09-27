@@ -30,6 +30,9 @@ Template Attributes:
 			<md-quote class="markdown-toolbar-button" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.quote.tooltip"}}">{{svg "octicon-quote"}}</md-quote>
 			<md-code class="markdown-toolbar-button" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.code.tooltip"}}">{{svg "octicon-code"}}</md-code>
 			<button type="button" class="markdown-toolbar-button show-modal" data-md-button data-md-action="new-link" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.link.tooltip"}}" data-md-ctrl-shortcut="k">{{svg "octicon-link"}}</button>
+			{{if .SuggestionButton}}
+				<button type="button" class="markdown-toolbar-button" data-md-button data-md-action="suggestion" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.suggestion.tooltip"}}">{{svg "octicon-diff"}}</button>
+			{{end}}
 		</div>
 		<div class="markdown-toolbar-group">
 			<md-unordered-list class="markdown-toolbar-button" data-tooltip-content="{{ctx.Locale.Tr "mde.buttons.list.unordered.tooltip"}}">{{svg "octicon-list-unordered"}}</md-unordered-list>

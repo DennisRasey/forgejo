@@ -341,6 +341,11 @@ func CreatePullReviewComment(ctx *context.APIContext) {
 		return
 	}
 
+	if err := pull_service.ValidateCodeCommentSuggestions(opts.Body); err != nil {
+		ctx.Error(http.StatusUnprocessableEntity, "invalid suggestion", err)
+		return
+	}
+
 	comment, err := pull_service.CreateCodeCommentKnownReviewID(ctx,
 		ctx.Doer(),
 		pr.Issue.Repo,
@@ -509,6 +514,11 @@ func CreatePullReview(ctx *context.APIContext) {
 	for _, c := range opts.Comments {
 		if err := pull_service.ValidateCodeCommentLineRange(c.ExtraLinesCount); err != nil {
 			ctx.Error(http.StatusUnprocessableEntity, "invalid extra_lines_count", err)
+			return
+		}
+
+		if err := pull_service.ValidateCodeCommentSuggestions(c.Body); err != nil {
+			ctx.Error(http.StatusUnprocessableEntity, "invalid suggestion", err)
 			return
 		}
 

@@ -149,6 +149,7 @@
 				"MarkdownPreviewContext" .RepoLink
 				"TextareaName" "content"
 				"DropzoneParentContainer" ".ui.form"
+				"SuggestionButton" true
 			)}}
 		</div>
 
@@ -168,6 +169,8 @@
 </template>
 
 {{template "repo/issue/view_content/reference_issue_dialog" .}}
+
+{{if .HeadBranchIsEditable}}{{template "repo/diff/suggestion_apply_modal" .}}{{end}}
 
 <div class="tw-hidden" id="no-content">
 	<span class="no-content">{{ctx.Locale.Tr "repo.issues.no_content"}}</span>

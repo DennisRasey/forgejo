@@ -1870,6 +1870,8 @@ func ViewIssue(ctx *context.Context) {
 					ctx.ServerError("GetUserRepoPermission", err)
 					return
 				}
+				// determine if the user viewing the pull request can edit the head branch (used to gate the "Apply suggestion" button)
+				ctx.Data["HeadBranchIsEditable"] = !pull.HasMerged && !issue.IsClosed && pull.HeadRepo.CanEnableEditor() && issues_model.CanMaintainerWriteToBranch(ctx, perm, pull.HeadBranch, ctx.Doer, access_model.GetUserRepoPermission) && pull.Flow != issues_model.PullRequestFlowAGit
 				if perm.CanWrite(unit.TypeCode) {
 					// Check if branch is not protected
 					if pull.HeadBranch != pull.HeadRepo.DefaultBranch {
@@ -3338,6 +3340,14 @@ func UpdateCommentContent(ctx *context.Context) {
 	newContent := ctx.FormString("content")
 	contentVersion := ctx.FormInt("content_version")
 
+	// a code comment may carry at most one suggestion
+	if comment.Type == issues_model.CommentTypeCode {
+		if err := pull_service.ValidateCodeCommentSuggestions(newContent); err != nil {
+			ctx.JSONError(err.Error())
+			return
+		}
+	}
+
 	comment.Content = newContent
 	if err = issue_service.UpdateComment(ctx, comment, contentVersion, ctx.Doer, oldContent); err != nil {
 		if errors.Is(err, issues_model.ErrCommentAlreadyChanged) {
@@ -3374,10 +3384,34 @@ func UpdateCommentContent(ctx *context.Context) {
 		return
 	}
 
+	var suggestions template.HTML
+	if comment.Type == issues_model.CommentTypeCode {
+		editable, err := headBranchIsEditable(ctx, comment.Issue)
+		if err != nil {
+			ctx.ServerError("headBranchIsEditable", err)
+			return
+		}
+		root := map[string]any{
+			"HeadBranchIsEditable": editable,
+			"RepoLink":             ctx.Repo.RepoLink,
+			"Issue":                comment.Issue,
+		}
+		// the editor declares its context (Files tab vs Conversation); anything else => no batch button
+		batchMode := ctx.FormString("batch_mode")
+		if batchMode != "active" && batchMode != "disabled" {
+			batchMode = ""
+		}
+		if suggestions, err = ctx.RenderToHTML("repo/diff/suggestion_diffs", map[string]any{"comment": comment, "root": root, "batchMode": batchMode}); err != nil {
+			ctx.ServerError("RenderToHTML", err)
+			return
+		}
+	}
+
 	ctx.JSON(http.StatusOK, map[string]any{
 		"content":        content,
 		"contentVersion": comment.ContentVersion,
 		"attachments":    attachmentsHTML(ctx, comment.Attachments, comment.Content),
+		"suggestions":    suggestions,
 	})
 }
 

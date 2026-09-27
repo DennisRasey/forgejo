@@ -1,0 +1,34 @@
+{{$file := .file}}
+<div class="diff-file-box diff-box file-content">
+	<div class="file-body file-code code-view code-diff code-diff-unified unicode-escaped">
+		<table>
+			<colgroup>
+				<col width="50">
+				<col width="50">
+				<col width="10">
+				<col width="10">
+				<col>
+			</colgroup>
+			<tbody>
+				{{range $section := $file.Sections}}
+					{{range $k, $line := $section.Lines}}
+						<tr class="{{.GetHTMLDiffLineType}}-code" data-line-type="{{.GetHTMLDiffLineType}}">
+							<td class="lines-num lines-num-old" data-line-num="{{if $line.LeftIdx}}{{$line.LeftIdx}}{{end}}"></td>
+							<td class="lines-num lines-num-new" data-line-num="{{if $line.RightIdx}}{{$line.RightIdx}}{{end}}"></td>
+							{{$inlineDiff := $section.GetComputedInlineDiffFor $line ctx.Locale -}}
+							<td class="lines-escape">
+								{{- if $inlineDiff.EscapeStatus.Escaped -}}
+									<button class="toggle-escape-button btn interact-bg" title="{{template "repo/diff/escape_title" dict "diff" $inlineDiff}}"></button>
+								{{- end -}}
+							</td>
+							<td class="lines-type-marker"><span class="tw-font-mono" data-type-marker="{{$line.GetLineTypeMarker}}"></span></td>
+							<td class="chroma lines-code{{if (not $line.RightIdx)}} lines-code-old{{end}}">{{/*
+								*/}}{{template "repo/diff/section_code" dict "diff" $inlineDiff}}{{/*
+							*/}}</td>
+						</tr>
+					{{end}}
+				{{end}}
+			</tbody>
+		</table>
+	</div>
+</div>

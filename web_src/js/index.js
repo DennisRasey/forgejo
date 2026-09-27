@@ -60,6 +60,7 @@ import {
   initRepoSettingSearchTeamBox,
 } from './features/repo-settings.js';
 import {initRepoDiffView} from './features/repo-diff.js';
+import {initRepoSuggestionApply} from './features/repo-suggestion.js';
 import {initOrgTeamSearchRepoBox} from './features/org-team.js';
 import {initUserAuthWebAuthn, initUserAuthWebAuthnRegister} from './features/user-auth-webauthn.js';
 import {initRepoRelease, initRepoReleaseNew} from './features/repo-release.js';
@@ -194,6 +195,7 @@ onDomReady(() => {
   initUserAuthWebAuthnRegister();
   initUserAuth();
   initRepoDiffView();
+  initRepoSuggestionApply();
   initColorPickers();
   initModalClose();
   initAuthorizedIntegrationClaimRuleEditor();

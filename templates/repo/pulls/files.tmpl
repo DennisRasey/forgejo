@@ -11,4 +11,5 @@
 		{{template "repo/diff/box" .}}
 	</div>
 </div>
+{{if .HeadBranchIsEditable}}{{template "repo/diff/suggestion_apply_modal" .}}{{end}}
 {{template "base/footer" .}}

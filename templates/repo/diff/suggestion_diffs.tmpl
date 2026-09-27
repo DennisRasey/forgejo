@@ -1,0 +1,30 @@
+{{$comment := .comment}}
+{{$root := .root}}
+{{$batchMode := .batchMode}}
+{{range $suggestion := SuggestionDiffs ctx $comment}}
+	<div class="suggestion-diff tw-hidden" data-comment-id="{{$comment.ID}}">
+		{{template "repo/diff/suggestion_diff" dict "file" (index $suggestion.Diff.Files 0)}}
+		{{with $root}}{{if .HeadBranchIsEditable}}
+			<div class="tw-flex tw-items-center tw-gap-2 tw-mt-2">
+				<button type="button" class="ui tiny basic button show-modal{{if eq $batchMode "active"}} apply-suggestion-single{{end}}"
+					data-modal="#apply-suggestion-modal"
+					data-modal-form.action="{{.RepoLink}}/pulls/{{.Issue.Index}}/files/reviews/apply_suggestion"
+					data-modal-form.data-comment-ids="{{$comment.ID}}"
+					data-modal-apply-suggestion-summary="{{ctx.Locale.Tr "repo.issues.review.suggested_change_commit"}}"
+					data-modal-apply-suggestion-message="">{{ctx.Locale.Tr "repo.issues.review.apply_suggestion"}}</button>
+				{{if eq $batchMode "active"}}
+					<button type="button" class="ui tiny primary button add-suggestion-batch"
+						data-comment-id="{{$comment.ID}}"
+						data-apply-url="{{.RepoLink}}/pulls/{{.Issue.Index}}/files/reviews/apply_suggestion"
+						data-add-label="{{ctx.Locale.Tr "repo.issues.review.add_suggestion_to_batch"}}"
+						data-remove-label="{{ctx.Locale.Tr "repo.issues.review.remove_suggestion_from_batch"}}">{{ctx.Locale.Tr "repo.issues.review.add_suggestion_to_batch"}}</button>
+				{{else if eq $batchMode "disabled"}}
+					{{/* batching needs the Files-changed review widget, so it is only offered there */}}
+					<span data-tooltip-content="{{ctx.Locale.Tr "repo.issues.review.batch_only_on_files_tab"}}">
+						<button type="button" class="ui tiny primary button" disabled>{{ctx.Locale.Tr "repo.issues.review.add_suggestion_to_batch"}}</button>
+					</span>
+				{{end}}
+			</div>
+		{{end}}{{end}}
+	</div>
+{{end}}

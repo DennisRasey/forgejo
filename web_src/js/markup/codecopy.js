@@ -13,6 +13,9 @@ export function renderCodeCopy() {
 
   for (const el of els) {
     if (!el.textContent) continue;
+    // suggestion blocks are replaced by a rendered before/after diff (see markup/suggestion.js),
+    // so they must not get a copy button.
+    if (/(?:^|\s)language-suggestion(?:\s|$)/i.test(el.className)) continue;
     let btn = el.nextElementSibling?.classList?.contains('code-copy') ? el.nextElementSibling : null;
     if (!btn) {
       btn = makeCodeCopyButton();

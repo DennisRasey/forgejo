@@ -222,6 +222,7 @@ func NewFuncMap() template.FuncMap {
 		"ActionContent2Commits":    ActionContent2Commits,
 		"IsMultilineCommitMessage": IsMultilineCommitMessage,
 		"CommentMustAsDiff":        gitdiff.CommentMustAsDiff,
+		"SuggestionDiffs":          gitdiff.SuggestionDiffs,
 		"MirrorRemoteAddress":      mirrorRemoteAddress,
 
 		"FilenameIsImage": FilenameIsImage,

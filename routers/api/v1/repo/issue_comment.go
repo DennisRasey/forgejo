@@ -22,6 +22,7 @@ import (
 	"forgejo.org/services/context"
 	"forgejo.org/services/convert"
 	issue_service "forgejo.org/services/issue"
+	pull_service "forgejo.org/services/pull"
 )
 
 // ListIssueComments list all the comments of an issue
@@ -612,6 +613,14 @@ func editIssueComment(ctx *context.APIContext, form api.EditIssueCommentOption) 
 	if err != nil {
 		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
 		return
+	}
+
+	// a code comment may carry at most one suggestion
+	if comment.Type == issues_model.CommentTypeCode {
+		if err := pull_service.ValidateCodeCommentSuggestions(form.Body); err != nil {
+			ctx.Error(http.StatusUnprocessableEntity, "invalid suggestion", err)
+			return
+		}
 	}
 
 	oldContent := comment.Content

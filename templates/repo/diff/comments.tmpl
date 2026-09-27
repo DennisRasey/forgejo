@@ -59,8 +59,10 @@
 				<span class="no-content">{{ctx.Locale.Tr "repo.issues.no_content"}}</span>
 			{{end}}
 			</div>
+			{{$comment := .}}
+			{{template "repo/diff/suggestion_diffs" dict "comment" $comment "root" $.root "batchMode" "active"}}
 			<div id="issuecomment-{{.ID}}-raw" class="raw-content tw-hidden">{{.Content}}</div>
-			<div class="edit-content-zone tw-hidden" data-update-url="{{$.root.RepoLink}}/comments/{{.ID}}" data-content-version="{{.ContentVersion}}" data-context="{{$.root.RepoLink}}" data-attachment-url="{{$.root.RepoLink}}/comments/{{.ID}}/attachments"></div>
+			<div class="edit-content-zone tw-hidden" data-update-url="{{$.root.RepoLink}}/comments/{{.ID}}" data-content-version="{{.ContentVersion}}" data-context="{{$.root.RepoLink}}" data-attachment-url="{{$.root.RepoLink}}/comments/{{.ID}}/attachments" data-batch-mode="active"{{if gt .Line 0}} data-suggestion-side="proposed" data-suggestion-line="{{.UnsignedLine}}" data-suggestion-extra-lines="{{.ExtraLinesCount}}" data-suggestion-path="{{.TreePath}}"{{end}}></div>
 			{{if .Attachments}}
 				{{template "repo/issue/view_content/attachments" dict "Attachments" .Attachments "RenderedContent" .RenderedContent}}
 			{{end}}

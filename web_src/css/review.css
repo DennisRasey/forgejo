@@ -295,3 +295,53 @@ tr.diff-line-commented-range > td,
 td.diff-line-commented-range {
   background-color: var(--color-yellow-badge-bg) !important;
 }
+
+/* Suggestion before/after preview rendered inside a review comment.
+   It reuses the diff machinery, so strip the file-box frame and the cell
+   borders to keep it light; the line-number gutter is kept. */
+.suggestion-diff {
+  margin-top: 8px;
+}
+
+.suggestion-diff .diff-file-box,
+.suggestion-diff .diff-file-box.file-content {
+  border: none;
+  border-radius: 0;
+}
+
+.suggestion-diff .file-body.file-code {
+  border: none;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* The preview table lives inside .markup (the rendered comment), which applies
+   markdown-table styling: block display, a border-top on every row, and cell
+   borders. Undo all of that so it renders as a clean diff. */
+.suggestion-diff .code-diff table {
+  display: table;
+  width: 100%;
+}
+
+.suggestion-diff .code-diff tr {
+  border-top: 0;
+}
+
+/* `.markup table td/th` set `border: 1px solid !important`; in CSS an !important
+   declaration can only be overridden by another !important, so this one is
+   unavoidable while the preview is rendered inside the comment's `.markup`. */
+.suggestion-diff .code-diff th,
+.suggestion-diff .code-diff td {
+  border: none !important;
+}
+
+/* Diff cells are `<code class="code-inner">`; inside the comment's `.markup` they would
+   inherit the inline-code pill (grey background, padding, 85% font, radius), which hides
+   the row's added/removed color. Restore the plain diff cell rendering. */
+.suggestion-diff .code-inner {
+  padding: 0;
+  font-size: 12px;
+  white-space: pre-wrap;
+  background-color: transparent;
+  border-radius: 0;
+}

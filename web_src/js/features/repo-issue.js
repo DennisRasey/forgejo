@@ -402,6 +402,38 @@ function findDiffLineRow(path, side, lineNum) {
   return null;
 }
 
+// diffLineCodeText returns the source text of a diff line for the given side.
+// In split view the two sides are separate cells; in unified view there is a single
+// code cell. The actual code lives in a `.code-inner` element (see section_code.tmpl).
+function diffLineCodeText(row, side) {
+  let cell;
+  if (row.closest('.code-diff-split')) {
+    cell = row.querySelector(side === 'left' ? '.lines-code-old' : '.lines-code-new');
+  } else {
+    cell = row.querySelector('.lines-code');
+  }
+  if (!cell) return '';
+  const inner = cell.querySelector('.code-inner');
+  return (inner ?? cell).textContent;
+}
+
+// insertSuggestionBlock inserts a ```suggestion fenced block (prefilled with the
+// commented lines) at the textarea cursor, on its own line.
+function insertSuggestionBlock(textarea, lines) {
+  const opening = '```suggestion\n';
+  const content = lines.join('\n');
+  const block = `${opening}${content}\n\`\`\`\n`;
+  const start = textarea.selectionStart ?? textarea.value.length;
+  const end = textarea.selectionEnd ?? textarea.value.length;
+  const before = textarea.value.slice(0, start);
+  const prefix = before === '' || before.endsWith('\n') ? '' : '\n';
+  textarea.setRangeText(prefix + block, start, end, 'end');
+  const caret = start + prefix.length + opening.length + content.length;
+  textarea.setSelectionRange(caret, caret);
+  textarea.dispatchEvent(new Event('input', {bubbles: true}));
+  textarea.focus();
+}
+
 // addLineHighlight applies a highlight class to a single diff line.
 // In split view a row holds both sides, so only the cells of `side` are highlighted to avoid
 // lighting up the opposite column. In unified view there is a single code column, so the whole
@@ -654,6 +686,7 @@ export function initRepoPullRequestReview() {
         $td.find("input[name='side']").val(side === 'left' ? 'previous' : 'proposed');
         $td.find("input[name='path']").val(path);
         $td.find("input[name='extra_lines_count']").val(extraLinesCount);
+        if (side === 'left') $td.find('button[data-md-action="suggestion"]').remove(); // suggestions only apply to the proposed (right) side
 
         await initDropzone($td.find('.dropzone')[0]);
         const editor = await initComboMarkdownEditor($td.find('.combo-markdown-editor'));
@@ -702,6 +735,7 @@ export function initRepoPullRequestReview() {
         $td.find("input[name='line']").val(idx);
         $td.find("input[name='side']").val(side === 'left' ? 'previous' : 'proposed');
         $td.find("input[name='path']").val(path);
+        if (side === 'left') $td.find('button[data-md-action="suggestion"]').remove(); // suggestions only apply to the proposed (right) side
 
         await initDropzone($td.find('.dropzone')[0]);
         const editor = await initComboMarkdownEditor($td.find('.combo-markdown-editor'));
@@ -710,6 +744,32 @@ export function initRepoPullRequestReview() {
         console.error(error);
       }
     }
+  });
+
+  // "Add a suggestion" toolbar button: prefill a ```suggestion block with the commented line(s).
+  $(document).on('click', 'button[data-md-action="suggestion"]', function (e) {
+    e.preventDefault();
+    const textarea = this.closest('.combo-markdown-editor')?.querySelector('textarea.markdown-text-editor');
+    // context comes from a new-comment form's hidden inputs, or from an edit zone's data attributes
+    const form = this.closest('form');
+    const editZone = this.closest('.edit-content-zone');
+    if (!textarea || (!form && !editZone)) return;
+    const ctxVal = (inputName, dataAttr) => (form ? form.querySelector(`input[name="${inputName}"]`)?.value : editZone.getAttribute(dataAttr));
+
+    const formSide = ctxVal('side', 'data-suggestion-side') || 'proposed';
+    const side = formSide === 'previous' ? 'left' : 'right';
+    const line = parseInt(ctxVal('line', 'data-suggestion-line'));
+    const extraLinesCount = parseInt(ctxVal('extra_lines_count', 'data-suggestion-extra-lines')) || 0;
+    const path = ctxVal('path', 'data-suggestion-path');
+    if (!path || !Number.isInteger(line)) return;
+
+    const lines = [];
+    for (let i = line; i <= line + extraLinesCount; i++) {
+      const row = findDiffLineRow(path, side, i);
+      if (!row) return; // a line couldn't be resolved in the DOM; don't insert a partial suggestion
+      lines.push(diffLineCodeText(row, side));
+    }
+    insertSuggestionBlock(textarea, lines);
   });
 
   // Clear multi-line selection when pressing Escape or cancelling

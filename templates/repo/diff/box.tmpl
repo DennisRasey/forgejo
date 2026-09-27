@@ -48,6 +48,12 @@
 			{{if and .PageIsPullFiles $.SignedUserID (not .IsArchived)}}
 				{{template "repo/diff/new_review" .}}
 			{{end}}
+			{{if .HeadBranchIsEditable}}
+				<div id="suggestion-batch-bar" class="tw-hidden tw-flex tw-gap-2" data-default-summary="{{ctx.Locale.Tr "repo.issues.review.suggested_change_commit"}}">
+					<button type="button" class="ui tiny basic button clear-suggestion-batch">{{ctx.Locale.Tr "repo.issues.review.discard_batch_suggestions"}}</button>
+					<button type="button" class="ui tiny primary button commit-suggestion-batch">{{ctx.Locale.Tr "repo.issues.review.commit_batch_suggestions"}} (<span class="batch-count">0</span>)</button>
+				</div>
+			{{end}}
 		</div>
 	</div>
 	{{if not .DiffNotAvailable}}
@@ -247,6 +253,7 @@
 					"MarkdownPreviewContext" $.RepoLink
 					"TextareaName" "content"
 					"DropzoneParentContainer" ".ui.form"
+					"SuggestionButton" true
 				)}}
 				{{if .IsAttachmentEnabled}}
 					<div class="field">
