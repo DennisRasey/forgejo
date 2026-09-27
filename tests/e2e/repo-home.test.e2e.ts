@@ -81,12 +81,12 @@ test('Watch/unwatch button URL retention', async ({page}) => {
   const response = await page.goto('/user2/repo1');
   expect(response?.status()).toBe(200);
 
-  const watchDropdown = page.locator('details.dropdown#watch-button');
-  const watchSummary = watchDropdown.locator('summary');
-  const watchMenu = watchDropdown.locator('.content');
+  const watchDropdown = page.locator('.dialog-dropdown#watch-button');
+  const watchOpener = watchDropdown.locator('button[command="toggle-popover"]');
+  const watchMenu = watchDropdown.locator('dialog');
 
   // Open the dropdown
-  await watchSummary.click();
+  await watchOpener.click();
   await expect(watchMenu).toBeVisible();
 
   // Select PRs
@@ -104,7 +104,7 @@ test('Watch/unwatch button URL retention', async ({page}) => {
   expect(page.url()).not.toContain('/unwatch');
 
   // Open the dropdown once more
-  await watchSummary.click();
+  await watchOpener.click();
   await expect(watchMenu).toBeVisible();
 
   // Unwatch

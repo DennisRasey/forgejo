@@ -15,7 +15,7 @@
 								<a href="#" class="ui muted icon tw-flex tw-items-center show-modal" data-tooltip-content="{{ctx.Locale.Tr "repo.issues.dismiss_review"}}" data-modal="#dismiss-review-modal-{{.Review.ID}}">
 									{{svg "octicon-x" 20}}
 								</a>
-								<dialog id="dismiss-review-modal-{{.Review.ID}}">
+								<dialog class="modal" id="dismiss-review-modal-{{.Review.ID}}">
 									<article>
 										<header>{{ctx.Locale.Tr "repo.issues.dismiss_review"}}</header>
 										<div class="content">

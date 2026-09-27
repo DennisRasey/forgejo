@@ -35,7 +35,7 @@
 										<div class="tw-float-right">
 											{{if $.allowAdopt}}
 												<button class="ui button primary show-modal tw-p-2" data-modal="#adopt-unadopted-modal-{{$dirI}}"><span class="icon">{{svg "octicon-plus"}}</span><span class="label">{{ctx.Locale.Tr "repo.adopt_preexisting_label"}}</span></button>
-												<dialog id="adopt-unadopted-modal-{{$dirI}}">
+												<dialog class="modal" id="adopt-unadopted-modal-{{$dirI}}">
 													<article>
 														<header>{{ctx.Locale.Tr "repo.adopt_preexisting"}}</header>
 														<div class="content">
@@ -51,7 +51,7 @@
 											{{end}}
 											{{if $.allowDelete}}
 												<button class="ui button red show-modal tw-p-2" data-modal="#delete-unadopted-modal-{{$dirI}}"><span class="icon">{{svg "octicon-x"}}</span><span class="label">{{ctx.Locale.Tr "repo.delete_preexisting_label"}}</span></button>
-												<dialog id="delete-unadopted-modal-{{$dirI}}">
+												<dialog class="modal" id="delete-unadopted-modal-{{$dirI}}">
 													<article>
 														<header>{{ctx.Locale.Tr "repo.delete_preexisting"}}</header>
 														<div class="content">

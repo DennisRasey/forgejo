@@ -103,7 +103,7 @@ func TestRepoWatchUnwatchUI(t *testing.T) {
 
 	// Verify that the watch dropdown shows "Watching"
 	htmlDoc := NewHTMLParser(t, resp.Body)
-	watchButton := htmlDoc.Find("details.dropdown#watch-button summary span.text")
+	watchButton := htmlDoc.Find(".dialog-dropdown#watch-button button[command='toggle-popover'] span.text")
 	assert.Equal(t, 1, watchButton.Length())
 	text := strings.TrimSpace(watchButton.Text())
 	assert.Equal(t, "Watching", text)
@@ -130,7 +130,7 @@ func TestRepoWatchUnwatchUI(t *testing.T) {
 
 	// Verify that the watch dropdown shows "Watch"
 	htmlDoc = NewHTMLParser(t, resp.Body)
-	watchButton = htmlDoc.Find("details.dropdown#watch-button summary span.text")
+	watchButton = htmlDoc.Find(".dialog-dropdown#watch-button button[command='toggle-popover'] span.text")
 	assert.Equal(t, 1, watchButton.Length())
 	text = strings.TrimSpace(watchButton.Text())
 	assert.Equal(t, "Watch", text)

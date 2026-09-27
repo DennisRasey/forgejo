@@ -794,6 +794,14 @@ export function initRepoIssueReferenceIssue() {
     const poster = $this.data('poster-username');
     const reference = toAbsoluteUrl($this.data('reference'));
     const $modal = $($this.data('modal'));
+
+    // Close the dropdown that initiated the func, otherwise popover has z-index
+    // higher than anything known to mankind
+    // ToDo: can be removed after this modal is converted to modern dialog,
+    // dropdown will then begin to auto-close
+    const dropdown = document.querySelector('.dialog-dropdown dialog:popover-open');
+    dropdown.hidePopover();
+
     $modal.find('textarea[name="content"]').val(`${content}\n\n_Originally posted by @${poster} in ${reference}_`);
     $modal.modal('show');
 

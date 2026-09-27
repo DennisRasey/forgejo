@@ -1,4 +1,4 @@
-<dialog id="delete-user-modal">
+<dialog class="modal" id="delete-user-modal">
 	<article>
 		<header>{{svg "octicon-trash"}} {{ctx.Locale.Tr "settings.delete_account_title"}}</header>
 		<form class="ui form" method="post" action="/admin/users/{{.ContextUser.ID}}/delete">

@@ -18,8 +18,8 @@ test('Follow and block actions', async ({page}) => {
   await page.goto('/user1');
 
   const followButton = page.locator('.main-actions > button');
-  const dropdownOpener = page.locator('.main-actions .dropdown summary');
-  const dropdownContent = page.locator('.main-actions .dropdown .content');
+  const dropdownOpener = page.locator('.main-actions .dialog-dropdown .opener');
+  const dropdownContent = page.locator('.main-actions .dialog-dropdown dialog');
   const blockButton = page.locator('#action-block');
   const blockModal = page.locator('#block-user');
   const flashMessage = page.locator('#flash-message');

@@ -1,6 +1,6 @@
 {{if $.IsSigned}}
-	<details class="dropdown" id="watch-button">
-		<summary class="ui labeled button">
+	<div class="dialog-dropdown" id="watch-button">
+		<button class="ui labeled button" command="toggle-popover" commandfor="watch-options-dropdown">
 			<div class="ui compact small button">
 				{{svg "octicon-eye" 16}}
 				<span class="text not-mobile">{{if $.RepoWatchSelection.IsWatching}}{{ctx.Locale.Tr "repo.watching"}}{{else}}{{ctx.Locale.Tr "repo.watch"}}{{end}}</span>
@@ -11,8 +11,8 @@
 				>
 				{{CountFmt .Repository.NumWatches}}
 			</a>
-		</summary>
-		<div class="content">
+		</button>
+		<dialog popover id="watch-options-dropdown">
 			<form class="ui form tw-p-3" hx-target="#watch-button" method="post" hx-post="{{$.RepoLink}}/action/watch/select" action="{{$.RepoLink}}/action/watch/select" hx-swap="outerHTML">
 				<fieldset>
 					<label>
@@ -41,8 +41,8 @@
 					</div>
 				</fieldset>
 			</form>
-		</div>
-	</details>
+		</dialog>
+	</div>
 {{else}}
 	{{/* not logged-in user */}}
 	<div class="ui disabled labeled button" data-tooltip-content="{{ctx.Locale.Tr "repo.watch_guest_user"}}">

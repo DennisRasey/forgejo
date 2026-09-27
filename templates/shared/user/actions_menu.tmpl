@@ -1,8 +1,8 @@
-<details class="dropdown dir-auto">
-	<summary class="border" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+<div class="dialog-dropdown">
+	<button class="opener border" command="toggle-popover" commandfor="profile-actions-dropdown" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
 		{{svg "octicon-kebab-horizontal"}}
-	</summary>
-	<div class="content">
+	</button>
+	<dialog popover id="profile-actions-dropdown">
 		<ul>
 			{{if eq .SignedUserID .ContextUser.ID}}
 				<li>
@@ -60,11 +60,11 @@
 				</ul>
 			{{end}}
 		{{end}}
-	</div>
-</details>
+	</dialog>
+</div>
 
 {{if not .IsBlocked}}
-	<dialog closedby="any" id="block-user">
+	<dialog class="modal" closedby="any" id="block-user">
 		<article>
 			<header>
 				{{ctx.Locale.Tr "user.block_user"}}

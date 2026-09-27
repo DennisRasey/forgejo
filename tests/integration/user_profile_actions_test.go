@@ -15,9 +15,9 @@ import (
 func TestUserProfileActions(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	admSel := `details.dropdown a[href^="/admin/users/"]`
-	blockSel := `details.dropdown button[commandfor="block-user"]`
-	reportSel := `details.dropdown a[href^="/report_abuse?type=user"]`
+	admSel := `.dialog-dropdown a[href^="/admin/users/"]`
+	blockSel := `.dialog-dropdown button[commandfor="block-user"]`
+	reportSel := `.dialog-dropdown a[href^="/report_abuse?type=user"]`
 
 	t.Run("Guest user", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()

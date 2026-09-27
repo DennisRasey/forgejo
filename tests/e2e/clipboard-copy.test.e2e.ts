@@ -31,14 +31,14 @@ async function evaluateCommentCopyMarkdown(page: Page, url: string, commentId: s
   const response = await page.goto(url);
   expect(response?.status()).toBe(200);
 
-  const areaOfInterest = page.locator(`#${commentId} .comment-container details.dropdown`);
+  const areaOfInterest = page.locator(`#${commentId} .comment-container .dialog-dropdown`);
 
   // Open dropdown
-  await areaOfInterest.locator('summary').click();
-  await expect(areaOfInterest).toHaveAttribute('open');
+  await areaOfInterest.locator('.opener').click();
+  await expect(areaOfInterest.locator('dialog:popover-open')).toHaveCount(1);
 
   // Request copy and check if it succeeded
-  await areaOfInterest.locator('.content ul li button').getByText('Copy Markdown').click();
+  await areaOfInterest.locator('dialog ul li button').getByText('Copy Markdown').click();
   await expect(async () => {
     const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
     for (const expectation of clipboardExpectations) {
@@ -47,7 +47,7 @@ async function evaluateCommentCopyMarkdown(page: Page, url: string, commentId: s
   }).toPass({timeout: 3000});
 
   // Dropdown should have been closed
-  await expect(areaOfInterest).not.toHaveAttribute('open');
+  await expect(areaOfInterest.locator('dialog:popover-open')).toHaveCount(0);
 
   return true;
 }

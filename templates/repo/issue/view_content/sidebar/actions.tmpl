@@ -21,7 +21,7 @@
 		{{ctx.Locale.Tr "repo.issues.lock"}}
 	{{end}}
 </button>
-<dialog class="tw-overflow-visible" id="lock">
+<dialog class="modal tw-overflow-visible" id="lock">
 	<article>
 		<header>
 			{{if .Issue.IsLocked}}
@@ -88,7 +88,7 @@
 	{{svg "octicon-trash"}}
 	{{ctx.Locale.Tr "repo.issues.delete"}}
 </button>
-<dialog id="sidebar-delete-issue">
+<dialog class="modal" id="sidebar-delete-issue">
 	<article>
 		<header>
 			{{if .Issue.IsPull}}

@@ -16,11 +16,11 @@ test.use({user: 'user2'});
 // The comment context menu is a JS-less <details>; it must keep working on conversations
 // inserted via AJAX, which must not be initialized as Fomantic dropdowns.
 async function expectCommentMenuToOpen(page) {
-  const menu = page.locator('.conversation-holder .comment-header-right.actions details.dropdown');
-  await menu.locator('summary').click();
-  await expect(menu.locator('.content').getByText(/Copy link.*/)).toBeVisible();
-  await menu.locator('summary').click();
-  await expect(menu.locator('.content')).toBeHidden();
+  const menu = page.locator('.conversation-holder .comment-header-right.actions .dialog-dropdown');
+  await menu.locator('.opener').click();
+  await expect(menu.locator('dialog').getByText(/Copy link.*/)).toBeVisible();
+  await menu.locator('.opener').click();
+  await expect(menu.locator('dialog')).toBeHidden();
 }
 
 test('PR: Create review from files', async ({page}) => {
@@ -113,12 +113,12 @@ test('PR: Create review from commit', async ({page}) => {
   // in-between, and subsequent runs of this test would fail, because when there already is
   // a comment, the on-hover button to start a conversation doesn't appear anymore.
   await page.goto('/user2/repo1/pulls/3/commits/4a357436d925b5c974181ff12a994538ddc5a269');
-  await page.locator('.comment-header-right.actions details.dropdown summary').click();
+  await page.locator('.comment-header-right.actions .dialog-dropdown .opener').click();
 
-  await expect(page.locator('.comment-header-right.actions details.dropdown .content').getByText(/Copy link.*/)).toBeVisible();
+  await expect(page.locator('.comment-header-right.actions .dialog-dropdown dialog').getByText(/Copy link.*/)).toBeVisible();
   // The button to delete a comment will prompt for confirmation using a browser alert.
   page.on('dialog', (dialog) => dialog.accept());
-  await page.locator('.comment-header-right.actions details.dropdown .content .delete-comment').click();
+  await page.locator('.comment-header-right.actions .dialog-dropdown dialog .delete-comment').click();
 
   await expect(page.locator('.comment-list .comment-container')).toBeHidden();
   await screenshot(page);

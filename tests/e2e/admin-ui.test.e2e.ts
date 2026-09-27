@@ -97,7 +97,7 @@ test('Admin: delete a user from their public profile', async ({page, request}) =
   // Check that modal appears after clicking
   await expect(modal).toBeHidden();
   await expect(okButton).toBeHidden();
-  await page.locator('#profile-avatar-card .dropdown').click();
+  await page.locator('#profile-avatar-card .dialog-dropdown').click();
   await page.locator('[data-modal="#delete-user-modal"]').click();
   await expect(modal).toBeVisible();
   await expect(okButton).toBeVisible();

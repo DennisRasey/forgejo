@@ -1,8 +1,8 @@
-<details class="dropdown dir-rtl">
-	<summary aria-label="{{ctx.Locale.Tr "repo.issues.context.menu"}}">
+<div class="dialog-dropdown">
+	<button class="opener" command="toggle-popover" commandfor="{{.item.HashTag}}-dropdown" aria-label="{{ctx.Locale.Tr "repo.issues.context.menu"}}">
 		{{svg "octicon-kebab-horizontal"}}
-	</summary>
-	<div class="content">
+	</button>
+	<dialog popover class="inline-flip" id="{{.item.HashTag}}-dropdown">
 		<ul>
 			<li>
 				{{$referenceUrl := ""}}
@@ -70,5 +70,5 @@
 				</li>
 			{{end}}
 		</ul>
-	</div>
-</details>
+	</dialog>
+</div>

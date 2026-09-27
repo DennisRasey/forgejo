@@ -40,7 +40,7 @@
 		</div>
 		{{template "base/paginate" .}}
 		{{range .LFSFiles}}
-			<dialog id="delete-{{.Oid}}">
+			<dialog class="modal" id="delete-{{.Oid}}">
 				<article>
 					<header>{{ctx.Locale.Tr "repo.settings.lfs_delete" .Oid}}</header>
 					<div class="content">

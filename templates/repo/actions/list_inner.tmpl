@@ -66,11 +66,11 @@
 			</div>
 
 			{{if .AllowDisableOrEnableWorkflow}}
-				<details class="dropdown dir-rtl">
-					<summary class="border" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+				<div class="dialog-dropdown">
+					<button class="opener border" command="toggle-popover" commandfor="workflow-options-dropdown" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
 						{{svg "octicon-kebab-horizontal"}}
-					</summary>
-					<div class="content">
+					</button>
+					<dialog popover id="workflow-options-dropdown" class="inline-flip">
 						<ul>
 							<li>
 								<a class="link-action" data-url="{{$.Link}}/{{if .CurWorkflowDisabled}}enable{{else}}disable{{end}}?workflow={{$.CurWorkflow}}&actor={{.CurActor}}&status={{$.CurStatus}}" href="#noscroll">
@@ -82,8 +82,8 @@
 								</a>
 							</li>
 						</ul>
-					</div>
-				</details>
+					</dialog>
+				</div>
 			{{end}}
 		</div>
 

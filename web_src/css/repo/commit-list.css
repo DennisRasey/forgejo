@@ -60,7 +60,7 @@
 
 @media (min-width: 640px) {
   .commit-group .commits .commit {
-    details.dropdown,
+    .dialog-dropdown,
     .button-sequence button[data-clipboard-text] {
       /* Hide additional copy button and dropdown opener that are exclusive to mobile layout */
       display: none;

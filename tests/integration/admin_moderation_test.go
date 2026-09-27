@@ -51,7 +51,7 @@ func testReportDetails(t *testing.T, htmlDoc *HTMLDoc, reportID, contentIcon, co
 	assert.Equal(t, reportsNo, count.Text())
 
 	// Check 'More actions' (⋯) dropdown
-	htmlDoc.AssertElement(t, "#report-"+reportID+" > .flex-item-trailing .button-sequence details.dropdown", hasMoreActions)
+	htmlDoc.AssertElement(t, "#report-"+reportID+" > .flex-item-trailing .button-sequence .dialog-dropdown", hasMoreActions)
 }
 
 func TestAdminModerationViewReports(t *testing.T) {

@@ -21,11 +21,11 @@
 				{{end}}
 				{{$moderationEntryNeeded := and .IsModerationEnabled .IsSigned (not .IsOrganizationOwner)}}
 				{{if or .EnableFeed $moderationEntryNeeded}}
-					<details class="dropdown dir-rtl">
-						<summary class="border" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+					<div class="dialog-dropdown">
+						<button class="opener border" command="toggle-popover" commandfor="org-actions-dropdown" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
 							{{svg "octicon-kebab-horizontal" 20}}
-						</summary>
-						<div class="content">
+						</button>
+						<dialog popover id="org-actions-dropdown" class="inline-flip">
 							<ul>
 								{{if .EnableFeed}}
 									<li>
@@ -41,8 +41,8 @@
 									</li>
 								{{end}}
 							</ul>
-						</div>
-					</details>
+						</dialog>
+					</div>
 				{{end}}
 			</span>
 		</div>

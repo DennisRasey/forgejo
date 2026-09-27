@@ -29,7 +29,7 @@ export function showModal(modalID: string | HTMLDialogElement, onApprove: () => 
 // NOTE: Can be replaced in late 2026 with `closedBy` attribute on `<dialog>` element.
 export function initModalClose() {
   document.addEventListener('click', (event) => {
-    const dialog = document.querySelector<HTMLDialogElement>('dialog[open]');
+    const dialog = document.querySelector<HTMLDialogElement>('dialog.modal[open]');
     // No open dialogs on page, nothing to do.
     if (dialog === null) return;
 

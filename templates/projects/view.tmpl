@@ -29,7 +29,7 @@
 					{{ctx.Locale.Tr "new_project_column"}}
 				</button>
 			</div>
-			<dialog id="new-project-column-item">
+			<dialog class="modal" id="new-project-column-item">
 				<article>
 					<header>{{ctx.Locale.Tr "repo.projects.column.new"}}</header>
 					<form class="ui form">
@@ -100,7 +100,7 @@
 									</a>
 								{{end}}
 
-								<dialog class="edit-project-column-modal" id="edit-project-column-modal-{{.ID}}">
+								<dialog class="modal edit-project-column-modal" id="edit-project-column-modal-{{.ID}}">
 									<article>
 										<header>{{ctx.Locale.Tr "repo.projects.column.edit"}}</header>
 										<form class="ui form">
@@ -127,7 +127,7 @@
 									</article>
 								</dialog>
 
-								<dialog class="default-project-column-modal" id="default-project-column-modal-{{.ID}}">
+								<dialog class="modal default-project-column-modal" id="default-project-column-modal-{{.ID}}">
 									<article>
 										<header><span id="default-project-column-header"></span></header>
 										<div class="content">
@@ -137,7 +137,7 @@
 									</article>
 								</dialog>
 
-								<dialog id="delete-project-column-modal-{{.ID}}">
+								<dialog class="modal" id="delete-project-column-modal-{{.ID}}">
 									<article>
 										<header>{{ctx.Locale.Tr "repo.projects.column.delete"}}</header>
 										<div class="content">

@@ -63,12 +63,12 @@ test.describe(`PR commits`, () => {
     const commit = page.locator('.commit-group:first-of-type .commit:first-child');
 
     // Click dropdown btn
-    const dropdown = commit.locator('details.dropdown');
+    const dropdown = commit.locator('.dialog-dropdown');
     await expect(dropdown).toBeVisible();
-    await dropdown.locator('summary').click();
+    await dropdown.locator('.opener').click();
 
     // List menu items of dropdown
-    const menuItem = commit.locator('details.dropdown ul li a'); // repo_path; always visible
+    const menuItem = commit.locator('.dialog-dropdown ul li a'); // repo_path; always visible
     await expect(menuItem).toHaveAttribute('href', '/user2/repo1/src/commit/5f22f7d0d95d614d25a5b68592adb345a4b5c7fd');
     await menuItem.click();
     await page.waitForURL(/.*\/user2\/repo1\/src\/commit\/5f22f7d0d95d614d25a5b68592adb345a4b5c7f/);
@@ -85,7 +85,7 @@ test.describe(`PR commits`, () => {
     const commit = page.locator('.commit-group:first-of-type .commit:first-child');
     await expect(commit.locator('.commit-buttons')).toBeVisible();
     await expect(commit.locator('.button-sequence button[data-clipboard-text]')).toBeHidden();
-    await expect(commit.locator('details.dropdown')).toBeHidden();
+    await expect(commit.locator('.dialog-dropdown')).toBeHidden();
 
     // Desktop layout is has specific grid-template-columns
     // toHaveCSS returns absolute values in px with decimals. This matcher only

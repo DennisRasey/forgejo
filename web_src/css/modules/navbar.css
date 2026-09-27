@@ -28,13 +28,9 @@
   display: flex;
 }
 
-#navbar .dropdown .item {
-  justify-content: stretch;
-}
-
 #navbar a.item:hover, #navbar a.item:focus,
-#navbar details.dropdown > summary:is(:hover, :focus),
-#navbar details.dropdown[open] > summary,
+#navbar .dialog-dropdown > .opener:is(:hover, :focus),
+#navbar .dialog-dropdown:has(dialog:popover-open) > .opener,
 #navbar button.item:hover, #navbar button.item:focus {
   background: var(--color-nav-hover-bg);
 }
@@ -94,18 +90,18 @@
     width: 100%;
     margin: 0;
   }
-  #navbar details.dropdown {
+  #navbar .dialog-dropdown {
     display: none;
   }
-  #navbar.navbar-menu-open details.dropdown {
+  #navbar.navbar-menu-open .dialog-dropdown {
     display: block;
     width: 100%;
-    > summary {
+    > .opener {
       width: 100%;
       justify-content: start;
     }
-    > .content {
-      width: 100%;
+    > dialog {
+      width: anchor-size();
     }
   }
 
@@ -123,14 +119,10 @@
   }
 }
 
-#navbar details.dropdown summary {
+#navbar .dialog-dropdown .opener {
   padding-inline-start: 0.75rem;
   /* The min height is dictated by the largest dropdown, which is the one that has an avatar in the opener */
   min-height: 38px;
-}
-
-#navbar details.dropdown .dropdown-icon {
-  display: contents;
 }
 
 #navbar a.item .notification_count {

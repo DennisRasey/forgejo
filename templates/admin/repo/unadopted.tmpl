@@ -24,7 +24,7 @@
 								<span class="tw-flex-1"> {{svg "octicon-file-directory-fill"}} {{$dir}}</span>
 								<div>
 									<button class="ui button primary show-modal tw-p-2" data-modal="#adopt-unadopted-modal-{{$dirI}}">{{svg "octicon-plus"}} {{ctx.Locale.Tr "repo.adopt_preexisting_label"}}</button>
-									<dialog id="adopt-unadopted-modal-{{$dirI}}">
+									<dialog class="modal" id="adopt-unadopted-modal-{{$dirI}}">
 										<article>
 											<header>{{ctx.Locale.Tr "repo.adopt_preexisting"}}</header>
 											<div class="content">
@@ -40,7 +40,7 @@
 										</article>
 									</dialog>
 									<button class="ui button red show-modal tw-p-2" data-modal="#delete-unadopted-modal-{{$dirI}}">{{svg "octicon-x"}} {{ctx.Locale.Tr "repo.delete_preexisting_label"}}</button>
-									<dialog id="delete-unadopted-modal-{{$dirI}}">
+									<dialog class="modal" id="delete-unadopted-modal-{{$dirI}}">
 										<article>
 											<header>{{ctx.Locale.Tr "repo.delete_preexisting"}}</header>
 											<div class="content">

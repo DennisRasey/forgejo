@@ -31,10 +31,10 @@ export function initGlobalCopyToClipboardListener() {
       let tippyTarget = target;
 
       // If successful, auto-close parent dropdown, change tippy target to opener
-      const dropdownParent = target.closest('details.dropdown');
+      const dropdownParent = target.closest('.dialog-dropdown');
       if (success && dropdownParent) {
-        dropdownParent.removeAttribute('open');
-        tippyTarget = dropdownParent.querySelector('summary');
+        dropdownParent.querySelector('dialog').hidePopover();
+        tippyTarget = dropdownParent.querySelector('.opener');
       }
 
       showTemporaryTooltip(tippyTarget, success ? copy_success : copy_error);

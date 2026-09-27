@@ -169,12 +169,12 @@ quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequa
 
 			// Both guests and logged in users should see the feed option
 			doc := NewHTMLParser(t, MakeRequest(t, NewRequest(t, "GET", "/org3"), http.StatusOK).Body)
-			doc.AssertElement(t, ".org-header details.dropdown a[href='/org3.rss']", true)
-			doc.AssertElement(t, ".org-header details.dropdown a[href^='/report_abuse']", false)
+			doc.AssertElement(t, ".org-header .dialog-dropdown a[href='/org3.rss']", true)
+			doc.AssertElement(t, ".org-header .dialog-dropdown a[href^='/report_abuse']", false)
 
 			doc = NewHTMLParser(t, loginUser(t, "user10").MakeRequest(t, NewRequest(t, "GET", "/org3"), http.StatusOK).Body)
-			doc.AssertElement(t, ".org-header details.dropdown a[href='/org3.rss']", true)
-			doc.AssertElement(t, ".org-header details.dropdown a[href^='/report_abuse']", false)
+			doc.AssertElement(t, ".org-header .dialog-dropdown a[href='/org3.rss']", true)
+			doc.AssertElement(t, ".org-header .dialog-dropdown a[href^='/report_abuse']", false)
 		})
 
 		t.Run("More actions - none", func(t *testing.T) {
@@ -184,10 +184,10 @@ quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequa
 
 			// The dropdown won't appear if no entries are available, for both guests and logged in users
 			doc := NewHTMLParser(t, MakeRequest(t, NewRequest(t, "GET", "/org3"), http.StatusOK).Body)
-			doc.AssertElement(t, ".org-header details.dropdown", false)
+			doc.AssertElement(t, ".org-header .dialog-dropdown", false)
 
 			doc = NewHTMLParser(t, loginUser(t, "user10").MakeRequest(t, NewRequest(t, "GET", "/org3"), http.StatusOK).Body)
-			doc.AssertElement(t, ".org-header details.dropdown", false)
+			doc.AssertElement(t, ".org-header .dialog-dropdown", false)
 		})
 
 		t.Run("More actions - moderation", func(t *testing.T) {
@@ -197,18 +197,18 @@ quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequa
 
 			// The report option shouldn't be available to a guest
 			doc := NewHTMLParser(t, MakeRequest(t, NewRequest(t, "GET", "/org3"), http.StatusOK).Body)
-			doc.AssertElement(t, ".org-header details.dropdown", false)
+			doc.AssertElement(t, ".org-header .dialog-dropdown", false)
 
 			// But should be available to a logged in user
 			doc = NewHTMLParser(t, loginUser(t, "user10").MakeRequest(t, NewRequest(t, "GET", "/org3"), http.StatusOK).Body)
-			doc.AssertElement(t, ".org-header details.dropdown a[href^='/report_abuse']", true)
+			doc.AssertElement(t, ".org-header .dialog-dropdown a[href^='/report_abuse']", true)
 
 			// But the org owner shouldn't see the report option
 			doc = NewHTMLParser(t, loginUser(t, "user1").MakeRequest(t, NewRequest(t, "GET", "/org3"), http.StatusOK).Body)
-			doc.AssertElement(t, ".org-header details.dropdown", false)
+			doc.AssertElement(t, ".org-header .dialog-dropdown", false)
 		})
 
-		t.Run("Invitiation notification", func(t *testing.T) {
+		t.Run("Invitation notification", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})

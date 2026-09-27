@@ -52,19 +52,20 @@
 		{{end}}
 	</div>
 
-	<!-- the full dropdown menus -->
+	{{/* Various dropdowns on the left side of the navbar */}}
 	<div class="navbar-right ui secondary menu">
 		{{if .IsSigned}}
 			<form id="logout-user-action" action="{{AppSubUrl}}/user/logout" method="POST" class="tw-hidden"></form>
 		{{end}}
 		{{if and .IsSigned .HideNavbarLinks}}
-			<details class="dropdown dir-rtl">
-				<summary data-tooltip-content="{{ctx.Locale.Tr "user_profile_and_more"}}">
+			{{/* Limited dropdown that for when account action is required, like change password or add 2FA */}}
+			<div class="dialog-dropdown">
+				<button class="opener" command="toggle-popover" commandfor="nav-user-limited-dropdown" data-tooltip-content="{{ctx.Locale.Tr "user_profile_and_more"}}">
 					{{ctx.AvatarUtils.Avatar .SignedUser 24}}
 					<span class="only-mobile tw-ml-2">{{.SignedUser.Name}}</span>
-					<span class="not-mobile dropdown-icon">{{svg "octicon-triangle-down"}}</span>
-				</summary>
-				<div class="content">
+					{{svg "octicon-triangle-down" 16 "not-mobile"}}
+				</button>
+				<dialog popover id="nav-user-limited-dropdown" class="inline-flip">
 					<span class="header">
 						<span>{{ctx.Locale.Tr "signed_in_as"}} <strong>{{.SignedUser.Name}}</strong></span>
 					</span>
@@ -77,8 +78,8 @@
 							</button>
 						</li>
 					</ul>
-				</div>
-			</details>
+				</dialog>
+			</div>
 		{{else if .IsSigned}}
 			{{if EnableTimetracking}}
 			<a class="active-stopwatch-trigger item tw-mx-0{{if not .ActiveStopwatch}} tw-hidden{{end}}" href="{{.ActiveStopwatch.IssueLink}}" data-tippy-content="{{ctx.Locale.Tr "active_stopwatch"}}" aria-label="{{ctx.Locale.Tr "active_stopwatch"}}">
@@ -122,13 +123,13 @@
 				</div>
 			</a>
 
-			<details class="dropdown dir-rtl">
-				<summary data-tooltip-content="{{ctx.Locale.Tr "create_new"}}">
+			<div class="dialog-dropdown">
+				<button class="opener" command="toggle-popover" commandfor="nav-create-dropdown" data-tooltip-content="{{ctx.Locale.Tr "create_new"}}">
 					{{svg "octicon-plus"}}
-					<span class="not-mobile dropdown-icon">{{svg "octicon-triangle-down"}}</span>
+					{{svg "octicon-triangle-down" 16 "not-mobile"}}
 					<span class="only-mobile">{{ctx.Locale.Tr "create_new"}}</span>
-				</summary>
-				<div class="content">
+				</button>
+				<dialog popover id="nav-create-dropdown" class="inline-flip">
 					<ul>
 						<li>
 							<a href="{{AppSubUrl}}/repo/create">
@@ -150,16 +151,16 @@
 							</li>
 						{{end}}
 					</ul>
-				</div>
-			</details>
+				</dialog>
+			</div>
 
-			<details class="dropdown dir-rtl">
-				<summary data-tooltip-content="{{ctx.Locale.Tr "user_profile_and_more"}}">
+			<div class="dialog-dropdown">
+				<button class="opener" command="toggle-popover" commandfor="nav-user-full-dropdown" data-tooltip-content="{{ctx.Locale.Tr "user_profile_and_more"}}">
 					{{ctx.AvatarUtils.Avatar .SignedUser 24}}
 					<span class="only-mobile tw-ml-2">{{.SignedUser.Name}}</span>
-					<span class="not-mobile dropdown-icon">{{svg "octicon-triangle-down"}}</span>
-				</summary>
-				<div class="content">
+					{{svg "octicon-triangle-down" 16 "not-mobile"}}
+				</button>
+				<dialog popover id="nav-user-full-dropdown" class="inline-flip">
 					<span class="header">
 						<span>{{ctx.Locale.Tr "signed_in_as"}} <strong>{{.SignedUser.Name}}</strong></span>
 					</span>
@@ -225,8 +226,8 @@
 							</button>
 						</li>
 					</ul>
-				</div>
-			</details>
+				</dialog>
+			</div>
 		{{else}}
 			{{if .ShowRegistrationButton}}
 				<a class="item{{if .PageIsSignUp}} active{{end}}" href="{{AppSubUrl}}/user/sign_up">

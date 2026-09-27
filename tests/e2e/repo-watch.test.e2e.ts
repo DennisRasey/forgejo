@@ -16,12 +16,12 @@ test('Watch dropdown: toggle watch events', async ({page}, _) => {
   await page.goto('/user2/repo1');
 
   // Find the watch dropdown
-  const watchDropdown = page.locator('details.dropdown#watch-button');
-  const watchSummary = watchDropdown.locator('summary');
-  const watchMenu = watchDropdown.locator('.content');
+  const watchDropdown = page.locator('.dialog-dropdown#watch-button');
+  const watchOpener = watchDropdown.locator('button[command="toggle-popover"]');
+  const watchMenu = watchDropdown.locator('dialog');
 
   // Open the dropdown
-  await watchSummary.click();
+  await watchOpener.click();
   await expect(watchMenu).toBeVisible();
 
   // Verify checkboxes are present
@@ -41,18 +41,18 @@ test('Watch dropdown: toggle watch events', async ({page}, _) => {
 test('Watch dropdown: unwatch all shows proper state', async ({page}, _) => {
   await page.goto('/user2/repo1');
 
-  const watchDropdown = page.locator('details.dropdown#watch-button');
-  const watchSummary = watchDropdown.locator('summary > div');
-  const watchMenu = watchDropdown.locator('.content');
+  const watchDropdown = page.locator('.dialog-dropdown#watch-button');
+  const watchOpener = watchDropdown.locator('button[command="toggle-popover"]');
+  const watchMenu = watchDropdown.locator('dialog');
 
   // Open dropdown and click unwatch
-  await watchSummary.click();
+  await watchOpener.click();
   await expect(watchMenu).toBeVisible();
 
   const unwatchButton = watchMenu.locator('button:has-text("Unwatch")');
   if (await unwatchButton.isVisible()) {
     await unwatchButton.click();
     // After unwatch, the button should show "Watch" state
-    await expect(watchSummary).toContainText('Watch');
+    await expect(watchOpener).toContainText('Watch');
   }
 });

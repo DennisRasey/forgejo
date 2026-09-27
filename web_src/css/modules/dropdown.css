@@ -1,36 +1,66 @@
-/* Copyright 2025 The Forgejo Authors. All rights reserved.
+/* Copyright 2025-2026 0ko, The Forgejo Authors. All rights reserved.
  * SPDX-License-Identifier: GPL-3.0-or-later */
 
-/* This is an implementation of a dropdown menu based on details HTML tag.
- * It is inspired by https://picocss.com/docs/dropdown.
- *
- * NoJS mode could be improved by forcing the same [name] onto all dropdowns, so
- * that the browser will automatically close all but the one that was just opened
- * using keyboard. But the code doing that will not be as clean.
- *
- * Note: when implementing this dropdown, please use `dropdown` as the 1st class,
+/*
+ * Note: when implementing the older details dropdown, please use `dropdown` as the 1st class,
  * so it is possible to search for all dropdowns with `details class="dropdown`
 */
 
-:root details.dropdown {
+:root .dialog-dropdown {
   --dropdown-box-shadow: 0 6px 18px var(--color-shadow);
   --dropdown-item-min-height: 34px;
   --dropdown-padding-inline: 0.75rem;
 }
 
 @media (pointer: coarse) {
-  :root details.dropdown {
+  :root .dialog-dropdown {
     --dropdown-item-min-height: 40px;
     --dropdown-padding-inline: 1rem;
   }
 }
 
-details.dropdown {
-  position: relative;
+.dialog-dropdown {
+  anchor-scope: --dropdown-opener;
+
+  button {
+    anchor-name: --dropdown-opener;
+  }
+
+  dialog {
+    /* Reset position from middle of the screen to being relative to parent */
+    inset: unset;
+    position-anchor: --dropdown-opener;
+
+    /* Default placement */
+    position-area: bottom span-right;
+
+    /* Try to horizontally mirror if ran into viewport */
+    position-try: flip-inline, flip-block, flip-inline flip-block;
+
+    /* Suppress default non-zero padding */
+    padding: unset;
+
+    /* Suppress default CanvasText color */
+    color: unset;
+
+    &::backdrop {
+      /* Backdrop is unwanted for open dropdown */
+      background-color: unset;
+    }
+
+    &.inline-flip {
+      /* Make `dialog` face the inverse direction compared to the default when possible */
+      position-area: bottom span-left;
+    }
+  }
+
+  &:has(> dialog:popover-open) > .opener {
+    /* Opener is more pronounced when it's dropdown is open */
+    background: var(--color-active);
+  }
 }
 
-/* Opener */
-details.dropdown > summary {
+.dialog-dropdown > .opener {
   /* Optional flex+gap in case summary contains multiple elements */
   display: flex;
   gap: 0.25rem;
@@ -51,31 +81,18 @@ details.dropdown > summary {
   &.options {
     padding-inline: 0.75rem;
   }
+
+  /* Suppress default button colors */
+  background: unset;
+  color: unset;
 }
 
-/* NoJS mode: create a virtual fullscreen area which closes the dropdown when clicked on */
-.no-js details.dropdown[open] > summary::before {
-  z-index: 1;
-  position: fixed;
-  width: 100vw;
-  height: 100vh;
-  inset: 0;
-  background: 0 0;
-  content: "";
-  cursor: default;
-}
-
-details.dropdown > summary:hover,
-details.dropdown > .content > ul > li > :is(a, button):hover {
+.dialog-dropdown > .opener:hover,
+.dialog-dropdown > dialog > ul > li > :is(a, button):hover {
   background: var(--color-hover);
 }
 
-details.dropdown[open] > summary,
-details.dropdown > .content > ul > li:focus-within > :is(a, button) {
-  background: var(--color-active);
-}
-
-details.dropdown > .content {
+.dialog-dropdown > dialog {
   z-index: 99;
   position: absolute;
   min-width: max-content;
@@ -93,14 +110,14 @@ details.dropdown > .content {
   }
 }
 
-details.dropdown > .content > ul {
+.dialog-dropdown > dialog > ul {
   /* Suppress default styling of <ul> */
   margin: 0;
   padding: 0;
   list-style-type: none;
 
   /* Round first item of first list and last item of last list. Each of these
-   * selectors should only resolve to one element in any .content */
+   * selectors should only resolve to one element in any :is(.content, dialog) */
   &:first-child > li:first-child {
     border-radius: var(--border-radius) var(--border-radius) 0 0;
   }
@@ -113,7 +130,7 @@ details.dropdown > .content > ul {
 }
 
 /* General styling of list items */
-details.dropdown > .content > ul > li {
+.dialog-dropdown > dialog > ul > li {
   width: 100%;
 
   > :is(a, button) {
@@ -126,6 +143,9 @@ details.dropdown > .content > ul > li {
     gap: 0.75rem;
     align-items: center;
     color: var(--color-text);
+
+    /* Reserve space for focus border */
+    border: 1px solid transparent;
 
     /* Interactable items should be transparent by default. <button> can also have a default background set by the browser */
     background: none;
@@ -142,11 +162,22 @@ details.dropdown > .content > ul > li {
       font-weight: var(--font-weight-medium);
     }
   }
+
+  /* Suppress both currentcolor from ua.css and dotted from normalize.css */
+  :focus-visible {
+    outline: none;
+  }
+
+  /* Apply visible border to both kinds of focus, so focused items can't be confused with .active */
+  &:focus-within > :is(a, button) {
+    background: var(--color-active);
+    border-color: var(--color-text-light);
+  }
 }
 
 /* Special styling for "headers" */
 /* A few dropdowns contain such headers, however, they are not semantically considered as headers */
-details.dropdown > .content > .header {
+.dialog-dropdown > dialog > .header {
   display: flex;
   padding-block: 0.5rem;
   padding-inline: var(--dropdown-padding-inline);
@@ -156,34 +187,6 @@ details.dropdown > .content > .header {
 }
 
 /* Decrease bottom padding if an <hr> follows, which adds it's own vertical padding */
-details.dropdown > .content > .header:has(+ hr) {
+.dialog-dropdown > dialog > .header:has(+ hr) {
   padding-bottom: 0.25rem;
 }
-
-/* dir-auto option - switch the direction at a width point where most of layout changes occur */
-@media (max-width: 767.98px) {
-  details.dropdown.dir-auto > .content {
-    inset-inline: 0 auto;
-    direction: rtl;
-    > :is(span, ul) {
-      direction: ltr;
-    }
-  }
-}
-
-/* dir-rtl option - force right-to-left box direction */
-details.dropdown.dir-rtl > .content {
-  inset-inline: 0 auto;
-  direction: rtl;
-  > :is(span, ul) {
-    direction: ltr;
-  }
-}
-
-/* Note: CSS anchor positioning will be a huge help in content positioning w/o JS
- * - https://css-tricks.com/css-anchor-positioning-guide/
- * - https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning/
- * - https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning/Using
- * It can already be implemented if the implementation won't interfere with the
- * normal behavior on unsupported browsers. Or it can wait until Firefox gets
- * starts supporting it. FF145 got this feature behind a feature flag. */

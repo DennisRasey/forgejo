@@ -2,7 +2,20 @@
 
 <div class="page-content ui container">
 	<h1>Dropdown</h1>
-	a.k.a. overflow menu, ellipsis menu
+	<p>
+		a.k.a. overflow menu, ellipsis menu
+	</p>
+	<p>
+		Openers are implemented as <code class="inline-code-block">&lt;button&gt;</code> with required class <code class="inline-code-block">opener</code>.
+		<br>
+		Optional style classes: <code class="inline-code-block">border</code>, <code class="inline-code-block">options</code>, see examples below.
+	</p>
+	<p>
+		Toggleable content is implemented as <code class="inline-code-block">&lt;dialog&gt;</code> with no required classes but a mandatory <code class="inline-code-block">id</code> attribute so it can be identified by it's opener.
+	</p>
+	<p>
+		Both opener and content elements are wrapped in a <code class="inline-code-block">&lt;div&gt;</code> with style <code class="inline-code-block">dialog-dropdown</code>. Additionally, when placed in line with other supported elements, they can all be wrapped in a <code class="inline-code-block">&lt;div&gt;</code> with style <code class="inline-code-block">button-sequence</code> to provide consistent height and spacing that adjust depending on user input method.
+	</p>
 
 	<h2>Options</h2>
 	<p>
@@ -10,11 +23,11 @@
 		and are used in search pages for changing sorting and filtering.
 	</p>
 	<div class="button-sequence">
-		<details class="dropdown" id="dropdown-1">
-			<summary class="options">
+		<div class="dialog-dropdown">
+			<button class="opener options" command="toggle-popover" commandfor="dropdown-1">
 				Options {{svg "octicon-triangle-down" 14}}
-			</summary>
-			<div class="content">
+			</button>
+			<dialog popover id="dropdown-1">
 				<ul>
 					<li>
 						<a id="dd1_g1_i1" href="#noscroll">Item 1</a>
@@ -26,14 +39,14 @@
 						<a id="dd1_g1_i3" href="#noscroll">Item 3</a>
 					</li>
 				</ul>
-			</div>
-		</details>
+			</dialog>
+		</div>
 
-		<details class="dropdown" id="dropdown-2">
-			<summary class="options">
+		<div class="dialog-dropdown">
+			<button class="opener options" command="toggle-popover" commandfor="dropdown-2">
 				Options {{svg "octicon-triangle-down" 14}}
-			</summary>
-			<div class="content">
+			</button>
+			<dialog popover id="dropdown-2">
 				<ul>
 					<li>
 						<a id="dd2_g1_i1" href="#noscroll">Item 1</a>
@@ -57,21 +70,21 @@
 						<a id="dd2_g2_i3" href="#noscroll">Item 6</a>
 					</li>
 				</ul>
-			</div>
-		</details>
+			</dialog>
+		</div>
 
-		<details class="dropdown" id="dropdown-3">
-			<summary class="options">
+		<div class="dialog-dropdown">
+			<button class="opener options" command="toggle-popover" commandfor="dropdown-3">
 				Options {{svg "octicon-triangle-down" 14}}
-			</summary>
-			<div class="content">
+			</button>
+			<dialog popover id="dropdown-3">
 				<ul>
 					<li>
 						<a id="dd3_g1_i1" href="#noscroll">Only item</a>
 					</li>
 				</ul>
-			</div>
-		</details>
+			</dialog>
+		</div>
 	</div>
 
 	<h2>More actions</h2>
@@ -83,11 +96,11 @@
 		so it is accessible to screen readers and has more meaning for regular users.
 	</p>
 	<div class="button-sequence">
-		<details class="dropdown">
-			<summary class="border" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+		<div class="dialog-dropdown">
+			<button class="opener border" command="toggle-popover" commandfor="dropdown-4" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
 				{{svg "octicon-kebab-horizontal"}}
-			</summary>
-			<div class="content">
+			</button>
+			<dialog popover id="dropdown-4">
 				<ul>
 					<li>
 						<a href="#noscroll">"Go to" action</a>
@@ -96,14 +109,14 @@
 						<button type="button">Button action</button>
 					</li>
 				</ul>
-			</div>
-		</details>
+			</dialog>
+		</div>
 
-		<details class="dropdown" id="dropdown-5">
-			<summary class="border" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+		<div class="dialog-dropdown">
+			<button class="opener border" command="toggle-popover" commandfor="dropdown-5" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
 				{{svg "octicon-kebab-horizontal"}}
-			</summary>
-			<div class="content">
+			</button>
+			<dialog popover id="dropdown-5">
 				<span class="header">
 					With header and hr
 				</span>
@@ -131,10 +144,9 @@
 						</a>
 					</li>
 				</ul>
-			</div>
-		</details>
+			</dialog>
+		</div>
 	</div>
-
 </div>
 
 {{template "base/footer" .}}

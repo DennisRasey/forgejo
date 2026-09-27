@@ -17,20 +17,20 @@
 							</div>
 						</div>
 						<div class="flex-item-trailing button-sequence">
-							<details class="dropdown dir-rtl access-mode" aria-label="{{ctx.Locale.Tr "repo.settings.collaboration.change_access"}}" data-url="{{$.Link}}/access_mode" data-uid="{{.ID}}">
-								<summary class="options">
+							<div class="dialog-dropdown access-mode" aria-label="{{ctx.Locale.Tr "repo.settings.collaboration.change_access"}}" data-url="{{$.Link}}/access_mode" data-uid="{{.ID}}">
+								<button class="opener options" command="toggle-popover" commandfor="collab-{{.ID}}-dropdown">
 									{{svg "octicon-shield-lock"}}
 									<div class="text">{{if eq .Collaboration.Mode 1}}{{ctx.Locale.Tr "repo.settings.collaboration.read"}}{{else if eq .Collaboration.Mode 2}}{{ctx.Locale.Tr "repo.settings.collaboration.write"}}{{else if eq .Collaboration.Mode 3}}{{ctx.Locale.Tr "repo.settings.collaboration.admin"}}{{else}}{{ctx.Locale.Tr "repo.settings.collaboration.undefined"}}{{end}}</div>
 									{{svg "octicon-triangle-down" 14 "dropdown icon"}}
-								</summary>
-								<div class="content">
+								</button>
+								<dialog popover class="inline-flip" id="collab-{{.ID}}-dropdown">
 									<ul>
 										<li><button type="button" data-mode="3">{{ctx.Locale.Tr "repo.settings.collaboration.admin"}}</button></li>
 										<li><button type="button" data-mode="2">{{ctx.Locale.Tr "repo.settings.collaboration.write"}}</button></li>
 										<li><button type="button" data-mode="1">{{ctx.Locale.Tr "repo.settings.collaboration.read"}}</button></li>
 									</ul>
-								</div>
-							</details>
+								</dialog>
+							</div>
 							<button class="danger button delete-button" data-url="{{$.Link}}/delete" data-id="{{.ID}}" data-modal-id="delete-collaborator">
 								{{ctx.Locale.Tr "repo.settings.delete_collaborator"}}
 							</button>

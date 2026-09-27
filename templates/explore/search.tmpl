@@ -8,12 +8,12 @@
 	</form>
 	<div class="button-row">
 		<!-- Sort -->
-		<details class="dropdown dir-rtl">
-			<summary class="options">
+		<div class="dialog-dropdown">
+			<button class="opener options" command="toggle-popover" commandfor="search-sort-dropdown">
 				{{ctx.Locale.Tr "repo.issues.filter_sort"}}
 				{{svg "octicon-triangle-down" 14}}
-			</summary>
-			<div class="content">
+			</button>
+			<dialog popover id="search-sort-dropdown" class="inline-flip">
 				<ul>
 					<li>
 						<a class="{{if eq .SortType "newest"}}active{{end}}" href="?sort=newest&q={{$.Keyword}}">{{ctx.Locale.Tr "issues.search.sort.latest"}}</a>
@@ -28,8 +28,8 @@
 						<a class="{{if eq .SortType "reversealphabetically"}}active{{end}}" href="?sort=reversealphabetically&q={{$.Keyword}}">{{ctx.Locale.Tr "repo.issues.label.filter_sort.reverse_alphabetically"}}</a>
 					</li>
 				</ul>
-			</div>
-		</details>
+			</dialog>
+		</div>
 	</div>
 </div>
 <div class="divider"></div>

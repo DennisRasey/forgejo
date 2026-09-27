@@ -94,7 +94,7 @@
 
 /* Dropdown openers should be at least tall as buttons they are in line with, and
  * as wide as they are tall */
-:is(.button-row, .button-sequence) details.dropdown summary {
+:is(.button-row, .button-sequence) .dialog-dropdown > .opener {
   min-height: var(--button-min-height);
   min-width: var(--button-min-height);
 }

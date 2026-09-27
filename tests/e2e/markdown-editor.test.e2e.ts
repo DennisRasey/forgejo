@@ -17,8 +17,8 @@ import {screenshot} from './shared/screenshots.ts';
 
 test.use({user: 'user2'});
 
+// Editing the root README.md file for image preview
 test('Markdown image preview behaviour', async ({page}) => {
-  // Editing the root README.md file for image preview
   const editPath = '/user2/repo1/src/branch/master/README.md';
 
   const response = await page.goto(editPath, {waitUntil: 'domcontentloaded'});
@@ -38,8 +38,10 @@ test('Markdown image preview behaviour', async ({page}) => {
   await page.locator('button[data-tab="preview"]').click();
 
   // Check for the image preview via the expected attribute
-  const preview = page.locator('div[data-tab="preview"] p[dir="auto"] a');
-  await expect(preview).toHaveAttribute('href', 'http://localhost:3003/user2/repo1/media/branch/master/assets/logo.svg');
+  // Note: branch master may redirect to a dyn-id- one
+  const preview = page.locator('div[data-tab="preview"] p[dir="auto"]');
+  await expect(preview.locator('a[href^="http://localhost:3003/user2/repo1/media/branch/"]')).toHaveCount(1);
+  await expect(preview.locator('a[href$="/assets/logo.svg"]')).toHaveCount(1);
   await screenshot(page);
 });
 
@@ -411,8 +413,8 @@ test.describe('Markdown insert table', () => {
 
       if (isEditing) {
         // Preparations for evaluating comment editing
-        await area.locator('.comment-header-right.actions details.dropdown').click();
-        await area.locator('.comment-header-right.actions details.dropdown .edit-content').click();
+        await area.locator('.comment-header-right.actions .dialog-dropdown .opener').click();
+        await area.locator('.comment-header-right.actions .dialog-dropdown dialog .edit-content').click();
         expectedContent = `good work!${expectedContent}`;
       }
 
@@ -468,8 +470,8 @@ test.describe('Markdown insert link', () => {
 
       if (isEditing) {
         // Preparations for evaluating comment editing
-        await area.locator('.comment-header-right.actions details.dropdown').click();
-        await area.locator('.comment-header-right.actions details.dropdown .edit-content').click();
+        await area.locator('.comment-header-right.actions .dialog-dropdown .opener').click();
+        await area.locator('.comment-header-right.actions .dialog-dropdown dialog .edit-content').click();
         expectedContent = `good work!${expectedContent}`;
       }
 
@@ -532,15 +534,18 @@ test.describe('Markdown insert link', () => {
       await screenshot(page);
     }
 
+    const response = await page.goto('/user2/repo1/issues/1');
+    expect(response?.status()).toBe(200);
+
     await expect(async () => {
       await evaluateLinkInsertion(page, '#comment-form', false);
       await evaluateLinkInsertion(page, '#issuecomment-2', true);
-    }).toPass();
+    }).toPass({timeout: 3000});
 
     await expect(async () => {
       await evaluateLinkInsertionShortcut(page, '#comment-form');
       await evaluateLinkInsertionShortcut(page, '#issuecomment-2');
-    }).toPass();
+    }).toPass({timeout: 3000});
   });
 });
 
@@ -807,8 +812,8 @@ test('Persistent monospace preference across multiple editors', async ({page}) =
 
   // Open a second editor (by clicking "Edit" in the context menu of a message)
   const openSecondEditor = async () => {
-    const contextMenu = page.locator('.timeline-item details:has(summary[aria-label="Comment menu"]):has(.edit-content)').first();
-    const editButton = contextMenu.locator('.content').getByText('Edit').first();
+    const contextMenu = page.locator('.timeline-item .dialog-dropdown:has(.opener[aria-label="Comment menu"]):has(.edit-content)').first();
+    const editButton = contextMenu.locator('dialog').getByText('Edit').first();
     await contextMenu.click();
     await editButton.click();
   };

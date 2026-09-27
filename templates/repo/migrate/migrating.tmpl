@@ -51,7 +51,7 @@
 	</div>
 </div>
 
-<dialog id="delete-repo-modal">
+<dialog class="modal" id="delete-repo-modal">
 	<article>
 		<header>{{ctx.Locale.Tr "repo.settings.delete"}}</header>
 		<div class="content">
@@ -85,7 +85,7 @@
 	</article>
 </dialog>
 
-<dialog id="cancel-repo-modal">
+<dialog class="modal" id="cancel-repo-modal">
 	<article>
 		<header>{{ctx.Locale.Tr "migrate.cancel.title"}}</header>
 		<form action="{{.Link}}/settings/migrate/cancel" method="post">

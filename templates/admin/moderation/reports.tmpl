@@ -56,25 +56,27 @@
 				{{$postURL := print AppSubUrl "/admin/abuse_reports/act"}}
 
 				<div class="flex-item-trailing">
-					<div class="flex-item-main tw-max-w-12 sm:tw-max-w-40">
+					<div class="flex-item-main tw-max-w-12 sm:tw-max-w-60">
 						<a class="flex-item-trailing tw-p-1" href="{{AppSubUrl}}/admin/moderation/reports/type/{{.ContentType}}/id/{{.ContentID}}">
 							<span class="tw-text-16 tw-font-semibold">{{.ReportedTimes}}</span>{{svg "octicon-report" "tw-ml-2"}}
 						</a>
-						<div class="button-sequence right tw-items-center"
+						<div class="button-sequence"
 								hx-target="{{$reportDivSelector}}" hx-indicator="{{$reportDivSelector}}"
 								hx-vals='{"content_type": {{.ContentType}}, "content_id": {{.ContentID}}}'>
-							<button class="item tw-p-1 ui button" data-tooltip-content="{{ctx.Locale.Tr "moderation.report.mark_as_handled"}}"
+							<button class="secondary button" data-tooltip-content="{{ctx.Locale.Tr "moderation.report.mark_as_handled"}}"
 									hx-post="{{$postURL}}" hx-vals='{"report_action": {{$.MarkAsHandled}}}'>
 								{{svg "octicon-check"}}
 							</button>
-							<button class="item tw-p-1 ui button" data-tooltip-content="{{ctx.Locale.Tr "moderation.report.mark_as_ignored"}}"
+							<button class="secondary button" data-tooltip-content="{{ctx.Locale.Tr "moderation.report.mark_as_ignored"}}"
 									hx-post="{{$postURL}}" hx-vals='{"report_action": {{$.MarkAsIgnored}}}'>
 								{{svg "octicon-x"}}
 							</button>
 							{{if .ContentReference}} {{/* the reference is missing when the content was already deleted */}}
-							<details class="dropdown item dir-rtl">
-								<summary class="tw-p-1" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">{{svg "octicon-kebab-horizontal"}}</summary>
-								<div class="content">
+							<div class="dialog-dropdown">
+								<button class="opener border" command="toggle-popover" commandfor="{{$reportDivSelector}}-dropdown" data-tooltip-content="{{ctx.Locale.Tr "profile.actions.tooltip"}}">
+									{{svg "octicon-kebab-horizontal"}}
+								</button>
+								<dialog popover class="inline-flip" id="{{$reportDivSelector}}-dropdown">
 									<ul
 											hx-target="{{$reportDivSelector}}" hx-indicator="{{$reportDivSelector}}"
 											hx-vals='{"content_type": {{.ContentType}}, "content_id": {{.ContentID}}}'>
@@ -109,8 +111,8 @@
 										</li>
 										{{end}}
 									</ul>
-								</div>
-							</details>
+								</dialog>
+							</div>
 							{{end}}
 						</div>
 					</div>

@@ -55,7 +55,7 @@
 								data-modal-cherry-pick-header="{{ctx.Locale.Tr "repo.commit.cherry-pick-header" (ShortSha .CommitID)}}"
 								data-modal-cherry-pick-content="{{ctx.Locale.Tr "repo.commit.cherry-pick-content"}}"
 								data-modal-cherry-pick-submit="{{ctx.Locale.Tr "repo.commit.cherry-pick"}}">{{ctx.Locale.Tr "repo.commit.cherry-pick"}}</div>
-							<dialog id="cherry-pick-modal">
+							<dialog class="modal" id="cherry-pick-modal">
 								<article>
 									<header><span id="cherry-pick-header"></span></header>
 									<div class="content">
@@ -77,7 +77,7 @@
 									</form>
 								</article>
 							</dialog>
-							<dialog id="create-branch-modal">
+							<dialog class="modal" id="create-branch-modal">
 								<article>
 									<header>{{ctx.Locale.Tr "repo.branch.new_branch"}}</header>
 									<form class="ui form" action="{{.RepoLink}}/branches/_new/commit/{{.CommitID}}" method="post">
@@ -97,7 +97,7 @@
 									</form>
 								</article>
 							</dialog>
-							<dialog id="create-tag-modal">
+							<dialog class="modal" id="create-tag-modal">
 								<article>
 									<header>{{ctx.Locale.Tr "repo.tag.create_tag_operation"}}</header>
 									<form class="ui form" action="{{.RepoLink}}/branches/_new/commit/{{.CommitID}}" method="post">
@@ -287,7 +287,7 @@
 				<button id="commit-notes-edit-button" class="ui tiny primary button tw-py-[6px] tw-px-[10px]">{{ctx.Locale.Tr "edit"}}</button>
 				<button class="ui tiny button red show-modal tw-py-[6px] tw-px-[10px]" data-modal="#delete-note-modal">{{ctx.Locale.Tr "remove"}}</button>
 			</div>
-			<dialog id="delete-note-modal">
+			<dialog class="modal" id="delete-note-modal">
 				<article>
 					<header>{{ctx.Locale.Tr "repo.diff.git-notes.remove-header"}}</header>
 					<div class="content">

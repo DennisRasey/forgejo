@@ -1,8 +1,8 @@
-body:has(dialog[open]) {
+body:has(dialog.modal[open]) {
   overflow: hidden;
 }
 
-dialog {
+dialog.modal {
   position: fixed;
   text-align: start;
   border: none;
@@ -27,7 +27,7 @@ dialog {
   padding: 0;
 }
 
-dialog::backdrop {
+dialog.modal::backdrop {
   background-color: var(--color-overlay-backdrop);
   will-change: opacity;
   opacity: 0;
@@ -36,11 +36,11 @@ dialog::backdrop {
   animation-timing-function: ease-in-out;
 }
 
-dialog[open]::backdrop {
+dialog.modal[open]::backdrop {
   opacity: 1;
 }
 
-dialog header {
+dialog.modal header {
   font-size: 1.42857143rem;
   display: flex;
   align-items: center;
@@ -55,7 +55,7 @@ dialog header {
   border-bottom: 1px solid var(--color-secondary);
 }
 
-dialog header [role="heading"] {
+dialog.modal header [role="heading"] {
   /* keep long header text to at most two lines, and ellipses after */
   display: inline-block;
   display: -webkit-inline-box;
@@ -66,24 +66,24 @@ dialog header [role="heading"] {
   text-overflow: ellipsis;
 }
 
-dialog article {
+dialog.modal article {
   display: block;
   width: 100%;
   font-size: 1em;
   line-height: 1.4;
 }
 
-dialog .content {
+dialog.modal .content {
   padding: 1.5em;
   background: var(--color-body);
   color: var(--color-text);
 }
 
-dialog .content:not(.tw-hidden) + form > .content {
+dialog.modal .content:not(.tw-hidden) + form > .content {
   padding-top: 0;
 }
 
-dialog .actions {
+dialog.modal .actions {
   background: var(--color-secondary-bg);
   border-color: var(--color-secondary);
   display: flex;
@@ -92,27 +92,27 @@ dialog .actions {
   padding: 1rem;
 }
 
-dialog footer {
+dialog.modal footer {
   border-bottom-left-radius: var(--border-radius); /* stylelint-disable-line logical-css/require-logical-properties */
   border-bottom-right-radius: var(--border-radius); /* stylelint-disable-line logical-css/require-logical-properties */
 }
 
 /* positive/negative action buttons */
-dialog .actions .ui.button {
+dialog.modal .actions .ui.button {
   display: inline-flex;
   align-items: center;
   padding: 10px 12px;
   margin-inline-end: 0;
 }
 
-dialog .actions .ui.button.danger {
+dialog.modal .actions .ui.button.danger {
   display: block;
   width: 100%;
   margin: 0 auto;
   text-align: center;
 }
 
-dialog .actions .ui.button .svg {
+dialog.modal .actions .ui.button .svg {
   margin-inline-end: 5px;
 }
 
