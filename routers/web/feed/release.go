@@ -8,6 +8,7 @@ import (
 
 	"forgejo.org/models/db"
 	repo_model "forgejo.org/models/repo"
+	"forgejo.org/modules/setting"
 	"forgejo.org/services/context"
 
 	"github.com/gorilla/feeds"
@@ -15,7 +16,15 @@ import (
 
 // shows tags and/or releases on the repo as RSS / Atom feed
 func ShowReleaseFeed(ctx *context.Context, repo *repo_model.Repository, isReleasesOnly bool, formatType string) {
+	limit := ctx.FormInt("limit")
+	if limit <= 0 || limit > setting.UI.FeedPagingNum {
+		limit = setting.UI.FeedPagingNum
+	}
 	releases, err := db.Find[repo_model.Release](ctx, repo_model.FindReleasesOptions{
+		ListOptions: db.ListOptions{
+			Page:     1,
+			PageSize: limit,
+		},
 		IncludeTags: !isReleasesOnly,
 		RepoID:      ctx.Repo.Repository.ID,
 	})

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"testing"
 
 	"forgejo.org/tests"
@@ -94,5 +95,15 @@ func TestReleaseFeed(t *testing.T) {
     </author>
   </entry>
 </feed>`, releasesPath), normalize(resp.Body.String()))
+	})
+
+	t.Run("RSS feed limit", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		releasesPath := "/user2/repo1/releases"
+		MakeRequest(t, NewRequest(t, "GET", releasesPath), http.StatusOK)
+
+		resp := MakeRequest(t, NewRequest(t, "GET", releasesPath+".rss?limit=1"), http.StatusOK)
+		assert.Equal(t, 1, strings.Count(resp.Body.String(), "<item>"))
 	})
 }
