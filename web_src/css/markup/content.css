@@ -411,7 +411,7 @@
   padding: 0;
   margin: 0;
   font-size: 100%;
-  white-space: pre-wrap;
+  white-space: pre;
   word-break: break-all;
   overflow-wrap: break-word;
   background: transparent;
