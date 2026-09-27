@@ -57,7 +57,7 @@ func Milestones(ctx *context.Context) {
 		return
 	}
 
-	stats, err := issues_model.GetMilestonesStatsByRepoCondAndKw(ctx, builder.And(builder.Eq{"id": ctx.Repo.Repository.ID}), keyword)
+	stats, err := issues_model.GetMilestonesStatsByRepoCondAndKw(ctx, builder.And(builder.Eq{"`repository`.id": ctx.Repo.Repository.ID}), keyword)
 	if err != nil {
 		ctx.ServerError("GetMilestoneStats", err)
 		return

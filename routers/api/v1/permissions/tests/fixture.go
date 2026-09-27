@@ -28,7 +28,6 @@ import (
 	apiv1_permissions "forgejo.org/routers/api/v1/permissions"
 	"forgejo.org/services/auth"
 	"forgejo.org/services/authz"
-	issue_service "forgejo.org/services/issue"
 	packages_service "forgejo.org/services/packages"
 	pull_service "forgejo.org/services/pull"
 	"forgejo.org/tests/forgery"
@@ -59,22 +58,6 @@ func fixtureCreateToken(t *testing.T, user *user_model.User, scope auth_model.Ac
 		require.NoError(t, auth_model.InsertAccessTokenResourceRepos(t.Context(), accessToken.ID, resourceRepos))
 	}
 	return accessToken, nil
-}
-
-func fixtureCreateIssue(t *testing.T, user *user_model.User, repo *repo_model.Repository, title, content string) *issues_model.Issue {
-	t.Helper()
-	issue := &issues_model.Issue{
-		RepoID:   repo.ID,
-		Title:    title,
-		Content:  content,
-		PosterID: user.ID,
-		Poster:   user,
-	}
-
-	err := issue_service.NewIssue(t.Context(), repo, issue, nil, nil, nil)
-	require.NoError(t, err)
-
-	return issue
 }
 
 func fixtureEditIssueOption(t *testing.T, fields string) api.EditIssueOption {
@@ -459,7 +442,7 @@ func fixtureSetIssue(t *testing.T, permissions *apiv1_permissions.Permissions, i
 	issue := fixtureGetIssue(t, issueName)
 	if issue == nil {
 		author := fixtureCreateUser(t, &user_model.User{Name: issueAuthor})
-		issue = fixtureCreateIssue(t, author, permissions.Repository(), issueName, "issue description")
+		issue = forgery.CreateIssue(t, author, permissions.Repository(), issueName, "issue description")
 	}
 	return issue
 }

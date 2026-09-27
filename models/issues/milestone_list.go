@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"forgejo.org/models/db"
+	"forgejo.org/models/repo"
+	"forgejo.org/models/unit"
 	"forgejo.org/modules/optional"
 
 	"xorm.io/builder"
@@ -44,7 +46,7 @@ func (opts FindMilestoneOptions) ToConds() builder.Cond {
 		cond = cond.And(builder.Eq{"is_closed": value})
 	}
 	if opts.RepoCond != nil && opts.RepoCond.IsValid() {
-		cond = cond.And(builder.In("repo_id", builder.Select("id").From("repository").Where(opts.RepoCond)))
+		cond = cond.And(repositorySubQuery(opts.RepoCond))
 	}
 	if len(opts.RepoIDs) > 0 {
 		cond = cond.And(builder.In("repo_id", opts.RepoIDs))
@@ -172,7 +174,7 @@ func GetMilestonesStatsByRepoCondAndKw(ctx context.Context, repoCond builder.Con
 		sess = sess.And(builder.Like{"UPPER(name)", strings.ToUpper(keyword)})
 	}
 	if repoCond.IsValid() {
-		sess.And(builder.In("repo_id", builder.Select("id").From("repository").Where(repoCond)))
+		sess.And(repositorySubQuery(repoCond))
 	}
 	stats.OpenCount, err = sess.Count(new(Milestone))
 	if err != nil {
@@ -184,7 +186,7 @@ func GetMilestonesStatsByRepoCondAndKw(ctx context.Context, repoCond builder.Con
 		sess = sess.And(builder.Like{"UPPER(name)", strings.ToUpper(keyword)})
 	}
 	if repoCond.IsValid() {
-		sess.And(builder.In("repo_id", builder.Select("id").From("repository").Where(repoCond)))
+		sess.And(repositorySubQuery(repoCond))
 	}
 	stats.ClosedCount, err = sess.Count(new(Milestone))
 	if err != nil {
@@ -192,4 +194,10 @@ func GetMilestonesStatsByRepoCondAndKw(ctx context.Context, repoCond builder.Con
 	}
 
 	return stats, nil
+}
+
+func repositorySubQuery(repoCond builder.Cond) builder.Cond {
+	b := builder.Select("`repository`.id").From("repository").Where(repoCond)
+	b = repo.JoinRepoType(b, unit.TypeIssues, unit.TypePullRequests)
+	return builder.In("repo_id", b)
 }
