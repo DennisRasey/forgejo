@@ -22,8 +22,8 @@ const FALLBACK_DATETIME_FORMAT = new Intl.RelativeTimeFormat(navigator.language,
 // Fallback formatter for duration units, used only when the corresponding
 // `relativetime.duration.*` string is untranslated. Localizes via the browser
 // rather than Forgejo's translations, so it follows navigator.language.
-const DURATION_FORMATTERS = {};
-function GetDurationFormatter(unit) {
+const DURATION_FORMATTERS: {[u in Intl.RelativeTimeFormatUnit]?: Intl.NumberFormat;} = {};
+function GetDurationFormatter(unit: Intl.RelativeTimeFormatUnit): Intl.NumberFormat {
   if (!DURATION_FORMATTERS[unit]) {
     DURATION_FORMATTERS[unit] = new Intl.NumberFormat(navigator.language, {
       style: 'unit',
@@ -61,7 +61,7 @@ const DURATION_LIST_FORMAT = new Intl.ListFormat(navigator.language, {
  * https://translate.codeberg.org/languages/$LANGUAGE_CODE/#information
  * https://github.com/WeblateOrg/language-data/blob/main/languages.csv
  */
-const PLURAL_RULES = [
+const PLURAL_RULES: readonly ((n: number) => number)[] = [
   // [ 0] Common 2-form, e.g. English, German
   function (n) { return n !== 1 ? 1 : 0 },
 
@@ -109,9 +109,9 @@ const PLURAL_RULES = [
  * Look up the correct localized plural form for amount `n` for the string with the translation key `key`.
  * If the current language does not contain a translation for this key, fallback to the browser's formatting.
  */
-function GetPluralizedStringOrFallback(key, n, unit) {
-  const translation = pageData.PLURALSTRINGS_LANG[key]?.[PLURAL_RULES[pageData.PLURAL_RULE_LANG](n)];
-  if (translation) return translation.replace('%d', n);
+function GetPluralizedStringOrFallback(key: string, n: number, unit: Intl.RelativeTimeFormatUnit): string {
+  const translation = pageData.PLURALSTRINGS_LANG[key]?.[PLURAL_RULES[pageData.PLURAL_RULE_LANG]?.(n)];
+  if (translation) return translation.replace('%d', n.toString());
   return FALLBACK_DATETIME_FORMAT.format(-n, unit);
 }
 
@@ -124,16 +124,16 @@ const DURATION_KEYS = {
   hour: 'relativetime.duration.hours',
   minute: 'relativetime.duration.mins',
   second: 'relativetime.duration.secs',
-};
+} as const;
 
 /**
  * Format amount `n` of the given time unit as a localized, suffix-free duration
  * word (e.g. "5 days") using Forgejo's translations, falling back to the
  * browser's Intl formatting when the string is untranslated.
  */
-function FormatDurationUnit(n, unit) {
-  const translation = pageData.PLURALSTRINGS_LANG[DURATION_KEYS[unit]]?.[PLURAL_RULES[pageData.PLURAL_RULE_LANG](n)];
-  if (translation) return translation.replace('%d', n);
+function FormatDurationUnit(n: number, unit: Intl.RelativeTimeFormatUnit): string {
+  const translation = pageData.PLURALSTRINGS_LANG[DURATION_KEYS[unit]]?.[PLURAL_RULES[pageData.PLURAL_RULE_LANG]?.(n)];
+  if (translation) return translation.replace('%d', n.toString());
   return GetDurationFormatter(unit).format(n);
 }
 
@@ -148,7 +148,7 @@ const DURATION_UNITS = [
   {primary: 'day', remainder: 'hour', next: ONE_HOUR},
   {primary: 'hour', remainder: 'minute', next: ONE_MINUTE},
   {primary: 'minute', remainder: 'second', next: HALF_MINUTE},
-];
+] as const;
 
 /**
  * Format the difference between two dayjs UTC instants as a localized,
@@ -157,7 +157,7 @@ const DURATION_UNITS = [
  * locale-correct separators via Intl.ListFormat; omits the remainder when
  * it rounds down to zero. Returns [text, recommendedUpdateIntervalMs].
  */
-function FormatAsDuration(nowJS, thenJS) {
+function FormatAsDuration(nowJS: dayjs.Dayjs, thenJS: dayjs.Dayjs): [string, number] {
   if (nowJS.isBefore(thenJS)) [nowJS, thenJS] = [thenJS, nowJS];
 
   for (const {primary, remainder, next} of DURATION_UNITS) {
@@ -179,7 +179,7 @@ function FormatAsDuration(nowJS, thenJS) {
  * Returns the recommended interval in milliseconds until the object should be updated again,
  * or null if the object is invalid.
  */
-export function DoUpdateRelativeTime(object, now) {
+export function DoUpdateRelativeTime(object: HTMLElement, now?: number): number {
   const absoluteTime = object.getAttribute('datetime');
   if (!absoluteTime) {
     return null;  // Object does not contain a datetime.
@@ -278,9 +278,9 @@ window.customElements.define('relative-time', class extends HTMLElement {
   static observedAttributes = ['datetime', 'format'];
 
   alive = false;
-  contentSpan = null;
+  contentSpan: HTMLSpanElement | null = null;
 
-  update = (recurring) => {
+  update = (recurring: boolean) => {
     if (!this.alive) return;
 
     if (!this.shadowRoot) {
@@ -307,14 +307,14 @@ window.customElements.define('relative-time', class extends HTMLElement {
     this.alive = false;
   }
 
-  attributeChangedCallback(name, oldValue, newValue) {
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     if ((name === 'datetime' || name === 'format') && oldValue !== newValue) this.update(false);
   }
 
-  set textContent(value) {
+  set textContent(value: string) {
     if (this.contentSpan) this.contentSpan.textContent = value;
   }
-  get textContent() {
+  get textContent(): string {
     return this.contentSpan?.textContent;
   }
 });

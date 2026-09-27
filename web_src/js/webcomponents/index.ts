@@ -1,4 +1,4 @@
-import './relative-time.js';
+import './relative-time.ts';
 import './origin-url.js';
 import './overflow-menu.js';
 import './absolute-date.js';

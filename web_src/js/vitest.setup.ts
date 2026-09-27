@@ -5,9 +5,14 @@ $.fn.dropdown = () => undefined;
 window.__webpack_public_path__ = '';
 
 window.config = {
-  pageData: {},
+  pageData: {
+    PLURALSTRINGS_LANG: {},
+    PLURAL_RULE_LANG: 0,
+    DATETIMESTRINGS: {},
+  },
   i18n: {},
   customEmojis: new Set(['forgejo', 'frogejo', 'blobnom']),
+  appUrl: '',
   appSubUrl: '',
   assetUrlPrefix: '/assets',
   mentionValues: [

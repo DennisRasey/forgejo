@@ -104,7 +104,7 @@ export default {
       fileURLToPath(new URL('web_src/css/index.css', import.meta.url)),
     ],
     webcomponents: [
-      fileURLToPath(new URL('web_src/js/webcomponents/index.js', import.meta.url)),
+      fileURLToPath(new URL('web_src/js/webcomponents/index.ts', import.meta.url)),
     ],
     forgejoswagger: [ // Forgejo swagger is OpenAPI 3.0.0 and has specific parameters
       fileURLToPath(new URL('web_src/js/standalone/forgejo-swagger.js', import.meta.url)),

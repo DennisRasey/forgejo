@@ -1,4 +1,5 @@
-import {DoUpdateRelativeTime, HALF_MINUTE, ONE_MINUTE, ONE_HOUR, ONE_DAY} from './relative-time.js';
+import {expect, test} from 'vitest';
+import {DoUpdateRelativeTime, HALF_MINUTE, ONE_MINUTE, ONE_HOUR, ONE_DAY} from './relative-time.ts';
 
 test('CalculateRelativeTimes', () => {
   window.config.pageData.PLURAL_RULE_LANG = 0;
