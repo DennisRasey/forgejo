@@ -406,10 +406,7 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==`)
 			AddBasicAuth(user.Name)
 		resp := MakeRequest(t, req, http.StatusOK)
 
-		b, _ := base64.StdEncoding.DecodeString(`eJxi4Si1EndPzbWyCi5ITc5My0xOLMnMz2M8zMIRLeGpxGWsZ6RnzGbF5hqSyempxJWeWZKayGbN
-EBJqJQjWFZZaVJyZnxfN5qnEZahnoGcKkjTwVBJyB6lUKEhMzk5MTwULGngqcRaVJlWCONEMBp5K
-DGAWSKc7zFhPJamg0qRK99TcYphehZLU4hKInFhGSUlBsZW+PtgZepn5+iDxECRzDUDGcfh6hoA4
-gAAAAP//MS06Gw==`)
+		b, _ := base64.StdEncoding.DecodeString(`eJxi4Si1EndPzbWyCi5ITc5My0xOLMnMz2M8zMIRLeGpxGWsZ6RnzGbF5hqSyempxJWeWZKayGbNEBJqJQjWFZZaVJyZnxfN5qnEZahnoGcKkjTwVBJyB6lUKEhMzk5MTwULGngqcRaVJlWCONEMBp5KDGAWSKc7zFhPJamg0qRK99TcYphehZLU4hKQSk8lsYySkoJiK319sDP0MvP1QeIhSOYagBzC4esZwmbNEAIYADEtOhs=`)
 		assert.Equal(t, b, resp.Body.Bytes())
 
 		pvs, err := packages.GetVersionsByPackageType(db.DefaultContext, user.ID, packages.TypeRubyGems)
@@ -429,11 +426,11 @@ gAAAAP//MS06Gw==`)
 			assert.Equal(t, expectedContent, resp.Body.Bytes())
 		}
 
-		b, _ := base64.StdEncoding.DecodeString(`H4sICAAAAAAA/3NwZWNzLjQuOABi4Yhmi+bwVOJKzyxJTWSzYnMNCbUSdE/NtbIKSy0qzszPi2bzVOIy1DPQM2WzZgjxVOIsKk2qBDEBAQAA///xOEYKOwAAAA==`)
+		b, _ := base64.StdEncoding.DecodeString(`H4sICAAAAAAA/3NwZWNzLjQuOAAAOwDE/wQIWwZbCEkiCmdpdGVhBjoGRVRVOhFHZW06OlZlcnNpb25bBkkiCjEuMC41BjsAVEkiCXJ1YnkGOwBUAwDxOEYKOwAAAA==`)
 		enumeratePackages(t, "specs.4.8.gz", b)
-		b, _ = base64.StdEncoding.DecodeString(`H4sICAAAAAAA/2xhdGVzdF9zcGVjcy40LjgAYuGIZovm8FTiSs8sSU1ks2JzDQm1EnRPzbWyCkstKs7Mz4tm81TiMtQz0DNls2YI8VTiLCpNqgQxAQEAAP//8ThGCjsAAAA=`)
+		b, _ = base64.StdEncoding.DecodeString(`H4sICAAAAAAA/2xhdGVzdF9zcGVjcy40LjgAADsAxP8ECFsGWwhJIgpnaXRlYQY6BkVUVToRR2VtOjpWZXJzaW9uWwZJIgoxLjAuNQY7AFRJIglydWJ5BjsAVAMA8ThGCjsAAAA=`)
 		enumeratePackages(t, "latest_specs.4.8.gz", b)
-		b, _ = base64.StdEncoding.DecodeString(`H4sICAAAAAAA/3ByZXJlbGVhc2Vfc3BlY3MuNC44AGLhiGYABAAA//9snXr5BAAAAA==`)
+		b, _ = base64.StdEncoding.DecodeString(`H4sICAAAAAAA/3ByZXJlbGVhc2Vfc3BlY3MuNC44AAAEAPv/BAhbAAMAbJ16+QQAAAA=`)
 		enumeratePackages(t, "prerelease_specs.4.8.gz", b)
 	})
 

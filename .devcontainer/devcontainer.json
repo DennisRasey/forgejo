@@ -1,6 +1,6 @@
 {
   "name": "forgejo-dev",
-  "image": "mcr.microsoft.com/devcontainers/go:1.26-trixie",
+  "image": "mcr.microsoft.com/devcontainers/go:1.27-trixie",
   "features": {
     // installs nodejs into container
     "ghcr.io/devcontainers/features/node:1": {

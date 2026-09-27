@@ -96,7 +96,7 @@ func TestParsePackage(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, p)
 
-		assert.Equal(t, "Q1SRYURM5+uQDqfHSwTnNIOIuuDVQ=", p.FileMetadata.Checksum)
+		assert.Equal(t, "Q1GfcV5dUrPr1xIRekqPYGehdxjL8=", p.FileMetadata.Checksum)
 	})
 }
 

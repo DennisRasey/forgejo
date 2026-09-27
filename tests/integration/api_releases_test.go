@@ -490,7 +490,7 @@ func TestAPIReleaseUploadAsset(t *testing.T) {
 		DecodeJSON(t, resp, &attachment)
 
 		assert.Equal(t, filename, attachment.Name)
-		assert.EqualValues(t, 104, attachment.Size)
+		assert.EqualValues(t, 101, attachment.Size)
 
 		req = NewRequestWithBody(t, http.MethodPost, assetURL+"?name=test-asset", bytes.NewReader(body.Bytes())).
 			AddTokenAuth(token).
@@ -501,7 +501,7 @@ func TestAPIReleaseUploadAsset(t *testing.T) {
 		DecodeJSON(t, resp, &attachment2)
 
 		assert.Equal(t, "test-asset", attachment2.Name)
-		assert.EqualValues(t, 104, attachment2.Size)
+		assert.EqualValues(t, 101, attachment2.Size)
 	})
 
 	t.Run("application/octet-stream", func(t *testing.T) {
@@ -519,7 +519,7 @@ func TestAPIReleaseUploadAsset(t *testing.T) {
 		DecodeJSON(t, resp, &attachment)
 
 		assert.Equal(t, "stream.bin", attachment.Name)
-		assert.EqualValues(t, 104, attachment.Size)
+		assert.EqualValues(t, 101, attachment.Size)
 		assert.Equal(t, "attachment", attachment.Type)
 	})
 }

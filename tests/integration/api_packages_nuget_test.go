@@ -378,7 +378,7 @@ AAAjQmxvYgAAAGm7ENm9SGxMtAFVvPUsPJTF6PbtAAAAAFcVogEJAAAAAQAAAA==`)
 
 					pb, err := packages.GetBlobByID(db.DefaultContext, pf.BlobID)
 					require.NoError(t, err)
-					assert.Equal(t, int64(616), pb.Size)
+					assert.Equal(t, int64(618), pb.Size)
 				case fmt.Sprintf("%s.nuspec", packageName):
 					assert.False(t, pf.IsLead)
 
