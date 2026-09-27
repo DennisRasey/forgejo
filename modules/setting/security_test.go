@@ -285,3 +285,97 @@ func TestLoadVerificationKeyCfg(t *testing.T) {
 		})
 	}
 }
+
+// XXX avoid config being changed to create secret, could use
+// volatileConfigProvider after #14403 merge
+var defSecret = "X_SECRET = ForgejoForgejoForgejoForgejoForgejoForgejo_\n"
+
+// error tests
+var testCKCerr = []struct {
+	name      string
+	cfgline   string
+	complaint string
+	checks    []checkKeyCfg
+}{
+	// onlyAsymmetric()
+	{
+		name:      "Asym_Sign_SymAlg",
+		cfgline:   defSecret + "X_SIGNING_ALGORITHM = HS256",
+		complaint: "[foo] Unexpected algorithm: X_SIGNING_ALGORITHM = HS256, needs to be one of [RS256 RS384 RS512 ES256 ES384 ES512 EdDSA]",
+		checks:    []checkKeyCfg{onlyAsymmetric()},
+	},
+	{
+		name:      "Asym_Sign_SECRET",
+		cfgline:   defSecret + "X_SECRET = Affe",
+		complaint: "[foo] Invalid config key: X_SECRET - must be removed",
+		checks:    []checkKeyCfg{onlyAsymmetric()},
+	},
+	{
+		name:      "Asym_Sign_SECRET_URI",
+		cfgline:   defSecret + "X_SECRET_URI = file:/foo/bar",
+		complaint: "[foo] Invalid config key: X_SECRET_URI - must be removed",
+		checks:    []checkKeyCfg{onlyAsymmetric()},
+	},
+	{
+		name:      "Asym_Validate_SymAlg",
+		cfgline:   "X_SIGNING_ALGORITHM = RS256\nX_KEYS_ACCEPTED = RS256:file:foo HS256:file:Bazz",
+		complaint: "[foo] Unexpected algorithm: X_KEYS_ACCEPTED = HS256, needs to be one of [RS256 RS384 RS512 ES256 ES384 ES512 EdDSA]",
+		checks:    []checkKeyCfg{onlyAsymmetric()},
+	},
+
+	// onlySymmetric()
+	{
+		name:      "Sym_Sign_AsymAlg",
+		cfgline:   defSecret + "X_SIGNING_ALGORITHM = RS256",
+		complaint: "[foo] Unexpected algorithm: X_SIGNING_ALGORITHM = RS256, needs to be one of [HS256 HS384 HS512]",
+		checks:    []checkKeyCfg{onlySymmetric()},
+	},
+	{
+		name:      "Sym_Sign_SIGNING_PRIVATE_KEY_FILE",
+		cfgline:   defSecret + "X_SIGNING_PRIVATE_KEY_FILE = file:foo",
+		complaint: "[foo] Invalid config key: X_SIGNING_PRIVATE_KEY_FILE - must be removed",
+		checks:    []checkKeyCfg{onlySymmetric()},
+	},
+	{
+		name:      "Sym_Validate_AsymAlg",
+		cfgline:   defSecret + "X_KEYS_ACCEPTED = RS256:file:foo HS256:file:Bazz",
+		complaint: "[foo] Unexpected algorithm: X_KEYS_ACCEPTED = RS256, needs to be one of [HS256 HS384 HS512]",
+		checks:    []checkKeyCfg{onlySymmetric()},
+	},
+
+	// onlyHS256()
+	{
+		name:      "HS256_Sign_OtherAlg",
+		cfgline:   defSecret + "X_SIGNING_ALGORITHM = HS384",
+		complaint: "[foo] Unexpected algorithm: X_SIGNING_ALGORITHM = HS384, needs to be one of [HS256]",
+		checks:    []checkKeyCfg{onlyHS256()},
+	},
+	{
+		name:      "HS256_Sign_SIGNING_PRIVATE_KEY_FILE",
+		cfgline:   defSecret + "X_SIGNING_PRIVATE_KEY_FILE = file:foo",
+		complaint: "[foo] Invalid config key: X_SIGNING_PRIVATE_KEY_FILE - must be removed",
+		checks:    []checkKeyCfg{onlyHS256()},
+	},
+	{
+		name:      "HS256_Validate_AsymAlg",
+		cfgline:   defSecret + "X_KEYS_ACCEPTED = ES384:file:foo HS256:file:Bazz",
+		complaint: "[foo] Unexpected algorithm: X_KEYS_ACCEPTED = ES384, needs to be one of [HS256]",
+		checks:    []checkKeyCfg{onlyHS256()},
+	},
+}
+
+func TestCheckKeyCfgErr(t *testing.T) {
+	cfgSec := "foo"
+	cfgBase := fmt.Sprintf("[%s]\n", cfgSec)
+
+	for _, spec := range testCKCerr {
+		t.Run(spec.name, func(t *testing.T) {
+			cfg, err := NewConfigProviderFromData(cfgBase + spec.cfgline)
+			require.NoError(t, err)
+			assert.NotNil(t, cfg)
+			_, err = loadKeyCfg(cfg, cfgSec, "X_", "HS256", "KeyFile", spec.checks...)
+			require.Error(t, err)
+			require.ErrorContains(t, err, spec.complaint)
+		})
+	}
+}

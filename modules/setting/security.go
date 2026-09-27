@@ -174,31 +174,32 @@ func loadAsymmetricSigningKeyPath(sec ConfigSection, pfx, defaultFile string) *s
 }
 
 type (
-	checkFunc   func(rootCfg ConfigProvider, cfgSection, pfx string) error
+	checkFunc func(rootCfg ConfigProvider, cfgSection, pfx string) error
+	checkSpec struct {
+		algCheck      func(algorithm string) bool
+		validAlgs     *[]string
+		forbiddenCfgs []string
+	}
 	checkKeyCfg struct {
 		signing      checkFunc
 		verification checkFunc
 	}
 )
 
-func checkSigningOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+func checkSigningSpec(rootCfg ConfigProvider, cfgSection, pfx string, cspec checkSpec) error {
 	sec := rootCfg.Section(cfgSection)
 	cfgAlg := pfx + "SIGNING_ALGORITHM"
 
 	if sec.HasKey(cfgAlg) {
 		alg := sec.Key(cfgAlg).String()
-		if !jwtx.IsValidAsymmetricAlgorithm(alg) {
+		if !cspec.algCheck(alg) {
 			return fmt.Errorf("Unexpected algorithm: %s = %s, needs to be one of %v",
-				cfgAlg, alg, jwtx.ValidAsymmetricAlgorithms)
+				cfgAlg, alg, *cspec.validAlgs)
 		}
 	}
 
-	noCfg := []string{
-		pfx + "SECRET_URI",
-		pfx + "SECRET",
-	}
-
-	for _, cfg := range noCfg {
+	for _, cfg := range cspec.forbiddenCfgs {
+		cfg = pfx + cfg
 		if sec.HasKey(cfg) {
 			return fmt.Errorf("Invalid config key: %s - must be removed", cfg)
 		}
@@ -207,7 +208,7 @@ func checkSigningOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx string) 
 	return nil
 }
 
-func checkValidationOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+func checkValidationSpec(rootCfg ConfigProvider, cfgSection, pfx string, cspec checkSpec) error {
 	sec := rootCfg.Section(cfgSection)
 	cfg := pfx + "KEYS_ACCEPTED"
 
@@ -222,18 +223,83 @@ func checkValidationOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx strin
 			continue
 		}
 
-		if !jwtx.IsValidAsymmetricAlgorithm(algo) {
+		if !cspec.algCheck(algo) {
 			return fmt.Errorf("Unexpected algorithm: %s = %s, needs to be one of %v",
-				cfg, algo, jwtx.ValidAsymmetricAlgorithms)
+				cfg, algo, *cspec.validAlgs)
 		}
 	}
 	return nil
+}
+
+////////////////
+// onlyAsymmetric(): Allow only asymmetric algorithms and their config
+
+var specAsymmetric = checkSpec{
+	jwtx.IsValidAsymmetricAlgorithm,
+	&jwtx.ValidAsymmetricAlgorithms,
+	[]string{"SECRET_URI", "SECRET"},
+}
+
+func checkSigningOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	return checkSigningSpec(rootCfg, cfgSection, pfx, specAsymmetric)
+}
+
+func checkValidationOnlyAsymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	return checkValidationSpec(rootCfg, cfgSection, pfx, specAsymmetric)
 }
 
 func onlyAsymmetric() checkKeyCfg {
 	return checkKeyCfg{
 		signing:      checkSigningOnlyAsymmetric,
 		verification: checkValidationOnlyAsymmetric,
+	}
+}
+
+////////////////
+// onlySymmetric(): Allow only symmetric algorithms and their config
+
+var specSymmetric = checkSpec{
+	jwtx.IsValidSymmetricAlgorithm,
+	&jwtx.ValidSymmetricAlgorighms,
+	[]string{"SIGNING_PRIVATE_KEY_FILE"},
+}
+
+func checkSigningOnlySymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	return checkSigningSpec(rootCfg, cfgSection, pfx, specSymmetric)
+}
+
+func checkValidationOnlySymmetric(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	return checkValidationSpec(rootCfg, cfgSection, pfx, specSymmetric)
+}
+
+func onlySymmetric() checkKeyCfg {
+	return checkKeyCfg{
+		signing:      checkSigningOnlySymmetric,
+		verification: checkValidationOnlySymmetric,
+	}
+}
+
+////////////////
+// onlyHS256(): Allow only HS256
+
+var specHS256 = checkSpec{
+	func(alg string) bool { return (alg == "HS256") },
+	&[]string{"HS256"},
+	[]string{"SIGNING_PRIVATE_KEY_FILE"},
+}
+
+func checkSigningOnlyHS256(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	return checkSigningSpec(rootCfg, cfgSection, pfx, specHS256)
+}
+
+func checkValidationOnlyHS256(rootCfg ConfigProvider, cfgSection, pfx string) error {
+	return checkValidationSpec(rootCfg, cfgSection, pfx, specHS256)
+}
+
+func onlyHS256() checkKeyCfg {
+	return checkKeyCfg{
+		signing:      checkSigningOnlyHS256,
+		verification: checkValidationOnlyHS256,
 	}
 }
 
