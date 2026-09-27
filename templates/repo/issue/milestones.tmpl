@@ -37,25 +37,25 @@
 								{{ctx.Locale.PrettyNumber .NumOpenIssues}}&nbsp;{{ctx.Locale.Tr "repo.issues.open_title"}}
 							</div>
 							<div class="flex-text-block">
-								{{svg "octicon-check" 14}}
+								{{svg "octicon-issue-closed" 14}}
 								{{ctx.Locale.PrettyNumber .NumClosedIssues}}&nbsp;{{ctx.Locale.Tr "repo.issues.closed_title"}}
 							</div>
 							{{if .TotalTrackedTime}}
 								<div class="flex-text-block">
-									{{svg "octicon-clock"}}
+									{{svg "octicon-clock" 14}}
 									{{.TotalTrackedTime|Sec2Time}}
 								</div>
 							{{end}}
 							{{if .UpdatedUnix}}
 								<div class="flex-text-block">
-									{{svg "octicon-clock"}}
+									{{svg "octicon-history" 14}}
 									{{ctx.Locale.Tr "repo.milestones.update_ago" (DateUtils.TimeSince .UpdatedUnix)}}
 								</div>
 							{{end}}
 							<div class="flex-text-block">
 								{{if .IsClosed}}
 									{{$closedDate:= DateUtils.TimeSince .ClosedDateUnix}}
-									{{svg "octicon-clock" 14}}
+									{{svg "octicon-calendar" 14}}
 									{{ctx.Locale.Tr "repo.milestones.closed" $closedDate}}
 								{{else}}
 									{{if .DeadlineString}}
