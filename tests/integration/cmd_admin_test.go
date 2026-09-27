@@ -6,6 +6,7 @@ package integration
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"testing"
 
 	auth_model "forgejo.org/models/auth"
@@ -17,34 +18,40 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 )
 
 func Test_Cmd_AdminUser(t *testing.T) {
 	onApplicationRun(t, func(*testing.T, *url.URL) {
 		for i, testCase := range []struct {
-			name               string
-			options            []string
-			mustChangePassword bool
+			name                     string
+			options                  []string
+			mustChangePassword       bool
+			mustChangePasswordUpdate bool
 		}{
 			{
-				name:               "default",
-				options:            []string{},
-				mustChangePassword: true,
+				name:                     "default",
+				options:                  []string{},
+				mustChangePassword:       true,
+				mustChangePasswordUpdate: false,
 			},
 			{
-				name:               "--must-change-password=false",
-				options:            []string{"--must-change-password=false"},
-				mustChangePassword: false,
+				name:                     "--must-change-password=false",
+				options:                  []string{"--must-change-password=false"},
+				mustChangePassword:       false,
+				mustChangePasswordUpdate: false,
 			},
 			{
-				name:               "--must-change-password=true",
-				options:            []string{"--must-change-password=true"},
-				mustChangePassword: true,
+				name:                     "--must-change-password=true",
+				options:                  []string{"--must-change-password=true"},
+				mustChangePassword:       true,
+				mustChangePasswordUpdate: true,
 			},
 			{
-				name:               "--must-change-password",
-				options:            []string{"--must-change-password"},
-				mustChangePassword: true,
+				name:                     "--must-change-password",
+				options:                  []string{"--must-change-password"},
+				mustChangePassword:       true,
+				mustChangePasswordUpdate: true,
 			},
 		} {
 			t.Run(testCase.name, func(t *testing.T) {
@@ -65,7 +72,7 @@ func Test_Cmd_AdminUser(t *testing.T) {
 				require.NoError(t, err)
 				assert.Contains(t, output, "has been successfully updated")
 				user = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: name})
-				assert.Equal(t, testCase.mustChangePassword, user.MustChangePassword)
+				assert.Equal(t, testCase.mustChangePasswordUpdate, user.MustChangePassword)
 
 				_, err = runMainApp("admin", "user", "delete", "--username", name)
 				require.NoError(t, err)
@@ -186,5 +193,56 @@ func Test_Cmd_AdminUserResetMFA(t *testing.T) {
 
 		_, err = runMainApp("admin", "user", "delete", "--username", name)
 		require.NoError(t, err)
+	})
+}
+
+func Test_Cmd_AdminUserStdin(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, _ *url.URL) {
+		defer tests.PrintCurrentTest(t)()
+		require.NoError(t, unittest.PrepareTestDatabase())
+
+		rIn, wIn, err := os.Pipe()
+		require.NoError(t, err)
+
+		cases := []struct {
+			stdin   string
+			changes bool
+		}{
+			{
+				stdin:   "password3\npassword3\n",
+				changes: true,
+			},
+			{
+				stdin:   "password3\nhunter2\n",
+				changes: false,
+			},
+		}
+
+		for _, c := range cases {
+			before := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 44})
+			assert.False(t, before.MustChangePassword)
+
+			var group errgroup.Group
+			group.Go(func() error {
+				_, err := tests.RunMainAppWithStdin(rIn, "admin", []string{"user", "change-password", "-u", "user44"}...)
+				return err
+			})
+
+			_, err = wIn.Write([]byte(c.stdin))
+			require.NoError(t, err)
+
+			cmdErr := group.Wait()
+
+			after := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 44})
+			assert.False(t, after.MustChangePassword)
+
+			if c.changes {
+				require.NoError(t, cmdErr)
+				assert.NotEqual(t, before.Passwd, after.Passwd)
+			} else {
+				require.Error(t, cmdErr)
+				assert.Equal(t, before.Passwd, after.Passwd)
+			}
+		}
 	})
 }

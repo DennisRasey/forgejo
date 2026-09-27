@@ -4,17 +4,21 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 
 	user_model "forgejo.org/models/user"
-	"forgejo.org/modules/auth/password"
+	auth_password "forgejo.org/modules/auth/password"
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
 	user_service "forgejo.org/services/user"
 
 	"github.com/urfave/cli/v3"
+	"golang.org/x/term"
 )
 
 func microcmdUserChangePassword() *cli.Command {
@@ -39,14 +43,26 @@ func microcmdUserChangePassword() *cli.Command {
 			&cli.BoolFlag{
 				Name:  "must-change-password",
 				Usage: "User must change password",
-				Value: true,
+				Value: false,
 			},
 		},
 	}
 }
 
+func readPassword(optReader optional.Option[*bufio.Reader]) (string, error) {
+	if !optReader.Has() {
+		pass, err := term.ReadPassword(int(os.Stdin.Fd()))
+		return string(pass), err
+	}
+
+	_, reader := optReader.Get()
+	rawPass, err := reader.ReadString('\n')
+	pass := strings.TrimSuffix(rawPass, "\n")
+	return pass, err
+}
+
 func runChangePassword(ctx context.Context, c *cli.Command) error {
-	if err := argsSet(c, "username", "password"); err != nil {
+	if err := argsSet(c, "username"); err != nil {
 		return err
 	}
 
@@ -62,17 +78,46 @@ func runChangePassword(ctx context.Context, c *cli.Command) error {
 		return err
 	}
 
+	password := c.String("password")
+	if password == "" {
+		var optReader optional.Option[*bufio.Reader]
+
+		// Use a buf reader for stdin if it isn't a normal terminal, for example to
+		// allow reading passwords from stdin.
+		if !term.IsTerminal(int(os.Stdin.Fd())) {
+			optReader = optional.Some(bufio.NewReader(os.Stdin))
+		}
+
+		fmt.Print("Enter new password: ")
+		password, err = readPassword(optReader)
+		fmt.Println()
+		if err != nil {
+			return err
+		}
+
+		fmt.Print("Confirm new password: ")
+		confirm, err := readPassword(optReader)
+		fmt.Println()
+		if err != nil {
+			return err
+		}
+
+		if password != confirm {
+			return errors.New("Passwords do not match")
+		}
+	}
+
 	opts := &user_service.UpdateAuthOptions{
-		Password:           optional.Some(c.String("password")),
+		Password:           optional.Some(password),
 		MustChangePassword: optional.Some(c.Bool("must-change-password")),
 	}
 	if err := user_service.UpdateAuth(ctx, user, opts); err != nil {
 		switch {
-		case errors.Is(err, password.ErrMinLength):
+		case errors.Is(err, auth_password.ErrMinLength):
 			return fmt.Errorf("password is not long enough, needs to be at least %d characters", setting.MinPasswordLength)
-		case errors.Is(err, password.ErrComplexity):
+		case errors.Is(err, auth_password.ErrComplexity):
 			return errors.New("password does not meet complexity requirements")
-		case errors.Is(err, password.ErrIsPwned):
+		case errors.Is(err, auth_password.ErrIsPwned):
 			return errors.New("the password is in a list of stolen passwords previously exposed in public data breaches, please try again with a different password, to see more details: https://haveibeenpwned.com/Passwords")
 		default:
 			return err
