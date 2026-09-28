@@ -202,7 +202,7 @@ func GetTaskByJobAttempt(ctx context.Context, jobID, attempt int64) (*ActionTask
 }
 
 func GetRunningTaskByToken(ctx context.Context, token string) (*ActionTask, error) {
-	errNotExist := fmt.Errorf("task with token %q: %w", token, util.ErrNotExist)
+	errNotExist := fmt.Errorf("task with the provided token: %w", util.ErrNotExist)
 	if token == "" {
 		return nil, errNotExist
 	}

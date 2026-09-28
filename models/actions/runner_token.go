@@ -53,7 +53,7 @@ func GetRunnerToken(ctx context.Context, token string) (*ActionRunnerToken, erro
 	if err != nil {
 		return nil, err
 	} else if !has {
-		return nil, fmt.Errorf("runner token %q: %w", token, util.ErrNotExist)
+		return nil, fmt.Errorf("runner token: %w", util.ErrNotExist)
 	}
 	return &runnerToken, nil
 }
