@@ -13,8 +13,6 @@ import (
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/markup"
-	"forgejo.org/modules/typesniffer"
-	"forgejo.org/modules/util"
 	"forgejo.org/services/context"
 )
 
@@ -30,25 +28,18 @@ func RenderFile(ctx *context.Context) {
 		return
 	}
 
-	dataRc, err := blob.DataAsync()
+	buf, dataRc, fInfo, err := getFileReader(ctx, ctx.Repo.Repository.ID, blob)
 	if err != nil {
-		ctx.ServerError("DataAsync", err)
+		ctx.ServerError("getFileReader", err)
 		return
 	}
 	defer dataRc.Close()
-
-	buf := make([]byte, 1024)
-	n, _ := util.ReadAtMost(dataRc, buf)
-	buf = buf[:n]
-
-	st := typesniffer.DetectContentType(buf, blob.Name())
-	isTextFile := st.IsText()
 
 	rd := charset.ToUTF8WithFallbackReader(io.MultiReader(bytes.NewReader(buf), dataRc), charset.ConvertOpts{})
 	ctx.Resp.Header().Add("Content-Security-Policy", "frame-src 'self'; sandbox allow-scripts")
 
 	if markupType := markup.Type(blob.Name()); markupType == "" {
-		if isTextFile {
+		if fInfo.isTextFile {
 			_, _ = io.Copy(ctx.Resp, rd)
 		} else {
 			http.Error(ctx.Resp, "Unsupported file type render", http.StatusInternalServerError)

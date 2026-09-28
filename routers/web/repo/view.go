@@ -230,6 +230,11 @@ func getFileReader(ctx gocontext.Context, repoID int64, blob *git.Blob) ([]byte,
 	n, _ := util.ReadAtMost(dataRc, buf)
 	buf = buf[:n]
 
+	// FIXME: For the /render/ endpoint and other places, if the LFS server is
+	// disabled, we should declare the content type to be merely text (as we'd be
+	// showing the pointer), otherwise the rendering is different depending on
+	// e.g. whether the LFS pointer file has the file extension of an image or a
+	// Markdown file.
 	st := typesniffer.DetectContentType(buf, blob.Name())
 	isTextFile := st.IsText()
 
