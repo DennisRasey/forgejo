@@ -92,7 +92,7 @@ func BlobsLessThan1024FromCatFileBatchCheck(catFileCheckReader *io.PipeReader, s
 			continue
 		}
 		size, _ := strconv.Atoi(fields[2])
-		if size > 1024 {
+		if size >= 1024 {
 			continue
 		}
 		toWrite := []byte(fields[0] + "\n")
