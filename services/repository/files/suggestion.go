@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	issues_model "forgejo.org/models/issues"
-	access_model "forgejo.org/models/perm/access"
 	quota_model "forgejo.org/models/quota"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
@@ -69,24 +68,11 @@ func ApplySuggestions(ctx context.Context, doer *user_model.User, pr *issues_mod
 	}
 
 	// The commit must land on the PR head branch, which for a fork lives in pr.HeadRepo.
-	if err := pr.LoadHeadRepo(ctx); err != nil {
+	if err := pull.CheckHeadBranchEditable(ctx, doer, pr); err != nil {
+		if errors.Is(err, pull.ErrHeadBranchNotEditable) {
+			return nil, ErrSuggestionNotApplicable
+		}
 		return nil, err
-	}
-	if err := pr.LoadIssue(ctx); err != nil {
-		return nil, err
-	}
-
-	if pr.HeadRepo == nil || pr.HasMerged || pr.Issue.IsClosed || pr.Flow == issues_model.PullRequestFlowAGit || !pr.HeadRepo.CanEnableEditor() {
-		return nil, ErrSuggestionNotApplicable
-	}
-
-	// Write permission is evaluated against the head repo (direct write, or maintainer edit on the PR).
-	headPerm, err := access_model.GetUserRepoPermission(ctx, pr.HeadRepo, doer)
-	if err != nil {
-		return nil, err
-	}
-	if !issues_model.CanMaintainerWriteToBranch(ctx, headPerm, pr.HeadBranch, doer, access_model.GetUserRepoPermission) {
-		return nil, util.ErrPermissionDenied
 	}
 
 	// The commit grows the head repo, so it must respect the head-repo owner's storage quota.

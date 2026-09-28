@@ -1188,14 +1188,12 @@ func viewPullFiles(ctx *context.Context, specifiedStartCommit, specifiedEndCommi
 
 	// determine if the user viewing the pull request can edit the head branch
 	if ctx.Doer != nil && pull.HeadRepo != nil && !pull.HasMerged {
-		headRepoPerm, err := access_model.GetUserRepoPermission(ctx, pull.HeadRepo, ctx.Doer)
+		editable, err := pull_service.CanEditHeadBranch(ctx, ctx.Doer, pull)
 		if err != nil {
-			ctx.ServerError("GetUserRepoPermission", err)
+			ctx.ServerError("CanEditHeadBranch", err)
 			return
 		}
-		ctx.Data["HeadBranchIsEditable"] = !issue.IsClosed && pull.HeadRepo.CanEnableEditor() &&
-			issues_model.CanMaintainerWriteToBranch(ctx, headRepoPerm, pull.HeadBranch, ctx.Doer, access_model.GetUserRepoPermission) &&
-			pull.Flow != issues_model.PullRequestFlowAGit
+		ctx.Data["HeadBranchIsEditable"] = editable
 		ctx.Data["SourceRepoLink"] = pull.HeadRepo.Link()
 		ctx.Data["HeadBranch"] = pull.HeadBranch
 	}

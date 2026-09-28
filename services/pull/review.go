@@ -116,10 +116,13 @@ func ValidateCodeCommentLineRange(extraLinesCount int64) error {
 	return nil
 }
 
-// ValidateCodeCommentSuggestions ensures a code comment carries at most one ```suggestion block
+// ErrMultipleSuggestions is returned when a code comment carries more than one suggestion block.
+var ErrMultipleSuggestions = errors.New("a review comment may contain at most one suggestion")
+
+// ValidateCodeCommentSuggestions ensures a code comment carries at most one suggestion block
 func ValidateCodeCommentSuggestions(content string) error {
 	if len(markdown.ExtractSuggestions(content)) > 1 {
-		return fmt.Errorf("a review comment may contain at most one suggestion")
+		return ErrMultipleSuggestions
 	}
 	return nil
 }

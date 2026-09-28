@@ -1871,7 +1871,10 @@ func ViewIssue(ctx *context.Context) {
 					return
 				}
 				// determine if the user viewing the pull request can edit the head branch (used to gate the "Apply suggestion" button)
-				ctx.Data["HeadBranchIsEditable"] = !pull.HasMerged && !issue.IsClosed && pull.HeadRepo.CanEnableEditor() && issues_model.CanMaintainerWriteToBranch(ctx, perm, pull.HeadBranch, ctx.Doer, access_model.GetUserRepoPermission) && pull.Flow != issues_model.PullRequestFlowAGit
+				if ctx.Data["HeadBranchIsEditable"], err = pull_service.CanEditHeadBranch(ctx, ctx.Doer, pull); err != nil {
+					ctx.ServerError("CanEditHeadBranch", err)
+					return
+				}
 				if perm.CanWrite(unit.TypeCode) {
 					// Check if branch is not protected
 					if pull.HeadBranch != pull.HeadRepo.DefaultBranch {
@@ -3343,7 +3346,11 @@ func UpdateCommentContent(ctx *context.Context) {
 	// a code comment may carry at most one suggestion
 	if comment.Type == issues_model.CommentTypeCode {
 		if err := pull_service.ValidateCodeCommentSuggestions(newContent); err != nil {
-			ctx.JSONError(err.Error())
+			if errors.Is(err, pull_service.ErrMultipleSuggestions) {
+				ctx.JSONError(ctx.Tr("repo.issues.review.one_suggestion_per_comment"))
+				return
+			}
+			ctx.ServerError("ValidateCodeCommentSuggestions", err)
 			return
 		}
 	}

@@ -7,6 +7,7 @@
 	"repo.issues.review.commit_batch_suggestions": "Commit suggestions",
 	"repo.issues.review.discard_batch_suggestions": "Discard",
 	"repo.issues.review.batch_only_on_files_tab": "Batching suggestions must be done from the files tab",
+	"repo.issues.review.one_suggestion_per_comment": "A review comment may contain at most one suggestion",
 	"home.welcome.no_activity": "No activity",
 	"home.welcome.activity_hint": "There is nothing in your feed yet. Your actions and activity from repositories that you watch will show up here.",
 	"home.explore_repos": "Explore repositories",

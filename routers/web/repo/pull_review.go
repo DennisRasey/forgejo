@@ -10,7 +10,6 @@ import (
 
 	"forgejo.org/models"
 	issues_model "forgejo.org/models/issues"
-	access_model "forgejo.org/models/perm/access"
 	pull_model "forgejo.org/models/pull"
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/modules/base"
@@ -100,7 +99,11 @@ func CreateCodeComment(ctx *context.Context) {
 	}
 
 	if err := pull_service.ValidateCodeCommentSuggestions(form.Content); err != nil {
-		ctx.Error(http.StatusBadRequest, err.Error())
+		if errors.Is(err, pull_service.ErrMultipleSuggestions) {
+			ctx.Error(http.StatusBadRequest, ctx.Locale.TrString("repo.issues.review.one_suggestion_per_comment"))
+			return
+		}
+		ctx.ServerError("ValidateCodeCommentSuggestions", err)
 		return
 	}
 
@@ -258,29 +261,13 @@ func renderConversation(ctx *context.Context, comment *issues_model.Comment, ori
 // headBranchIsEditable reports whether doer may edit the PR head branch; gates the
 // "Apply suggestion" button when code comments are re-rendered over AJAX.
 func headBranchIsEditable(ctx *context.Context, issue *issues_model.Issue) (bool, error) {
-	if ctx.Doer == nil {
-		return false, nil
-	}
 	if err := issue.LoadPullRequest(ctx); err != nil {
 		return false, err
 	}
-	pull := issue.PullRequest
-	if pull == nil || pull.HasMerged {
+	if issue.PullRequest == nil {
 		return false, nil
 	}
-	if err := pull.LoadHeadRepo(ctx); err != nil {
-		return false, err
-	}
-	if pull.HeadRepo == nil {
-		return false, nil
-	}
-	headRepoPerm, err := access_model.GetUserRepoPermission(ctx, pull.HeadRepo, ctx.Doer)
-	if err != nil {
-		return false, err
-	}
-	return !issue.IsClosed && pull.HeadRepo.CanEnableEditor() &&
-		issues_model.CanMaintainerWriteToBranch(ctx, headRepoPerm, pull.HeadBranch, ctx.Doer, access_model.GetUserRepoPermission) &&
-		pull.Flow != issues_model.PullRequestFlowAGit, nil
+	return pull_service.CanEditHeadBranch(ctx, ctx.Doer, issue.PullRequest)
 }
 
 // Maximum number of suggestions per apply request.

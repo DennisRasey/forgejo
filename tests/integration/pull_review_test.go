@@ -35,6 +35,7 @@ import (
 	"forgejo.org/modules/setting"
 	api "forgejo.org/modules/structs"
 	"forgejo.org/modules/test"
+	"forgejo.org/modules/translation"
 	issue_service "forgejo.org/services/issue"
 	"forgejo.org/services/mailer"
 	pull_service "forgejo.org/services/pull"
@@ -2942,9 +2943,32 @@ func TestPullReviewSuggestionRender(t *testing.T) {
 					"content":           content,
 					"single_review":     "true",
 				})
-			tester.session.MakeRequest(t, req, http.StatusBadRequest)
+			resp := tester.session.MakeRequest(t, req, http.StatusBadRequest)
+			assert.Contains(t, resp.Body.String(), translation.NewLocale("en-US").TrString("repo.issues.review.one_suggestion_per_comment"))
 			// the comment must not have been created
 			unittest.AssertNotExistsBean(t, &issues_model.Comment{Content: content})
+		})
+
+		t.Run("rejects editing a code comment to add a second suggestion (web)", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			tester := newSuggestionTester(t)
+			tester.changeFile("file1.md", strings.Replace(tester.fileContent, "Line 50\n", "Line 50--modified\n", 1))
+			tester.createPR()
+
+			single := "```suggestion\nLine 50--one\n```"
+			comment := tester.suggestionComment("file1.md", "proposed", 50, 0, single)
+
+			req := NewRequestWithValues(t, "POST",
+				fmt.Sprintf("/%s/%s/comments/%d", tester.repo.OwnerName, tester.repo.Name, comment.ID),
+				map[string]string{
+					"content":         single + "\n\n```suggestion\nLine 50--two\n```",
+					"content_version": fmt.Sprintf("%d", comment.ContentVersion),
+				})
+			resp := tester.session.MakeRequest(t, req, http.StatusBadRequest)
+			assert.Contains(t, resp.Body.String(), translation.NewLocale("en-US").TrString("repo.issues.review.one_suggestion_per_comment"))
+
+			// the content must be unchanged (still a single suggestion)
+			unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID, Content: single})
 		})
 
 		t.Run("rejects editing a code comment to add a second suggestion (API)", func(t *testing.T) {
