@@ -747,3 +747,16 @@ func GetUserRepositories(ctx context.Context, opts *SearchRepoOptions) (Reposito
 	repos := make(RepositoryList, 0, opts.PageSize)
 	return repos, count, db.SetSessionPagination(sess, opts).Find(&repos)
 }
+
+func makeTypeUnitConds(types []unit.Type) builder.Cond {
+	conds := make([]builder.Cond, len(types))
+	for i, t := range types {
+		conds[i] = builder.Eq{"`repo_unit`.type": t}
+	}
+	return builder.Or(conds...)
+}
+
+func JoinRepoType(b *builder.Builder, types ...unit.Type) *builder.Builder {
+	return b.Join("INNER", "`repo_unit`", "`repository`.id = `repo_unit`.repo_id").
+		And(makeTypeUnitConds(types))
+}

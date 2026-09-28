@@ -6,6 +6,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -358,5 +359,55 @@ func TestProtectedBranch(t *testing.T) {
 
 		// Verify it wasn't added.
 		unittest.AssertCount(t, &git_model.ProtectedBranch{RuleName: "master", RepoID: repo.ID}, 1)
+	})
+}
+
+func TestDashboardLists(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, giteaURL *url.URL) {
+		user := forgery.CreateUser(t, nil)
+		repo := forgery.CreateRepository(t, user, nil)
+		forgery.CreateIssue(t, user, repo, "test issue", "")
+		forgery.CreatePullRequest(t, user, repo, "test pull request", "")
+		forgery.CreateMilestone(t, repo, "test milestone", "")
+		session := loginUser(t, user.Name)
+
+		t.Run("no issues when issue unit disabled", func(t *testing.T) {
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeIssues)
+			defer forgery.EnableRepoUnits(t, repo, unit_model.TypeIssues)
+
+			req := NewRequest(t, "GET", "/issues")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			element := htmlDoc.doc.Find("h3")
+			assert.NotNil(t, element)
+			assert.Equal(t, "No results", element.Text())
+		})
+
+		t.Run("no PRs when PR unit disabled", func(t *testing.T) {
+			forgery.DisableRepoUnits(t, repo, unit_model.TypePullRequests)
+			defer forgery.EnableRepoUnits(t, repo, unit_model.TypePullRequests)
+
+			req := NewRequest(t, "GET", "/pulls")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			element := htmlDoc.doc.Find("h3")
+			assert.NotNil(t, element)
+			assert.Equal(t, "No results", element.Text())
+		})
+
+		t.Run("no milestones with disabled issue, PR units", func(t *testing.T) {
+			forgery.DisableRepoUnits(t, repo, unit_model.TypeIssues, unit_model.TypePullRequests)
+			defer forgery.EnableRepoUnits(t, repo, unit_model.TypeIssues, unit_model.TypePullRequests)
+
+			req := NewRequest(t, "GET", "/milestones")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			element := htmlDoc.doc.Find(".milestones strong")
+			assert.NotNil(t, element)
+			assert.Equal(t, "0", element.Text())
+		})
 	})
 }
