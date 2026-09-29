@@ -289,13 +289,13 @@ func TestUpdateLabel(t *testing.T) {
 func TestDeleteLabel(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	label := unittest.AssertExistsAndLoadBean(t, &issues_model.Label{ID: 1})
-	require.NoError(t, issues_model.DeleteLabel(db.DefaultContext, label.RepoID, label.ID))
+	require.NoError(t, issues_model.DeleteLabelInRepo(db.DefaultContext, label.RepoID, label.ID))
 	unittest.AssertNotExistsBean(t, &issues_model.Label{ID: label.ID, RepoID: label.RepoID})
 
-	require.NoError(t, issues_model.DeleteLabel(db.DefaultContext, label.RepoID, label.ID))
+	require.NoError(t, issues_model.DeleteLabelInRepo(db.DefaultContext, label.RepoID, label.ID))
 	unittest.AssertNotExistsBean(t, &issues_model.Label{ID: label.ID})
 
-	require.NoError(t, issues_model.DeleteLabel(db.DefaultContext, unittest.NonexistentID, unittest.NonexistentID))
+	require.NoError(t, issues_model.DeleteLabelInRepo(db.DefaultContext, unittest.NonexistentID, unittest.NonexistentID))
 	unittest.CheckConsistencyFor(t, &issues_model.Label{}, &repo_model.Repository{})
 }
 
