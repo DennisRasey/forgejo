@@ -254,7 +254,7 @@ func DeleteLabel(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	if err := issues_model.DeleteLabel(ctx, ctx.Org().Organization.ID, ctx.ParamsInt64(":id")); err != nil {
+	if err := issues_model.DeleteLabelInOrg(ctx, ctx.Org().Organization.ID, ctx.ParamsInt64(":id")); err != nil {
 		ctx.Error(http.StatusInternalServerError, "DeleteLabel", err)
 		return
 	}
