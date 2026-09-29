@@ -5,7 +5,6 @@ package helper
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 
@@ -13,6 +12,7 @@ import (
 	"forgejo.org/modules/log"
 	"forgejo.org/modules/setting"
 	"forgejo.org/services/context"
+	packages_service "forgejo.org/services/packages"
 )
 
 // LogAndProcessError logs an error and calls a custom callback with the processed error message.
@@ -42,7 +42,7 @@ func LogAndProcessError(ctx *context.Context, status int, obj any, cb func(strin
 
 // ServePackageFile Serves the content of the package file
 // If the url is set it will redirect the request, otherwise the content is copied to the response.
-func ServePackageFile(ctx *context.Context, s io.ReadSeekCloser, u *url.URL, pf *packages_model.PackageFile, forceOpts ...*context.ServeHeaderOptions) {
+func ServePackageFile(ctx *context.Context, s packages_service.ReadSeekCloseSizer, u *url.URL, pf *packages_model.PackageFile, forceOpts ...*context.ServeHeaderOptions) {
 	var opts *context.ServeHeaderOptions
 	if len(forceOpts) > 0 {
 		opts = forceOpts[0]
@@ -60,5 +60,8 @@ func ServePackageFile(ctx *context.Context, s io.ReadSeekCloser, u *url.URL, pf 
 
 	defer s.Close()
 
+	if opts.ContentLength == nil {
+		opts.ContentLength = new(s.Size())
+	}
 	ctx.ServeContent(s, opts)
 }

@@ -67,6 +67,33 @@ type PackageFileCreationInfo struct {
 	OverwriteExisting bool
 }
 
+// ReadSeekCloseSizer is the interface that adds Size method to io.ReadSeekCloser.
+type ReadSeekCloseSizer interface {
+	io.ReadSeekCloser
+	Size() int64
+}
+
+type packageBlobStream struct {
+	obj storage.Object
+	pb  *packages_model.PackageBlob
+}
+
+func (s *packageBlobStream) Read(p []byte) (n int, err error) {
+	return s.obj.Read(p)
+}
+
+func (s *packageBlobStream) Seek(offset int64, whence int) (int64, error) {
+	return s.obj.Seek(offset, whence)
+}
+
+func (s *packageBlobStream) Close() error {
+	return s.obj.Close()
+}
+
+func (s *packageBlobStream) Size() int64 {
+	return s.pb.Size
+}
+
 // CreatePackageAndAddFile creates a package with a file. If the same package exists already, ErrDuplicatePackageVersion is returned
 func CreatePackageAndAddFile(ctx context.Context, pvci *PackageCreationInfo, pfci *PackageFileCreationInfo) (*packages_model.PackageVersion, *packages_model.PackageFile, error) {
 	return createPackageAndAddFile(ctx, pvci, pfci, false)
@@ -617,7 +644,7 @@ func DeletePackageFile(ctx context.Context, pf *packages_model.PackageFile) erro
 }
 
 // GetFileStreamByPackageNameAndVersion returns the content of the specific package file
-func GetFileStreamByPackageNameAndVersion(ctx context.Context, pvi *PackageInfo, pfi *PackageFileInfo) (io.ReadSeekCloser, *url.URL, *packages_model.PackageFile, error) {
+func GetFileStreamByPackageNameAndVersion(ctx context.Context, pvi *PackageInfo, pfi *PackageFileInfo) (ReadSeekCloseSizer, *url.URL, *packages_model.PackageFile, error) {
 	log.Trace("Getting package file stream: %v, %v, %s, %s, %s, %s", pvi.Owner.ID, pvi.PackageType, pvi.Name, pvi.Version, pfi.Filename, pfi.CompositeKey)
 
 	pv, err := packages_model.GetVersionByNameAndVersion(ctx, pvi.Owner.ID, pvi.PackageType, pvi.Name, pvi.Version)
@@ -633,7 +660,7 @@ func GetFileStreamByPackageNameAndVersion(ctx context.Context, pvi *PackageInfo,
 }
 
 // GetFileStreamByPackageVersion returns the content of the specific package file
-func GetFileStreamByPackageVersion(ctx context.Context, pv *packages_model.PackageVersion, pfi *PackageFileInfo) (io.ReadSeekCloser, *url.URL, *packages_model.PackageFile, error) {
+func GetFileStreamByPackageVersion(ctx context.Context, pv *packages_model.PackageVersion, pfi *PackageFileInfo) (ReadSeekCloseSizer, *url.URL, *packages_model.PackageFile, error) {
 	pf, err := packages_model.GetFileForVersionByName(ctx, pv.ID, pfi.Filename, pfi.CompositeKey)
 	if err != nil {
 		return nil, nil, nil, err
@@ -643,7 +670,7 @@ func GetFileStreamByPackageVersion(ctx context.Context, pv *packages_model.Packa
 }
 
 // GetPackageFileStream returns the content of the specific package file
-func GetPackageFileStream(ctx context.Context, pf *packages_model.PackageFile) (io.ReadSeekCloser, *url.URL, *packages_model.PackageFile, error) {
+func GetPackageFileStream(ctx context.Context, pf *packages_model.PackageFile) (ReadSeekCloseSizer, *url.URL, *packages_model.PackageFile, error) {
 	pb, err := packages_model.GetBlobByID(ctx, pf.BlobID)
 	if err != nil {
 		return nil, nil, nil, err
@@ -654,12 +681,13 @@ func GetPackageFileStream(ctx context.Context, pf *packages_model.PackageFile) (
 
 // GetPackageBlobStream returns the content of the specific package blob
 // If the storage supports direct serving and it's enabled, only the direct serving url is returned.
-func GetPackageBlobStream(ctx context.Context, pf *packages_model.PackageFile, pb *packages_model.PackageBlob, serveDirectReqParams url.Values) (io.ReadSeekCloser, *url.URL, *packages_model.PackageFile, error) {
+func GetPackageBlobStream(ctx context.Context, pf *packages_model.PackageFile, pb *packages_model.PackageBlob, serveDirectReqParams url.Values) (ReadSeekCloseSizer, *url.URL, *packages_model.PackageFile, error) {
 	key := packages_module.BlobHash256Key(pb.HashSHA256)
 
 	cs := packages_module.NewContentStore()
 
-	var s io.ReadSeekCloser
+	var obj storage.Object
+	var s ReadSeekCloseSizer
 	var u *url.URL
 	var err error
 
@@ -670,7 +698,11 @@ func GetPackageBlobStream(ctx context.Context, pf *packages_model.PackageFile, p
 		}
 	}
 	if u == nil {
-		s, err = cs.Get(key)
+		obj, err = cs.Get(key)
+		if err != nil {
+			return s, u, pf, err
+		}
+		s = &packageBlobStream{obj, pb}
 	}
 
 	if err == nil {
