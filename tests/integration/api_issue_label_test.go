@@ -172,6 +172,33 @@ func TestAPIRemoveIssueLabel(t *testing.T) {
 	unittest.AssertCount(t, &issues_model.IssueLabel{IssueID: issue.ID, LabelID: issueLabel.LabelID}, 0)
 }
 
+func TestAPIRemoveIssueLabelByID(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{RepoID: repo.ID})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+	issueLabel := unittest.AssertExistsAndLoadBean(t, &issues_model.IssueLabel{IssueID: issue.ID})
+	token := getUserToken(t, owner.LowerName, auth_model.AccessTokenScopeWriteIssue)
+
+	deleteURLWrongRepo := fmt.Sprintf("/api/v1/repos/user2/repo2/issues/1/labels/%d", issueLabel.LabelID)
+	req := NewRequest(t, "DELETE", deleteURLWrongRepo).AddTokenAuth(token)
+	req.Header.Add("Accept", "application/vnd.github+json")
+	resp := MakeRequest(t, req, http.StatusUnprocessableEntity)
+	assert.Contains(t, resp.Body.String(), "label does not exist")
+
+	deleteURL := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/labels/%d", owner.Name, repo.Name, issue.Index, issueLabel.LabelID)
+	req = NewRequest(t, "DELETE", deleteURL).AddTokenAuth(token)
+	req.Header.Add("Accept", "application/vnd.github+json") // allows reading the label while removing it from the issue
+	resp = MakeRequest(t, req, http.StatusOK)
+
+	var apiLabels []*api.Label
+	DecodeJSON(t, resp, &apiLabels)
+	require.Len(t, apiLabels, 1)
+	assert.EqualValues(t, 1, apiLabels[0].ID)
+	assert.Equal(t, "label1", apiLabels[0].Name)
+}
+
 func TestAPIRemoveIssueLabelByName(t *testing.T) {
 	defer unittest.OverrideFixtures("tests/integration/fixtures/TestAPIRemoveIssueLabelByName")()
 	defer tests.PrepareTestEnv(t)()
