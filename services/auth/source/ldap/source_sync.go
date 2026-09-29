@@ -191,7 +191,7 @@ func (source *Source) Sync(ctx context.Context, updateExisting bool) error {
 		// Synchronize LDAP groups with organization and team memberships
 		if source.GroupsEnabled && (source.GroupTeamMap != "" || source.GroupTeamMapRemoval) {
 			if err := source_service.SyncGroupsToTeamsCached(ctx,
-				usr, su.Groups, groupTeamMapping, source.GroupTeamMapRemoval,
+				usr, source.authSource.ID, su.Groups, groupTeamMapping, source.GroupTeamMapRemoval,
 				nil, false, orgCache, teamCache,
 			); err != nil {
 				log.Error("SyncGroupsToTeamsCached: %v", err)

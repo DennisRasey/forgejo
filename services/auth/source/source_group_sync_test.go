@@ -3,10 +3,13 @@ package source
 import (
 	"testing"
 
+	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
+	org_model "forgejo.org/models/organization"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/container"
+	"forgejo.org/modules/optional"
 	"forgejo.org/modules/test"
 
 	"github.com/stretchr/testify/assert"
@@ -434,4 +437,30 @@ func TestResolveMappedMemberships(t *testing.T) {
 			assert.Equal(t, test.wantRemove, gotRemove)
 		})
 	}
+}
+
+func TestSyncGroupsToTeams(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	unittest.AssertSuccessfulInsert(t, auth_model.Source{ID: 1, Name: "Keycloak"})
+	loginSourceID := int64(1)
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+	team := unittest.AssertExistsAndLoadBean(t, &org_model.Team{ID: 1})
+	org := unittest.AssertExistsAndLoadBean(t, &org_model.Organization{ID: team.OrgID})
+	sourceUserGroups := container.SetOf("some-group")
+	sourceGroupTeamMapping := map[string]map[string][]string{
+		"some-group": {org.Name: {team.Name}},
+	}
+	sourceGroupTeamRemoval := false
+
+	err := SyncGroupsToTeams(t.Context(), user, loginSourceID, sourceUserGroups, sourceGroupTeamMapping, sourceGroupTeamRemoval, nil, false)
+	require.NoError(t, err)
+
+	unittest.AssertExistsAndLoadBean(t, &org_model.TeamUser{
+		UID:                    user.ID,
+		TeamID:                 team.ID,
+		OrgID:                  org.ID,
+		Reason:                 org_model.MembershipReasonAddedByAuthProvider,
+		CreatedByLoginSourceID: optional.Some(loginSourceID),
+	})
 }

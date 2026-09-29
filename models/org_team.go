@@ -17,7 +17,9 @@ import (
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/log"
+	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
 	"xorm.io/builder"
@@ -370,14 +372,19 @@ func DeleteTeam(ctx context.Context, t *organization.Team) error {
 	return committer.Commit()
 }
 
-func AddTeamMember(ctx context.Context, team *organization.Team, userID int64) error {
-	_, err := InsertTeamMember(ctx, team, userID)
+func AddTeamMemberByCooptation(ctx context.Context, team *organization.Team, userID, inviterID int64) error {
+	_, err := InsertTeamMember(ctx, team, userID, organization.MembershipReasonAddedByUser, optional.Some(inviterID), optional.None[int64]())
+	return err
+}
+
+func AddTeamMemberByLoginSource(ctx context.Context, team *organization.Team, userID, loginSourceID int64) error {
+	_, err := InsertTeamMember(ctx, team, userID, organization.MembershipReasonAddedByAuthProvider, optional.None[int64](), optional.Some(loginSourceID))
 	return err
 }
 
 // AddTeamMember adds new membership of given team to given organization,
 // the user will have membership to given organization automatically when needed.
-func InsertTeamMember(ctx context.Context, team *organization.Team, userID int64) (*organization.TeamUser, error) {
+func InsertTeamMember(ctx context.Context, team *organization.Team, userID int64, reason organization.MembershipReason, inviterID, loginSourceID optional.Option[int64]) (*organization.TeamUser, error) {
 	isAlreadyMember, err := organization.IsTeamMember(ctx, team.OrgID, team.ID, userID)
 	if err != nil || isAlreadyMember {
 		return nil, err
@@ -388,9 +395,13 @@ func InsertTeamMember(ctx context.Context, team *organization.Team, userID int64
 	}
 
 	teamUser := &organization.TeamUser{
-		UID:    userID,
-		OrgID:  team.OrgID,
-		TeamID: team.ID,
+		UID:                    userID,
+		OrgID:                  team.OrgID,
+		TeamID:                 team.ID,
+		Reason:                 reason,
+		CreatedByUserID:        inviterID,
+		CreatedByLoginSourceID: loginSourceID,
+		CreatedUnix:            optional.Some(timeutil.TimeStampNow()),
 	}
 
 	err = db.WithTx(ctx, func(ctx context.Context) error {

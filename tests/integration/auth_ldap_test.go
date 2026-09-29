@@ -15,6 +15,7 @@ import (
 	"forgejo.org/models/organization"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/optional"
 	"forgejo.org/modules/translation"
 	"forgejo.org/services/auth"
 	"forgejo.org/services/auth/source/ldap"
@@ -429,6 +430,8 @@ func TestLDAPGroupTeamSyncAddMember(t *testing.T) {
 	require.NoError(t, err)
 	team, err := organization.GetTeam(db.DefaultContext, org.ID, "team11")
 	require.NoError(t, err)
+	loginSource := unittest.AssertExistsAndLoadBean(t, &auth_model.Source{Name: "ldap"})
+
 	auth.SyncExternalUsers(t.Context(), true)
 	for _, gitLDAPUser := range gitLDAPUsers {
 		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{
@@ -448,6 +451,8 @@ func TestLDAPGroupTeamSyncAddMember(t *testing.T) {
 			isMember, err := organization.IsTeamMember(db.DefaultContext, usersOrgs[0].ID, team.ID, user.ID)
 			require.NoError(t, err)
 			assert.True(t, isMember, "Membership should be added to the right team")
+			// check that the login source is marked as reason for the team membership
+			unittest.AssertExistsAndLoadBean(t, &organization.TeamUser{TeamID: team.ID, UID: user.ID, Reason: organization.MembershipReasonAddedByAuthProvider, CreatedByLoginSourceID: optional.Some(loginSource.ID)})
 			err = models.RemoveTeamMember(db.DefaultContext, team, user.ID)
 			require.NoError(t, err)
 			err = models.RemoveOrgUser(db.DefaultContext, usersOrgs[0].ID, user.ID)
@@ -480,7 +485,7 @@ func TestLDAPGroupTeamSyncRemoveMember(t *testing.T) {
 	})
 	err = organization.AddOrgUser(db.DefaultContext, org.ID, user.ID)
 	require.NoError(t, err)
-	err = models.AddTeamMember(db.DefaultContext, team, user.ID)
+	err = models.AddTeamMemberByCooptation(db.DefaultContext, team, user.ID, 1)
 	require.NoError(t, err)
 	isMember, err := organization.IsOrganizationMember(db.DefaultContext, org.ID, user.ID)
 	require.NoError(t, err)

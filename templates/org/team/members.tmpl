@@ -28,22 +28,23 @@
 				{{end}}
 				<div class="ui attached segment">
 					<div class="flex-list">
-						{{range .Team.Members}}
+						{{range $.Memberships}}
 							<div class="flex-item tw-items-center">
 								<div class="flex-item-leading">
-									<a href="{{.HomeLink}}">{{ctx.AvatarUtils.Avatar . 32}}</a>
+									<a href="{{.User.HomeLink}}">{{ctx.AvatarUtils.Avatar .User 32}}</a>
 								</div>
 								<div class="flex-item-main">
 									<div class="flex-item-title">
-										{{template "shared/user/name" .}}
+										{{template "shared/user/name" .User}}
 									</div>
+									{{template "org/team/membership_origin" .}}
 								</div>
 								<div class="flex-item-trailing">
 									{{if and $.IsOrganizationOwner (not (and ($.Team.IsOwnerTeam) (eq (len $.Team.Members) 1)))}}
 										<form>
 											<button class="ui danger button delete-button" data-modal-id="remove-team-member"
-												data-url="{{$.OrgLink}}/teams/{{$.Team.LowerName | PathEscape}}/action/remove" data-datauid="{{.ID}}"
-												data-name="{{.DisplayName}}"
+												data-url="{{$.OrgLink}}/teams/{{$.Team.LowerName | PathEscape}}/action/remove" data-datauid="{{.User.ID}}"
+												data-name="{{.User.DisplayName}}"
 												data-data-team-name="{{$.Team.Name}}">{{ctx.Locale.Tr "org.members.remove"}}</button>
 										</form>
 									{{end}}

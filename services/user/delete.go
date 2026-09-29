@@ -224,6 +224,17 @@ func deleteUser(ctx context.Context, u *user_model.User, purge bool) (err error)
 		return err
 	}
 
+	// ***** START: TeamUser ******
+	// Remove references to the deleted user in team membership provenance
+	if _, err := db.GetEngine(ctx).
+		Table("team_user").
+		Cols("created_by_user_id").
+		Update(organization.TeamUser{CreatedByUserID: optional.None[int64]()},
+			organization.TeamUser{CreatedByUserID: optional.Some(u.ID)}); err != nil {
+		return err
+	}
+	// ***** END: TeamUser *****
+
 	if _, err = db.DeleteByID[user_model.User](ctx, u.ID); err != nil {
 		return fmt.Errorf("delete: %w", err)
 	}

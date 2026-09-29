@@ -12,6 +12,7 @@ import (
 	"forgejo.org/models/perm"
 	unit_model "forgejo.org/models/unit"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/optional"
 
 	"github.com/stretchr/testify/require"
 )
@@ -65,7 +66,7 @@ func CreateTeam(t *testing.T, org *org_model.Organization, opts *CreateTeamOptio
 	require.NoError(t, db.Insert(t.Context(), &units))
 
 	for _, user := range opts.Members {
-		_, err := models.InsertTeamMember(t.Context(), team, user.ID)
+		_, err := models.InsertTeamMember(t.Context(), team, user.ID, org_model.MembershipReasonUnknown, optional.None[int64](), optional.None[int64]())
 		require.NoError(t, err)
 	}
 

@@ -509,7 +509,8 @@ func TestCreateOrganization(t *testing.T) {
 		&organization.Organization{Name: newOrgName, Type: user_model.UserTypeOrganization})
 	ownerTeam := unittest.AssertExistsAndLoadBean(t,
 		&organization.Team{Name: organization.OwnerTeamName, OrgID: org.ID})
-	unittest.AssertExistsAndLoadBean(t, &organization.TeamUser{UID: owner.ID, TeamID: ownerTeam.ID})
+	teamUser := unittest.AssertExistsAndLoadBean(t, &organization.TeamUser{UID: owner.ID, TeamID: ownerTeam.ID, Reason: organization.MembershipReasonOrgCreator})
+	assert.True(t, teamUser.CreatedUnix.Has())
 	unittest.CheckConsistencyFor(t, &user_model.User{}, &organization.Team{})
 }
 

@@ -38,7 +38,7 @@ func InviteOrAddTeamMember(ctx context.Context, inviter, invited *user_model.Use
 	if setting.Service.AddMembersByInvitations && inviter.ID != invited.ID {
 		return CreateTeamInviteByUser(ctx, inviter, invited, team)
 	}
-	return models.AddTeamMember(ctx, team, invited.ID)
+	return models.AddTeamMemberByCooptation(ctx, team, invited.ID, inviter.ID)
 }
 
 // DeclineInvite turns down an invitation to a team

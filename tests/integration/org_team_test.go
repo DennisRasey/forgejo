@@ -9,12 +9,16 @@ import (
 	"strings"
 	"testing"
 
+	"forgejo.org/models"
+	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/organization"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
+	auth_service "forgejo.org/services/auth"
+	user_service "forgejo.org/services/user"
 	"forgejo.org/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -170,4 +174,37 @@ func TestAddMembersByInvitations(t *testing.T) {
 	body = session.MakeRequest(t, NewRequest(t, "GET", teamURL), http.StatusOK).Body
 	doc = NewHTMLParser(t, body)
 	assert.Contains(t, strings.TrimSpace(doc.Find(".flash-error").Text()), "This user is already invited to the team.")
+}
+
+func TestShowMembershipProvenance(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	org := unittest.AssertExistsAndLoadBean(t, &organization.Organization{ID: 3})
+	team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 1})
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	user28 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 28})
+	user30 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 30})
+	loginSource := auth_model.Source{ID: 1, Name: "Keycloak"}
+	unittest.AssertSuccessfulInsert(t, &loginSource)
+
+	require.NoError(t, models.AddTeamMemberByCooptation(t.Context(), team, user28.ID, user2.ID))
+	require.NoError(t, models.AddTeamMemberByLoginSource(t.Context(), team, user30.ID, loginSource.ID))
+
+	session := loginUser(t, "user30")
+
+	teamURL := fmt.Sprintf("/org/%s/teams/%s", org.Name, team.LowerName)
+
+	// check that the list of members shows the provenance of the added members
+	doc := NewHTMLParser(t, session.MakeRequest(t, NewRequest(t, "GET", teamURL), http.StatusOK).Body)
+	doc.AssertElement(t, ".flex-item-main div:contains('added by') a:contains('user2')", true)
+	doc.AssertElement(t, ".flex-item-main div:contains('joined via') strong:contains('Keycloak')", true)
+
+	// delete the beans that are tracked in the membership provenance metadata
+	require.NoError(t, user_service.DeleteUser(t.Context(), user2, true))
+	require.NoError(t, auth_service.DeleteSource(t.Context(), &loginSource))
+
+	/// check that the membership provenance still displays correctly after those deletions
+	doc = NewHTMLParser(t, session.MakeRequest(t, NewRequest(t, "GET", teamURL), http.StatusOK).Body)
+	doc.AssertElement(t, ".flex-item-main div:contains('added by') a:contains('ghost')", true)
+	doc.AssertElement(t, ".flex-item-main div:contains('joined via an unknown authentication source')", true)
 }

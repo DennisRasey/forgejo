@@ -22,6 +22,7 @@ import (
 	"forgejo.org/modules/optional"
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/structs"
+	"forgejo.org/modules/timeutil"
 	"forgejo.org/modules/util"
 
 	"xorm.io/builder"
@@ -380,9 +381,11 @@ func CreateOrganization(ctx context.Context, org *Organization, owner *user_mode
 	}
 
 	if err = db.Insert(ctx, &TeamUser{
-		UID:    owner.ID,
-		OrgID:  org.ID,
-		TeamID: t.ID,
+		UID:         owner.ID,
+		OrgID:       org.ID,
+		TeamID:      t.ID,
+		CreatedUnix: optional.Some(timeutil.TimeStampNow()),
+		Reason:      MembershipReasonOrgCreator,
 	}); err != nil {
 		return fmt.Errorf("insert team-user relation: %w", err)
 	}

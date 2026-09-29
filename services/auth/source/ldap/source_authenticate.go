@@ -111,7 +111,7 @@ func (source *Source) Authenticate(ctx context.Context, user *user_model.User, u
 			return user, err
 		}
 		if err := source_service.SyncGroupsToTeams(ctx,
-			user, sr.Groups, groupTeamMapping, source.GroupTeamMapRemoval,
+			user, source.authSource.ID, sr.Groups, groupTeamMapping, source.GroupTeamMapRemoval,
 			nil, false,
 		); err != nil {
 			return user, err

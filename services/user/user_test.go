@@ -417,3 +417,17 @@ func TestCreateShadowCopyOnUserUpdate(t *testing.T) {
 	assert.Equal(t, oldUserData.Pronouns, shadowCopyUserData.Pronouns)
 	assert.Equal(t, oldUserData.Description, shadowCopyUserData.Description)
 }
+
+func TestDeleteUserCleansUpMembershipProvenance(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	user28 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 28})
+	team1 := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 1})
+
+	require.NoError(t, models.AddTeamMemberByCooptation(db.DefaultContext, team1, user28.ID, user2.ID))
+
+	require.NoError(t, DeleteUser(db.DefaultContext, user2, true))
+
+	unittest.AssertExistsAndLoadBean(t, &organization.TeamUser{UID: 28, TeamID: 1, Reason: organization.MembershipReasonAddedByUser, CreatedByUserID: optional.None[int64]()})
+}

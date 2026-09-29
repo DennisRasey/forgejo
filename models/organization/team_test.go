@@ -7,10 +7,14 @@ package organization_test
 import (
 	"testing"
 
+	"forgejo.org/models"
+	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/organization"
 	"forgejo.org/models/perm"
 	"forgejo.org/models/unittest"
+	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/optional"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,6 +91,39 @@ func TestTeam_GetMembers(t *testing.T) {
 	}
 	test(1)
 	test(3)
+}
+
+func TestTeam_GetTeamMemberships(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	team := unittest.AssertExistsAndLoadBean(t, &organization.Team{ID: 1})
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	user28 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 28})
+	user30 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 30})
+	loginSource := auth_model.Source{ID: 1, Name: "Keycloak"}
+	_, err := db.GetEngine(db.DefaultContext).Insert(loginSource)
+	require.NoError(t, err)
+
+	require.NoError(t, models.AddTeamMemberByCooptation(db.DefaultContext, team, user28.ID, user2.ID))
+	require.NoError(t, models.AddTeamMemberByLoginSource(db.DefaultContext, team, user30.ID, loginSource.ID))
+
+	memberships, err := organization.GetTeamMemberships(db.DefaultContext, &organization.SearchMembersOptions{TeamID: team.ID, ListOptions: db.ListOptionsAll})
+	require.NoError(t, err)
+	assert.Len(t, memberships, team.NumMembers)
+	for _, membership := range memberships {
+		assert.NotNil(t, membership.User)
+		assert.Equal(t, membership.User.ID, membership.UID)
+		switch membership.UID {
+		case user28.ID:
+			assert.True(t, membership.IsMembershipAddedByUser())
+			assert.Equal(t, membership.CreatedByUserID, optional.Some(user2.ID))
+			assert.Equal(t, membership.CreatedByUser, user2)
+		case user30.ID:
+			assert.True(t, membership.IsMembershipAddedByLoginSource())
+			assert.Equal(t, membership.CreatedByLoginSourceID, optional.Some(loginSource.ID))
+			assert.Equal(t, membership.CreatedByLoginSource.Name, loginSource.Name)
+		}
+	}
 }
 
 func TestGetTeam(t *testing.T) {
