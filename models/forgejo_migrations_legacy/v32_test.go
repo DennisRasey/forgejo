@@ -6,13 +6,13 @@ package forgejo_migrations_legacy
 import (
 	"bytes"
 	"context"
-	"io"
 	"net/url"
 	"strings"
 	"testing"
 
 	migration_tests "forgejo.org/models/gitea_migrations/test"
 	"forgejo.org/models/packages"
+	packages_service "forgejo.org/services/packages"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,12 +27,17 @@ func (rsc readSeekCloser) Close() error {
 	return nil
 }
 
-func StringToReadSeekCloser(s string) io.ReadSeekCloser {
+func (rsc readSeekCloser) Size() int64 {
+	// Size is not used, so we provide a no-op implementation.
+	return 0
+}
+
+func StringToReadSeekCloser(s string) packages_service.ReadSeekCloseSizer {
 	return readSeekCloser{Reader: bytes.NewReader([]byte(s))}
 }
 
 func Test_ChangeMavenArtifactConcatenation(t *testing.T) {
-	getPackage = func(ctx context.Context, pf *packages.PackageFile) (io.ReadSeekCloser, *url.URL, *packages.PackageFile, error) {
+	getPackage = func(ctx context.Context, pf *packages.PackageFile) (packages_service.ReadSeekCloseSizer, *url.URL, *packages.PackageFile, error) {
 		var data string
 
 		switch pf.BlobID {

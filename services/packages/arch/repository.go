@@ -272,7 +272,7 @@ func createDB(ctx context.Context, ownerID int64, group, arch string) (*packages
 
 // GetPackageFile Get data related to provided filename and distribution, for package files
 // update download counter.
-func GetPackageFile(ctx context.Context, group, file string, ownerID int64) (io.ReadSeekCloser, *url.URL, *packages_model.PackageFile, error) {
+func GetPackageFile(ctx context.Context, group, file string, ownerID int64) (packages_service.ReadSeekCloseSizer, *url.URL, *packages_model.PackageFile, error) {
 	fileSplit := strings.Split(file, "-")
 	if len(fileSplit) <= 3 {
 		return nil, nil, nil, errors.New("invalid file format, need <name>-<version>-<release>-<arch>.pkg.<archive>")
@@ -294,7 +294,7 @@ func GetPackageFile(ctx context.Context, group, file string, ownerID int64) (io.
 	return packages_service.GetPackageFileStream(ctx, pkgFile)
 }
 
-func GetPackageDBFile(ctx context.Context, ownerID int64, group, arch string, sigFile bool) (io.ReadSeekCloser, *url.URL, *packages_model.PackageFile, error) {
+func GetPackageDBFile(ctx context.Context, ownerID int64, group, arch string, sigFile bool) (packages_service.ReadSeekCloseSizer, *url.URL, *packages_model.PackageFile, error) {
 	pv, err := GetOrCreateRepositoryVersion(ctx, ownerID)
 	if err != nil {
 		return nil, nil, nil, err

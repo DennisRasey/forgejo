@@ -142,6 +142,7 @@ func TestPackageGeneric(t *testing.T) {
 		resp := MakeRequest(t, req, http.StatusOK)
 
 		assert.Equal(t, content, resp.Body.Bytes())
+		assert.Equal(t, fmt.Sprintf("%d", len(resp.Body.Bytes())), resp.Header().Get("Content-Length"))
 
 		checkDownloadCount(1)
 		checkLastDownloadAfter(preRequestTime)
