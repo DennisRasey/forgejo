@@ -195,7 +195,7 @@ func DeleteIssueLabel(ctx *context.APIContext) {
 	}
 	if err != nil && (issues_model.IsErrRepoLabelNotExist(err) || issues_model.IsErrOrgLabelNotExist(err)) {
 		if labelID, parseErr := strconv.ParseInt(labelName, 10, 64); parseErr == nil {
-			label, err = issues_model.GetLabelByID(ctx, labelID)
+			label, err = issues_model.GetLabelInRepoByID(ctx, ctx.Repo().Repository.ID, labelID)
 		}
 	}
 
