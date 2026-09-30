@@ -813,6 +813,8 @@ func DispatchWorkflow(ctx *context.APIContext) {
 	//     "$ref": "#/responses/DispatchWorkflowRun"
 	//   "204":
 	//     "$ref": "#/responses/empty"
+	//   "400":
+	//     "$ref": "#/responses/error"
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
@@ -829,9 +831,12 @@ func DispatchWorkflow(ctx *context.APIContext) {
 
 	workflow, err := actions_service.GetWorkflowFromCommit(ctx.Repo().GitRepo, opt.Ref, name)
 	if err != nil {
-		if errors.Is(err, util.ErrNotExist) {
+		switch {
+		case errors.Is(err, util.ErrInvalidArgument):
+			ctx.Error(http.StatusBadRequest, "GetWorkflowFromCommit", err)
+		case errors.Is(err, util.ErrNotExist):
 			ctx.Error(http.StatusNotFound, "GetWorkflowFromCommit", err)
-		} else {
+		default:
 			ctx.Error(http.StatusInternalServerError, "GetWorkflowFromCommit", err)
 		}
 		return
