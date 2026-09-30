@@ -411,6 +411,7 @@ func PackageSettings(ctx *context.Context) {
 	repos, _, _ := repo_model.GetUserRepositories(ctx, &repo_model.SearchRepoOptions{
 		Actor:   pd.Owner,
 		Private: true,
+		OrderBy: db.SearchOrderByAlphabetically,
 	})
 	ctx.Data["Repos"] = repos
 	ctx.Data["CanWritePackages"] = ctx.Package.AccessMode >= perm.AccessModeWrite || ctx.IsUserSiteAdmin()
