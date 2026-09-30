@@ -301,7 +301,7 @@ func (s slackConvertor) Review(p *api.PullRequestPayload, event webhook_module.H
 			return SlackPayload{}, err
 		}
 
-		text = fmt.Sprintf("[%s] Pull request review %s: [%s](%s) by %s", p.Repository.FullName, action, title, titleLink, SlackNameFormatter(p.Sender.UserName))
+		text = fmt.Sprintf("[%s] Pull request review %s: %s by %s", p.Repository.FullName, action, SlackLinkFormatter(titleLink, title), SlackNameFormatter(p.Sender.UserName))
 	}
 
 	return s.createPayload(text, nil), nil
