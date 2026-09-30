@@ -25,6 +25,7 @@ import (
 	repo_service "forgejo.org/services/repository"
 	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	gouuid "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -224,6 +225,50 @@ jobs:
 				body, err := io.ReadAll(res.Body)
 				require.NoError(t, err)
 				assert.Empty(t, body) // 204 No Content doesn't support a body, so should be empty
+			})
+		}
+	})
+}
+
+func TestActionsAPIWorkflowDispatchErrors(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		token := getUserToken(t, user2.LowerName, auth_model.AccessTokenScopeWriteRepository)
+
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name: "api-repo-workflow-dispatch-errors",
+			Files: forgery.MapFS{
+				".forgejo/workflows/dispatch.yml": forgery.MapFile(`name: dispatch
+on: [workflow_dispatch]
+jobs:
+  test:
+    runs-on: docker
+    steps:
+      - run: echo test
+`),
+			},
+		})
+
+		for _, testCase := range []struct {
+			name            string
+			workflowName    string
+			ref             string
+			status          int
+			expectedMessage string
+		}{
+			{name: "missing workflow", workflowName: "missing.yml", ref: repo.DefaultBranch, status: http.StatusNotFound, expectedMessage: "workflow not found"},
+			{name: "missing ref", workflowName: "dispatch.yml", ref: "missing-ref", status: http.StatusBadRequest, expectedMessage: "could not expand reference 'missing-ref'"},
+		} {
+			t.Run(testCase.name, func(t *testing.T) {
+				req := NewRequestWithJSON(t, http.MethodPost,
+					fmt.Sprintf("/api/v1/repos/%s/%s/actions/workflows/%s/dispatches", repo.OwnerName, repo.Name, testCase.workflowName),
+					&api.DispatchWorkflowOption{Ref: testCase.ref},
+				).AddTokenAuth(token)
+				resp := MakeRequest(t, req, testCase.status)
+
+				var apiError api.APIError
+				DecodeJSON(t, resp, &apiError)
+				assert.Equal(t, testCase.expectedMessage, apiError.Message)
 			})
 		}
 	})
