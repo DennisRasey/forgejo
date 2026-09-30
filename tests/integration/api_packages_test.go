@@ -28,6 +28,7 @@ import (
 	packages_service "forgejo.org/services/packages"
 	packages_cleanup_service "forgejo.org/services/packages/cleanup"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -102,8 +103,8 @@ func TestPackageAPI(t *testing.T) {
 			assert.Nil(t, ap1.Repository)
 
 			// create a repository
-			repo, _, f := tests.CreateDeclarativeRepo(t, user, "", []unit_model.Type{unit_model.TypeCode}, nil, nil)
-			defer f()
+			repo := forgery.CreateRepository(t, user, nil)
+			forgery.EnableRepoUnit(t, repo, unit_model.TypeCode, nil)
 
 			// link to public repository
 			req = NewRequest(t, "POST", fmt.Sprintf("/api/v1/packages/%s/generic/%s/-/link/%s", user.Name, packageName, repo.Name)).AddTokenAuth(tokenWritePackage)

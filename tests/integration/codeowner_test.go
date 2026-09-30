@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"strings"
 	"testing"
 	"time"
 
@@ -20,8 +19,8 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
-	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/require"
 )
@@ -30,17 +29,13 @@ func CodeOwnerTestCommon(t *testing.T, u *url.URL, codeownerTest CodeownerTest) 
 	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 	// Create the repo.
-	repo, _, f := tests.CreateDeclarativeRepo(t, user2, codeownerTest.Name,
-		[]unit_model.Type{unit_model.TypePullRequests}, nil,
-		[]*files_service.ChangeRepoFile{
-			{
-				Operation:     "create",
-				TreePath:      codeownerTest.Path,
-				ContentReader: strings.NewReader("README.md @user5\ntest-file @user4"),
-			},
+	repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+		Name: codeownerTest.Name,
+		Files: forgery.MapFS{
+			codeownerTest.Path: forgery.MapFile("README.md @user5\ntest-file @user4"),
 		},
-	)
-	defer f()
+	})
+	forgery.EnableRepoUnit(t, repo, unit_model.TypePullRequests, nil)
 
 	dstPath := t.TempDir()
 	r := fmt.Sprintf("%suser2/%s.git", u.String(), repo.Name)

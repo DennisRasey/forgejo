@@ -26,7 +26,7 @@ import (
 	pull_service "forgejo.org/services/pull"
 	repo_service "forgejo.org/services/repository"
 	files_service "forgejo.org/services/repository/files"
-	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -96,13 +96,12 @@ func actionsTrustTestAssertPRConflicted(t *testing.T, session *TestSession, url 
 	}, 5*time.Second, time.Millisecond*100)
 }
 
-func actionsTrustTestCreateBaseRepo(t *testing.T, owner *user_model.User) (*repo_model.Repository, func()) {
+func actionsTrustTestCreateBaseRepo(t *testing.T, owner *user_model.User) *repo_model.Repository {
 	t.Helper()
 
 	// create the base repo
-	baseRepo, _, f := tests.CreateDeclarativeRepo(t, owner, "repo-pull-request",
-		[]unit_model.Type{unit_model.TypeActions}, nil, nil,
-	)
+	baseRepo := forgery.CreateRepository(t, owner, &forgery.CreateRepositoryOptions{Name: "repo-pull-request"})
+	forgery.EnableRepoUnit(t, baseRepo, unit_model.TypeActions, nil)
 
 	// add workflow file to the base repo
 	addWorkflowToBaseResp, err := files_service.ChangeRepoFiles(git.DefaultContext, baseRepo, owner, &files_service.ChangeRepoFilesOptions{
@@ -140,7 +139,7 @@ jobs:
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, addWorkflowToBaseResp)
-	return baseRepo, f
+	return baseRepo
 }
 
 func actionsTrustTestRequireRun(t *testing.T, repo *repo_model.Repository, modifiedFiles *structs.FilesResponse) {
@@ -301,8 +300,7 @@ func TestActionsPullRequestTrustPanelImplicit(t *testing.T) {
 		regularUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5}) // a regular user with no specific permission
 		regularSession := loginUser(t, regularUser.Name)
 
-		baseRepo, f := actionsTrustTestCreateBaseRepo(t, ownerUser)
-		defer f()
+		baseRepo := actionsTrustTestCreateBaseRepo(t, ownerUser)
 
 		_, pullRequest, _ := actionsTrustTestCreatePullRequestFromForkedRepo(t, ownerUser, baseRepo, regularUser)
 		pullRequestLink := pullRequest.Issue.Link()
@@ -336,8 +334,7 @@ func TestActionsPullRequestTrustPanelExplicit(t *testing.T) {
 		userAdmin := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1}) // the instance admin
 		adminSession := loginUser(t, userAdmin.Name)
 
-		baseRepo, f := actionsTrustTestCreateBaseRepo(t, ownerUser)
-		defer f()
+		baseRepo := actionsTrustTestCreateBaseRepo(t, ownerUser)
 
 		forkedRepo, pullRequest, addFileToForkedResp := actionsTrustTestCreatePullRequestFromForkedRepo(t, ownerUser, baseRepo, regularUser)
 		pullRequestLink := pullRequest.Issue.Link()
@@ -470,8 +467,7 @@ func TestActionsPullRequestTrustPanelWIPConflicts(t *testing.T) {
 		userAdmin := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1}) // the instance admin
 		adminSession := loginUser(t, userAdmin.Name)
 
-		baseRepo, f := actionsTrustTestCreateBaseRepo(t, ownerUser)
-		defer f()
+		baseRepo := actionsTrustTestCreateBaseRepo(t, ownerUser)
 
 		_, pullRequest, _ := actionsTrustTestCreatePullRequestFromForkedRepo(t, ownerUser, baseRepo, regularUser)
 		pullRequestLink := pullRequest.Issue.Link()
@@ -516,8 +512,7 @@ func TestActionsPullRequestTrustPanelMergedOrClosed(t *testing.T) {
 		adminSession := loginUser(t, userAdmin.Name)
 		adminToken := getTokenForLoggedInUser(t, adminSession, auth_model.AccessTokenScopeAll)
 
-		baseRepo, f := actionsTrustTestCreateBaseRepo(t, ownerUser)
-		defer f()
+		baseRepo := actionsTrustTestCreateBaseRepo(t, ownerUser)
 
 		_, pullRequest, addFileToForkedResp := actionsTrustTestCreatePullRequestFromForkedRepo(t, ownerUser, baseRepo, regularUser)
 		pullRequestLink := pullRequest.Issue.Link()
@@ -559,8 +554,7 @@ func TestActionsPullRequestTrustPanelClosed(t *testing.T) {
 		adminSession := loginUser(t, userAdmin.Name)
 		adminToken := getTokenForLoggedInUser(t, adminSession, auth_model.AccessTokenScopeAll)
 
-		baseRepo, f := actionsTrustTestCreateBaseRepo(t, ownerUser)
-		defer f()
+		baseRepo := actionsTrustTestCreateBaseRepo(t, ownerUser)
 
 		_, pullRequest, addFileToForkedResp := actionsTrustTestCreatePullRequestFromForkedRepo(t, ownerUser, baseRepo, regularUser)
 		pullRequestLink := pullRequest.Issue.Link()
@@ -582,8 +576,7 @@ func TestActionsPullRequestTrustCancelOnClose(t *testing.T) {
 		regularSession := loginUser(t, regularUser.Name)
 		token := getTokenForLoggedInUser(t, regularSession, auth_model.AccessTokenScopeWriteRepository)
 
-		baseRepo, f := actionsTrustTestCreateBaseRepo(t, ownerUser)
-		defer f()
+		baseRepo := actionsTrustTestCreateBaseRepo(t, ownerUser)
 
 		_, pullRequest, addFileToForkedResp := actionsTrustTestCreatePullRequestFromForkedRepo(t, ownerUser, baseRepo, regularUser)
 		prAPILink := pullRequest.Issue.APIURL(t.Context())
@@ -615,8 +608,7 @@ func TestActionsPullRequestTrustPushCancel(t *testing.T) {
 
 		regularUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
 
-		baseRepo, f := actionsTrustTestCreateBaseRepo(t, ownerUser)
-		defer f()
+		baseRepo := actionsTrustTestCreateBaseRepo(t, ownerUser)
 
 		forkedRepo, pullRequest, addFileToForkedResp := actionsTrustTestCreatePullRequestFromForkedRepo(t, ownerUser, baseRepo, regularUser)
 		pullRequestLink := pullRequest.Issue.Link()

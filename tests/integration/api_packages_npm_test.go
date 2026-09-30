@@ -22,6 +22,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/timeutil"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -128,8 +129,8 @@ func TestPackageNpm(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
 		// create a repository
-		repo, _, f := tests.CreateDeclarativeRepo(t, user, "", []unit_model.Type{unit_model.TypeCode}, nil, nil)
-		defer f()
+		repo := forgery.CreateRepository(t, user, nil)
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeCode, nil)
 
 		// link to public repository
 		req := NewRequest(t, "POST", fmt.Sprintf("/api/v1/packages/%s/npm/%s/-/link/%s", user.Name, url.QueryEscape(packageName), repo.Name)).AddTokenAuth(tokenWritePackage)
