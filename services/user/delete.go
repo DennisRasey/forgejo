@@ -74,6 +74,32 @@ func deleteUser(ctx context.Context, u *user_model.User, purge bool) (err error)
 	}
 	// ***** END: Follow *****
 
+	// Before deleting all access tokens owned by the user, delete all the AccessTokenResourceRepo records for those
+	// access tokens:
+	accessTokenIDs, err := db.FindIDs(ctx, "access_token", "access_token.id", builder.Eq{"access_token.uid": u.ID})
+	if err != nil {
+		return fmt.Errorf("get all access tokens for user: %w", err)
+	}
+	if len(accessTokenIDs) > 0 {
+		_, err = e.Table(&auth_model.AccessTokenResourceRepo{}).Where(builder.In("token_id", accessTokenIDs)).Delete()
+		if err != nil {
+			return fmt.Errorf("delete access_token_resource_repo: %w", err)
+		}
+	}
+
+	// Before deleting all authorized integrations owned by the user, delete all the AuthorizedIntegResourceRepo records
+	// for those authorized integrations:
+	authorizedIntegrationIDs, err := db.FindIDs(ctx, "authorized_integration", "authorized_integration.id", builder.Eq{"authorized_integration.user_id": u.ID})
+	if err != nil {
+		return fmt.Errorf("get all authorized integrations for user: %w", err)
+	}
+	if len(authorizedIntegrationIDs) > 0 {
+		_, err = e.Table(&auth_model.AuthorizedIntegResourceRepo{}).Where(builder.In("integ_id", authorizedIntegrationIDs)).Delete()
+		if err != nil {
+			return fmt.Errorf("delete authorized_integ_resource_repo: %w", err)
+		}
+	}
+
 	if err = db.DeleteBeans(ctx,
 		&auth_model.AccessToken{UID: u.ID},
 		&repo_model.Collaboration{UserID: u.ID},
