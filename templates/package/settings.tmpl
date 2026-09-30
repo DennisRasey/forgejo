@@ -20,7 +20,7 @@
 				{{template "base/disable_form_autofill"}}
 				<input type="hidden" name="action" value="link">
 				<div class="field">
-					<div class="ui clearable selection dropdown">
+					<div class="ui clearable selection dropdown search">
 						{{$repoID := 0}}
 						{{if .PackageDescriptor.Repository}}
 							{{$repoID = .PackageDescriptor.Repository.ID}}
