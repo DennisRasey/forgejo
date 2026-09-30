@@ -6,7 +6,6 @@ package git
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"strings"
 
@@ -79,7 +78,7 @@ func (repo *Repository) ExpandRef(ref string) (string, error) {
 	} else if repo.IsCommitExist(ref) {
 		return ref, nil
 	}
-	return "", fmt.Errorf("could not expand reference '%s'", ref)
+	return "", util.NewInvalidArgumentErrorf("could not expand reference '%s'", ref)
 }
 
 // GetRefsFiltered returns all references of the repository that matches patterm exactly or starting with.
