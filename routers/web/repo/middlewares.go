@@ -10,6 +10,7 @@ import (
 	system_model "forgejo.org/models/system"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/git"
+	"forgejo.org/modules/log"
 	"forgejo.org/modules/optional"
 	"forgejo.org/services/context"
 	user_service "forgejo.org/services/user"
@@ -58,11 +59,13 @@ func SetDiffViewStyle(ctx *context.Context) {
 
 	ctx.Data["IsSplitStyle"] = style == "split"
 
-	opts := &user_service.UpdateOptions{
-		DiffViewStyle: optional.Some(style),
-	}
-	if err := user_service.UpdateUser(ctx, ctx.Doer, opts); err != nil {
-		ctx.ServerError("UpdateUser", err)
+	if style != userStyle {
+		opts := &user_service.UpdateOptions{
+			DiffViewStyle: optional.Some(style),
+		}
+		if err := user_service.UpdateUser(ctx, ctx.Doer, opts); err != nil {
+			log.Error("UpdateUser: %v", err)
+		}
 	}
 }
 
