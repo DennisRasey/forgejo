@@ -13,7 +13,7 @@ import (
 
 	"forgejo.org/models"
 	asymkey_model "forgejo.org/models/asymkey"
-	"forgejo.org/models/auth"
+	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	"forgejo.org/models/git"
 	"forgejo.org/models/issues"
@@ -27,6 +27,7 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
 	"forgejo.org/modules/timeutil"
+	"forgejo.org/modules/util"
 	"forgejo.org/services/auth/source/oauth2"
 	redirect_service "forgejo.org/services/redirect"
 
@@ -134,6 +135,43 @@ func TestDeleteUserCleansUpBranchProtectionRules(t *testing.T) {
 		assert.Equal(t, []int64{1}, pb.WhitelistUserIDs)
 		assert.Equal(t, []int64{1}, pb.MergeWhitelistUserIDs)
 	}
+}
+
+func TestDeleteUserCleansUpRepoSpecificAPIAccess(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 8})
+
+	// Create access token with repo-specific access, owned by `user`
+	accessToken := &auth_model.AccessToken{
+		UID:              user.ID,
+		Name:             util.CryptoRandomString(10),
+		Scope:            auth_model.AccessTokenScopeReadRepository,
+		ResourceAllRepos: false,
+	}
+	require.NoError(t, auth_model.NewAccessToken(t.Context(), accessToken))
+	resRepo1 := &auth_model.AccessTokenResourceRepo{
+		RepoID: 2,
+	}
+	require.NoError(t, auth_model.InsertAccessTokenResourceRepos(t.Context(), accessToken.ID, []*auth_model.AccessTokenResourceRepo{resRepo1}))
+
+	// Create authorized integration with repo-specific access, owned by `user`
+	ai := &auth_model.AuthorizedIntegration{
+		UserID:           user.ID,
+		Scope:            auth_model.AccessTokenScopeReadRepository,
+		ResourceAllRepos: false,
+		Issuer:           "https://example.org/",
+		ClaimRules:       &auth_model.ClaimRules{},
+	}
+	require.NoError(t, auth_model.InsertAuthorizedIntegration(t.Context(), ai))
+	aiResRepo1 := &auth_model.AuthorizedIntegResourceRepo{
+		RepoID: 2,
+	}
+	require.NoError(t, auth_model.InsertAuthorizedIntegrationResourceRepos(t.Context(), ai.ID, []*auth_model.AuthorizedIntegResourceRepo{aiResRepo1}))
+
+	// Delete user.  No follow-up assertions are required as foreign key violations will occur if the delete did not
+	// cleanup the repo-specific access created above.
+	require.NoError(t, DeleteUser(db.DefaultContext, user, false))
 }
 
 func TestPurgeUser(t *testing.T) {
@@ -282,7 +320,7 @@ func TestRenameUser(t *testing.T) {
 
 	t.Run("Non-local", func(t *testing.T) {
 		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1041, LoginSource: 1001})
-		authSource := unittest.AssertExistsAndLoadBean(t, &auth.Source{ID: user.LoginSource})
+		authSource := unittest.AssertExistsAndLoadBean(t, &auth_model.Source{ID: user.LoginSource})
 		assert.False(t, user.IsLocal())
 		assert.True(t, user.IsOAuth2())
 
