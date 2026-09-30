@@ -5,7 +5,6 @@ package integration
 
 import (
 	"net/url"
-	"strings"
 	"testing"
 
 	actions_model "forgejo.org/models/actions"
@@ -17,8 +16,8 @@ import (
 	"forgejo.org/modules/setting"
 	"forgejo.org/modules/test"
 	actions_service "forgejo.org/services/actions"
-	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -219,32 +218,30 @@ func TestActionConcurrencyGroupQueueFetchNext(t *testing.T) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 		// create the repo
-		repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "repo-workflow-dispatch",
-			[]unit_model.Type{unit_model.TypeActions}, nil,
-			[]*files_service.ChangeRepoFile{
-				{
-					Operation: "create",
-					TreePath:  ".forgejo/workflows/dispatch.yml",
-					ContentReader: strings.NewReader(
-						"name: concurrency group workflow\n" +
-							"on:\n" +
-							"  workflow_dispatch:\n" +
-							"    inputs:\n" +
-							"      ident:\n" +
-							"        type: string\n" +
-							"concurrency:\n" +
-							"  group: abc\n" +
-							"  cancel-in-progress: false\n" +
-							"jobs:\n" +
-							"  test:\n" +
-							"    runs-on: ubuntu-latest\n" +
-							"    steps:\n" +
-							"      - run: echo deployment goes here\n",
-					),
-				},
+		var sha string
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:      "repo-workflow-dispatch",
+			LatestSha: &sha,
+			Files: forgery.MapFS{
+				".forgejo/workflows/dispatch.yml": forgery.MapFile(
+					"name: concurrency group workflow\n" +
+						"on:\n" +
+						"  workflow_dispatch:\n" +
+						"    inputs:\n" +
+						"      ident:\n" +
+						"        type: string\n" +
+						"concurrency:\n" +
+						"  group: abc\n" +
+						"  cancel-in-progress: false\n" +
+						"jobs:\n" +
+						"  test:\n" +
+						"    runs-on: ubuntu-latest\n" +
+						"    steps:\n" +
+						"      - run: echo deployment goes here\n",
+				),
 			},
-		)
-		defer f()
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		require.NoError(t, err)

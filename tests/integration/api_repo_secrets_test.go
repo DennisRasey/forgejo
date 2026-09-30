@@ -19,6 +19,7 @@ import (
 	api "forgejo.org/modules/structs"
 	repo_service "forgejo.org/services/repository"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -174,19 +175,18 @@ func TestAPIRepoSecrets(t *testing.T) {
 	})
 
 	t.Run("Endpoints disabled if Actions disabled", func(t *testing.T) {
-		repository, _, cleanUp := tests.CreateDeclarativeRepo(t, user, "no-actions",
-			[]unit_model.Type{unit_model.TypeCode, unit_model.TypeActions}, []unit_model.Type{}, nil)
-		defer cleanUp()
+		repo := forgery.CreateRepository(t, user, &forgery.CreateRepositoryOptions{Name: "no-actions"})
+		forgery.EnableRepoUnits(t, repo, unit_model.TypeCode, unit_model.TypeActions)
 
-		getURL := fmt.Sprintf("/api/v1/repos/%s/actions/secrets", repository.FullName())
+		getURL := fmt.Sprintf("/api/v1/repos/%s/actions/secrets", repo.FullName())
 
 		getRequest := NewRequest(t, "GET", getURL)
 		getRequest.AddTokenAuth(token)
 		MakeRequest(t, getRequest, http.StatusOK)
 
-		enabledUnits := []repo_model.RepoUnit{{RepoID: repository.ID, Type: unit_model.TypeCode}}
+		enabledUnits := []repo_model.RepoUnit{{RepoID: repo.ID, Type: unit_model.TypeCode}}
 		disabledUnits := []unit_model.Type{unit_model.TypeActions}
-		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repository, enabledUnits, disabledUnits)
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, enabledUnits, disabledUnits)
 		require.NoError(t, err)
 
 		getRequest = NewRequest(t, "GET", getURL)

@@ -19,21 +19,16 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
-	"testing/fstest"
 	"time"
 
 	"forgejo.org/cmd"
 	"forgejo.org/models/db"
 	packages_model "forgejo.org/models/packages"
-	repo_model "forgejo.org/models/repo"
-	unit_model "forgejo.org/models/unit"
 	"forgejo.org/models/unittest"
-	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/base"
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/graceful"
 	"forgejo.org/modules/log"
-	"forgejo.org/modules/options"
 	"forgejo.org/modules/process"
 	repo_module "forgejo.org/modules/repository"
 	"forgejo.org/modules/setting"
@@ -41,11 +36,7 @@ import (
 	"forgejo.org/modules/testlogger"
 	"forgejo.org/modules/util"
 	"forgejo.org/routers"
-	"forgejo.org/services/notify"
-	files_service "forgejo.org/services/repository/files"
-	"forgejo.org/tests/forgery"
 
-	"code.forgejo.org/xorm/xorm/convert"
 	"github.com/stretchr/testify/require"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // Import pgx driver
@@ -422,76 +413,6 @@ func PrintCurrentTest(t testing.TB, skip ...int) func() {
 // Printf takes a format and args and prints the string to os.Stdout
 func Printf(format string, args ...any) {
 	testlogger.Printf(format, args...)
-}
-
-// Deprecated: use forgery.CreateRepository instead
-func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, enabledUnits, disabledUnits []unit_model.Type, files []*files_service.ChangeRepoFile) (*repo_model.Repository, string, func()) {
-	t.Helper()
-
-	opts := &forgery.CreateRepositoryOptions{
-		LatestSha: new(string),
-		Name:      name,
-	}
-
-	if len(files) > 0 {
-		licenseData, err := options.License("CC0-1.0")
-		require.NoError(t, err)
-		mfs := forgery.MapFS{
-			"README.md": forgery.MapFile("# " + t.Name() + "\n\nThis is a test repo created via test_utils"),
-			"LICENSE":   &fstest.MapFile{Data: licenseData},
-		}
-		for _, f := range files {
-			require.Empty(t, f.FromTreePath, f.TreePath)
-			if f.Operation != "create" {
-				require.Equal(t, "README.md", f.TreePath, "%q operation only expected on README.md", f.Operation)
-				if f.Operation == "delete" {
-					delete(mfs, f.TreePath)
-					continue
-				}
-				require.Equal(t, "update", f.Operation, "only update/delete operations are supported on README.md")
-			}
-			if f.SHA != "" {
-				require.Nil(t, f.ContentReader, f.TreePath)
-				mfs[f.TreePath] = forgery.MapSubmodule(f.SHA)
-			} else {
-				require.Nil(t, f.Options, f.TreePath)
-
-				data, err := io.ReadAll(f.ContentReader)
-				require.NoError(t, err)
-				mfs[f.TreePath] = &fstest.MapFile{
-					Data: data,
-				}
-			}
-		}
-		opts.Files = mfs
-	} else {
-		opts.Files = forgery.FilesInit{}
-	}
-
-	repo := forgery.CreateRepository(t, owner, opts)
-	notify.CreateRepository(t.Context(), owner, owner, repo) // CreateDeclarativeRepoWithOptions didn't call CreateRepositoryDirectly; notify manually to keep the same behavior
-
-	for _, unitType := range enabledUnits {
-		var config convert.Conversion
-		if unitType == unit_model.TypePullRequests {
-			config = &repo_model.PullRequestsConfig{
-				AllowMerge:           true,
-				AllowRebase:          true,
-				AllowRebaseMerge:     true,
-				AllowSquash:          true,
-				AllowFastForwardOnly: true,
-				AllowManualMerge:     true,
-				AllowRebaseUpdate:    true,
-				DefaultMergeStyle:    repo_model.MergeStyleMerge,
-				DefaultUpdateStyle:   repo_model.UpdateStyleMerge,
-			}
-		}
-		forgery.EnableRepoUnit(t, repo, unitType, config)
-	}
-	if disabledUnits != nil {
-		forgery.DisableRepoUnits(t, repo, disabledUnits...)
-	}
-	return repo, *opts.LatestSha, func() {}
 }
 
 func WriteImageBody(t *testing.T, buff bytes.Buffer, filename string, body *bytes.Buffer) string {

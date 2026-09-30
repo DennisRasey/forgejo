@@ -18,6 +18,7 @@ import (
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -172,8 +173,8 @@ func TestGitHTTPSameStatusCodeForGetAndHeadRequests(t *testing.T) {
 		)
 	}
 
-	repo, _, f := tests.CreateDeclarativeRepo(t, owner, "get-and-head-requests", []unit_model.Type{unit_model.TypeCode}, nil, nil)
-	defer f()
+	repo := forgery.CreateRepository(t, owner, &forgery.CreateRepositoryOptions{Name: "get-and-head-requests"})
+	forgery.EnableRepoUnit(t, repo, unit_model.TypeCode, nil)
 
 	for _, c := range cases {
 		t.Run(caseToTestName(c), func(t *testing.T) {

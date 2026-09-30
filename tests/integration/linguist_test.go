@@ -14,10 +14,12 @@ import (
 	repo_model "forgejo.org/models/repo"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/git"
 	"forgejo.org/modules/indexer/stats"
 	"forgejo.org/modules/queue"
 	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
+	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,13 +30,16 @@ func TestLinguistSupport(t *testing.T) {
 		/******************
 		 ** Preparations **
 		 ******************/
-		prep := func(t *testing.T, attribs string) (*repo_model.Repository, string, func()) {
+		prep := func(t *testing.T, attribs string) (*repo_model.Repository, string) {
 			t.Helper()
 
 			user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
-			repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "", nil, nil,
-				[]*files_service.ChangeRepoFile{
+			repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+				Files: forgery.FilesInit{},
+			})
+			resp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, user2, &files_service.ChangeRepoFilesOptions{
+				Files: []*files_service.ChangeRepoFile{
 					{
 						Operation:     "create",
 						TreePath:      ".gitattributes",
@@ -70,9 +75,11 @@ func TestLinguistSupport(t *testing.T) {
 						TreePath:      "some-file.xml",
 						ContentReader: strings.NewReader("<?xml version=\"1.0\"?>\n<foo>\n <bar>Hello</bar>\n</foo>\n"),
 					},
-				})
+				},
+			})
+			require.NoError(t, err)
 
-			return repo, sha, f
+			return repo, resp.Commit.SHA
 		}
 
 		getFreshLanguageStats := func(t *testing.T, repo *repo_model.Repository, sha string) repo_model.LanguageStatList {
@@ -100,8 +107,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("default", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "")
-			defer f()
+			repo, sha := prep(t, "")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 
@@ -140,8 +146,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("foo.c non-detectable", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "foo.c linguist-detectable=false\n")
-			defer f()
+			repo, sha := prep(t, "foo.c linguist-detectable=false\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Empty(t, langs)
@@ -151,8 +156,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("detectable markdown", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "*.md linguist-detectable\n")
-			defer f()
+			repo, sha := prep(t, "*.md linguist-detectable\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Len(t, langs, 2)
@@ -164,8 +168,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("foo.c as documentation", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "foo.c linguist-documentation\n")
-			defer f()
+			repo, sha := prep(t, "foo.c linguist-documentation\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Empty(t, langs)
@@ -175,8 +178,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("linguist-generated=false", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "foo.nib linguist-generated=false\nfoo.nib linguist-language=Perl\n")
-			defer f()
+			repo, sha := prep(t, "foo.nib linguist-generated=false\nfoo.nib linguist-language=Perl\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Len(t, langs, 2)
@@ -188,8 +190,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("linguist-vendored=false", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "cpplint.py linguist-vendored=false\n")
-			defer f()
+			repo, sha := prep(t, "cpplint.py linguist-vendored=false\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Len(t, langs, 2)
@@ -201,8 +202,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("-linguist-vendored", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "cpplint.py -linguist-vendored\n")
-			defer f()
+			repo, sha := prep(t, "cpplint.py -linguist-vendored\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Len(t, langs, 2)
@@ -214,8 +214,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("foo.c as vendored", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "foo.c linguist-vendored\n")
-			defer f()
+			repo, sha := prep(t, "foo.c linguist-vendored\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Empty(t, langs)
@@ -225,8 +224,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("linguist-language", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, _, f := prep(t, "foo.c linguist-language=sh\n")
-			defer f()
+			repo, _ := prep(t, "foo.c linguist-language=sh\n")
 
 			assertFileLanguage := func(t *testing.T, uri, expectedLanguage string) {
 				t.Helper()
@@ -256,8 +254,7 @@ func TestLinguistSupport(t *testing.T) {
 		t.Run("linguist-documentation=false", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			repo, sha, f := prep(t, "README.md linguist-documentation=false\n")
-			defer f()
+			repo, sha := prep(t, "README.md linguist-documentation=false\n")
 
 			langs := getFreshLanguageStats(t, repo, sha)
 			assert.Len(t, langs, 2)

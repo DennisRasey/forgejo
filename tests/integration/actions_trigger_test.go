@@ -54,6 +54,12 @@ func TestActionsPullRequestCommitStatus(t *testing.T) {
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
 
 		// prepare the repository
+		baseRepo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:  "repo-pull-request",
+			Files: forgery.FilesInit{},
+		})
+		forgery.EnableRepoUnit(t, baseRepo, unit_model.TypeActions, nil)
+
 		files := make([]*files_service.ChangeRepoFile, 0, 10)
 		for _, onType := range []string{
 			"opened",
@@ -83,9 +89,12 @@ jobs:
 `, onType)),
 			})
 		}
-		baseRepo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-pull-request",
-			[]unit_model.Type{unit_model.TypeActions}, nil, files)
-		defer f()
+
+		_, err := files_service.ChangeRepoFiles(git.DefaultContext, baseRepo, user2, &files_service.ChangeRepoFilesOptions{
+			Files: files,
+		})
+		require.NoError(t, err)
+
 		baseGitRepo, err := gitrepo.OpenRepository(db.DefaultContext, baseRepo)
 		require.NoError(t, err)
 		defer func() {
@@ -364,8 +373,14 @@ func TestActionsPullRequestWithInvalidWorkflow(t *testing.T) {
 		session := loginUser(t, "user2")
 
 		// prepare the repository
-		baseRepo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-pull-request",
-			[]unit_model.Type{unit_model.TypeActions}, nil, []*files_service.ChangeRepoFile{
+		baseRepo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:  "repo-pull-request",
+			Files: forgery.FilesInit{},
+		})
+		forgery.EnableRepoUnit(t, baseRepo, unit_model.TypeActions, nil)
+
+		_, err := files_service.ChangeRepoFiles(git.DefaultContext, baseRepo, user2, &files_service.ChangeRepoFilesOptions{
+			Files: []*files_service.ChangeRepoFile{
 				{
 					Operation: "create",
 					TreePath:  ".forgejo/workflows/broken.yml",
@@ -380,8 +395,10 @@ runs-on: docker
 	- run: true
 `),
 				},
-			})
-		defer f()
+			},
+		})
+		require.NoError(t, err)
+
 		baseGitRepo, err := gitrepo.OpenRepository(t.Context(), baseRepo)
 		require.NoError(t, err)
 		defer func() {
@@ -445,10 +462,8 @@ func TestActionsPullRequestTargetEvent(t *testing.T) {
 		org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})  // owner of the forked repo
 
 		// create the base repo
-		baseRepo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-pull-request-target",
-			[]unit_model.Type{unit_model.TypeActions}, nil, nil,
-		)
-		defer f()
+		baseRepo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{Name: "repo-pull-request-target"})
+		forgery.EnableRepoUnit(t, baseRepo, unit_model.TypeActions, nil)
 
 		// create the forked repo
 		forkedRepo, err := repo_service.ForkRepositoryAndUpdates(git.DefaultContext, user2, org3, repo_service.ForkRepoOptions{
@@ -604,10 +619,8 @@ func TestActionsPullRequestTargetEventLocalReusable(t *testing.T) {
 			org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})  // owner of the forked repo
 
 			// create the base repo
-			baseRepo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-pull-request-target",
-				[]unit_model.Type{unit_model.TypeActions}, nil, nil,
-			)
-			defer f()
+			baseRepo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{Name: "repo-pull-request-target"})
+			forgery.EnableRepoUnit(t, baseRepo, unit_model.TypeActions, nil)
 
 			// create the forked repo
 			forkedRepo, err := repo_service.ForkRepositoryAndUpdates(git.DefaultContext, user2, org3, repo_service.ForkRepoOptions{
@@ -745,10 +758,8 @@ jobs:
 			org3 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})  // owner of the forked repo
 
 			// create the base repo
-			baseRepo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-pull-request-target-2",
-				[]unit_model.Type{unit_model.TypeActions}, nil, nil,
-			)
-			defer f()
+			baseRepo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{Name: "repo-pull-request-target-2"})
+			forgery.EnableRepoUnit(t, baseRepo, unit_model.TypeActions, nil)
 
 			// create the forked repo
 			forkedRepo, err := repo_service.ForkRepositoryAndUpdates(git.DefaultContext, user2, org3, repo_service.ForkRepoOptions{
@@ -896,18 +907,13 @@ func TestActionsSkipCI(t *testing.T) {
 		session := loginUser(t, "user2")
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
-		// create the repo
-		repo, _, f := tests.CreateDeclarativeRepo(t, user2, "skip-ci",
-			[]unit_model.Type{unit_model.TypeActions}, nil,
-			[]*files_service.ChangeRepoFile{
-				{
-					Operation:     "create",
-					TreePath:      ".gitea/workflows/pr.yml",
-					ContentReader: strings.NewReader("name: test\non:\n  push:\n    branches: [main]\n  pull_request:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
-				},
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name: "skip-ci",
+			Files: forgery.MapFS{
+				".gitea/workflows/pr.yml": forgery.MapFile("name: test\non:\n  push:\n    branches: [main]\n  pull_request:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
 			},
-		)
-		defer f()
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 		// a run has been created
 		assert.Equal(t, 1, unittest.GetCount(t, &actions_model.ActionRun{RepoID: repo.ID}))
@@ -1126,25 +1132,23 @@ func TestActionsWorkflowDispatch(t *testing.T) {
 				user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 				// create the repo
-				repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "repo-workflow-dispatch",
-					[]unit_model.Type{unit_model.TypeActions}, nil,
-					[]*files_service.ChangeRepoFile{
-						{
-							Operation: "create",
-							TreePath:  fmt.Sprintf("%s/%s", testCase.workflowDirectory, testCase.workflowID),
-							ContentReader: strings.NewReader(
-								"name: test\n" +
-									"on: [workflow_dispatch]\n" +
-									"jobs:\n" +
-									"  test:\n" +
-									"    runs-on: ubuntu-latest\n" +
-									"    steps:\n" +
-									"      - run: echo helloworld\n",
-							),
-						},
+				var sha string
+				repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+					Name:      "repo-workflow-dispatch",
+					LatestSha: &sha,
+					Files: forgery.MapFS{
+						fmt.Sprintf("%s/%s", testCase.workflowDirectory, testCase.workflowID): forgery.MapFile(
+							"name: test\n" +
+								"on: [workflow_dispatch]\n" +
+								"jobs:\n" +
+								"  test:\n" +
+								"    runs-on: ubuntu-latest\n" +
+								"    steps:\n" +
+								"      - run: echo helloworld\n",
+						),
 					},
-				)
-				defer f()
+				})
+				forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 				gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 				require.NoError(t, err)
@@ -1222,17 +1226,15 @@ jobs:
 	onApplicationRun(t, func(t *testing.T, u *url.URL) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
-		repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "repo-workflow-dispatch",
-			[]unit_model.Type{unit_model.TypeActions}, nil,
-			[]*files_service.ChangeRepoFile{
-				{
-					Operation:     "create",
-					TreePath:      ".forgejo/workflows/dispatch.yaml",
-					ContentReader: strings.NewReader(workflow),
-				},
+		var sha string
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:      "repo-workflow-dispatch",
+			LatestSha: &sha,
+			Files: forgery.MapFS{
+				".forgejo/workflows/dispatch.yaml": forgery.MapFile(workflow),
 			},
-		)
-		defer f()
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		require.NoError(t, err)
@@ -1265,28 +1267,26 @@ func TestActionsWorkflowDispatchDynamicMatrix(t *testing.T) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 		// create the repo
-		repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "repo-workflow-dispatch",
-			[]unit_model.Type{unit_model.TypeActions}, nil,
-			[]*files_service.ChangeRepoFile{
-				{
-					Operation: "create",
-					TreePath:  ".gitea/workflows/dispatch.yml",
-					ContentReader: strings.NewReader(
-						"name: test\n" +
-							"on: [workflow_dispatch]\n" +
-							"jobs:\n" +
-							"  test:\n" +
-							"    runs-on: ubuntu-latest\n" +
-							"    strategy:\n" +
-							"      matrix: \n" +
-							"        dim1: \"${{ fromJSON(needs.other-job.outputs.some-output) }}\"\n" +
-							"    steps:\n" +
-							"      - run: echo helloworld\n",
-					),
-				},
+		var sha string
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:      "repo-workflow-dispatch",
+			LatestSha: &sha,
+			Files: forgery.MapFS{
+				".forgejo/workflows/dispatch.yml": forgery.MapFile(
+					"name: test\n" +
+						"on: [workflow_dispatch]\n" +
+						"jobs:\n" +
+						"  test:\n" +
+						"    runs-on: ubuntu-latest\n" +
+						"    strategy:\n" +
+						"      matrix: \n" +
+						"        dim1: \"${{ fromJSON(needs.other-job.outputs.some-output) }}\"\n" +
+						"    steps:\n" +
+						"      - run: echo helloworld\n",
+				),
 			},
-		)
-		defer f()
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		require.NoError(t, err)
@@ -1316,34 +1316,32 @@ func TestActionsWorkflowDispatchDynamicMatrixBooleanInput(t *testing.T) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 		// create the repo
-		repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "repo-workflow-dispatch",
-			[]unit_model.Type{unit_model.TypeActions}, nil,
-			[]*files_service.ChangeRepoFile{
-				{
-					Operation: "create",
-					TreePath:  ".forgejo/workflows/dispatch.yml",
-					ContentReader: strings.NewReader(
-						"name: test\n" +
-							"on:\n" +
-							"  workflow_dispatch:\n" +
-							"    inputs:\n" +
-							"      win32:\n" +
-							"        description: 'Boolean'\n" +
-							"        required: false\n" +
-							"        type: boolean\n" +
-							"jobs:\n" +
-							"  test:\n" +
-							"    runs-on: ubuntu-latest\n" +
-							"    strategy:\n" +
-							"      matrix:\n" +
-							"        runner: ${{ fromJSON(inputs.win32 && '[\"win32\", \"win64\"]' || '[\"win64\"]') }}\n" +
-							"    steps:\n" +
-							"      - run: echo helloworld\n",
-					),
-				},
+		var sha string
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:      "repo-workflow-dispatch",
+			LatestSha: &sha,
+			Files: forgery.MapFS{
+				".forgejo/workflows/dispatch.yml": forgery.MapFile(
+					"name: test\n" +
+						"on:\n" +
+						"  workflow_dispatch:\n" +
+						"    inputs:\n" +
+						"      win32:\n" +
+						"        description: 'Boolean'\n" +
+						"        required: false\n" +
+						"        type: boolean\n" +
+						"jobs:\n" +
+						"  test:\n" +
+						"    runs-on: ubuntu-latest\n" +
+						"    strategy:\n" +
+						"      matrix:\n" +
+						"        runner: ${{ fromJSON(inputs.win32 && '[\"win32\", \"win64\"]' || '[\"win64\"]') }}\n" +
+						"    steps:\n" +
+						"      - run: echo helloworld\n",
+				),
 			},
-		)
-		defer f()
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		require.NoError(t, err)
@@ -1372,36 +1370,30 @@ func TestActionsWorkflowDispatchReusableWorkflow(t *testing.T) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 		// create the repo
-		repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "repo-workflow-dispatch",
-			[]unit_model.Type{unit_model.TypeActions}, nil,
-			[]*files_service.ChangeRepoFile{
-				{
-					Operation: "create",
-					TreePath:  ".forgejo/workflows/dispatch.yml",
-					ContentReader: strings.NewReader(
-						"name: test\n" +
-							"on: [workflow_dispatch]\n" +
-							"jobs:\n" +
-							"  test:\n" +
-							"    uses: ./.forgejo/workflows/reusable.yml\n",
-					),
-				},
-				{
-					Operation: "create",
-					TreePath:  ".forgejo/workflows/reusable.yml",
-					ContentReader: strings.NewReader(
-						"name: test\n" +
-							"on: [workflow_call]\n" +
-							"jobs:\n" +
-							"  inner:\n" +
-							"    runs-on: ubuntu-latest\n" +
-							"    steps:\n" +
-							"      - run: echo helloworld\n",
-					),
-				},
+		var sha string
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:      "repo-workflow-dispatch",
+			LatestSha: &sha,
+			Files: forgery.MapFS{
+				".forgejo/workflows/dispatch.yml": forgery.MapFile(
+					"name: test\n" +
+						"on: [workflow_dispatch]\n" +
+						"jobs:\n" +
+						"  test:\n" +
+						"    uses: ./.forgejo/workflows/reusable.yml\n",
+				),
+				".forgejo/workflows/reusable.yml": forgery.MapFile(
+					"name: test\n" +
+						"on: [workflow_call]\n" +
+						"jobs:\n" +
+						"  inner:\n" +
+						"    runs-on: ubuntu-latest\n" +
+						"    steps:\n" +
+						"      - run: echo helloworld\n",
+				),
 			},
-		)
-		defer f()
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		require.NoError(t, err)
@@ -1443,28 +1435,26 @@ func TestActionsWorkflowDispatchConcurrencyGroup(t *testing.T) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 		// create the repo
-		repo, sha, f := tests.CreateDeclarativeRepo(t, user2, "repo-workflow-dispatch",
-			[]unit_model.Type{unit_model.TypeActions}, nil,
-			[]*files_service.ChangeRepoFile{
-				{
-					Operation: "create",
-					TreePath:  ".gitea/workflows/dispatch.yml",
-					ContentReader: strings.NewReader(
-						"name: test\n" +
-							"on: [workflow_dispatch]\n" +
-							"jobs:\n" +
-							"  test:\n" +
-							"    runs-on: ubuntu-latest\n" +
-							"    steps:\n" +
-							"      - run: echo helloworld\n" +
-							"concurrency:\n" +
-							"  group: workflow-magic-group\n" +
-							"  cancel-in-progress: true\n",
-					),
-				},
+		var sha string
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+			Name:      "repo-workflow-dispatch",
+			LatestSha: &sha,
+			Files: forgery.MapFS{
+				".forgejo/workflows/dispatch.yml": forgery.MapFile(
+					"name: test\n" +
+						"on: [workflow_dispatch]\n" +
+						"jobs:\n" +
+						"  test:\n" +
+						"    runs-on: ubuntu-latest\n" +
+						"    steps:\n" +
+						"      - run: echo helloworld\n" +
+						"concurrency:\n" +
+						"  group: workflow-magic-group\n" +
+						"  cancel-in-progress: true\n",
+				),
 			},
-		)
-		defer f()
+		})
+		forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		require.NoError(t, err)
@@ -1542,28 +1532,15 @@ jobs:
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				// Prepare a repository.
-				files := []*files_service.ChangeRepoFile{
-					{
-						Operation:     "create",
-						TreePath:      ".forgejo/workflows/test.yaml",
-						ContentReader: strings.NewReader(testCase.workflow),
+				baseRepo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+					Name: "repo-pull-request",
+					Files: forgery.MapFS{
+						".forgejo/workflows/test.yaml": forgery.MapFile(testCase.workflow),
+						"README.md":                    forgery.MapFile("Hello"),
+						"test.txt":                     forgery.MapFile("one"),
 					},
-					{
-						Operation:     "create",
-						TreePath:      "README.md",
-						ContentReader: strings.NewReader("Hello"),
-					},
-					{
-						Operation:     "create",
-						TreePath:      "test.txt",
-						ContentReader: strings.NewReader("one"),
-					},
-				}
-
-				baseRepo, _, f := tests.CreateDeclarativeRepo(t, user2, "repo-pull-request",
-					[]unit_model.Type{unit_model.TypeActions}, nil, files)
-				defer f()
+				})
+				forgery.EnableRepoUnit(t, baseRepo, unit_model.TypeActions, nil)
 
 				baseGitRepo, err := gitrepo.OpenRepository(db.DefaultContext, baseRepo)
 				require.NoError(t, err)

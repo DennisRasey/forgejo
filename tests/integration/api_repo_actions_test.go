@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -27,7 +26,6 @@ import (
 	"forgejo.org/modules/webhook"
 	"forgejo.org/routers/api/v1/shared"
 	repo_service "forgejo.org/services/repository"
-	files_service "forgejo.org/services/repository/files"
 	"forgejo.org/tests"
 	"forgejo.org/tests/forgery"
 
@@ -155,13 +153,10 @@ func TestActionsAPIWorkflowDispatchReturnInfo(t *testing.T) {
 				token := getUserToken(t, user2.LowerName, auth_model.AccessTokenScopeWriteRepository)
 
 				// create the repo
-				repo, _, f := tests.CreateDeclarativeRepo(t, user2, "api-repo-workflow-dispatch",
-					[]unit_model.Type{unit_model.TypeActions}, nil,
-					[]*files_service.ChangeRepoFile{
-						{
-							Operation: "create",
-							TreePath:  fmt.Sprintf("%s/%s", testCase.workflowDirectory, testCase.workflowID),
-							ContentReader: strings.NewReader(`name: WD
+				repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{
+					Name: "api-repo-workflow-dispatch",
+					Files: forgery.MapFS{
+						fmt.Sprintf("%s/%s", testCase.workflowDirectory, testCase.workflowID): forgery.MapFile(`name: WD
 on: [workflow-dispatch]
 jobs:
   t1:
@@ -173,11 +168,10 @@ jobs:
     steps:
       - run: echo "test 2"
 `,
-							),
-						},
+						),
 					},
-				)
-				defer f()
+				})
+				forgery.EnableRepoUnit(t, repo, unit_model.TypeActions, nil)
 
 				req := NewRequestWithJSON(
 					t,
@@ -757,19 +751,18 @@ func TestAPIRepoActionsRunnerOperations(t *testing.T) {
 	})
 
 	t.Run("Endpoints disabled if Actions disabled", func(t *testing.T) {
-		repository, _, cleanUp := tests.CreateDeclarativeRepo(t, user2, "no-actions",
-			[]unit_model.Type{unit_model.TypeCode, unit_model.TypeActions}, []unit_model.Type{}, nil)
-		defer cleanUp()
+		repo := forgery.CreateRepository(t, user2, &forgery.CreateRepositoryOptions{Name: "no-actions"})
+		forgery.EnableRepoUnits(t, repo, unit_model.TypeCode, unit_model.TypeActions)
 
-		requestURL := fmt.Sprintf("/api/v1/repos/%s/actions/runners", repository.FullName())
+		requestURL := fmt.Sprintf("/api/v1/repos/%s/actions/runners", repo.FullName())
 
 		request := NewRequest(t, "GET", requestURL)
 		request.AddTokenAuth(readToken)
 		MakeRequest(t, request, http.StatusOK)
 
-		enabledUnits := []repo_model.RepoUnit{{RepoID: repository.ID, Type: unit_model.TypeCode}}
+		enabledUnits := []repo_model.RepoUnit{{RepoID: repo.ID, Type: unit_model.TypeCode}}
 		disabledUnits := []unit_model.Type{unit_model.TypeActions}
-		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repository, enabledUnits, disabledUnits)
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, enabledUnits, disabledUnits)
 		require.NoError(t, err)
 
 		request = NewRequest(t, "GET", requestURL)
