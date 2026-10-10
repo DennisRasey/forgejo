@@ -807,7 +807,7 @@
 		"other": "Valda kodförråd (%d)"
 	},
 	"settings.access_token.available_repositories": "Tillgängliga kodförråd",
-	"settings.access_token.no_repositories_selected": "Inga valda kodförråd.",
+	"settings.access_token.no_repositories_selected": "Inga kodförråd valda.",
 	"settings.access_token.no_repositories_found": "Fann inga kodförråd.",
 	"settings.access_token.remove": "Ta bort %s",
 	"settings.access_token.resource_all_help": "Tillåt åtkomst till alla resurser.",
@@ -955,5 +955,7 @@
 	"repo.watch.releases.hint": "(e-post endast)",
 	"admin.dashboard.new_major_version_hint": "Forgejo version %[2]s är inte längre en huvudversion som stöds. Den kommer inte att få några felrättningar eller säkerhetsuppdateringar. Forgejo %[1]s finns nu tillgänglig. Se <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuella utgåvor</a> för mer information.",
 	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s finns nu tillgänglig; du kör %[2]s. Detta är en uppgradering till en mindre version som kan innehålla bugg- och säkerhetsfixar. Uppgradering rekommenderas starkt. Se <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuella utgåvor</a> för mer information.",
-	"admin.dashboard.update_checker_error": "Forgejo misslyckades vid kontroll av tillgängliga uppgraderingar. Kontrollera <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">aktuella\nutgåvor</a> manuellt. Felmeddelande: %[1]s"
+	"admin.dashboard.update_checker_error": "Forgejo misslyckades vid kontroll av tillgängliga uppgraderingar. Kontrollera <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">aktuella\nutgåvor</a> manuellt. Felmeddelande: %[1]s",
+	"members.user_already_invited_to_org": "Den här användaren är redan inbjuden till organisationen.",
+	"members.user_already_invited_to_team": "Den här användaren är redan inbjuden till laget."
 }

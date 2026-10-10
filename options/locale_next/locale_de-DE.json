@@ -952,5 +952,10 @@
 	"repo.watch.issues": "Issues",
 	"repo.watch.pull_requests": "Pull-Requests",
 	"repo.watch.releases": "Releases",
-	"repo.watch.releases.hint": "(nur E-Mail)"
+	"repo.watch.releases.hint": "(nur E-Mail)",
+	"admin.dashboard.new_major_version_hint": "Forgejo-Version %[2]s ist eine nicht länger unterstützter Hauptversion. Diese Version wird keine Fehlerbehebungen oder Sicherheitspatches erhalten. Forgejo %[1]s ist nun verfügbar. Prüfe den <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuellen Release</a> für mehr Details.",
+	"admin.dashboard.new_minor_version_hint": "Forgejo %[1] ist nun verfügbar, du verwendest %[2]s. Dies ist ein kleines Update, dass Fehlerbehebungen und Sicherheitsverbesserungen beinhalten kann. Das Aktualisieren wird dringend empfohlen. Prüfe den <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuellen Release</a> für mehr Details.",
+	"admin.dashboard.update_checker_error": "Forgejo konnte nicht auf verfügbare Aktualisierungen prüfen. Prüfe den <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">aktuellen Release</a> manuell. Fehler: %[1]s",
+	"members.user_already_invited_to_org": "Dieser Benutzer wurde bereits in die Organisation eingeladen.",
+	"members.user_already_invited_to_team": "Dieser Benutzer wurde bereits in das Team eingeladen."
 }

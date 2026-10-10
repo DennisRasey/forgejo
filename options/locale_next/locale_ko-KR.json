@@ -438,7 +438,7 @@
 	"admin.dashboard.cleanup_hook_task_table": "Hook_task 테이블 정리",
 	"admin.dashboard.cleanup_packages": "만료된 패키지 정리",
 	"admin.dashboard.cleanup_actions": "작업에서 만료된 로그 및 아티팩트 정리",
-	"admin.dashboard.update_checker": "업데이트 검사기",
+	"admin.dashboard.update_checker": "Update-Checker",
 	"admin.dashboard.delete_old_system_notices": "데이터베이스에서 모든 오래된 시스템 공지 삭제",
 	"admin.dashboard.gc_lfs": "가비지 수집 LFS 메타 객체",
 	"admin.dashboard.stop_zombie_tasks": "좀비 액션 태스크 중지",
@@ -896,5 +896,7 @@
 	"graphs.code_frequency.title": "{0} 기록에 따른 코드 빈도",
 	"admin.dashboard.new_major_version_hint": "Forgejo 버전을 버전 %[2]s(으)로 업데이트하세요. 주요 버전이 더 이상 지원되지 않습니다. 버그 수정이나 보안 패치가 제공되지 않습니다. Forgejo %[1]s 버전이 현재 출시되었습니다. 자세한 내용은 <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">현재 릴리즈</a>에서 확인하세요.",
 	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s 버전을 사용할 수 있으며, 현재 %[2]s 버전을 실행 중입니다. 이번 마이너 버전 업그레이드에는 버그 및 보안 수정 사항이 포함되어 있을 수 있으므로 업그레이드를 강력히 권장합니다. 자세한 내용은 <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">현재 릴리즈</a>에서 확인하세요.",
-	"admin.dashboard.update_checker_error": "Forgejo가 사용 가능한 업그레이드를 확인하는 데 실패했습니다. <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">현재 릴리즈</a>을 수동으로 확인하세요. 오류 메시지: %[1]s"
+	"admin.dashboard.update_checker_error": "Forgejo가 사용 가능한 업그레이드를 확인하는 데 실패했습니다. <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">현재 릴리즈</a>을 수동으로 확인하세요. 오류 메시지: %[1]s",
+	"members.user_already_invited_to_org": "이 사용자는 이미 조직에 초대되었습니다.",
+	"members.user_already_invited_to_team": "이 사용자는 이미 팀에 초대되었습니다."
 }

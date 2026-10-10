@@ -977,5 +977,7 @@
 	"repo.watch.releases.hint": "(Solo por correo electrónico)",
 	"admin.dashboard.new_major_version_hint": "La versión %[2]s de Forgejo ya no es una versión principal compatible. No recibirá correcciones de errores ni parches de seguridad. Ya está disponible Forgejo %[1]s. Consulta <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">las versiones actuales</a> para obtener más detalles.",
 	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s ya está disponible; actualmente estás ejecutando %[2]s. Se trata de una actualización de versión menor que puede incluir correcciones de errores y de seguridad. Se recomienda encarecidamente actualizar. Consulta <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">las versiones actuales</a> para obtener más detalles.",
-	"admin.dashboard.update_checker_error": "Forgejo ha dado un error al comprobar si hay actualizaciones disponibles. Comprueba <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">las versiones actuales</a> manualmente. El error fue: %[1]s"
+	"admin.dashboard.update_checker_error": "Forgejo ha dado un error al comprobar si hay actualizaciones disponibles. Comprueba <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">las versiones actuales</a> manualmente. El error fue: %[1]s",
+	"members.user_already_invited_to_org": "Este usuario ya está invitado a la organización.",
+	"members.user_already_invited_to_team": "Este usuario ya está invitado al equipo."
 }

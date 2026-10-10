@@ -1011,5 +1011,16 @@
 	"actions.runs.deprioritize_run": "Ná tabhair tús áite don rith",
 	"actions.runs.options": "Roghanna",
 	"actions.runs.prioritization_success": "Tá tús áite á thabhairt anois do rith sreabhadh oibre #%d.",
-	"actions.runs.deprioritization_success": "Ní thabharfar tús áite a thuilleadh do rith sreabhadh oibre #%d."
+	"actions.runs.deprioritization_success": "Ní thabharfar tús áite a thuilleadh do rith sreabhadh oibre #%d.",
+	"admin.dashboard.new_major_version_hint": "Ní leagan mór tacaithe a thuilleadh é Forgejo leagan %[2]s. Ní dhéanfar aon cheartúcháin ar fhabhtanna ná paistí slándála dó. Tá Forgejo %[1]s ar fáil anois. Féach <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">na leaganacha reatha</a> chun tuilleadh eolais a fháil.",
+	"admin.dashboard.new_minor_version_hint": "Tá Forgejo %[1]s ar fáil anois; tá %[2]s á rith agat faoi láthair. Is uasghrádú mionleagan é seo a d’fhéadfadh a bheith ina chúis le réitigh ar fhabhtanna agus ar shaincheisteanna slándála. Moltar go láidir uasghrádú a dhéanamh. Féach ar <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">na heisiúintí reatha</a> chun tuilleadh eolais a fháil.",
+	"admin.dashboard.update_checker_error": "Theip ar Forgejo agus é ag seiceáil an raibh uasghráduithe ar fáil. Seiceáil <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">na heisiúintí reatha</a> de láimh. Seo an earráid: %[1]s",
+	"actions.workflow.pre_execution_warning": "Rabhaidh maidir leis an sreabhadh oibre:",
+	"actions.workflow.permissions_warning": "Tá réimse <code>permissions</code> ag an bpostáil <code>%[1]s</code> nó ag a sreabhadh oibre; ní thacaíonn Forgejo leis seo agus déanfar neamhaird de. Bain úsáid as <a href=\"%[2]s\">Comhtháthuithe Údaraithe</a> chun cumais a bhronnadh ar an bpostáil seo ina ionad sin.",
+	"members.user_already_invited_to_org": "Tá an t-úsáideoir seo tugtha isteach sa eagraíocht cheana féin.",
+	"members.user_already_invited_to_team": "Tá an t-úsáideoir seo tugtha isteach sa bhfoireann cheana féin.",
+	"repo.watching": "Ag faire",
+	"repo.watch.pull_requests": "Iarratais tarraingthe",
+	"repo.watch.releases": "Eisiúintí",
+	"repo.watch.releases.hint": "(Ríomhphost amháin)"
 }

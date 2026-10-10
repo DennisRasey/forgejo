@@ -974,5 +974,10 @@
 	"repo.watch.issues": "Problémy",
 	"repo.watch.pull_requests": "Žádosti o sloučení",
 	"repo.watch.releases": "Vydání",
-	"repo.watch.releases.hint": "(Pouze e-mail)"
+	"repo.watch.releases.hint": "(Pouze e-mail)",
+	"admin.dashboard.new_major_version_hint": "Verze Forgeja %[2] již není podporované vydání. Nebude dostávat opravy chyb a bezpečnostních děr. Forgejo %[1] je nyní dostupné. Pro více detailů se podívejte na <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuální vydání</a>.",
+	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s je dostupné a ty používáš %[2]s. Toto je malá aktualizace co obsahuje opravy chyb a bezpečnostních děr. Aktualizace se silně doporučoje. Pro více informací zkontrolujte <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuální vydání</a>.",
+	"admin.dashboard.update_checker_error": "Forgejo selhalo v kontrole dostupných aktualizací. Zkontrolujte <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">aktuální verzi</a> manuálně. Chyba byla: %[1]s",
+	"members.user_already_invited_to_org": "Tento uživatel již byl pozván do organizace.",
+	"members.user_already_invited_to_team": "Tento uživatel již byl pozván do týmu."
 }
