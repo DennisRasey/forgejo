@@ -893,5 +893,8 @@
 	"repo.watch.issues": "议题",
 	"repo.watch.pull_requests": "合并请求",
 	"repo.watch.releases": "版本发布",
-	"repo.watch.releases.hint": "（仅邮件通知）"
+	"repo.watch.releases.hint": "（仅邮件通知）",
+	"admin.dashboard.new_major_version_hint": "Forgejo大版本%[2]s已不再获得支持，其不会再获得漏洞修复和安全补丁。Forgejo %[1]s现已可用。欲了解更多信息，请查阅<a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">当前版本发布</a>页面。",
+	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s现已可用，您正在使用的是%[2]s。这是一个小版本更新，可能包含漏洞修复和安全补丁。强烈推荐更新到新版本。欲了解更多信息，请查阅<a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">当前版本发布</a>页面。",
+	"admin.dashboard.update_checker_error": "Forgejo在检查更新时出现错误。请手动查阅<a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">当前版本发布</a>页面。错误为：%[1]s"
 }

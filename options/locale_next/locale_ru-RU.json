@@ -957,6 +957,8 @@
 	"actions.runs.delete.confirm_action": "Вы точно хотите удалить это выполнение?",
 	"actions.runs.deprioritize_run": "Деприоритизировать",
 	"actions.runs.options": "Опции",
-	"actions.runs.prioritization_success": "Выполнение #%d теперь приоритизовано.",
-	"actions.runs.deprioritization_success": "Выполнение #%d теперь не приоритизовано."
+	"actions.runs.prioritization_success": "Выполнение #%d теперь приоритетно.",
+	"actions.runs.deprioritization_success": "Выполнение #%d теперь неприоритетно.",
+	"pulls.status_checks.skipped": "Некоторые проверки были пропущены",
+	"graphs.code_frequency.title": "Частота изменений в истории {0}"
 }

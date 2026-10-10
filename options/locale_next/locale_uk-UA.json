@@ -692,7 +692,7 @@
 	},
 	"actions.status.unknown": "Невідомо",
 	"actions.status.waiting": "Очікує",
-	"actions.status.running": "Працює",
+	"actions.status.running": "Виконується",
 	"actions.status.success": "Успіх",
 	"actions.status.failure": "Помилка",
 	"actions.status.cancelled": "Скасовано",
@@ -974,5 +974,8 @@
 	"repo.watch.issues": "Задачі",
 	"repo.watch.pull_requests": "Запити на злиття",
 	"repo.watch.releases": "Випуски",
-	"repo.watch.releases.hint": "(Тільки email)"
+	"repo.watch.releases.hint": "(Тільки email)",
+	"admin.dashboard.new_major_version_hint": "Версія Forgejo %[2]s більше не підтримується. Для неї не випускатимуться виправлення помилок чи оновлення безпеки. Доступна версія Forgejo %[1]s. Перегляньте інформацію про <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">поточні випуски</a>, щоб дізнатися більше.",
+	"admin.dashboard.new_minor_version_hint": "Доступна версія Forgejo %[1]s, а ви використовуєте версію %[2]s. Це оновлення містить виправлення помилок та вразливостей. Настійно рекомендуємо оновитися. Перегляньте інформацію про <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">поточні випуски</a>, щоб дізнатися більше.",
+	"admin.dashboard.update_checker_error": "Під час перевірки наявності оновлень для Forgejo сталася помилка. Перевірте інформацію про <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">поточні випуски</a> вручну. Помилка: %[1]s"
 }

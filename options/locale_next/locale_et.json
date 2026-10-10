@@ -159,5 +159,7 @@
 	"packages.versions": "Versioonid",
 	"packages.versions.view_all": "Vaata kõiki",
 	"packages.dependency.id": "Tunnus",
-	"packages.dependency.version": "Versioon"
+	"packages.dependency.version": "Versioon",
+	"repo.pulls.poster_manage_approval": "Halda heakskiitu",
+	"repo.pulls.poster_requires_approval.tooltip": "Selle tõmbepäringu autorit ei usaldata käivitama töövooge, mis on algatatud hargnenud hoidlast või AGit-i kaudu loodud tõmbetaotlusega. `pull_request`-sündmusega käivitatavad töövood ei käivitu enne, kui need on heaks kiidetud."
 }

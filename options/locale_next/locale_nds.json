@@ -952,5 +952,8 @@
 	"repo.watch.issues": "Gefallens",
 	"repo.watch.pull_requests": "Haalvörslagen",
 	"repo.watch.releases": "Publizerens",
-	"repo.watch.releases.hint": "(blots E-Mail)"
+	"repo.watch.releases.hint": "(blots E-Mail)",
+	"admin.dashboard.new_major_version_hint": "Forgejo-Versioon %[2]s is keen unnerstütt Höövd-Publizeren mehr. Dat kriggt keene Fehler-Ofhelpens of Sekerheids-Flickens. Forgejo %[1]s is nu verföögbaar. Bekiek <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">de stedenwies Publizerens</a> för mehr Informatioonen.",
+	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s is nu verföögbaar, du bruukst %[2]s. Dat is een Unnerversioons-Vernejen, wat Fehler-Ofhelpens un Sekerheids-Flickens enthollen kann. Vernejen word drock anraden. Bekiek <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">de stedenwies Publizerens</a> för mehr Informatioonen.",
+	"admin.dashboard.update_checker_error": "Forgejo kunn nich na verföögbaaren Vernejens kieken. Bekiek <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">de stedenwies Publizerens</a> sülvst. Fehler weer: %[1]s"
 }

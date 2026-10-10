@@ -952,5 +952,8 @@
 	"repo.watch.issues": "Ärenden",
 	"repo.watch.pull_requests": "Ändringsförfrågningar",
 	"repo.watch.releases": "Utgåvor",
-	"repo.watch.releases.hint": "(e-post endast)"
+	"repo.watch.releases.hint": "(e-post endast)",
+	"admin.dashboard.new_major_version_hint": "Forgejo version %[2]s är inte längre en huvudversion som stöds. Den kommer inte att få några felrättningar eller säkerhetsuppdateringar. Forgejo %[1]s finns nu tillgänglig. Se <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuella utgåvor</a> för mer information.",
+	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s finns nu tillgänglig; du kör %[2]s. Detta är en uppgradering till en mindre version som kan innehålla bugg- och säkerhetsfixar. Uppgradering rekommenderas starkt. Se <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">aktuella utgåvor</a> för mer information.",
+	"admin.dashboard.update_checker_error": "Forgejo misslyckades vid kontroll av tillgängliga uppgraderingar. Kontrollera <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">aktuella\nutgåvor</a> manuellt. Felmeddelande: %[1]s"
 }

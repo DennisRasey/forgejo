@@ -822,5 +822,18 @@
 	"form.RunnerName": "Nosaukums",
 	"form.website.valid_url_schemes": "Atļautās URL shēmas iekļauj: %s",
 	"graphs.recent_commits.title": "Iesūtījumu skaits iepriekšējā gada laikā",
-	"graphs.code_frequency.title": "Koda biežus {0} vēsturē"
+	"graphs.code_frequency.title": "Koda biežus {0} vēsturē",
+	"search.docs": "<a target=\"_blank\" rel=\"noopener noreferrer\" href=\"%[1]s\">Apskatīt dokumentāciju</a>, lai uzzinātu vairāk par meklēšanu, operatoriem un atsijātājiem.",
+	"repo.settings.units.more_units_disable_hint": "Norādi “Iespējot vēl” var atspējot <a href=\"%s\">Lietotāja iestatījumi > Izskats</a>.",
+	"admin.federation.host.schema": "Shēma",
+	"admin.federation.user.inbox_path": "Iesūtnes ceļš",
+	"admin.config.federation.digest_algorithm": "Paraksta īssavilkuma algoritms",
+	"settings.access_token.resource_specific_repo_help": "Ierobežo piekļuvi noteiktam glabātavu sarakstam. Tikai lasāma piekļuve ir atļauta visām publiskajām glabātavām. Var iespējot tikai atļaujas, kas ļauj piekļūt glabātavām un pieteikumiem.",
+	"settings.access_token.admin_disabled": "Pārvaldības atļaujas ir atspējotas.",
+	"settings.authorized_integrations": "Pilnvarotās iekļaušanas",
+	"settings.manage_authorized_integrations": "Pilnvarotās iekļaušanas",
+	"settings.authorized_integration.desc": "Pilnvarotās iekļaušanas ļauj Forgejo saņemt parakstītus JWT, pārbaudīt to prasības pret konfigurētām kārtulām un atļauj tām piekļūt Forgejo API.",
+	"settings.authorized_integration.ui.generic": "Vispārīgs JWT",
+	"settings.authorized_integration.ui.forgejo_actions_local": "Forgejo darbības (vietējas)",
+	"settings.authorized_integration.none": "Pašreiz nav konfigurēta neviena pilnvarota iekļaušana."
 }

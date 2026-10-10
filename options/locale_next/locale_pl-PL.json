@@ -750,5 +750,6 @@
 	"admin.federation.users": "Użytkownicy",
 	"mail.issue.action.close_by_commit": "%[1]s zamknięty %[2]s w commicie %[3]s.",
 	"editor.textarea.tab_hint": "Linia jest już wcięta. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora.",
-	"editor.textarea.shift_tab_hint": "Brak wcięcia dla tej linii. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora."
+	"editor.textarea.shift_tab_hint": "Brak wcięcia dla tej linii. Wciśnij <kbd>Tab</kbd> ponownie, albo wciśnij <kbd>Escape</kbd> żeby wyjść z edytora.",
+	"admin.federation.host.schema": "Schemat"
 }

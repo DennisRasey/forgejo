@@ -631,7 +631,7 @@
 	},
 	"issues.filters.labels.exclude": "Excluir etiqueta",
 	"issues.filters.labels.unexclude": "Limpiar exclusión",
-	"repo.pulls.poster_manage_approval": "Administrar la aprobación",
+	"repo.pulls.poster_manage_approval": "Gestionar aprobación",
 	"repo.pulls.poster_requires_approval": "Algunos flujos de trabajo están <a href=\"%[1]s\">pendientes de revisión</a>.",
 	"repo.pulls.poster_requires_approval.tooltip": "Al autor de esta solicitud de incorporación de cambios no se le confía el ejecutar flujos de trabajo desencadenados por una solicitud de incorporación de cambios creada a partir de un repositorio bifurcado o con AGit. Los flujos de trabajo desencadenados por un evento \"pull_request\" no funcionarán hasta ser aprobados.",
 	"repo.pulls.poster_is_trusted": "El autor de esta solicitud de fusión <a href=\"%[1]s\">siempre podrá ejecutar flujos de trabajo</a>.",
@@ -666,7 +666,7 @@
 	"repo.diff.commit.next-short": "Siguiente",
 	"admin.config.global_2fa_requirement.all": "Todos los usuarios",
 	"admin.config.global_2fa_requirement.admin": "Administradores",
-	"repo.pulls.auto_merge.no_permission": "No tiene permisos para cancelar esta fusión automática de solicitud de incorporación.",
+	"repo.pulls.auto_merge.no_permission": "Sin permisos necesarios para cancelar la fusión automática de esta solicitud de cambios.",
 	"repo.pulls.poster_trust_always": "Siempre aprobar",
 	"repo.pulls.maintainers_can_edit": "Los mantenedores pueden editar esta solicitud de incorporación de cambios.",
 	"repo.pulls.maintainers_cannot_edit": "Los mantenedores no pueden editar esta solicitud de incorporación de cambios.",
@@ -974,5 +974,8 @@
 	"repo.watch.issues": "Problemas",
 	"repo.watch.pull_requests": "Solicitudes de extracción",
 	"repo.watch.releases": "Versiones",
-	"repo.watch.releases.hint": "(Solo por correo electrónico)"
+	"repo.watch.releases.hint": "(Solo por correo electrónico)",
+	"admin.dashboard.new_major_version_hint": "La versión %[2]s de Forgejo ya no es una versión principal compatible. No recibirá correcciones de errores ni parches de seguridad. Ya está disponible Forgejo %[1]s. Consulta <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">las versiones actuales</a> para obtener más detalles.",
+	"admin.dashboard.new_minor_version_hint": "Forgejo %[1]s ya está disponible; actualmente estás ejecutando %[2]s. Se trata de una actualización de versión menor que puede incluir correcciones de errores y de seguridad. Se recomienda encarecidamente actualizar. Consulta <a target=\"_blank\" rel=\"noreferrer\" href=\"%[3]s\">las versiones actuales</a> para obtener más detalles.",
+	"admin.dashboard.update_checker_error": "Forgejo ha dado un error al comprobar si hay actualizaciones disponibles. Comprueba <a target=\"_blank\" rel=\"noreferrer\" href=\"%[2]s\">las versiones actuales</a> manualmente. El error fue: %[1]s"
 }
