@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Legacy-Editor verwenden",
+	"mde.buttons.new_table.tooltip": "Tabelle hinzufügen",
+	"mde.buttons.unindent.tooltip": "Einträge um eine Ebene entschachteln",
+	"mde.buttons.indent.tooltip": "Einträge um eine Ebene verschachteln",
 	"sync_fork.sync.button": "Sync",
 	"sync_fork.branch_behind": {
 		"one": "Dieser Branch hinkt %[1]d Commit hinter %[2]s her",
@@ -118,10 +122,6 @@
 	"user.visibility.limited.title": "Begrenzt",
 	"user.visibility.public.tooltip": "Für alle sichtbar",
 	"user.visibility.public.title": "Öffentlich",
-	"mde.buttons.new_table.tooltip": "Legacy-Editor verwenden",
-	"mde.buttons.unindent.tooltip": "Tabelle hinzufügen",
-	"mde.buttons.indent.tooltip": "Einträge um eine Ebene entschachteln",
-	"mde.buttons.switch_to_legacy.tooltip": "Einträge um eine Ebene verschachteln",
 	"mde.buttons.ref.tooltip": "Issue oder Pull-Request referenzieren",
 	"mde.buttons.mention.tooltip": "Benutzer oder Team erwähnen",
 	"mde.buttons.list.task.tooltip": "Aufgabenliste hinzufügen",

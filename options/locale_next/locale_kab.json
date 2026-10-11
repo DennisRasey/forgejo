@@ -1,4 +1,5 @@
 {
+	"mde.buttons.new_table.tooltip": "Rnu tafelwit",
 	"sync_fork.sync.button": "Mtawi",
 	"milestone.filter_sort.name": "Isem",
 	"file_editor.edit_file": "Ẓreg afaylu",
@@ -17,7 +18,6 @@
 	"issues.search.no_results.title": "Ulac igmaḍ",
 	"user.visibility.private.title": "Uslig",
 	"user.visibility.public.title": "Azayez",
-	"mde.buttons.unindent.tooltip": "Rnu tafelwit",
 	"mde.buttons.link.tooltip": "Rnu yiwen n useɣwen",
 	"mde.buttons.code.tooltip": "Rnu tangalt",
 	"admin.config.db.path": "Abrid",

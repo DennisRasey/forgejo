@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Использовать старый редактор",
+	"mde.buttons.new_table.tooltip": "Создать таблицу",
+	"mde.buttons.unindent.tooltip": "Уменьшить вложенность на 1",
+	"mde.buttons.indent.tooltip": "Увеличить вложенность на 1",
 	"sync_fork.sync.button": "Синхронизировать",
 	"sync_fork.branch_behind": {
 		"one": "Эта ветвь отстаёт от %[2]s на %[1]d коммит",
@@ -121,10 +125,6 @@
 	"user.visibility.limited.title": "Ограниченный",
 	"user.visibility.public.tooltip": "Виден всем, кто может открыть этот сайт",
 	"user.visibility.public.title": "Публичный",
-	"mde.buttons.new_table.tooltip": "Использовать старый редактор",
-	"mde.buttons.unindent.tooltip": "Создать таблицу",
-	"mde.buttons.indent.tooltip": "Уменьшить вложенность на 1",
-	"mde.buttons.switch_to_legacy.tooltip": "Увеличить вложенность на 1",
 	"mde.buttons.ref.tooltip": "Сослаться на задачу или запрос слияния",
 	"mde.buttons.mention.tooltip": "Упомянуть пользователя или команду",
 	"mde.buttons.list.task.tooltip": "Добавить список заданий",

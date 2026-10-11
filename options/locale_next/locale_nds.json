@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "In Stee daarvun de olle Bewarker bruken",
+	"mde.buttons.new_table.tooltip": "Tabell hentofögen",
+	"mde.buttons.unindent.tooltip": "Dingen um een Stand utschuven",
+	"mde.buttons.indent.tooltip": "Dingen um een Stand inschuven",
 	"sync_fork.sync.button": "Vernejen",
 	"sync_fork.branch_behind": {
 		"one": "Deeser Twieg is %[1]d Kommitteren achter %[2]s",
@@ -118,10 +122,6 @@
 	"user.visibility.limited.title": "Begrenzt",
 	"user.visibility.public.tooltip": "Elkeen kann ’t sehen",
 	"user.visibility.public.title": "Publik",
-	"mde.buttons.new_table.tooltip": "In Stee daarvun de olle Bewarker bruken",
-	"mde.buttons.unindent.tooltip": "Tabell hentofögen",
-	"mde.buttons.indent.tooltip": "Dingen um een Stand utschuven",
-	"mde.buttons.switch_to_legacy.tooltip": "Dingen um een Stand inschuven",
 	"mde.buttons.ref.tooltip": "Een Gefall of Haalvörslag nömen",
 	"mde.buttons.mention.tooltip": "Eenen Bruker of eene Klottje nömen",
 	"mde.buttons.list.task.tooltip": "List vun Upgavens hentofögen",

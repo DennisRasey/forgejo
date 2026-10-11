@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Zamiast tego użyj starego edytora",
+	"mde.buttons.new_table.tooltip": "Dodaj tabelę",
+	"mde.buttons.unindent.tooltip": "Usuń jeden poziom zagnieżdżenia",
+	"mde.buttons.indent.tooltip": "Zagnieźdź elementy o jeden poziom",
 	"sync_fork.sync.button": "Synchronizuj",
 	"sync_fork.branch_behind": {
 		"one": "Ta gałąź jest %[1]d commit za %[2]s",
@@ -121,10 +125,6 @@
 	"user.visibility.limited.title": "Ograniczony",
 	"user.visibility.public.tooltip": "Widoczne dla wszystkich",
 	"user.visibility.public.title": "Publiczny",
-	"mde.buttons.new_table.tooltip": "Zamiast tego użyj starego edytora",
-	"mde.buttons.unindent.tooltip": "Dodaj tabelę",
-	"mde.buttons.indent.tooltip": "Usuń jeden poziom zagnieżdżenia",
-	"mde.buttons.switch_to_legacy.tooltip": "Zagnieźdź elementy o jeden poziom",
 	"mde.buttons.ref.tooltip": "Dodaj odniesienie do zgłoszenia lub pull requestu",
 	"mde.buttons.mention.tooltip": "Dodaj wzmiankę o użytkowniku lub zespole",
 	"mde.buttons.list.task.tooltip": "Dodaj listę zadań",

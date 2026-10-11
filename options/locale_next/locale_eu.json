@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Erabili editore zaharra horren ordez",
+	"mde.buttons.new_table.tooltip": "Gehitu taula",
+	"mde.buttons.unindent.tooltip": "Kendu itemen habiaratzea maila bat",
+	"mde.buttons.indent.tooltip": "Habiaratu itemak maila bat",
 	"sync_fork.sync.button": "Sinkronizatu",
 	"sync_fork.branch_behind": {
 		"one": "Adar hau commit %[1]d atzerago dago %[2]s baino",
@@ -118,10 +122,6 @@
 	"user.visibility.limited.title": "Mugatua",
 	"user.visibility.public.tooltip": "Guztiek ikus dezakete",
 	"user.visibility.public.title": "Publikoa",
-	"mde.buttons.new_table.tooltip": "Erabili editore zaharra horren ordez",
-	"mde.buttons.unindent.tooltip": "Gehitu taula",
-	"mde.buttons.indent.tooltip": "Kendu itemen habiaratzea maila bat",
-	"mde.buttons.switch_to_legacy.tooltip": "Habiaratu itemak maila bat",
 	"mde.buttons.ref.tooltip": "Erreferentziatu arazo edo pull request bat",
 	"mde.buttons.mention.tooltip": "Aipatu erabiltzaile edo talde bat",
 	"mde.buttons.list.task.tooltip": "Gehitu zeregin-zerrenda",

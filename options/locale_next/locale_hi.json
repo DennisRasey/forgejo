@@ -1,8 +1,8 @@
 {
-	"mde.buttons.new_table.tooltip": "पुराना एडिटर इस्तेमाल करें",
-	"mde.buttons.unindent.tooltip": "टेबल जोड़ें",
-	"mde.buttons.indent.tooltip": "चीज़ों को एक लेवल नेस्ट से निकालें",
-	"mde.buttons.switch_to_legacy.tooltip": "चीज़ों को एक लेवल नेस्ट करें",
+	"mde.buttons.switch_to_legacy.tooltip": "पुराना एडिटर इस्तेमाल करें",
+	"mde.buttons.new_table.tooltip": "टेबल जोड़ें",
+	"mde.buttons.unindent.tooltip": "चीज़ों को एक लेवल नेस्ट से निकालें",
+	"mde.buttons.indent.tooltip": "चीज़ों को एक लेवल नेस्ट करें",
 	"mde.buttons.ref.tooltip": "इशू या पुल्ल निवेदन ज़ाहिर करें",
 	"mde.buttons.mention.tooltip": "यूजर या टीम को ज़ाहिर करें",
 	"mde.buttons.list.task.tooltip": "कार्यों की सूचि जोड़ें",

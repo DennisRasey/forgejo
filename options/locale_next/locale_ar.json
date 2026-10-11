@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "استخدم المحرر القديم",
+	"mde.buttons.new_table.tooltip": "إضافة جدول",
+	"mde.buttons.unindent.tooltip": "‪عناصر غير متساوية من نفس المستوى",
+	"mde.buttons.indent.tooltip": "تداخل العناصر بنفس المستوى",
 	"sync_fork.sync.button": "مزامنة",
 	"sync_fork.branch_behind": {
 		"zero": "هذا الفرع هو %[1]d إيداع خلف %[2]s",
@@ -74,10 +78,6 @@
 	"user.visibility.limited.title": "محدود",
 	"user.visibility.public.tooltip": "مرئي للجميع",
 	"user.visibility.public.title": "عام",
-	"mde.buttons.new_table.tooltip": "استخدم المحرر القديم",
-	"mde.buttons.unindent.tooltip": "إضافة جدول",
-	"mde.buttons.indent.tooltip": "‪عناصر غير متساوية من نفس المستوى",
-	"mde.buttons.switch_to_legacy.tooltip": "تداخل العناصر بنفس المستوى",
 	"mde.buttons.ref.tooltip": "أشر إلى مسألة أو طلب سحب",
 	"mde.buttons.mention.tooltip": "اذكر مستخدمًا أو فريقًا",
 	"mde.buttons.list.task.tooltip": "أضف قائمة مهام",

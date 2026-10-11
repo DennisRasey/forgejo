@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "En el seu lloc, utilitzar l'editor de codi antic",
+	"mde.buttons.new_table.tooltip": "Afegir taula",
+	"mde.buttons.unindent.tooltip": "Desaniuna els elements un nivell",
+	"mde.buttons.indent.tooltip": "Aniua els elements un nivell",
 	"sync_fork.sync.button": "Sincronitza",
 	"sync_fork.branch_behind": {
 		"one": "Aquesta branca és %[1]d commit darrere de %[2]s",
@@ -121,10 +125,6 @@
 	"user.visibility.limited.title": "Limitat",
 	"user.visibility.public.tooltip": "Visible per a tothom",
 	"user.visibility.public.title": "Públic",
-	"mde.buttons.new_table.tooltip": "En el seu lloc, utilitzar l'editor de codi antic",
-	"mde.buttons.unindent.tooltip": "Afegir taula",
-	"mde.buttons.indent.tooltip": "Desaniuna els elements un nivell",
-	"mde.buttons.switch_to_legacy.tooltip": "Aniua els elements un nivell",
 	"mde.buttons.ref.tooltip": "Referenciar un problema o una \"pull request\"",
 	"mde.buttons.mention.tooltip": "Mencionar un usuari o equip",
 	"mde.buttons.list.task.tooltip": "Afegir una llista de tasques",

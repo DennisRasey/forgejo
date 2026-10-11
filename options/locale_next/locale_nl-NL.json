@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Gebruik in plaats daarvan de oude editor",
+	"mde.buttons.new_table.tooltip": "Tabel toevoegen",
+	"mde.buttons.unindent.tooltip": "Items één niveau hoger plaatsen",
+	"mde.buttons.indent.tooltip": "Items één niveau lager plaatsen",
 	"sync_fork.sync.button": "Synchroniseer",
 	"sync_fork.branch_behind": {
 		"one": "Deze branch is %[1]d commit achter %[2]s",
@@ -118,10 +122,6 @@
 	"user.visibility.limited.title": "Beperkt",
 	"user.visibility.public.tooltip": "Zichtbaar voor iedereen",
 	"user.visibility.public.title": "Openbaar",
-	"mde.buttons.new_table.tooltip": "Gebruik in plaats daarvan de oude editor",
-	"mde.buttons.unindent.tooltip": "Tabel toevoegen",
-	"mde.buttons.indent.tooltip": "Items één niveau hoger plaatsen",
-	"mde.buttons.switch_to_legacy.tooltip": "Items één niveau lager plaatsen",
 	"mde.buttons.ref.tooltip": "Verwijs naar een issue of pull verzoek",
 	"mde.buttons.mention.tooltip": "Vermeld een gebruiker of team",
 	"mde.buttons.list.task.tooltip": "Een lijst met taken toevoegen",

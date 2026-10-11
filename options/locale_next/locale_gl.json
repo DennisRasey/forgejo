@@ -1,13 +1,13 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Utilizar o editor herdado",
+	"mde.buttons.new_table.tooltip": "Engadir táboa",
+	"mde.buttons.unindent.tooltip": "Desaniñar os elementos nun nivel",
+	"mde.buttons.indent.tooltip": "Aniña os elementos nun nivel",
 	"sync_fork.sync.button": "Sincronizar",
 	"sync_fork.branch_behind": {
 		"one": "Esta rama ten %d achega por detrás de %s",
 		"other": "Esta rama ten %d achegas por detrás de %s"
 	},
-	"mde.buttons.new_table.tooltip": "Utilizar o editor herdado",
-	"mde.buttons.unindent.tooltip": "Engadir táboa",
-	"mde.buttons.indent.tooltip": "Desaniñar os elementos nun nivel",
-	"mde.buttons.switch_to_legacy.tooltip": "Aniña os elementos nun nivel",
 	"mde.buttons.ref.tooltip": "Referencia un problema ou pull request",
 	"mde.buttons.mention.tooltip": "Menciona a un usuario ou equipo",
 	"mde.buttons.list.task.tooltip": "Engade unha lista de tarefas",

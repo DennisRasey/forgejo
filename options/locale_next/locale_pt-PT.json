@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Usar o editor clássico",
+	"mde.buttons.new_table.tooltip": "Adicionar tabela",
+	"mde.buttons.unindent.tooltip": "Desaninhar itens por um nível",
+	"mde.buttons.indent.tooltip": "Aninhar itens num nível",
 	"sync_fork.sync.button": "Sincronizar",
 	"sync_fork.branch_behind": {
 		"one": "Este ramo está %[1]d commit atrás de %[2]s",
@@ -121,10 +125,6 @@
 	"user.visibility.limited.title": "Limitada",
 	"user.visibility.public.tooltip": "Visível para todos",
 	"user.visibility.public.title": "Pública",
-	"mde.buttons.new_table.tooltip": "Usar o editor clássico",
-	"mde.buttons.unindent.tooltip": "Adicionar tabela",
-	"mde.buttons.indent.tooltip": "Desaninhar itens por um nível",
-	"mde.buttons.switch_to_legacy.tooltip": "Aninhar itens num nível",
 	"mde.buttons.ref.tooltip": "Referenciar uma questão ou um pull request",
 	"mde.buttons.mention.tooltip": "Mencionar um utilizador ou uma equipa",
 	"mde.buttons.list.task.tooltip": "Adicionar uma lista de tarefas",

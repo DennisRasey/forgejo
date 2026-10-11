@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Χρήση του κλασσικού κειμενογράφου",
+	"mde.buttons.new_table.tooltip": "Προσθήκη πίνακα",
+	"mde.buttons.unindent.tooltip": "Μείωση εσοχής στοιχείων κατά ένα επίπεδο",
+	"mde.buttons.indent.tooltip": "Αύξηση εσοχής στοιχείων κατά ένα επίπεδο",
 	"sync_fork.sync.button": "Συγχρον",
 	"sync_fork.branch_behind": {
 		"one": "Ο κλάδος είναι %[1]d υποβολή πίσω από το %[2]s",
@@ -118,10 +122,6 @@
 	"user.visibility.limited.title": "Περιορισμένη",
 	"user.visibility.public.tooltip": "Ορατό σε όλους",
 	"user.visibility.public.title": "Δημόσια",
-	"mde.buttons.new_table.tooltip": "Χρήση του κλασσικού κειμενογράφου",
-	"mde.buttons.unindent.tooltip": "Προσθήκη πίνακα",
-	"mde.buttons.indent.tooltip": "Μείωση εσοχής στοιχείων κατά ένα επίπεδο",
-	"mde.buttons.switch_to_legacy.tooltip": "Αύξηση εσοχής στοιχείων κατά ένα επίπεδο",
 	"mde.buttons.ref.tooltip": "Μνημόνευση ενός θέματος ή pull request",
 	"mde.buttons.mention.tooltip": "Μνημόνευση ενός χρήστη ή ομάδας",
 	"mde.buttons.list.task.tooltip": "Προσθήκη λίστας εργασιών",

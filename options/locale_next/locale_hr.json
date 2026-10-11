@@ -1,4 +1,5 @@
 {
+	"mde.buttons.new_table.tooltip": "Dodaj tablicu",
 	"sync_fork.sync.button": "Sinkronizacija",
 	"mirror_settings.direction.header": "Smjer",
 	"mirror_settings.push_mirror.none_ssh": "Ništa",
@@ -33,7 +34,6 @@
 	"user.visibility.limited.title": "Ograničeno",
 	"user.visibility.public.tooltip": "Vidljivo svima",
 	"user.visibility.public.title": "Javno",
-	"mde.buttons.unindent.tooltip": "Dodaj tablicu",
 	"mde.buttons.mention.tooltip": "Spomeni korisnika ili tim",
 	"mde.buttons.list.task.tooltip": "Dodaj popis zadataka",
 	"mde.buttons.list.ordered.tooltip": "Dodaj numerirani popis",

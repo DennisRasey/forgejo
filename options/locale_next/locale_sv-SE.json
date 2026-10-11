@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Använd den föråldrade redigeraren istället",
+	"mde.buttons.new_table.tooltip": "Lägg till tabell",
+	"mde.buttons.unindent.tooltip": "Minska indrag med en nivå",
+	"mde.buttons.indent.tooltip": "Öka indrag med en nivå",
 	"sync_fork.sync.button": "Synkronisera",
 	"sync_fork.branch_behind": {
 		"one": "Denna gren ligger %[1]d incheckning efter %[2]s",
@@ -118,10 +122,6 @@
 	"user.visibility.limited.title": "Begränsad",
 	"user.visibility.public.tooltip": "Synlig för alla",
 	"user.visibility.public.title": "Offentlig",
-	"mde.buttons.new_table.tooltip": "Använd den föråldrade redigeraren istället",
-	"mde.buttons.unindent.tooltip": "Lägg till tabell",
-	"mde.buttons.indent.tooltip": "Minska indrag med en nivå",
-	"mde.buttons.switch_to_legacy.tooltip": "Öka indrag med en nivå",
 	"mde.buttons.ref.tooltip": "Hänvisa till ett ärende eller en ändringsförfrågan",
 	"mde.buttons.mention.tooltip": "Nämn en användare eller ett lag",
 	"mde.buttons.list.task.tooltip": "Lägg till en uppgiftslista",

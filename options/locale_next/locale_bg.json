@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Използване на стария редактор",
+	"mde.buttons.new_table.tooltip": "Добавяне на таблица",
+	"mde.buttons.unindent.tooltip": "Изваждане на елементи с едно ниво",
+	"mde.buttons.indent.tooltip": "Вмъкване на елементи с едно ниво",
 	"sync_fork.sync.button": "Синхронизиране",
 	"sync_fork.branch_behind": {
 		"one": "Този клон е %[1]d подаване зад %[2]s",
@@ -73,10 +77,6 @@
 	"user.visibility.limited.title": "Ограничена",
 	"user.visibility.public.tooltip": "Видим за всички",
 	"user.visibility.public.title": "Публична",
-	"mde.buttons.new_table.tooltip": "Използване на стария редактор",
-	"mde.buttons.unindent.tooltip": "Добавяне на таблица",
-	"mde.buttons.indent.tooltip": "Изваждане на елементи с едно ниво",
-	"mde.buttons.switch_to_legacy.tooltip": "Вмъкване на елементи с едно ниво",
 	"mde.buttons.ref.tooltip": "Препратка към задача или заявка за сливане",
 	"mde.buttons.mention.tooltip": "Споменаване на потребител или екип",
 	"mde.buttons.list.task.tooltip": "Добавяне на списък със задачи",

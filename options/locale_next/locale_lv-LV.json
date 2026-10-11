@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Izmantot vēsturisko redaktoru",
+	"mde.buttons.new_table.tooltip": "Pievienot tabulu",
+	"mde.buttons.unindent.tooltip": "Pārvietot vienumus vienu līmeni augstāk",
+	"mde.buttons.indent.tooltip": "Pārvietot vienumus vienu līmeni dziļāk",
 	"sync_fork.sync.button": "Sinhronizēt",
 	"sync_fork.branch_behind": {
 		"zero": "Šis zars ir %[1]d iesūtījumus aiz %[2]s",
@@ -121,10 +125,6 @@
 	"user.visibility.limited.title": "Ierobežota",
 	"user.visibility.public.tooltip": "Redzams ikvienam",
 	"user.visibility.public.title": "Publiska",
-	"mde.buttons.new_table.tooltip": "Izmantot vēsturisko redaktoru",
-	"mde.buttons.unindent.tooltip": "Pievienot tabulu",
-	"mde.buttons.indent.tooltip": "Pārvietot vienumus vienu līmeni augstāk",
-	"mde.buttons.switch_to_legacy.tooltip": "Pārvietot vienumus vienu līmeni dziļāk",
 	"mde.buttons.ref.tooltip": "Atsaukties uz pieteikumu vai izmaiņu pieprasījumu",
 	"mde.buttons.mention.tooltip": "Pieminēt lietotāju vai komandu",
 	"mde.buttons.list.task.tooltip": "Pievienot uzdevumu sarakstu",

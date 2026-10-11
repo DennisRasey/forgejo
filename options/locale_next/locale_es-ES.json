@@ -1,4 +1,8 @@
 {
+	"mde.buttons.switch_to_legacy.tooltip": "Utilizar el editor antiguo en su lugar",
+	"mde.buttons.new_table.tooltip": "Añadir tabla",
+	"mde.buttons.unindent.tooltip": "Reducir sangría",
+	"mde.buttons.indent.tooltip": "Aumentar sangría",
 	"sync_fork.sync.button": "Sincronizar",
 	"sync_fork.branch_behind": {
 		"one": "Esta rama esta %[1]d cambios detrás de %[2]s",
@@ -121,10 +125,6 @@
 	"user.visibility.limited.title": "Limitado",
 	"user.visibility.public.tooltip": "Visible para todos",
 	"user.visibility.public.title": "Público",
-	"mde.buttons.new_table.tooltip": "Utilizar el editor antiguo en su lugar",
-	"mde.buttons.unindent.tooltip": "Añadir tabla",
-	"mde.buttons.indent.tooltip": "Reducir sangría",
-	"mde.buttons.switch_to_legacy.tooltip": "Aumentar sangría",
 	"mde.buttons.ref.tooltip": "Mencionar una incidencia o solicitud de extracción",
 	"mde.buttons.mention.tooltip": "Mencionar un usuario o equipo",
 	"mde.buttons.list.task.tooltip": "Añadir una lista de tareas",
