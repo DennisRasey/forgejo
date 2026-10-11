@@ -109,10 +109,10 @@
 	"user.visibility.limited.title": "限定",
 	"user.visibility.public.tooltip": "全員に表示されます",
 	"user.visibility.public.title": "パブリック",
-	"mde.buttons.new_table.tooltip": "レガシーエディタを使用する",
-	"mde.buttons.unindent.tooltip": "テーブル追加",
-	"mde.buttons.indent.tooltip": "アイテムを1つずつネストの解除をする",
-	"mde.buttons.switch_to_legacy.tooltip": "アイテムを1つずつネストする",
+	"mde.buttons.new_table.tooltip": "テーブル追加",
+	"mde.buttons.unindent.tooltip": "アイテムを1つずつネストの解除をする",
+	"mde.buttons.indent.tooltip": "アイテムを1つずつネストする",
+	"mde.buttons.switch_to_legacy.tooltip": "レガシーエディタを使用する",
 	"mde.buttons.ref.tooltip": "イシューまたはプルリクエストを参照",
 	"mde.buttons.mention.tooltip": "ユーザーまたはチームにメンション",
 	"mde.buttons.list.task.tooltip": "タスクリスト追加",
@@ -1010,5 +1010,8 @@
 	"form.RunnerName": "名前",
 	"form.website.valid_url_schemes": "許可されているURLスキーム: %s",
 	"graphs.recent_commits.title": "過去1年間のコミット数",
-	"graphs.code_frequency.title": "{0} の履歴におけるコード頻度"
+	"graphs.code_frequency.title": "{0} の履歴におけるコード頻度",
+	"auth.signup.username.prefix.info": "この接頭辞（%s）はユーザー名の先頭に追加され、変更することはできません。",
+	"repo.rss.issue_feed_title": "イシュー %s: %s",
+	"repo.rss.pull_feed_title": "プルリクエスト %s: %s"
 }

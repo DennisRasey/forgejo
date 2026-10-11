@@ -121,10 +121,10 @@
 	"user.visibility.limited.title": "Ierobežota",
 	"user.visibility.public.tooltip": "Redzams ikvienam",
 	"user.visibility.public.title": "Publiska",
-	"mde.buttons.new_table.tooltip": "Izmantot vēsturisko redaktoru",
-	"mde.buttons.unindent.tooltip": "Pievienot tabulu",
-	"mde.buttons.indent.tooltip": "Pārvietot vienumus vienu līmeni augstāk",
-	"mde.buttons.switch_to_legacy.tooltip": "Pārvietot vienumus vienu līmeni dziļāk",
+	"mde.buttons.new_table.tooltip": "Pievienot tabulu",
+	"mde.buttons.unindent.tooltip": "Pārvietot vienumus vienu līmeni augstāk",
+	"mde.buttons.indent.tooltip": "Pārvietot vienumus vienu līmeni dziļāk",
+	"mde.buttons.switch_to_legacy.tooltip": "Izmantot vēsturisko redaktoru",
 	"mde.buttons.ref.tooltip": "Atsaukties uz pieteikumu vai izmaiņu pieprasījumu",
 	"mde.buttons.mention.tooltip": "Pieminēt lietotāju vai komandu",
 	"mde.buttons.list.task.tooltip": "Pievienot uzdevumu sarakstu",
@@ -1014,8 +1014,8 @@
 	"funding.yaml_error.bad_input": "Atslēgas “%[1]s” vērtība neatbilst paraugam /%[2]s/",
 	"funding.yaml_error.n_too_many_providers": {
 		"zero": "Pieļaujami līdz %[1]d naudas līdzekļu nodrošinātāji",
-		"one": "",
-		"other": ""
+		"one": "Pieļaujams līdz %[1]d naudas līdzekļu nodrošinātājs",
+		"other": "Pieļaujami līdz %[1]d naudas līdzekļu nodrošinātāji"
 	},
 	"funding.yaml_error.duplicate_entry": "Atkārtots atslēgas “%[1]s” ieraksts: %[2]s",
 	"funding.yaml_error.unknown_provider": "Nezināms naudas līdzekļu nodrošinātājs: %[1]s",
@@ -1059,5 +1059,19 @@
 	"settings.authorized_integration.ui.generic": "Vispārīgs JWT",
 	"settings.authorized_integration.ui.forgejo_actions_local": "Forgejo darbības (vietējas)",
 	"settings.authorized_integration.none": "Pašreiz nav konfigurēta neviena pilnvarota iekļaušana.",
-	"mail.actions.job_failure_info_run": "Izpilde: <a href=\"%[2]s\">%[1]s</a>"
+	"mail.actions.job_failure_info_run": "Izpilde: <a href=\"%[2]s\">%[1]s</a>",
+	"auth.signup.username.prefix.info": "Šis priedēklis (%s) tiks pievienots pirms lietotājvārda, un to nevar nomainīt.",
+	"repo.settings.event_action_do_not_use_label": "neizmantot",
+	"repo.settings.event_action_do_not_use_tooltip": "Neizmantot darbību izpildes notikumus! Tā vietā izmantot darbplūsmas izpildi.",
+	"repo.settings.event_header_workflow_job": "Darbplūsmas darba notikumi",
+	"repo.settings.event_workflow_job_blocked": "Aizturēts",
+	"repo.settings.event_workflow_job_blocked_desc": "Darbu nevar izpildīt, kamēr nosacījums nav piepildījies.",
+	"repo.settings.event_workflow_job_cancelled": "Atcelts",
+	"repo.settings.event_workflow_job_cancelled_desc": "Darbs tika atcelts.",
+	"repo.settings.event_workflow_job_failure": "Kļūme",
+	"repo.settings.event_workflow_job_failure_desc": "Darbā izpildē bija kļūda.",
+	"repo.settings.event_workflow_job_running": "Izpildās",
+	"repo.settings.event_workflow_job_running_desc": "Darbs tiek izpildīts.",
+	"repo.settings.event_workflow_job_skipped": "Izlaists",
+	"repo.settings.event_workflow_job_skipped_desc": "Darbs tika izlaists."
 }

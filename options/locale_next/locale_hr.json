@@ -570,5 +570,6 @@
 	"feed.atom.link": "Atom prijenos",
 	"keys.verify.token.hint": "Token je samo valjan na 1 minutu. <a href=\"%[1]s\">Dobij novi ako istekne</a>.",
 	"admin.federation.hosts.manage_panel": "Upravljaj federacijskim domaćinima",
-	"admin.federation.users.show_local_user": "Pokaži detalje o lokalnom korisniku"
+	"admin.federation.users.show_local_user": "Pokaži detalje o lokalnom korisniku",
+	"mde.buttons.new_table.tooltip": "Dodaj tablicu"
 }

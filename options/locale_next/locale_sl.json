@@ -34,5 +34,6 @@
 	"webauthn.insert_key": "Vnesite varnostni ključ",
 	"actions.runners.runner_manage_panel": "Upravljanje tekačev",
 	"packages.owner.settings.chef.keypair.description": "Za preverjanje pristnosti v registru Chef je potreben par ključev. Če ste par ključev ustvarili že prej, se pri ustvarjanju novega para ključev stari par ključev zavrže.",
-	"meta.last_line": " "
+	"meta.last_line": " ",
+	"mde.buttons.switch_to_legacy.tooltip": "Namesto tega uporabite starejši urejevalnik"
 }
