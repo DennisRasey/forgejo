@@ -96,23 +96,19 @@ func InitRepository(ctx context.Context, repoPath string, bare bool, objectForma
 	return err
 }
 
-// IsEmpty Check if repository is empty.
+// IsEmpty checks if the repository is empty. It does so by
+// determining if there's any ref in the repository.
 func (repo *Repository) IsEmpty() (bool, error) {
-	var errbuf, output strings.Builder
-	if err := NewCommand(repo.Ctx).AddOptionFormat("--git-dir=%s", repo.Path).AddArguments("rev-list", "-n", "1", "--all").
-		Run(&RunOpts{
-			Dir:    repo.Path,
-			Stdout: &output,
-			Stderr: &errbuf,
-		}); err != nil {
-		if (err.Error() == "exit status 1" && strings.TrimSpace(errbuf.String()) == "") || err.Error() == "exit status 129" {
-			// git 2.11 exits with 129 if the repo is empty
-			return true, nil
-		}
-		return true, fmt.Errorf("check empty: %w - %s", err, errbuf.String())
+	stdout, _, err := NewCommand(repo.Ctx).
+		AddOptionFormat("--git-dir=%s", repo.Path).
+		AddArguments("for-each-ref", "--count=1", `--format=found`).
+		SetDescription("Empty repository check").
+		RunStdString(&RunOpts{Dir: repo.Path})
+	if err != nil {
+		return false, err
 	}
 
-	return strings.TrimSpace(output.String()) == "", nil
+	return strings.TrimSpace(stdout) == "", nil
 }
 
 // CloneRepoOptions options when clone a repository

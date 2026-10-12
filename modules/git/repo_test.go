@@ -20,13 +20,25 @@ import (
 )
 
 func TestRepoIsEmpty(t *testing.T) {
-	emptyRepo2Path := filepath.Join(testReposDir, "repo2_empty")
-	repo, err := openRepositoryWithDefaultContext(emptyRepo2Path)
-	require.NoError(t, err)
-	defer repo.Close()
-	isEmpty, err := repo.IsEmpty()
-	require.NoError(t, err)
-	assert.True(t, isEmpty)
+	t.Run("Empty", func(t *testing.T) {
+		repo, err := OpenRepository(t.Context(), filepath.Join(testReposDir, "repo2_empty"))
+		require.NoError(t, err)
+		defer repo.Close()
+
+		isEmpty, err := repo.IsEmpty()
+		require.NoError(t, err)
+		assert.True(t, isEmpty)
+	})
+
+	t.Run("Not empty", func(t *testing.T) {
+		repo, err := OpenRepository(t.Context(), filepath.Join(testReposDir, "repo1_bare"))
+		require.NoError(t, err)
+		defer repo.Close()
+
+		isEmpty, err := repo.IsEmpty()
+		require.NoError(t, err)
+		assert.False(t, isEmpty)
+	})
 }
 
 func TestRepoGetDivergingCommits(t *testing.T) {
