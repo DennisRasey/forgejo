@@ -109,13 +109,18 @@ func TestInitWorkPathAndCommonConfig(t *testing.T) {
 		assert.Equal(t, fp(dirFoo, "custom2/conf/app.ini"), CustomConf)
 	})
 
-	t.Run("CustomConf", func(t *testing.T) {
+	t.Run("CustomConfInCwd", func(t *testing.T) {
+		err := os.MkdirAll(dirXxx, 0o700)
+		require.NoError(t, err)
+		t.Chdir(dirXxx)
 		testInit(dirFoo, "", "")
 		InitWorkPathAndCommonConfig(envVars{}.Getenv, ArgWorkPathAndCustomConf{CustomConf: "app1.ini"})
 		assert.Equal(t, dirFoo, AppWorkPath)
 		cwd, _ := os.Getwd()
 		assert.Equal(t, fp(cwd, "app1.ini"), CustomConf)
+	})
 
+	t.Run("CustomConfInCustomDir", func(t *testing.T) {
 		testInit(dirFoo, "", "")
 		InitWorkPathAndCommonConfig(envVars{}.Getenv, ArgWorkPathAndCustomConf{CustomConf: fp(dirBar, "app1.ini")})
 		assert.Equal(t, dirFoo, AppWorkPath)
