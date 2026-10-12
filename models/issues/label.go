@@ -6,6 +6,7 @@ package issues
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -254,7 +255,7 @@ func UpdateLabel(ctx context.Context, l *Label) error {
 }
 
 // DeleteLabel delete a label
-func DeleteLabel(ctx context.Context, id, labelID int64) error {
+func DeleteLabelInOrg(ctx context.Context, orgID, labelID int64) error {
 	l, err := GetLabelByID(ctx, labelID)
 	if err != nil {
 		if IsErrLabelNotExist(err) {
@@ -262,36 +263,48 @@ func DeleteLabel(ctx context.Context, id, labelID int64) error {
 		}
 		return err
 	}
+	if !l.BelongsToOrg() {
+		return errors.New("attempted to delete label that doesn't belong to an organization with an organization ID check")
+	} else if l.OrgID != orgID {
+		return nil
+	}
 
-	ctx, committer, err := db.TxContext(ctx)
+	return deleteLabel(ctx, labelID)
+}
+
+func DeleteLabelInRepo(ctx context.Context, repoID, labelID int64) error {
+	l, err := GetLabelByID(ctx, labelID)
 	if err != nil {
+		if IsErrLabelNotExist(err) {
+			return nil
+		}
 		return err
 	}
-	defer committer.Close()
-
-	sess := db.GetEngine(ctx)
-
-	if l.BelongsToOrg() && l.OrgID != id {
+	if !l.BelongsToRepo() {
+		return errors.New("attempted to delete label that doesn't belong to an repository with an repository ID check")
+	} else if l.RepoID != repoID {
 		return nil
 	}
-	if l.BelongsToRepo() && l.RepoID != id {
-		return nil
-	}
 
-	if _, err = db.DeleteByID[Label](ctx, labelID); err != nil {
-		return err
-	} else if _, err = sess.
-		Where("label_id = ?", labelID).
-		Delete(new(IssueLabel)); err != nil {
-		return err
-	}
+	return deleteLabel(ctx, labelID)
+}
 
-	// delete comments about now deleted label_id
-	if _, err = sess.Where("label_id = ?", labelID).Cols("label_id").Delete(&Comment{}); err != nil {
-		return err
-	}
+func deleteLabel(ctx context.Context, labelID int64) error {
+	return db.WithTx(ctx, func(ctx context.Context) error {
+		sess := db.GetEngine(ctx)
 
-	return committer.Commit()
+		if _, err := db.DeleteByID[Label](ctx, labelID); err != nil {
+			return err
+		} else if _, err = sess.
+			Where("label_id = ?", labelID).
+			Delete(new(IssueLabel)); err != nil {
+			return err
+		}
+
+		// delete comments about now deleted label_id
+		_, err := sess.Where("label_id = ?", labelID).Cols("label_id").Delete(&Comment{})
+		return err
+	})
 }
 
 // GetLabelByID returns a label by given ID.
