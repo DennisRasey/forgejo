@@ -81,6 +81,7 @@ func GetUserOrgsList(ctx context.Context, user *user_model.User) ([]*Organizatio
 	outputCols := []string{
 		"id",
 		"name",
+		"lower_name",
 		"full_name",
 		"visibility",
 		"avatar",

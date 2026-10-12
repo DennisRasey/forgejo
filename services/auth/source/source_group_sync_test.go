@@ -439,6 +439,68 @@ func TestResolveMappedMemberships(t *testing.T) {
 	}
 }
 
+// TestResolveMappedMembershipsUpperCaseOrgTeam tests resolveMappedMemberships
+// with upper case organization and team names.
+func TestResolveMappedMembershipsUpperCaseOrgTeam(t *testing.T) {
+	require.NoError(t, unittest.PrepareTestDatabase())
+	ctx := db.DefaultContext
+
+	// "user24" is member of team "NotOwners" in "org25".
+	// rename org to "Org25" to have upper case letters in both the team
+	// name and the organization name
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 24})
+	org := unittest.AssertExistsAndLoadBean(t, &org_model.Organization{ID: 25})
+	org.Name = "Org25"
+	require.NoError(t, user_model.UpdateUserCols(ctx, org.AsUser(), "name"))
+	org = unittest.AssertExistsAndLoadBean(t, org)
+	require.Equal(t, "Org25", org.Name)
+
+	t.Run("dynamic mapping", func(t *testing.T) {
+		srcGroups := container.SetOf(
+			"dyn-org25-notowners",
+			"dyn-Org25-NotOwners",
+			"dyn-ORG25-NOTOWNERS",
+		)
+		mappings := map[string]map[string][]string{}
+		dynMappings := NewDynGroupMaps([]string{
+			"dyn-{org}-{team}",
+		})
+		dynRemoval := true
+		wantAdd := map[string][]string{
+			"org25": {"notowners"},
+		}
+		wantRemove := map[string][]string{}
+		gotAdd, gotRemove := resolveMappedMemberships(ctx, user,
+			srcGroups, mappings,
+			dynMappings, dynRemoval)
+
+		assert.Equal(t, wantAdd, gotAdd)
+		assert.Equal(t, wantRemove, gotRemove)
+	})
+	t.Run("static mapping", func(t *testing.T) {
+		// it is possible to configure dynamic removal with only static
+		// mappings and no dynamic mappings, so test it here.
+		srcGroups := container.SetOf(
+			"Org25-NotOwners",
+		)
+		mappings := map[string]map[string][]string{
+			"Org25-NotOwners": {"Org25": {"NotOwners"}},
+		}
+		dynMappings := NewDynGroupMaps([]string{})
+		dynRemoval := true
+		wantAdd := map[string][]string{
+			"org25": {"notowners"},
+		}
+		wantRemove := map[string][]string{}
+		gotAdd, gotRemove := resolveMappedMemberships(ctx, user,
+			srcGroups, mappings,
+			dynMappings, dynRemoval)
+
+		assert.Equal(t, wantAdd, gotAdd)
+		assert.Equal(t, wantRemove, gotRemove)
+	})
+}
+
 func TestSyncGroupsToTeams(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	unittest.AssertSuccessfulInsert(t, auth_model.Source{ID: 1, Name: "Keycloak"})
