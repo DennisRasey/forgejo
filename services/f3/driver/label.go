@@ -105,7 +105,7 @@ func (o *label) Delete(ctx context.Context) {
 
 	project := f3_tree.GetProjectID(o.GetNode())
 
-	if err := issues_model.DeleteLabel(ctx, project, o.forgejoLabel.ID); err != nil {
+	if err := issues_model.DeleteLabelInRepo(ctx, project, o.forgejoLabel.ID); err != nil {
 		panic(err)
 	}
 }
