@@ -316,6 +316,8 @@ func mustMapSetting(rootCfg ConfigProvider, sectionName string, setting any) {
 func (k *iniConfigKey) MustDuration(defaultVal time.Duration) (time.Duration, error) {
 	val := k.String()
 	if len(val) == 0 {
+		// persist default in value
+		k.Key.MustDuration(defaultVal)
 		return defaultVal, nil
 	}
 
