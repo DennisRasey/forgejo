@@ -1,8 +1,8 @@
 {
-	"mde.buttons.new_table.tooltip": "Folosiți în schimb editorul vechi",
-	"mde.buttons.unindent.tooltip": "Adaugă tabel",
-	"mde.buttons.indent.tooltip": "Nu mai indentați obiectele cu un nivel",
-	"mde.buttons.switch_to_legacy.tooltip": "Indentați obiectele cu un nivel",
+	"mde.buttons.new_table.tooltip": "Adaugă tabel",
+	"mde.buttons.unindent.tooltip": "Nu mai indentați obiectele cu un nivel",
+	"mde.buttons.indent.tooltip": "Indentați obiectele cu un nivel",
+	"mde.buttons.switch_to_legacy.tooltip": "Folosiți în schimb editorul vechi",
 	"mde.buttons.ref.tooltip": "Faceți o referire la o problemă sau o cerere de extragere",
 	"mde.buttons.mention.tooltip": "Menționează un utilizator sau o echipă",
 	"mde.buttons.list.task.tooltip": "Adăugați o listă de sarcini",

@@ -1,7 +1,7 @@
 {
 	"mde.buttons.new_table.tooltip": "Vietoj to naudoti senąjį rengyklę",
-	"mde.buttons.indent.tooltip": "Išdėti elementus vienu lygiu",
-	"mde.buttons.switch_to_legacy.tooltip": "Įdėti elementus vienu lygiu",
+	"mde.buttons.indent.tooltip": "Įdėti elementus vienu lygiu",
+	"mde.buttons.switch_to_legacy.tooltip": "Vietoj to naudoti senąjį rengyklę",
 	"mde.buttons.ref.tooltip": "Nurodyti į problemą arba sujungimo prašymą",
 	"mde.buttons.mention.tooltip": "Minėti naudotoją arba komandą",
 	"mde.buttons.list.task.tooltip": "Pridėti užduočių sąrašą",
@@ -155,5 +155,6 @@
 	"editor.textarea.shift_tab_hint": "Ši eilutė neturi įtraukos. Paspauskite <kbd>Shift</kbd> + <kbd>Tab</kbd> dar kartą arba <kbd>Escape</kbd>, kad išeitumėte iš redaktoriaus.",
 	"admin.dashboard.cleanup_offline_runners": "Išvalyti neprisijungusius vykdytojus",
 	"settings.visibility.description": "Profilio matomumas turi įtakos kitų galimybei pasiekti jūsų ne privačias saugyklas. <a href=\"%s\" target=\"_blank\">Sužinokite daugiau</a>.",
-	"avatar.constraints_hint": "Pasirinktinis avataras negali viršyti %[1]s dydžio arba būti didesnis nei %[2]dx%[3]d pikselių"
+	"avatar.constraints_hint": "Pasirinktinis avataras negali viršyti %[1]s dydžio arba būti didesnis nei %[2]dx%[3]d pikselių",
+	"mde.buttons.unindent.tooltip": "Išdėti elementus vienu lygiu"
 }

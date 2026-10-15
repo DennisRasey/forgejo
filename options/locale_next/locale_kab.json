@@ -191,5 +191,6 @@
 	"admin.federation.host.software_name": "Aseɣẓan",
 	"admin.federation.users": "Iseqdacen",
 	"admin.federation.user.id": "Asulay ID",
-	"admin.config.federation.enabled": "D urmid"
+	"admin.config.federation.enabled": "D urmid",
+	"mde.buttons.new_table.tooltip": "Rnu tafelwit"
 }
