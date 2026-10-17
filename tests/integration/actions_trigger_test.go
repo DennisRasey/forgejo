@@ -1957,11 +1957,19 @@ func TestActionsForkPullRequest(t *testing.T) {
 		// and triggering the issue_comment event.
 		runFromBaseWithoutPullRequest
 	)
+	type expectedRef int
+	const (
+		// forgejo.ref will be refs/pull/%d/head
+		refPullRequest expectedRef = iota
+		// refs/heads/main
+		refBaseBranch
+	)
 	type testCase struct {
 		name             string // must be safe to use in a repo name
 		workflowPreamble string
 		triggerEvent     func(t *testing.T, baseRepo *repo_model.Repository, pr *issues_model.PullRequest, token string)
 		expectedResult   expectedResult
+		expectedRef      expectedRef
 	}
 
 	testCases := []testCase{
@@ -2048,72 +2056,84 @@ func TestActionsForkPullRequest(t *testing.T) {
 			workflowPreamble: "on: { pull_request_target: { types: [assigned] } }\n",
 			triggerEvent:     assignPR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-unassigned",
 			workflowPreamble: "on: { pull_request_target: { types: [unassigned] } }\n",
 			triggerEvent:     unassignPR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-labeled",
 			workflowPreamble: "on: { pull_request_target: { types: [labeled] } }\n",
 			triggerEvent:     labelPR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-unlabeled",
 			workflowPreamble: "on: { pull_request_target: { types: [unlabeled] } }\n",
 			triggerEvent:     unlabelPR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-edited",
 			workflowPreamble: "on: { pull_request_target: { types: [edited] } }\n",
 			triggerEvent:     editPRTitle,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-closed",
 			workflowPreamble: "on: { pull_request_target: { types: [closed] } }\n",
 			triggerEvent:     closePR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-reopened",
 			workflowPreamble: "on: { pull_request_target: { types: [reopened] } }\n",
 			triggerEvent:     reopenPR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-synchronize",
 			workflowPreamble: "on: { pull_request_target: { types: [synchronize] } }\n",
 			triggerEvent:     synchronizePR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-milestoned",
 			workflowPreamble: "on: { pull_request_target: { types: [milestoned] } }\n",
 			triggerEvent:     milestonePR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-demilestoned",
 			workflowPreamble: "on: { pull_request_target: { types: [demilestoned] } }\n",
 			triggerEvent:     demilestonePR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "pull_request_target-review_requested",
 			workflowPreamble: "on: { pull_request_target: { types: [review_requested] } }\n",
 			triggerEvent:     requestReview,
 			expectedResult:   runFromBase,
+			expectedRef:      refPullRequest, // unexpected for pull_request_target, possible bug; generateGiteaContextForRun doesn't get a PR payload; out of scope for current patch
 		},
 		{
 			name:             "pull_request_target-review_request_removed",
 			workflowPreamble: "on: { pull_request_target: { types: [review_request_removed] } }\n",
 			triggerEvent:     removeReviewRequest,
 			expectedResult:   runFromBase,
+			expectedRef:      refPullRequest, // unexpected for pull_request_target, possible bug; generateGiteaContextForRun doesn't get a PR payload; out of scope for current patch
 		},
 		{
 			name:             "pull_request_review",
@@ -2144,18 +2164,21 @@ func TestActionsForkPullRequest(t *testing.T) {
 			workflowPreamble: "on: { issue_comment: { types: [created] } }",
 			triggerEvent:     createPRComment,
 			expectedResult:   runFromBaseWithoutPullRequest,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "issue_comment-edited",
 			workflowPreamble: "on: { issue_comment: { types: [edited] } }",
 			triggerEvent:     editPRComment,
 			expectedResult:   runFromBaseWithoutPullRequest,
+			expectedRef:      refBaseBranch,
 		},
 		{
 			name:             "issue_comment-deleted",
 			workflowPreamble: "on: { issue_comment: { types: [deleted] } }",
 			triggerEvent:     deletePRComment,
 			expectedResult:   runFromBaseWithoutPullRequest,
+			expectedRef:      refBaseBranch,
 		},
 	}
 
@@ -2303,6 +2326,16 @@ jobs:
 					assert.Contains(t, task.Secrets, "MY_SECRET")
 					assert.Len(t, task.Secrets, 4)
 					writeToRepoCode(t, baseRepo, task.Secrets["FORGEJO_TOKEN"], http.StatusCreated)
+				}
+
+				ref, ok := task.Context.AsMap()["ref"]
+				switch tc.expectedRef {
+				case refPullRequest:
+					require.True(t, ok, "'ref' must exist in context")
+					assert.Equal(t, "refs/pull/1/head", ref)
+				case refBaseBranch:
+					require.True(t, ok, "'ref' must exist in context")
+					assert.Equal(t, "refs/heads/main", ref)
 				}
 
 				runner.execTask(t, task, &mockTaskOutcome{
