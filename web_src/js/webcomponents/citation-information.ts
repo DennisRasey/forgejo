@@ -3,7 +3,7 @@
 
 import '@citation-js/plugin-software-formats';
 import '@citation-js/plugin-bibtex';
-import {Cite, plugins} from '@citation-js/core';
+import {Cite, plugins, type InputOptions} from '@citation-js/core';
 
 import {getCurrentLocale} from '../utils.ts';
 import {initTab} from '../modules/tab.ts';
@@ -13,16 +13,16 @@ window.customElements.define(
   class extends HTMLElement {
     connectedCallback() {
       const children = this.children; // eslint-disable-line wc/no-child-traversal-in-connectedcallback
-      if (children.length !== 1) {
+      if (children.length !== 1 || children[0].tagName !== 'TABLE') {
         // developer error
         throw new Error(
-          `<citation-information> expected one child, got ${children.length}`,
+          `<citation-information> expected one <table> child, got ${children.length}`,
         );
       }
 
       const lang = getCurrentLocale() || 'en-US';
 
-      const raw = children[0];
+      const raw = children[0] as HTMLTableElement;
       raw.dataset.tab = 'raw';
       raw.classList.add('tab', 'active');
 
@@ -31,9 +31,10 @@ window.customElements.define(
       const code = Array.from(lineEls, (el) => el.textContent).join('');
 
       const inputType = plugins.input.type(code);
-      let parsed;
+      let parsed: Cite;
       try {
-        parsed = new Cite(code, {forceType: inputType});
+        // FIXME: upstream failed to mark Cite constructor options as optional, despite them each having default values, so tsc complains here about an incomplete object
+        parsed = new Cite(code, {forceType: inputType} as InputOptions);
       } catch (err) {
         const elContainer = document.createElement('div');
         elContainer.classList.add('ui', 'warning', 'message');
@@ -53,7 +54,7 @@ window.customElements.define(
       const toggleBar = document.createElement('div');
       toggleBar.classList.add('switch');
 
-      const newButton = (txt, id, tooltip, active) => {
+      const newButton = (txt: string, id: string, tooltip: string, active?: boolean) => {
         const el = document.createElement('button');
         el.textContent = txt;
         el.dataset.tab = id;
@@ -79,13 +80,13 @@ window.customElements.define(
       }
       toggleBar.append(newButton(originalText, 'raw', originalTooltip, true));
 
-      const appendTab = (id, btnLabel, btnTooltip, tabContent) => {
+      const appendTab = (id: string, btnLabel: string, btnTooltip: string, tabContent: string) => {
         const el = document.createElement('pre');
         el.textContent = tabContent;
         el.dataset.tab = id;
         el.classList.add('tab');
         el.style.padding = '1rem';
-        el.style.margin = 0;
+        el.style.margin = '0';
         this.append(el);
         toggleBar.append(newButton(btnLabel, id, btnTooltip));
       };
@@ -94,7 +95,7 @@ window.customElements.define(
           'bibtex',
           'BibTeX',
           '',
-          parsed.format('bibtex', {lang}).trim(),
+          parsed.format('bibtex', {lang, format: 'text'}).trim(),
         );
       }
       if (inputType !== '@else/yaml') {
@@ -102,7 +103,7 @@ window.customElements.define(
           'cff',
           'CFF',
           'Citation File Format',
-          parsed.format('cff', {lang}).trim(),
+          parsed.format('cff').trim(),
         );
       }
 

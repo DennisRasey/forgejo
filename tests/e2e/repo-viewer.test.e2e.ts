@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // @watch start
-// web_src/js/webcomponents/citation-information.js
+// web_src/js/webcomponents/citation-information.ts
 // @watch end
 
 import {expect} from '@playwright/test';

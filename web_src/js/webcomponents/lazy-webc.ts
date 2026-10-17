@@ -5,12 +5,11 @@ import {onDomReady} from '../utils/dom.ts';
 
 /**
  * Lazy-load the promise (making it a singleton).
- * @param {()=>Promise} newPromise Promise factory.
- * @returns {()=>Promise} Singleton promise
+ * @param newPromise Promise factory.
+ * @returns Singleton promise
  */
-function lazyPromise(newPromise) {
-  /** @type {Promise?} */
-  let p;
+function lazyPromise<T>(newPromise: () => Promise<T>): () => Promise<T> {
+  let p: Promise<T>;
   return () => {
     p ??= newPromise();
     return p;
@@ -18,24 +17,26 @@ function lazyPromise(newPromise) {
 }
 
 // the following web components will only be loaded if present in the page (to reduce the bundle size for infrequently used components)
+// NOTE: tsconfig "module" must be "esnext" or equivalent
 const loadableComponents = {
   'model-viewer': lazyPromise(() => {
+    // FIXME: this causes an error when WebGL context isn't available. We may need to do some detecting on our own for this case.
     return import(/* webpackChunkName: "model-viewer" */ '@google/model-viewer');
   }),
   'pdf-object': lazyPromise(() => {
-    return import(/* webpackChunkName: "pdf-object" */ './pdf-object.js');
+    return import(/* webpackChunkName: "pdf-object" */ './pdf-object.ts');
   }),
   'citation-information': lazyPromise(() => {
-    return import(/* webpackChunkName: "citation-information" */ './citation-information.js');
+    return import(/* webpackChunkName: "citation-information" */ './citation-information.ts');
   }),
-};
+} as const;
 
 /**
  * Replace elt with an element having the given tag.
- * @param {HTMLElement} elt The element to replace.
- * @param {string} name The tagName of the new element.
+ * @param elt The element to replace.
+ * @param name The tagName of the new element.
  */
-function replaceTag(elt, name) {
+function replaceTag(elt: HTMLElement, name: string) {
   const successor = document.createElement(name);
   // Move the children to the successor
   while (elt.firstChild) {
@@ -43,7 +44,7 @@ function replaceTag(elt, name) {
   }
   // Copy the attributes to the successor
   for (let index = elt.attributes.length - 1; index >= 0; --index) {
-    successor.attributes.setNamedItem(elt.attributes[index].cloneNode());
+    successor.attributes.setNamedItem(elt.attributes[index].cloneNode() as Attr);
   }
   // Replace elt with the successor
   elt.parentNode.replaceChild(successor, elt);
