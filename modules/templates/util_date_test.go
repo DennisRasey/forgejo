@@ -89,7 +89,8 @@ func TestTimeDuration(t *testing.T) {
 	defer timeutil.MockUnset()
 
 	t.Run("Display TZ UTC", func(t *testing.T) {
-		result := TimeDuration(timeutil.TimeStampNow().Add(-67))
+		t.Setenv("TZ", "UTC")
+		result := TimeDuration(timeutil.TimeStampNow().Add(-67).AsTimeInLocation(time.UTC))
 		assert.EqualValues(t, `<relative-time datetime="2024-05-19T05:39:25Z" format="duration" prefix="" data-tooltip-content data-tooltip-interactive="true">1m7s</relative-time>`, result)
 	})
 
