@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import {minimatch} from 'minimatch';
-import {onInputDebounce, toggleElem} from '../utils/dom.js';
+import {onInputDebounce, toggleElem} from '../utils/dom.ts';
 import {POST} from '../modules/fetch.ts';
 import {createCodemirror} from './codemirror.ts';
 

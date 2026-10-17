@@ -1,4 +1,4 @@
-import {hideElem, showElem} from '../utils/dom.js';
+import {hideElem, showElem} from '../utils/dom.ts';
 import {GET} from '../modules/fetch.ts';
 
 export function initInstall() {

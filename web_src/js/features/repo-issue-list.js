@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import {updateIssuesMeta} from './repo-issue.js';
-import {toggleElem, hideElem, isElemHidden} from '../utils/dom.js';
+import {toggleElem, hideElem, isElemHidden} from '../utils/dom.ts';
 import {htmlEscape} from 'escape-goat';
 import {showErrorToast} from '../modules/toast.js';
 import {createSortable} from '../modules/sortable.js';

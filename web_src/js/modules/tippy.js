@@ -1,5 +1,5 @@
 import tippy, {followCursor} from 'tippy.js';
-import {isDocumentFragmentOrElementNode} from '../utils/dom.js';
+import {isDocumentFragmentOrElementNode} from '../utils/dom.ts';
 import {formatDatetime} from '../utils/time.js';
 
 const visibleInstances = new Set();

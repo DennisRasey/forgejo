@@ -22,7 +22,7 @@ import {initCompReactionSelector} from './comp/ReactionSelector.js';
 import {initRepoSettingBranches} from './repo-settings.js';
 import {initRepoPullRequestMergeForm} from './repo-issue-pr-form.js';
 import {initRepoPullRequestCommitStatus} from './repo-issue-pr-status.js';
-import {hideElem, showElem} from '../utils/dom.js';
+import {hideElem, showElem} from '../utils/dom.ts';
 import {getComboMarkdownEditor, initComboMarkdownEditor} from './comp/ComboMarkdownEditor.js';
 import {attachRefIssueContextPopup} from './contextpopup.js';
 import {POST} from '../modules/fetch.ts';

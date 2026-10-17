@@ -1,6 +1,6 @@
 import {throttle} from 'throttle-debounce';
 import {createTippy} from '../modules/tippy.js';
-import {isDocumentFragmentOrElementNode} from '../utils/dom.js';
+import {isDocumentFragmentOrElementNode} from '../utils/dom.ts';
 import octiconKebabHorizontal from '../../../public/assets/img/svg/octicon-kebab-horizontal.svg';
 
 window.customElements.define('overflow-menu', class extends HTMLElement {

@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import {checkAppUrl} from '../common-global.js';
-import {hideElem, showElem, toggleElem} from '../../utils/dom.js';
+import {hideElem, showElem, toggleElem} from '../../utils/dom.ts';
 import {POST} from '../../modules/fetch.ts';
 import {showModal} from '../../modules/modal.ts';
 

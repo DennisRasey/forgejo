@@ -2,7 +2,7 @@
 import {SvgIcon} from '../svg.ts';
 import ActionRunStatus from './ActionRunStatus.vue';
 import ActionJobStepList from './ActionJobStepList.vue';
-import {toggleElem} from '../utils/dom.js';
+import {toggleElem} from '../utils/dom.ts';
 import {GET, POST, DELETE} from '../modules/fetch.ts';
 import {initMarkupContent} from '../markup/content.js';
 import {showErrorToast} from '../modules/toast.js';

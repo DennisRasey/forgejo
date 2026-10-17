@@ -79,7 +79,7 @@ import {initRepositoryActionView} from './features/repo-action-view.ts';
 import {initGlobalTooltips} from './modules/tippy.js';
 import {initDropdowns} from './modules/dropdown.ts';
 import {initGiteaFomantic} from './modules/fomantic.js';
-import {onDomReady} from './utils/dom.js';
+import {onDomReady} from './utils/dom.ts';
 import {initRepoIssueList} from './features/repo-issue-list.js';
 import {initCommonIssueListQuickGoto} from './features/common-issue-list.js';
 import {initRepoContributors} from './features/contributors.js';

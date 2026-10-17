@@ -1,4 +1,4 @@
-import {isElemHidden, onInputDebounce, submitEventSubmitter, toggleElem} from '../utils/dom.js';
+import {isElemHidden, onInputDebounce, submitEventSubmitter, toggleElem} from '../utils/dom.ts';
 import {GET} from '../modules/fetch.ts';
 
 const {appSubUrl} = window.config;

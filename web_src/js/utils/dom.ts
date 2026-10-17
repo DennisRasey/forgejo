@@ -1,7 +1,7 @@
 import {debounce} from 'throttle-debounce';
 
-function elementsCall(el, func, ...args) {
-  if (typeof el === 'string' || el instanceof String) {
+function elementsCall<A extends unknown[]>(el: string | Element | Element[] | NodeListOf<Element> | JQuery, func: (...args: [Element, ...A]) => void, ...args: A) {
+  if (typeof el === 'string') {
     el = document.querySelectorAll(el);
   }
   if (el instanceof Node) {
@@ -17,10 +17,9 @@ function elementsCall(el, func, ...args) {
 }
 
 /**
- * @param el string (selector), Node, NodeList, HTMLCollection, Array or jQuery
- * @param force force=true to show or force=false to hide, undefined to toggle
+ * @param force `true` to show, `false` to hide, `undefined` or omit to toggle
  */
-function toggleShown(el, force) {
+function toggleShown(el: Element, force?: boolean) {
   if (force === true) {
     el.classList.remove('tw-hidden');
   } else if (force === false) {
@@ -32,34 +31,38 @@ function toggleShown(el, force) {
   }
 }
 
-export function showElem(el) {
+/** Unhide one or more elements. */
+export function showElem(el: string | Element | Element[] | NodeListOf<Element> | JQuery) {
   elementsCall(el, toggleShown, true);
 }
 
-export function hideElem(el) {
+/** Hide one or more elements. */
+export function hideElem(el: string | Element | Element[] | NodeListOf<Element> | JQuery) {
   elementsCall(el, toggleShown, false);
 }
 
-export function toggleElem(el, force) {
+/**
+ * Toggle visibility of one or more elements.
+ * @param force `true` to show, `false` to hide, `undefined` or omit to toggle
+ */
+export function toggleElem(el: string | Element | Element[] | NodeListOf<Element> | JQuery, force?: boolean) {
   elementsCall(el, toggleShown, force);
 }
 
-export function isElemHidden(el) {
-  const res = [];
-  elementsCall(el, (e) => res.push(e.classList.contains('tw-hidden')));
-  if (res.length > 1) throw new Error(`isElemHidden doesn't work for multiple elements`);
-  return res[0];
+/** Returns `true` if the element has been forcibly hidden. */
+export function isElemHidden(el: Element): boolean {
+  return el.classList.contains('tw-hidden');
 }
 
-export function resetForms(el) {
+export function resetForms(el: Element) {
   queryElemChildren(el, 'form', resetForm);
 }
 
-function resetForm(form) {
+function resetForm(form: HTMLFormElement) {
   form.reset();
 }
 
-function applyElemsCallback(elems, fn) {
+function applyElemsCallback<E extends Element, I extends Iterable<E>>(elems: I, fn?: (e: E) => void): I {
   if (fn) {
     for (const el of elems) {
       fn(el);
@@ -68,20 +71,20 @@ function applyElemsCallback(elems, fn) {
   return elems;
 }
 
-export function queryElemSiblings(el, selector = '*', fn) {
+export function queryElemSiblings(el: Element, selector: string = '*', fn?: (e: Element) => void): Element[] {
   return applyElemsCallback(Array.from(el.parentNode.children).filter((child) => child !== el && child.matches(selector)), fn);
 }
 
-// it works like jQuery.children: only the direct children are selected
-export function queryElemChildren(parent, selector = '*', fn) {
-  return applyElemsCallback(parent.querySelectorAll(`:scope > ${selector}`), fn);
+/** it works like jQuery.children: only the direct children are selected */
+export function queryElemChildren<K extends keyof HTMLElementTagNameMap>(parent: Element, selector: K, fn: (e: HTMLElementTagNameMap[K]) => void): NodeListOf<HTMLElementTagNameMap[K]> {
+  return applyElemsCallback(parent.querySelectorAll<HTMLElementTagNameMap[K]>(`:scope > ${selector}`), fn);
 }
 
-export function queryElems(selector, fn) {
+export function queryElems<K extends keyof HTMLElementTagNameMap>(selector: K, fn: (e: HTMLElementTagNameMap[K]) => void): NodeListOf<HTMLElementTagNameMap[K]> {
   return applyElemsCallback(document.querySelectorAll(selector), fn);
 }
 
-export function onDomReady(cb) {
+export function onDomReady(cb: () => void) {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', cb);
   } else {
@@ -89,9 +92,11 @@ export function onDomReady(cb) {
   }
 }
 
-// checks whether an element is owned by the current document, and whether it is a document fragment or element node
-// if it is, it means it is a "normal" element managed by us, which can be modified safely.
-export function isDocumentFragmentOrElementNode(el) {
+/**
+ * Checks whether an element is owned by the current document, and whether it is a document fragment or element node.
+ * If it is, it means it is a "normal" element managed by us, which can be modified safely.
+ */
+export function isDocumentFragmentOrElementNode(el: Node): el is Element | DocumentFragment {
   try {
     return el.ownerDocument === document && el.nodeType === Node.ELEMENT_NODE || el.nodeType === Node.DOCUMENT_FRAGMENT_NODE;
   } catch {
@@ -100,23 +105,27 @@ export function isDocumentFragmentOrElementNode(el) {
   }
 }
 
-// autosize a textarea to fit content. Based on
-// https://github.com/github/textarea-autosize
-// ---------------------------------------------------------------------
-// Copyright (c) 2018 GitHub, Inc.
-//
-// Permission is hereby granted, free of charge, to any person obtaining
-// a copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to
-// permit persons to whom the Software is furnished to do so, subject to
-// the following conditions:
-//
-// The above copyright notice and this permission notice shall be
-// included in all copies or substantial portions of the Software.
-// ---------------------------------------------------------------------
-export function autosize(textarea, {viewportMarginBottom = 0} = {}) {
+/**
+ * Autosize a textarea to fit content. Based on
+ * https://github.com/github/textarea-autosize
+ *
+ * ---------------------------------------------------------------------
+ * Copyright (c) 2018 GitHub, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * ---------------------------------------------------------------------
+ */
+export function autosize(textarea: HTMLTextAreaElement, {viewportMarginBottom = 0} = {}) {
   const textareaParent = textarea.parentElement;
   function createJumpPreventer() {
     const el = document.createElement('div');
@@ -126,9 +135,13 @@ export function autosize(textarea, {viewportMarginBottom = 0} = {}) {
   const jumpPreventer = textareaParent.querySelector('div') || createJumpPreventer();
   let isUserResized = false;
   // lastStyleHeight and initialStyleHeight are CSS values like '100px'
-  let lastMouseX, lastMouseY, lastStyleHeight, initialStyleHeight, lastLines;
+  let lastMouseX: number;
+  let lastMouseY: number;
+  let lastStyleHeight: string;
+  let initialStyleHeight: string;
+  let lastLines: number;
 
-  function onUserResize(event) {
+  function onUserResize(event: MouseEvent) {
     if (isUserResized) return;
     if (lastMouseX !== event.clientX || lastMouseY !== event.clientY) {
       const newStyleHeight = textarea.style.height;
@@ -142,13 +155,13 @@ export function autosize(textarea, {viewportMarginBottom = 0} = {}) {
     lastMouseY = event.clientY;
   }
 
-  function overflowOffset() {
+  function overflowOffset(): {top: number; bottom: number} {
     let offsetTop = 0;
-    let el = textarea;
+    let el: HTMLElement = textarea;
 
     while (el !== document.body && el !== null) {
       offsetTop += el.offsetTop || 0;
-      el = el.offsetParent;
+      el = el.offsetParent as HTMLElement;
     }
 
     const top = offsetTop - document.defaultView.scrollY;
@@ -222,14 +235,16 @@ export function autosize(textarea, {viewportMarginBottom = 0} = {}) {
   };
 }
 
-export function onInputDebounce(fn) {
+export function onInputDebounce<T extends (...args: unknown[]) => unknown>(fn: T): debounce<T> {
   return debounce(300, fn);
 }
 
-// Set the `src` attribute on an element and returns a promise that resolves once the element
-// has loaded or errored. Suitable for all elements mention in:
-// https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/load_event
-export function loadElem(el, src) {
+/**
+ * Set the `src` attribute on an element and returns a promise that resolves once the element
+ * has loaded or errored. Suitable for all elements mention in:
+ * https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/load_event
+ */
+export function loadElem(el: HTMLImageElement, src: string): Promise<boolean> {
   return new Promise((resolve) => {
     el.addEventListener('load', () => resolve(true), {once: true});
     el.addEventListener('error', () => resolve(false), {once: true});
@@ -241,14 +256,20 @@ export function loadElem(el, src) {
 // it can't use other transparent polyfill patches because PaleMoon also doesn't support "addEventListener(capture)"
 const needSubmitEventPolyfill = typeof SubmitEvent === 'undefined';
 
-export function submitEventSubmitter(e) {
-  return needSubmitEventPolyfill ? (e.target._submitter || null) : e.submitter;
+declare global {
+  interface HTMLFormElement {
+    _submitter?: HTMLElement;
+  }
 }
 
-function submitEventPolyfillListener(e) {
-  const form = e.target.closest('form');
+export function submitEventSubmitter(e: SubmitEvent): HTMLElement {
+  return needSubmitEventPolyfill ? ((e.target as HTMLFormElement)._submitter || null) : e.submitter;
+}
+
+function submitEventPolyfillListener(e: PointerEvent | FocusEvent) {
+  const form = (e.target as HTMLElement).closest('form');
   if (!form) return;
-  form._submitter = e.target.closest('button:not([type]), button[type="submit"], input[type="submit"]');
+  form._submitter = (e.target as HTMLElement).closest('button:not([type]), button[type="submit"], input[type="submit"]');
 }
 
 export function initSubmitEventPolyfill() {
@@ -261,18 +282,23 @@ export function initSubmitEventPolyfill() {
 /**
  * Check if an element is visible, equivalent to jQuery's `:visible` pseudo.
  * Note: This function doesn't account for all possible visibility scenarios.
- * @param {HTMLElement} element The element to check.
- * @returns {boolean} True if the element is visible.
+ * @param element The element to check.
+ * @returns True if the element is visible.
  */
-export function isElemVisible(element) {
+export function isElemVisible(element: HTMLElement): boolean {
   if (!element) return false;
 
   return Boolean(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
 }
 
-// extract text and images from "paste" event
-export function getPastedContent(e) {
-  const images = [];
+export interface PastedContent {
+  text: string;
+  images: File[];
+}
+
+/** Extract text and images from `paste` event. */
+export function getPastedContent(e: ClipboardEvent): PastedContent {
+  const images: File[] = [];
   for (const item of e.clipboardData?.items ?? []) {
     if (item.type?.startsWith('image/')) {
       images.push(item.getAsFile());
@@ -282,8 +308,8 @@ export function getPastedContent(e) {
   return {text, images};
 }
 
-// replace selected text in a textarea while preserving editor history, e.g. CTRL-Z works after this
-export function replaceTextareaSelection(textarea, text) {
+/** Replace selected text in a textarea while preserving editor history, e.g. CTRL-Z works after this. */
+export function replaceTextareaSelection(textarea: HTMLTextAreaElement, text: string) {
   const before = textarea.value.slice(0, textarea.selectionStart ?? undefined);
   const after = textarea.value.slice(textarea.selectionEnd ?? undefined);
   let success = true;
@@ -306,9 +332,9 @@ export function replaceTextareaSelection(textarea, text) {
   }
 }
 
-// Warning: Do not enter any unsanitized variables here
-export function createElementFromHTML(htmlString) {
+/** **Warning**: Do not enter any unsanitized variables here. */
+export function createElementFromHTML(htmlString: string): Element {
   const div = document.createElement('div');
   div.innerHTML = htmlString.trim();
-  return div.firstChild;
+  return div.firstElementChild;
 }

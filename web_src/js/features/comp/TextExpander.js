@@ -2,7 +2,7 @@ import {matchEmoji, matchMention, matchIssue} from '../../utils/match.js';
 import {emojiHTML, emojiString} from '../emoji.ts';
 import {getIssueIcon, getIssueColor} from '../issue.js';
 import {svg} from '../../svg.ts';
-import {createElementFromHTML} from '../../utils/dom.js';
+import {createElementFromHTML} from '../../utils/dom.ts';
 import {parseIssueHref, parseRepoOwnerPathInfo} from '../../utils.ts';
 import {debounce} from 'throttle-debounce';
 

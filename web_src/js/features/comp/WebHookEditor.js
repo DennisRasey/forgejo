@@ -1,5 +1,5 @@
 import {POST} from '../../modules/fetch.ts';
-import {toggleElem} from '../../utils/dom.js';
+import {toggleElem} from '../../utils/dom.ts';
 
 export function initCompWebHookEditor() {
   if (!document.querySelectorAll('.new.webhook').length) {

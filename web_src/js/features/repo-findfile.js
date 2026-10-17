@@ -1,5 +1,5 @@
 import {svg} from '../svg.ts';
-import {toggleElem} from '../utils/dom.js';
+import {toggleElem} from '../utils/dom.ts';
 import {pathEscapeSegments} from '../utils/url.ts';
 import {GET} from '../modules/fetch.ts';
 

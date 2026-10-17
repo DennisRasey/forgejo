@@ -1,4 +1,4 @@
-import {hideElem, showElem} from '../utils/dom.js';
+import {hideElem, showElem} from '../utils/dom.ts';
 import {GET, POST} from '../modules/fetch.ts';
 import {showErrorToast} from '../modules/toast.js';
 import {createTomSelect} from '../modules/tom-select.ts';

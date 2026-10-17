@@ -1,4 +1,4 @@
-import {hideElem, queryElemSiblings, showElem, toggleElem} from '../utils/dom.js';
+import {hideElem, queryElemSiblings, showElem, toggleElem} from '../utils/dom.ts';
 
 export function initUnicodeEscapeButton() {
   document.addEventListener('click', (e) => {

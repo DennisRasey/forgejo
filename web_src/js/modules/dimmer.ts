@@ -41,6 +41,12 @@ class Dimmer {
   addClass() {}
 }
 
+declare global {
+  interface JQuery {
+    dimmer: (arg: string | object) => Dimmer | undefined;
+  }
+}
+
 export function initDimmer() {
   $.fn.dimmer = (arg: string | object) => {
     if (typeof arg === 'object') return new Dimmer();

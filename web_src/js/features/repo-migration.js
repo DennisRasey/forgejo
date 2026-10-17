@@ -1,4 +1,4 @@
-import {hideElem, showElem, toggleElem} from '../utils/dom.js';
+import {hideElem, showElem, toggleElem} from '../utils/dom.ts';
 
 const service = document.getElementById('service_type');
 const user = document.getElementById('auth_username');

@@ -1,6 +1,6 @@
 import type {EditorView} from '@codemirror/view';
 import {basename, extname} from '../utils.ts';
-import {hideElem, onInputDebounce, showElem} from '../utils/dom.js';
+import {hideElem, onInputDebounce, showElem} from '../utils/dom.ts';
 import {createCodemirror, type CodemirrorEditor, type EditorOptions} from './codemirror.ts';
 import type {LanguageSupport} from '@codemirror/language';
 

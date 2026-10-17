@@ -1,4 +1,4 @@
-import {hideElem, showElem} from '../utils/dom.js';
+import {hideElem, showElem} from '../utils/dom.ts';
 import {initComboMarkdownEditor} from './comp/ComboMarkdownEditor.js';
 
 export function initRepoRelease() {

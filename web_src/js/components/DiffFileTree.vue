@@ -1,6 +1,6 @@
 <script>
 import DiffFileTreeItem from './DiffFileTreeItem.vue';
-import {toggleElem} from '../utils/dom.js';
+import {toggleElem} from '../utils/dom.ts';
 import {diffTreeStore} from '../modules/stores.js';
 import {setFileFolding} from '../features/file-fold.js';
 

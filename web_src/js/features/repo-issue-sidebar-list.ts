@@ -4,6 +4,13 @@ import {emojiHTML} from './emoji.ts';
 
 const {appSubUrl} = window.config;
 
+// TODO: move this to dropdown.js when we typescript that module:
+declare global {
+  interface JQuery {
+    dropdown: (...args: unknown[]) => JQuery;
+  }
+}
+
 export function initRepoIssueSidebarList() {
   const repolink = $('#repolink').val();
   const repoId = $('#repoId').val();
@@ -77,7 +84,7 @@ export function initRepoIssueSidebarList() {
     });
   }
 
-  $('.menu .ui.dropdown.label-filter').on('keydown', (e: KeyboardEvent) => {
+  $('.menu .ui.dropdown.label-filter').on('keydown', (e) => {
     const selectedItem = document.querySelector('.menu .ui.dropdown.label-filter .menu .item.selected');
 
     if (!selectedItem) {
@@ -153,7 +160,7 @@ export function issueTitleHTML(title: string) {
  *
  * If the label is included it will be converted to an exclusion, if its already excluded it will get removed, otherwise, if not present at all it will get excluded.
  */
-export function excludeLabel(item: HTMLElement) {
+export function excludeLabel(item: Element) {
   const id = item.getAttribute('data-label-id');
   const excludedId = `-${id}`;
 

@@ -1,4 +1,4 @@
-import {hideElem, showElem} from '../utils/dom.js';
+import {hideElem, showElem} from '../utils/dom.ts';
 import {GET, POST} from '../modules/fetch.ts';
 
 const {appSubUrl} = window.config;

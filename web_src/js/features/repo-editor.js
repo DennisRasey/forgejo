@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import {htmlEscape} from 'escape-goat';
-import {hideElem, showElem, createElementFromHTML} from '../utils/dom.js';
+import {hideElem, showElem, createElementFromHTML} from '../utils/dom.ts';
 import {initMarkupContent} from '../markup/content.js';
 import {attachRefIssueContextPopup} from './contextpopup.js';
 import {POST} from '../modules/fetch.ts';

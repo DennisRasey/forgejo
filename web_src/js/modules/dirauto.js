@@ -1,4 +1,4 @@
-import {isDocumentFragmentOrElementNode} from '../utils/dom.js';
+import {isDocumentFragmentOrElementNode} from '../utils/dom.ts';
 
 // for performance considerations, it only uses performant syntax
 function attachDirAuto(el) {

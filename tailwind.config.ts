@@ -128,7 +128,7 @@ export default {
         // * jQuery's show/hide/toggle: it can not show/hide elements with "display: xxx !important"
         // only use:
         // * this ".tw-hidden" class
-        // * showElem/hideElem/toggleElem functions in "utils/dom.js"
+        // * showElem/hideElem/toggleElem functions in "utils/dom.ts"
         '.hidden.hidden': {
           'display': 'none',
         },

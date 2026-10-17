@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 <script>
 import ActionJobStep from './ActionJobStep.vue';
-import {toggleElem} from '../utils/dom.js';
+import {toggleElem} from '../utils/dom.ts';
 
 export default {
   name: 'ActionJobStepList',

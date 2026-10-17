@@ -1,5 +1,5 @@
 import {initCompLabelEdit} from './comp/LabelEdit.js';
-import {toggleElem} from '../utils/dom.js';
+import {toggleElem} from '../utils/dom.ts';
 
 export function initCommonOrganization() {
   if (!document.querySelectorAll('.organization').length) {

@@ -5,7 +5,7 @@ import {createDropzone} from './dropzone.js';
 import {showGlobalErrorMessage} from '../bootstrap.js';
 import {handleGlobalEnterQuickSubmit} from './comp/QuickSubmit.js';
 import {svg} from '../svg.ts';
-import {hideElem, showElem, toggleElem, resetForms, initSubmitEventPolyfill, submitEventSubmitter} from '../utils/dom.js';
+import {hideElem, showElem, toggleElem, resetForms, initSubmitEventPolyfill, submitEventSubmitter} from '../utils/dom.ts';
 import {htmlEscape} from 'escape-goat';
 import {showTemporaryTooltip} from '../modules/tippy.js';
 import {showErrorToast} from '../modules/toast.js';

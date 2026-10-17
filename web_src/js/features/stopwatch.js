@@ -1,7 +1,7 @@
 import prettyMilliseconds from 'pretty-ms';
 import {createTippy} from '../modules/tippy.js';
 import {GET} from '../modules/fetch.ts';
-import {hideElem, showElem} from '../utils/dom.js';
+import {hideElem, showElem} from '../utils/dom.ts';
 
 const {appSubUrl, notificationSettings, enableTimeTracking, assetVersionEncoded} = window.config;
 

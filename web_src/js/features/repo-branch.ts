@@ -1,7 +1,7 @@
 // Copyright 2025 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import {toggleElem} from '../utils/dom.js';
+import {toggleElem} from '../utils/dom.ts';
 import {showModal} from '../modules/modal.ts';
 
 export function initRepoBranchButton() {
