@@ -164,27 +164,18 @@ func Test_ProcessAvatarImage(t *testing.T) {
 
 func Test_FetchExternalImageData(t *testing.T) {
 	blackPng, err := base64.URLEncoding.DecodeString("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQAAAAA3bvkkAAAACklEQVR4AWNgAAAAAgABc3UBGAAAAABJRU5ErkJggg==")
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
 
 	var tooWideBuf bytes.Buffer
 	imgTooWide := image.NewGray(image.Rect(0, 0, 16001, 10))
 	err = png.Encode(&tooWideBuf, imgTooWide)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
 	imgTooWidePng := tooWideBuf.Bytes()
 
 	var tooTallBuf bytes.Buffer
 	imgTooTall := image.NewGray(image.Rect(0, 0, 10, 16002))
 	err = png.Encode(&tooTallBuf, imgTooTall)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, err)
 	imgTooTallPng := tooTallBuf.Bytes()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

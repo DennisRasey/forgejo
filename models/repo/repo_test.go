@@ -224,7 +224,5 @@ func TestAPActorID(t *testing.T) {
 	repo := repo_model.Repository{ID: 1}
 	url := repo.APActorID()
 	expected := "https://try.gitea.io/api/v1/activitypub/repository-id/1"
-	if url != expected {
-		t.Errorf("unexpected APActorID, expected: %q, actual: %q", expected, url)
-	}
+	assert.Equal(t, expected, url, "unexpected APActorID")
 }

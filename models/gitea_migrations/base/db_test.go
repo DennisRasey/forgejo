@@ -10,6 +10,7 @@ import (
 	"forgejo.org/modules/timeutil"
 
 	"code.forgejo.org/xorm/xorm/names"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_DropTableColumns(t *testing.T) {
@@ -40,10 +41,8 @@ func Test_DropTableColumns(t *testing.T) {
 	x.SetMapper(names.GonicMapper{})
 
 	for i := range columns {
-		if err := x.Sync(new(DropTest)); err != nil {
-			t.Errorf("unable to create DropTest table: %v", err)
-			return
-		}
+		err := x.Sync(new(DropTest))
+		require.NoError(t, err, "unable to create DropTest table")
 
 		sess := x.NewSession()
 		if err := sess.Begin(); err != nil {

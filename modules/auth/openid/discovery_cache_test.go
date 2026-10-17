@@ -6,6 +6,8 @@ package openid
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testDiscoveredInfo struct{}
@@ -36,14 +38,12 @@ func TestTimedDiscoveryCache(t *testing.T) {
 	}
 
 	// Attempt to get a non-existent value
-	if di := dc.Get("bar"); di != nil {
-		t.Errorf("Expected nil, got %v", di)
-	}
+	di := dc.Get("bar")
+	assert.Nil(t, di)
 
-	// Sleep one second and try retrieve again
+	// Sleep 100 ms and try retrieve again
 	time.Sleep(100 * time.Millisecond)
 
-	if di := dc.Get("foo"); di != nil {
-		t.Error("Expected a nil, got a result")
-	}
+	di = dc.Get("foo")
+	assert.Nil(t, di)
 }

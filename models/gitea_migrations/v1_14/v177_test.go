@@ -47,40 +47,32 @@ func Test_DeleteOrphanedIssueLabels(t *testing.T) {
 	postMigration := map[int64]*IssueLabel{}
 
 	// Load issue labels that exist in the database pre-migration
-	if err := x.Find(&issueLabels); err != nil {
-		require.NoError(t, err)
-		return
-	}
+	err := x.Find(&issueLabels)
+	require.NoError(t, err)
+
 	for _, issueLabel := range issueLabels {
 		preMigration[issueLabel.ID] = issueLabel
 	}
 
 	// Run the migration
-	if err := DeleteOrphanedIssueLabels(x); err != nil {
-		require.NoError(t, err)
-		return
-	}
+	err = DeleteOrphanedIssueLabels(x)
+	require.NoError(t, err)
 
 	// Load the remaining issue-labels
 	issueLabels = issueLabels[:0]
-	if err := x.Find(&issueLabels); err != nil {
-		require.NoError(t, err)
-		return
-	}
+	err = x.Find(&issueLabels)
+	require.NoError(t, err)
+
 	for _, issueLabel := range issueLabels {
 		postMigration[issueLabel.ID] = issueLabel
 	}
 
 	// Now test what is left
-	if _, ok := postMigration[2]; ok {
-		t.Error("Orphaned Label[2] survived the migration")
-		return
-	}
+	_, ok := postMigration[2]
+	require.False(t, ok, "Orphaned Label[2] survived the migration")
 
-	if _, ok := postMigration[5]; ok {
-		t.Error("Orphaned Label[5] survived the migration")
-		return
-	}
+	_, ok = postMigration[5]
+	require.False(t, ok, "Orphaned Label[5] survived the migration")
 
 	for id, post := range postMigration {
 		pre := preMigration[id]

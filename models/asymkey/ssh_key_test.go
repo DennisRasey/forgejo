@@ -334,22 +334,18 @@ func TestFromOpenSSH(t *testing.T) {
 			run(t, nil, "ssh-keygen", "-Y", "sign", "-n", "file", "-f", privPath, dataPath)
 
 			sigBytes, err := os.ReadFile(sigPath)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := sshsig.Verify(bytes.NewReader(data), sigBytes, []byte(tt.pub), "file"); err != nil {
-				t.Error(err)
-			}
+			require.NoError(t, err)
+
+			err = sshsig.Verify(bytes.NewReader(data), sigBytes, []byte(tt.pub), "file")
+			require.NoError(t, err)
 
 			// It should not verify if we check against another public key
-			if err := sshsig.Verify(bytes.NewReader(data), sigBytes, []byte(otherSSHPublicKey), "file"); err == nil {
-				t.Error("expected error with incorrect key")
-			}
+			err = sshsig.Verify(bytes.NewReader(data), sigBytes, []byte(otherSSHPublicKey), "file")
+			require.Error(t, err, "expected error with incorrect key")
 
 			// It should not verify if the data is tampered
-			if err := sshsig.Verify(strings.NewReader("bad data"), sigBytes, []byte(sshPublicKey), "file"); err == nil {
-				t.Error("expected error with incorrect data")
-			}
+			err = sshsig.Verify(strings.NewReader("bad data"), sigBytes, []byte(sshPublicKey), "file")
+			require.Error(t, err, "expected error with incorrect data")
 		})
 	}
 }
@@ -383,9 +379,7 @@ func TestToOpenSSH(t *testing.T) {
 			write(t, data, td, "data")
 
 			armored, err := sshsig.Sign([]byte(tt.priv), bytes.NewReader(data), "file")
-			if err != nil {
-				t.Fatal(err)
-			}
+			require.NoError(t, err)
 
 			sigPath := write(t, armored, td, "oursig")
 
@@ -414,9 +408,7 @@ func TestRoundTrip(t *testing.T) {
 
 	// Create one extra signature for all the tests.
 	otherSig, err := sshsig.Sign([]byte(otherSSHPrivateKey), bytes.NewReader(data), "file")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	for _, tt := range []struct {
 		name string
@@ -442,42 +434,36 @@ func TestRoundTrip(t *testing.T) {
 			}
 
 			// Check the signature against that data and public key
-			if err := sshsig.Verify(bytes.NewReader(data), sig, []byte(tt.pub), "file"); err != nil {
-				t.Error(err)
-			}
+			err = sshsig.Verify(bytes.NewReader(data), sig, []byte(tt.pub), "file")
+			require.NoError(t, err)
 
 			// Now check it against invalid data.
-			if err := sshsig.Verify(strings.NewReader("invalid data!"), sig, []byte(tt.pub), "file"); err == nil {
-				t.Error("expected error!")
-			}
+			err = sshsig.Verify(strings.NewReader("invalid data!"), sig, []byte(tt.pub), "file")
+			require.Error(t, err)
 
 			// Now check it against the wrong key.
-			if err := sshsig.Verify(bytes.NewReader(data), sig, []byte(otherSSHPublicKey), "file"); err == nil {
-				t.Error("expected error!")
-			}
+			err = sshsig.Verify(bytes.NewReader(data), sig, []byte(otherSSHPublicKey), "file")
+			require.Error(t, err)
 
 			// Now check it against an invalid signature data.
-			if err := sshsig.Verify(bytes.NewReader(data), []byte("invalid signature!"), []byte(tt.pub), "file"); err == nil {
-				t.Error("expected error!")
-			}
+			err = sshsig.Verify(bytes.NewReader(data), []byte("invalid signature!"), []byte(tt.pub), "file")
+			require.Error(t, err)
 
 			// Once more, use the wrong signature and check it against the original (wrong public key)
-			if err := sshsig.Verify(bytes.NewReader(data), otherSig, []byte(tt.pub), "file"); err == nil {
-				t.Error("expected error!")
-			}
+			err = sshsig.Verify(bytes.NewReader(data), otherSig, []byte(tt.pub), "file")
+			require.Error(t, err)
+
 			// It should work against the correct public key.
-			if err := sshsig.Verify(bytes.NewReader(data), otherSig, []byte(otherSSHPublicKey), "file"); err != nil {
-				t.Error(err)
-			}
+			err = sshsig.Verify(bytes.NewReader(data), otherSig, []byte(otherSSHPublicKey), "file")
+			require.NoError(t, err)
 		})
 	}
 }
 
 func write(t *testing.T, d []byte, fp ...string) string {
 	p := filepath.Join(fp...)
-	if err := os.WriteFile(p, d, 0o600); err != nil {
-		t.Fatal(err)
-	}
+	err := os.WriteFile(p, d, 0o600)
+	require.NoError(t, err)
 	return p
 }
 
@@ -488,9 +474,7 @@ func run(t *testing.T, stdin []byte, args ...string) {
 	cmd.Stdin = bytes.NewReader(stdin)
 	out, err := cmd.CombinedOutput()
 	t.Logf("cmd %v: %s", cmd, string(out))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func runErr(t *testing.T, stdin []byte, args ...string) {
@@ -500,9 +484,7 @@ func runErr(t *testing.T, stdin []byte, args ...string) {
 	cmd.Stdin = bytes.NewReader(stdin)
 	out, err := cmd.CombinedOutput()
 	t.Logf("cmd %v: %s", cmd, string(out))
-	if err == nil {
-		t.Fatal("expected error")
-	}
+	require.Error(t, err)
 }
 
 func Test_PublicKeysAreExternallyManaged(t *testing.T) {

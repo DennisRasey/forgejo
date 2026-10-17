@@ -25,10 +25,10 @@ func Test_NewForgeLike(t *testing.T) {
 	objectIRI := "https://codeberg.org/api/v1/activitypub/repository-id/1"
 	startTime, _ := time.Parse("2006-Jan-02", "2024-Mar-07")
 	sut, err := forgefed.NewForgeLike(actorIRI, objectIRI, startTime)
-	require.NoError(t, err, "unexpected error: %v\n", err)
+	require.NoError(t, err, "unexpected error: %v", err)
 
-	valid, _ := validation.IsValid(sut)
-	assert.True(t, valid, "sut expected to be valid: %v\n", sut.Validate())
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 
 	got, err := sut.MarshalJSON()
 	require.NoError(t, err, "MarshalJSON() error = %q", err)
@@ -114,8 +114,8 @@ func Test_ForgeLikeValidation(t *testing.T) {
 	"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",
 	"object":"https://codeberg.org/api/activitypub/repository-id/1",
 	"startTime": "2014-12-31T23:00:00-08:00"}`))
-	valid, _ := validation.IsValid(sut)
-	assert.True(t, valid, "sut expected to be valid: %v\n", sut.Validate())
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 
 	// Errors
 	sut.UnmarshalJSON([]byte(`{"actor":"https://repo.prod.meissa.de/api/activitypub/user-id/1",

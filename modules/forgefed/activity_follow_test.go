@@ -20,7 +20,7 @@ func Test_NewForgeFollowValidation(t *testing.T) {
 	sut.Object = ap.IRI("example.org/bob")
 
 	valid, err := validation.IsValid(sut)
-	assert.True(t, valid, "sut is invalid: %v\n", err)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 
 	sut = forgefed.ForgeFollow{}
 	sut.Actor = ap.IRI("example.org/alice")

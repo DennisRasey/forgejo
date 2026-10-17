@@ -84,16 +84,12 @@ func TestPrimaryKeys(t *testing.T) {
 
 	for _, bean := range beans {
 		table, err := db.TableInfo(bean)
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		if why, ok := whitelist[table.Name]; ok {
 			t.Logf("ignore %q because %q", table.Name, why)
 			continue
 		}
-		if len(table.PrimaryKeys) == 0 {
-			t.Errorf("table %q has no primary key", table.Name)
-		}
+		assert.NotEmptyf(t, table.PrimaryKeys, "table %q has no primary key", table.Name)
 	}
 }
 

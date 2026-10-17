@@ -7,6 +7,9 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func getWhoamiOutput() (string, error) {
@@ -19,20 +22,16 @@ func getWhoamiOutput() (string, error) {
 
 func TestCurrentUsername(t *testing.T) {
 	user := CurrentUsername()
-	if len(user) == 0 {
-		t.Errorf("expected non-empty user, got: %s", user)
-	}
+	assert.NotEmpty(t, user)
+
 	whoami, err := getWhoamiOutput()
-	if err != nil {
-		t.Errorf("failed to run whoami to test current user: %f", err)
-	}
+	require.NoError(t, err)
+
 	user = CurrentUsername()
-	if user != whoami {
-		t.Errorf("expected %s as user, got: %s", whoami, user)
-	}
+	assert.Equal(t, whoami, user)
+
 	t.Setenv("USER", "spoofed")
+
 	user = CurrentUsername()
-	if user != whoami {
-		t.Errorf("expected %s as user, got: %s", whoami, user)
-	}
+	assert.Equal(t, whoami, user)
 }

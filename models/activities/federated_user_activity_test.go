@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"forgejo.org/modules/validation"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_FederatedUserActivityValidation(t *testing.T) {
@@ -18,7 +20,6 @@ func Test_FederatedUserActivityValidation(t *testing.T) {
 	sut.NoteURL = "https://example.org/note/17"
 	sut.OriginalNote = "federatedUserActivityNote-17"
 
-	if res, _ := validation.IsValid(sut); !res {
-		t.Errorf("sut expected to be valid: %v\n", sut.Validate())
-	}
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 }

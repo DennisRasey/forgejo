@@ -9,6 +9,7 @@ import (
 	migration_tests "forgejo.org/models/gitea_migrations/test"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_RemoveInvalidLabels(t *testing.T) {
@@ -63,40 +64,37 @@ func Test_RemoveInvalidLabels(t *testing.T) {
 	comPostMigration := map[int64]*Comment{}
 
 	// Get pre migration values
-	if err := x.Find(&issueLabels); err != nil {
-		t.Errorf("Unable to find issueLabels: %v", err)
-		return
-	}
+	err := x.Find(&issueLabels)
+	require.NoError(t, err, "Unable to find issueLabels")
+
 	for _, issueLabel := range issueLabels {
 		ilPreMigration[issueLabel.ID] = issueLabel
 	}
-	if err := x.Find(&comments); err != nil {
-		t.Errorf("Unable to find comments: %v", err)
-		return
-	}
+
+	err = x.Find(&comments)
+	require.NoError(t, err, "Unable to find comments")
+
 	for _, comment := range comments {
 		comPreMigration[comment.ID] = comment
 	}
 
 	// Run the migration
-	if err := RemoveInvalidLabels(x); err != nil {
-		t.Errorf("unable to RemoveInvalidLabels: %v", err)
-	}
+	err = RemoveInvalidLabels(x)
+	require.NoError(t, err, "unable to RemoveInvalidLabels")
 
 	// Get the post migration values
 	issueLabels = issueLabels[:0]
-	if err := x.Find(&issueLabels); err != nil {
-		t.Errorf("Unable to find issueLabels: %v", err)
-		return
-	}
+	err = x.Find(&issueLabels)
+	require.NoError(t, err, "Unable to find issueLabels")
+
 	for _, issueLabel := range issueLabels {
 		ilPostMigration[issueLabel.ID] = issueLabel
 	}
+
 	comments = comments[:0]
-	if err := x.Find(&comments); err != nil {
-		t.Errorf("Unable to find comments: %v", err)
-		return
-	}
+	err = x.Find(&comments)
+	require.NoError(t, err, "Unable to find comments")
+
 	for _, comment := range comments {
 		comPostMigration[comment.ID] = comment
 	}
@@ -105,9 +103,7 @@ func Test_RemoveInvalidLabels(t *testing.T) {
 	for id, comment := range comPreMigration {
 		post, ok := comPostMigration[id]
 		if ok {
-			if !comment.ShouldRemain {
-				t.Errorf("Comment[%d] remained but should have been deleted", id)
-			}
+			assert.True(t, comment.ShouldRemain, "Comment[%d] remained but should have been deleted", id)
 			assert.Equal(t, comment, post)
 		} else if comment.ShouldRemain {
 			t.Errorf("Comment[%d] was deleted but should have remained", id)
@@ -117,9 +113,7 @@ func Test_RemoveInvalidLabels(t *testing.T) {
 	for id, il := range ilPreMigration {
 		post, ok := ilPostMigration[id]
 		if ok {
-			if !il.ShouldRemain {
-				t.Errorf("IssueLabel[%d] remained but should have been deleted", id)
-			}
+			assert.True(t, il.ShouldRemain, "IssueLabel[%d] remained but should have been deleted", id)
 			assert.Equal(t, il, post)
 		} else if il.ShouldRemain {
 			t.Errorf("IssueLabel[%d] was deleted but should have remained", id)

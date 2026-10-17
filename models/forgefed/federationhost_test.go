@@ -10,6 +10,7 @@ import (
 
 	"forgejo.org/modules/validation"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,9 +24,8 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostPort:       443,
 		HostSchema:     "https",
 	}
-	if res, err := validation.IsValid(sut); !res {
-		t.Errorf("sut should be valid but was %q", err)
-	}
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 
 	sut = FederationHost{
 		HostFqdn: "",
@@ -36,9 +36,8 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostPort:       443,
 		HostSchema:     "https",
 	}
-	if res, _ := validation.IsValid(sut); res {
-		t.Error("sut should be invalid: HostFqdn empty")
-	}
+	valid, _ = validation.IsValid(sut)
+	assert.False(t, valid, "sut should be invalid: HostFqdn empty")
 
 	sut = FederationHost{
 		HostFqdn: strings.Repeat("fill", 64),
@@ -49,9 +48,8 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostPort:       443,
 		HostSchema:     "https",
 	}
-	if res, _ := validation.IsValid(sut); res {
-		t.Error("sut should be invalid: HostFqdn too long (len=256)")
-	}
+	valid, _ = validation.IsValid(sut)
+	assert.False(t, valid, "sut should be invalid: HostFqdn too long (len=256)")
 
 	sut = FederationHost{
 		HostFqdn:       "host.do.main",
@@ -60,9 +58,8 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostPort:       443,
 		HostSchema:     "https",
 	}
-	if res, _ := validation.IsValid(sut); res {
-		t.Error("sut should be invalid: NodeInfo invalid")
-	}
+	valid, _ = validation.IsValid(sut)
+	assert.False(t, valid, "sut should be invalid: NodeInfo invalid")
 
 	sut = FederationHost{
 		HostFqdn: "host.do.main",
@@ -73,9 +70,8 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostPort:       443,
 		HostSchema:     "https",
 	}
-	if res, _ := validation.IsValid(sut); res {
-		t.Error("sut should be invalid: Future timestamp")
-	}
+	valid, _ = validation.IsValid(sut)
+	assert.False(t, valid, "sut should be invalid: Future timestamp")
 
 	sut = FederationHost{
 		HostFqdn: "hOst.do.main",
@@ -86,9 +82,8 @@ func Test_FederationHostValidation(t *testing.T) {
 		HostPort:       443,
 		HostSchema:     "https",
 	}
-	if res, _ := validation.IsValid(sut); res {
-		t.Error("sut should be invalid: HostFqdn lower case")
-	}
+	valid, _ = validation.IsValid(sut)
+	assert.False(t, valid, "sut should be invalid: HostFqdn lower case")
 }
 
 func Test_FederationHostDefaultPort(t *testing.T) {
@@ -102,9 +97,9 @@ func Test_FederationHostDefaultPort(t *testing.T) {
 		HostPort:       443,
 		HostSchema:     "https",
 	}
-	if res, err := validation.IsValid(sut); !res {
-		t.Errorf("sut should be valid but was %q", err)
-	}
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
+
 	url := sut.AsURL()
 	require.Equal(t, "https://host.do.main", url.String())
 
@@ -118,9 +113,9 @@ func Test_FederationHostDefaultPort(t *testing.T) {
 		HostPort:       80,
 		HostSchema:     "http",
 	}
-	if res, err := validation.IsValid(sut); !res {
-		t.Errorf("sut should be valid but was %q", err)
-	}
+	valid, err = validation.IsValid(sut)
+	assert.True(t, valid, "sut should be valid but was %q", err)
+
 	url = sut.AsURL()
 	require.Equal(t, "http://host.do.main", url.String())
 
@@ -134,9 +129,9 @@ func Test_FederationHostDefaultPort(t *testing.T) {
 		HostPort:       8443,
 		HostSchema:     "https",
 	}
-	if res, err := validation.IsValid(sut); !res {
-		t.Errorf("sut should be valid but was %q", err)
-	}
+	valid, err = validation.IsValid(sut)
+	assert.True(t, valid, "sut should be valid but was %q", err)
+
 	url = sut.AsURL()
 	require.Equal(t, "https://host.do.main:8443", url.String())
 
@@ -150,9 +145,9 @@ func Test_FederationHostDefaultPort(t *testing.T) {
 		HostPort:       0,
 		HostSchema:     "https",
 	}
-	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid")
-	}
+	valid, _ = validation.IsValid(sut)
+	assert.False(t, valid, "sut should be invalid")
+
 	url = sut.AsURL()
 	require.Equal(t, "https://host.do.main", url.String())
 }

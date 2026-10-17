@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"forgejo.org/modules/validation"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_FederatedUserValidation(t *testing.T) {
@@ -16,16 +18,14 @@ func Test_FederatedUserValidation(t *testing.T) {
 		FederationHostID: 1,
 		InboxPath:        "/api/v1/activitypub/user-id/12/inbox",
 	}
-	if res, err := validation.IsValid(sut); !res {
-		t.Errorf("sut should be valid but was %q", err)
-	}
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 
 	sut = FederatedUser{
 		ExternalID:       "12",
 		FederationHostID: 1,
 		InboxPath:        "/api/v1/activitypub/user-id/12/inbox",
 	}
-	if res, _ := validation.IsValid(sut); res {
-		t.Error("sut should be invalid")
-	}
+	valid, _ = validation.IsValid(sut)
+	assert.False(t, valid, "sut should be invalid")
 }

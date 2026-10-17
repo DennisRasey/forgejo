@@ -6,7 +6,6 @@ package markup
 
 import (
 	"html/template"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -113,9 +112,6 @@ func TestDescriptionSanitizer(t *testing.T) {
 
 func TestSanitizeNonEscape(t *testing.T) {
 	descStr := "<scrİpt>&lt;script&gt;alert(document.domain)&lt;/script&gt;</scrİpt>"
-
 	output := template.HTML(Sanitize(descStr))
-	if strings.Contains(string(output), "<script>") {
-		t.Errorf("un-escaped <script> in output: %q", output)
-	}
+	assert.NotContains(t, output, "<script>", "un-escaped <script> in output")
 }

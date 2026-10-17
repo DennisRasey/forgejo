@@ -277,7 +277,7 @@ func TestValidatePackageSpec(t *testing.T) {
 		} {
 			p.Name = name
 			err := ValidatePackageSpec(&p)
-			require.NoErrorf(t, err, "name %s", name)
+			require.NoError(t, err, "name %s", name)
 		}
 	})
 
@@ -292,7 +292,7 @@ func TestValidatePackageSpec(t *testing.T) {
 		} {
 			p.Name = name
 			err := ValidatePackageSpec(&p)
-			require.Errorf(t, err, "name %s", name)
+			require.Error(t, err, "name %s", name)
 			require.Contains(t, err.Error(), "invalid package name")
 		}
 	})
@@ -329,7 +329,7 @@ func TestValidatePackageSpec(t *testing.T) {
 		} {
 			p.Version = version
 			err := ValidatePackageSpec(&p)
-			require.NoErrorf(t, err, "version %s", version)
+			require.NoError(t, err, "version %s", version)
 		}
 	})
 
@@ -352,7 +352,7 @@ func TestValidatePackageSpec(t *testing.T) {
 		} {
 			p.Version = version
 			err := ValidatePackageSpec(&p)
-			require.Errorf(t, err, "version %s", version)
+			require.Error(t, err, "version %s", version)
 			require.Contains(t, err.Error(), "invalid package version")
 		}
 	})

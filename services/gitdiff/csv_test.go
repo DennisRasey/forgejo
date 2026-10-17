@@ -193,23 +193,17 @@ c,d,e`,
 
 	for n, c := range cases {
 		diff, err := ParsePatch(db.DefaultContext, setting.Git.MaxGitDiffLines, setting.Git.MaxGitDiffLineCharacters, strings.NewReader(c.diff))
-		if err != nil {
-			t.Errorf("ParsePatch failed: %s", err)
-		}
+		require.NoError(t, err, "ParsePatch failed")
 
 		var baseReader *csv.Reader
 		if len(c.base) > 0 {
 			baseReader, err = csv_module.CreateReaderAndDetermineDelimiter(nil, strings.NewReader(c.base))
-			if err != nil {
-				t.Errorf("CreateReaderAndDetermineDelimiter failed: %s", err)
-			}
+			require.NoError(t, err, "CreateReaderAndDetermineDelimiter failed")
 		}
 		var headReader *csv.Reader
 		if len(c.head) > 0 {
 			headReader, err = csv_module.CreateReaderAndDetermineDelimiter(nil, strings.NewReader(c.head))
-			if err != nil {
-				t.Errorf("CreateReaderAndDetermineDelimiter failed: %s", err)
-			}
+			require.NoError(t, err, "CreateReaderAndDetermineDelimiter failed")
 		}
 
 		result, err := CreateCsvDiff(diff.Files[0], baseReader, headReader)

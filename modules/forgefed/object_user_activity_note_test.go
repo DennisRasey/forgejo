@@ -21,6 +21,6 @@ func Test_UserActivityNoteValidation(t *testing.T) {
 	}
 	sut.URL = ap.IRI("example.org/user-id/57")
 
-	valid, _ := validation.IsValid(sut)
-	assert.True(t, valid, "sut expected to be valid: %v\n", sut.Validate())
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 }

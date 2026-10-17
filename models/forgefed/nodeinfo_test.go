@@ -6,10 +6,12 @@ package forgefed
 import (
 	"errors"
 	"reflect"
-	"strings"
 	"testing"
 
 	"forgejo.org/modules/validation"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_NodeInfoWellKnownUnmarshalJSON(t *testing.T) {
@@ -48,45 +50,33 @@ func Test_NodeInfoWellKnownUnmarshalJSON(t *testing.T) {
 
 func Test_NodeInfoWellKnownValidate(t *testing.T) {
 	sut := NodeInfoWellKnown{Href: "https://federated-repo.prod.meissa.de/api/v1/nodeinfo"}
-	if b, err := validation.IsValid(sut); !b {
-		t.Errorf("sut should be valid, %v, %v", sut, err)
-	}
+	valid, err := validation.IsValid(sut)
+	assert.True(t, valid, "sut '%v' should be valid: %v", sut, err)
 
 	sut = NodeInfoWellKnown{Href: "./federated-repo.prod.meissa.de/api/v1/nodeinfo"}
-	_, err := validation.IsValid(sut)
-	if !validation.IsErrNotValid(err) && strings.Contains(err.Error(), "Href has to be absolute\nValue  is not contained in allowed values [http https]") {
-		t.Errorf("validation error expected but was: %v\n", err)
-	}
-
-	sut = NodeInfoWellKnown{Href: "https://federated-repo.prod.meissa.de/api/v1/nodeinfo?alert=1"}
 	_, err = validation.IsValid(sut)
-	if !validation.IsErrNotValid(err) && strings.Contains(err.Error(), "Href has to be absolute\nValue  is not contained in allowed values [http https]") {
-		t.Errorf("sut should be valid, %v, %v", sut, err)
-	}
+	require.ErrorContains(t, err, "Href has to be absolute\nField parsedURL.Scheme contains the value , which is not in allowed subset [http https]")
+	assert.True(t, validation.IsErrNotValid(err), "validation error expected but was: %v", err)
+
+	sut = NodeInfoWellKnown{Href: "https://federated-repo.prod.meissa.de/api/v1/nodeinfo"}
+	_, err = validation.IsValid(sut)
+	require.NoError(t, err)
 }
 
 func Test_NewNodeInfoWellKnown(t *testing.T) {
 	sut, _ := NewNodeInfoWellKnown([]byte(`{"links":[{"href":"https://federated-repo.prod.meissa.de/api/v1/nodeinfo","rel":"http://nodeinfo.diaspora.software/ns/schema/2.1"}]}`))
 	expected := NodeInfoWellKnown{Href: "https://federated-repo.prod.meissa.de/api/v1/nodeinfo"}
-	if sut != expected {
-		t.Errorf("expected was: %v but was: %v", expected, sut)
-	}
+	assert.Equal(t, expected, sut)
 
 	_, err := NewNodeInfoWellKnown([]byte(`invalid`))
-	if err == nil {
-		t.Error("error was expected here")
-	}
+	require.Error(t, err)
 }
 
 func Test_NewNodeInfo(t *testing.T) {
 	sut, _ := NewNodeInfo([]byte(`{"version":"2.1","software":{"name":"gitea","version":"1.20.0+dev-2539-g5840cc6d3","repository":"https://github.com/go-gitea/gitea.git","homepage":"https://gitea.io/"},"protocols":["activitypub"],"services":{"inbound":[],"outbound":["rss2.0"]},"openRegistrations":true,"usage":{"users":{"total":13,"activeHalfyear":1,"activeMonth":1}},"metadata":{}}`))
 	expected := NodeInfo{SoftwareName: "gitea"}
-	if sut != expected {
-		t.Errorf("expected was: %v but was: %v", expected, sut)
-	}
+	assert.Equal(t, expected, sut)
 
 	_, err := NewNodeInfo([]byte(`invalid`))
-	if err == nil {
-		t.Error("error was expected here")
-	}
+	require.Error(t, err)
 }
