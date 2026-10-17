@@ -600,7 +600,7 @@ export default defineConfig(
       'prefer-rest-params': [2],
       'prefer-spread': [2],
       'prefer-template': [2],
-      radix: [2, 'as-needed'],
+      'radix': [0],
       'regexp/confusing-quantifier': [2],
       'regexp/control-character-escape': [2],
       'regexp/hexadecimal-escape': [0],
