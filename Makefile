@@ -670,7 +670,9 @@ tidy-check: tidy
 go-licenses: $(GO_LICENSE_FILE)
 
 $(GO_LICENSE_FILE): go.mod go.sum
-	-$(GO) run $(GO_LICENSES_PACKAGE) save . --force --ignore forgejo.org --save_path=$(GO_LICENSE_TMP_DIR) 2>/dev/null
+	-$(GO) run $(GO_LICENSES_PACKAGE) save . --force --ignore forgejo.org --ignore github.com/alecthomas/chroma/v2 --save_path=$(GO_LICENSE_TMP_DIR) 2>/dev/null
+	@mkdir -p "$(GO_LICENSE_TMP_DIR)/github.com/alecthomas/chroma/v2"
+	@cp "$$($(GO) list -f '{{.Dir}}' github.com/alecthomas/chroma/v2)/COPYING" $(GO_LICENSE_TMP_DIR)/github.com/alecthomas/chroma/v2/COPYING
 	$(GO) run build/generate-go-licenses.go $(GO_LICENSE_TMP_DIR) $(GO_LICENSE_FILE)
 	@rm -rf $(GO_LICENSE_TMP_DIR)
 
