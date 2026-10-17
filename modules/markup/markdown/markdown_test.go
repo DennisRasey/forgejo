@@ -1551,8 +1551,8 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 		"```rust\n"+
 			"fn main() {}\n"+
 			"```",
-		`<pre class="code-block"><code class="chroma language-rust display"><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span><span class="w">
-</span></code></pre>`,
+		`<div><pre class="code-block"><code class="chroma language-rust display"><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span><span class="w">
+</span></code></pre></div>`,
 	)
 
 	// Comma stripped
@@ -1560,8 +1560,8 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 		"```rust,ignore\n"+
 			"fn main() {}\n"+
 			"```",
-		`<pre class="code-block"><code class="chroma language-rust display"><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span><span class="w">
-</span></code></pre>`,
+		`<div><pre class="code-block"><code class="chroma language-rust display"><span class="k">fn</span> <span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span><span class="w">
+</span></code></pre></div>`,
 	)
 
 	// Pandoc stripping
@@ -1572,10 +1572,10 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 			"qsort (x:xs) = qsort (filter (< x) xs) ++ [x] ++\n"+
 			"               qsort (filter (>= x) xs)\n"+
 			"```",
-		`<pre class="code-block"><code class="chroma language-haskell display"><span class="nf">qsort</span> <span class="kt">[]</span>     <span class="ow">=</span> <span class="kt">[]</span>
+		`<div><pre class="code-block"><code class="chroma language-haskell display"><span class="nf">qsort</span> <span class="kt">[]</span>     <span class="ow">=</span> <span class="kt">[]</span>
 <span class="nf">qsort</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">xs</span><span class="p">)</span> <span class="ow">=</span> <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&lt;</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span> <span class="o">++</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">++</span>
                <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&gt;=</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span>
-</code></pre>`,
+</code></pre></div>`,
 	)
 
 	// Pandoc language extracting
@@ -1586,10 +1586,10 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 			"qsort (x:xs) = qsort (filter (< x) xs) ++ [x] ++\n"+
 			"               qsort (filter (>= x) xs)\n"+
 			"```",
-		`<pre class="code-block"><code class="chroma language-haskell display"><span class="nf">qsort</span> <span class="kt">[]</span>     <span class="ow">=</span> <span class="kt">[]</span>
+		`<div><pre class="code-block"><code class="chroma language-haskell display"><span class="nf">qsort</span> <span class="kt">[]</span>     <span class="ow">=</span> <span class="kt">[]</span>
 <span class="nf">qsort</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">xs</span><span class="p">)</span> <span class="ow">=</span> <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&lt;</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span> <span class="o">++</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">++</span>
                <span class="n">qsort</span> <span class="p">(</span><span class="n">filter</span> <span class="p">(</span><span class="o">&gt;=</span> <span class="n">x</span><span class="p">)</span> <span class="n">xs</span><span class="p">)</span>
-</code></pre>`,
+</code></pre></div>`,
 	)
 
 	// No language identifier
@@ -1597,7 +1597,7 @@ func TestCodeblockLanguageTransformation(t *testing.T) {
 		"```\n"+
 			"fn main() {}\n"+
 			"```",
-		`<pre class="code-block"><code class="chroma language-text display">fn main() {}
-</code></pre>`,
+		`<div><pre class="code-block"><code class="chroma language-text display">fn main() {}
+</code></pre></div>`,
 	)
 }

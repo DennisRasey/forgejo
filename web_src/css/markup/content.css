@@ -429,6 +429,7 @@
   line-height: 1.45;
   background-color: var(--color-markup-code-block);
   border-radius: var(--border-radius);
+  overflow: auto;
 }
 
 .markup .highlight pre {

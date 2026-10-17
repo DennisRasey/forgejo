@@ -1,7 +1,7 @@
 import {renderCodeCopy} from './codecopy.js';
 
 test('renderCodeCopy adds the button once and only updates the clipboard text afterwards', () => {
-  document.body.innerHTML = '<div class="markup"><pre class="code-block"><code>initial content\n</code></pre></div>';
+  document.body.innerHTML = '<div class="markup"><div><pre class="code-block"><code>initial content\n</code></pre></div></div>';
   const code = document.querySelector('code');
 
   renderCodeCopy();

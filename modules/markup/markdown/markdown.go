@@ -95,7 +95,7 @@ func SpecializedMarkdown() goldmark.Markdown {
 								preClasses = append(preClasses, "is-loading")
 							}
 
-							_, err := w.WriteString(`<pre class="` + strings.Join(preClasses, " ") + `">`)
+							_, err := w.WriteString(`<div><pre class="` + strings.Join(preClasses, " ") + `">`)
 							if err != nil {
 								return
 							}
@@ -107,7 +107,7 @@ func SpecializedMarkdown() goldmark.Markdown {
 								return
 							}
 						} else {
-							_, err := w.WriteString("</code></pre>")
+							_, err := w.WriteString("</code></pre></div>")
 							if err != nil {
 								return
 							}
