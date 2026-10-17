@@ -772,6 +772,10 @@ func GetBranchesList(ctx *context.Context) {
 		branches = util.SliceRemoveAll(branches, ctx.Repo.Repository.DefaultBranch)
 		branches = append([]string{ctx.Repo.Repository.DefaultBranch}, branches...)
 	}
+
+	if branches == nil {
+		branches = []string{}
+	}
 	resp.Results = branches
 	ctx.JSON(http.StatusOK, resp)
 }

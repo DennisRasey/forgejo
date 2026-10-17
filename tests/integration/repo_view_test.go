@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/git"
+	"forgejo.org/modules/test"
 	"forgejo.org/routers/web/repo"
 	"forgejo.org/services/context"
 	"forgejo.org/services/contexttest"
@@ -17,6 +19,7 @@ import (
 	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func createRepoAndGetContext(t *testing.T, user *user_model.User, filenames ...string) *context.Context {
@@ -185,6 +188,51 @@ func TestRepoViewFileLines(t *testing.T) {
 				assert.True(t, ok, "could not find CITATION.cff line")
 				assert.Contains(t, c, "octicon-cross-reference")
 			})
+		})
+	})
+}
+
+func TestRepoWithTagButNoBranch(t *testing.T) {
+	onApplicationRun(t, func(t *testing.T, u *url.URL) {
+		const tagName = "tag-test"
+
+		user := forgery.CreateUser(t, nil)
+		repo := forgery.CreateRepository(t, user, nil)
+
+		// clone the repo
+		repoPath := t.TempDir()
+		doGitInitTestRepository(repoPath, git.Sha1ObjectFormat)(t)
+
+		// create a commit
+		generateCommitWithNewData(t, littleSize, repoPath, user.Email, user.Name, "newFile")
+
+		// create tag
+		_, _, err := git.NewCommand(git.DefaultContext, "tag").AddDynamicArguments(tagName).RunStdString(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+
+		// push the tag
+		u.Path = repo.FullName() + ".git"
+		u.User = url.UserPassword(user.LowerName, userPassword)
+		_, _, err = git.NewCommand(git.DefaultContext, "push", "--tags").AddDynamicArguments(u.String()).RunStdString(&git.RunOpts{Dir: repoPath})
+		require.NoError(t, err)
+
+		session := loginUser(t, user.Name)
+
+		t.Run("repo view should redirect to the tag", func(t *testing.T) {
+			req := NewRequest(t, "GET", "/"+repo.FullName())
+			resp := session.MakeRequest(t, req, http.StatusSeeOther)
+			assert.Equal(t, "/"+repo.FullName()+"/src/tag/"+tagName, test.RedirectURL(resp))
+		})
+
+		t.Run("/branches/list is an empty list, not nil", func(t *testing.T) {
+			req := NewRequest(t, "GET", "/"+repo.FullName()+"/branches/list")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			respJSON := struct {
+				Results []string
+			}{}
+			DecodeJSON(t, resp, &respJSON)
+			assert.Equal(t, []string{}, respJSON.Results)
 		})
 	})
 }
