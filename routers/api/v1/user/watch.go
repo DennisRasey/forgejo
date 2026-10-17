@@ -35,7 +35,7 @@ func getWatchedRepos(ctx *context.APIContext, user *user_model.User, listOptions
 		// account here:
 		//
 		// nosemgrep: forgejo-api-use-resource-GetUserRepoPermission
-		permission, err := access_model.GetUserRepoPermission(ctx, watched, user)
+		permission, err := access_model.GetUserRepoPermission(ctx, watched, ctx.Doer())
 		if err != nil {
 			return nil, 0, err
 		}
