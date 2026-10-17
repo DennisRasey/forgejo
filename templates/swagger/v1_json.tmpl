@@ -31934,7 +31934,10 @@
         },
         "repositories": {
           "type": "array",
-          "items": {},
+          "items": {
+            "x-go-type": "forgejo.org/modules/structs.RepositoryMeta",
+            "type": "string"
+          },
           "description": "Indicates that an access token only has access to the specified repositories.  Will be null if the access token\nis not limited to a set of specified repositories."
         },
         "scopes": {
