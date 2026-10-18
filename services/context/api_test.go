@@ -77,6 +77,17 @@ func TestAcceptsGithubResponse(t *testing.T) {
 
 		assert.True(t, ctx.AcceptsGithubResponse())
 	})
+
+	t.Run("Accepts Github with params", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/", nil)
+		req.Header.Add("Accept", "application/vnd.github.v3+json")
+		resp := httptest.NewRecorder()
+		base, baseCleanUp := NewBaseContext(resp, req)
+		t.Cleanup(baseCleanUp)
+		ctx := &APIContext{Base: base}
+
+		assert.True(t, ctx.AcceptsGithubResponse())
+	})
 }
 
 func TestIsUserSiteAdmin(t *testing.T) {
