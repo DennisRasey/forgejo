@@ -1,4 +1,4 @@
-import {showInfoToast, showWarningToast, showErrorToast} from '../modules/toast.js';
+import {showInfoToast, showWarningToast, showErrorToast} from '../modules/toast.ts';
 
 document.getElementById('info-toast').addEventListener('click', () => {
   showInfoToast('success 😀');

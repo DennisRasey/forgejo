@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import {svg} from '../svg.ts';
-import {showErrorToast} from '../modules/toast.js';
+import {showErrorToast} from '../modules/toast.ts';
 import {GET, POST} from '../modules/fetch.ts';
 import {showElem} from '../utils/dom.ts';
 

@@ -8,7 +8,7 @@ import {handleGlobalEnterQuickSubmit} from './QuickSubmit.js';
 import {renderPreviewPanelContent} from '../repo-editor.js';
 import {easyMDEToolbarActions} from './EasyMDEToolbarActions.js';
 import {initTextExpander} from './TextExpander.js';
-import {showErrorToast, showHintToast} from '../../modules/toast.js';
+import {showErrorToast, showHintToast} from '../../modules/toast.ts';
 import {POST} from '../../modules/fetch.ts';
 import {initTab} from '../../modules/tab.ts';
 

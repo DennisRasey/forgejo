@@ -121,7 +121,7 @@ export default {
     ],
     ...(!isProduction && {
       demo: [
-        fileURLToPath(new URL('web_src/js/standalone/demo.js', import.meta.url)),
+        fileURLToPath(new URL('web_src/js/standalone/demo.ts', import.meta.url)),
         fileURLToPath(new URL('web_src/css/standalone/demo.css', import.meta.url)),
       ],
     }),
@@ -162,7 +162,7 @@ export default {
         loader: 'vue-loader',
         options: {
           compilerOptions: {
-            isCustomElement: (tag) => webComponents.has(tag),
+            isCustomElement: (tag: string) => webComponents.has(tag),
           },
           experimentalInlineMatchResource: true,
         },

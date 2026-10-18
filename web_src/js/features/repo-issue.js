@@ -7,7 +7,7 @@ import {getComboMarkdownEditor, initComboMarkdownEditor} from './comp/ComboMarkd
 import {toAbsoluteUrl} from '../utils.ts';
 import {initDropzone} from './common-global.js';
 import {POST, GET} from '../modules/fetch.ts';
-import {showErrorToast} from '../modules/toast.js';
+import {showErrorToast} from '../modules/toast.ts';
 
 const {appSubUrl} = window.config;
 

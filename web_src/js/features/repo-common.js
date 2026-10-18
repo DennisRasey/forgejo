@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import {hideElem, queryElems, showElem} from '../utils/dom.ts';
 import {POST} from '../modules/fetch.ts';
-import {showErrorToast} from '../modules/toast.js';
+import {showErrorToast} from '../modules/toast.ts';
 import {sleep} from '../utils.ts';
 
 async function onDownloadArchive(e) {

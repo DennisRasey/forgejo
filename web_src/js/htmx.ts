@@ -1,5 +1,5 @@
 import htmx from 'htmx.org';
-import {showErrorToast} from './modules/toast.js';
+import {showErrorToast} from './modules/toast.ts';
 
 // https://github.com/bigskysoftware/idiomorph#htmx
 import 'idiomorph/dist/idiomorph-ext.js';

@@ -1,4 +1,5 @@
-import {showInfoToast, showErrorToast, showWarningToast} from './toast.js';
+import {expect, test} from 'vitest';
+import {showInfoToast, showErrorToast, showWarningToast} from './toast.ts';
 
 test('showInfoToast', async () => {
   showInfoToast('success 😀', {duration: -1});

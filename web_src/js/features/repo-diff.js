@@ -7,7 +7,7 @@ import {initDiffCommitSelect} from './repo-diff-commitselect.js';
 import {validateTextareaNonEmpty} from './comp/ComboMarkdownEditor.js';
 import {initViewedCheckboxListenerFor, countAndUpdateViewedFiles, initExpandAndCollapseFilesButton} from './pull-view-file.js';
 import {initImageDiff} from './imagediff.js';
-import {showErrorToast} from '../modules/toast.js';
+import {showErrorToast} from '../modules/toast.ts';
 import {submitEventSubmitter, queryElemSiblings, hideElem, showElem} from '../utils/dom.ts';
 import {POST, GET} from '../modules/fetch.ts';
 import {clearMultiLineSelection, refreshMultiLineCommentHighlights} from './repo-issue.js';

@@ -1,6 +1,6 @@
 import {hideElem, showElem} from '../utils/dom.ts';
 import {GET, POST} from '../modules/fetch.ts';
-import {showErrorToast} from '../modules/toast.js';
+import {showErrorToast} from '../modules/toast.ts';
 import {createTomSelect} from '../modules/tom-select.ts';
 
 const {appSubUrl} = window.config;
