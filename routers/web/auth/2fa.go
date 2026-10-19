@@ -32,7 +32,7 @@ func TwoFactor(ctx *context.Context) {
 
 	// Ensure user is in a 2FA session.
 	if ctx.Session.Get("twofaUid") == nil {
-		ctx.ServerError("UserSignIn", errors.New("not in 2FA session"))
+		ctx.Redirect("/user/login", http.StatusFound)
 		return
 	}
 

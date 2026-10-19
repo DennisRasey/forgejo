@@ -28,10 +28,24 @@ import (
 	"forgejo.org/modules/web/middleware"
 	"forgejo.org/services/context"
 
+	"code.forgejo.org/go-chi/session"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type MockSessionStore struct {
+	*session.MemStore
+	*session.Manager
+}
+
+func NewMockSessionStore(sid, name string, opt session.Options) MockSessionStore {
+	manager, _ := session.NewManager(name, opt)
+	return MockSessionStore{
+		session.NewMemStore(sid),
+		manager,
+	}
+}
 
 func mockRequest(t *testing.T, reqPath string) *http.Request {
 	method, path, found := strings.Cut(reqPath, " ")
@@ -71,6 +85,8 @@ func MockContext(t *testing.T, reqPath string, opts ...MockContextOption) (*cont
 	ctx.Data["PageStartTime"] = time.Now()
 	chiCtx := chi.NewRouteContext()
 	ctx.AppendContextValue(chi.RouteCtxKey, chiCtx)
+	// FIXME: This should probably not be hard coded
+	ctx.Session = NewMockSessionStore("test-sid", "test", session.Options{})
 	return ctx, resp
 }
 
