@@ -338,7 +338,7 @@ func GetReviewers(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	reviewers, err := repo_model.GetReviewers(ctx, ctx.Repo().Repository, ctx.Doer().ID, 0)
+	reviewers, err := repo_model.GetReviewers(ctx, ctx.Repo().Repository, 0)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "ListCollaborators", err)
 		return

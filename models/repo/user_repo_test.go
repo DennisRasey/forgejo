@@ -40,47 +40,52 @@ func TestRepoAssignees(t *testing.T) {
 	}
 }
 
+func assertReviewers(t *testing.T, repoID, posterID int64, expectedUIDs []int64) {
+	ctx := db.DefaultContext
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: repoID})
+
+	reviewers, err := repo_model.GetReviewers(ctx, repo, posterID)
+	require.NoError(t, err)
+
+	assert.Len(t, reviewers, len(expectedUIDs))
+	for i, u := range reviewers {
+		assert.Equal(t, expectedUIDs[i], u.ID)
+	}
+}
+
 func TestRepoGetReviewers(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 
-	// test public repo
-	repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	// public repository, including
+	// - people with read access
+	// - people watching pull requests
+	// - members of the organization owning the repository
+	// who are NOT the poster and active
 
-	ctx := db.DefaultContext
-	reviewers, err := repo_model.GetReviewers(ctx, repo1, 2, 2)
-	require.NoError(t, err)
-	if assert.Len(t, reviewers, 3) {
-		assert.ElementsMatch(t, []int64{1, 4, 11}, []int64{reviewers[0].ID, reviewers[1].ID, reviewers[2].ID})
-	}
+	// repo 1 has 0 people with explicit access, 5 people watching PRs (including
+	// user2 and one inactive user), owner user2
+	assertReviewers(t, 1, 2, []int64{1, 11, 4})
 
-	// should include doer if doer is not PR poster.
-	reviewers, err = repo_model.GetReviewers(ctx, repo1, 11, 2)
-	require.NoError(t, err)
-	assert.Len(t, reviewers, 3)
+	// poster which is a canidate reviewer
+	assertReviewers(t, 1, 1, []int64{11, 4})
 
-	// should not include PR poster, if PR poster would be otherwise eligible
-	reviewers, err = repo_model.GetReviewers(ctx, repo1, 11, 4)
-	require.NoError(t, err)
-	assert.Len(t, reviewers, 2)
+	// repo 23 has 2 people with explicit access, 0 people watching PRs, 4 people
+	// being members of the org (including the two with access)
+	assertReviewers(t, 23, 1, []int64{15, 18, 2, 29})
 
-	// test private user repo
-	repo2 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
+	// private repository, including
+	// - people with read access
+	// - the owner
+	// who are NOT the poster and active
 
-	reviewers, err = repo_model.GetReviewers(ctx, repo2, 2, 4)
-	require.NoError(t, err)
-	assert.Len(t, reviewers, 1)
-	assert.EqualValues(t, 2, reviewers[0].ID)
+	// repo 6 has 0 people with explicit access, 0 people watching PRs, owned by
+	// user 10
+	assertReviewers(t, 6, 1, []int64{10})
 
-	// test private org repo
-	repo3 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 3})
-
-	reviewers, err = repo_model.GetReviewers(ctx, repo3, 2, 1)
-	require.NoError(t, err)
-	assert.Len(t, reviewers, 2)
-
-	reviewers, err = repo_model.GetReviewers(ctx, repo3, 2, 2)
-	require.NoError(t, err)
-	assert.Len(t, reviewers, 1)
+	// repo 5 has 1 user with explicit access, 1 user watching PRs (without
+	// access) 3 people with org access (including user 2), which will not be
+	// counted
+	assertReviewers(t, 5, 1, []int64{2})
 }
 
 func GetWatchedRepoIDsOwnedBy(t *testing.T) {
