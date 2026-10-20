@@ -1796,12 +1796,12 @@ func registerRoutes(m *web.Route) {
 		}, repo.MustAllowPulls)
 
 		m.Group("/media", func() {
-			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.SingleDownloadOrLFS)
-			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.SingleDownloadOrLFS)
-			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.SingleDownloadOrLFS)
-			m.Get("/blob/{sha}", context.RepoRefByType(context.RepoRefBlob), repo.DownloadByIDOrLFS)
+			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.SingleDownload)
+			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.SingleDownload)
+			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.SingleDownload)
+			m.Get("/blob/{sha}", context.RepoRefByType(context.RepoRefBlob), repo.DownloadByID)
 			// "/*" route is deprecated, and kept for backward compatibility
-			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.SingleDownloadOrLFS)
+			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.SingleDownload)
 		}, repo.MustBeNotEmpty, reqRepoCodeReader)
 
 		m.Group("/render", func() {
@@ -1954,12 +1954,12 @@ func registerMixedRoutes(m *web.Route) {
 
 	m.Group("/{username}/{reponame}", func() {
 		m.Group("/raw", func() {
-			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.SingleDownload)
-			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.SingleDownload)
-			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.SingleDownload)
-			m.Get("/blob/{sha}", context.RepoRefByType(context.RepoRefBlob), repo.DownloadByID)
+			m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.SingleDownloadRaw)
+			m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.SingleDownloadRaw)
+			m.Get("/commit/*", context.RepoRefByType(context.RepoRefCommit), repo.SingleDownloadRaw)
+			m.Get("/blob/{sha}", context.RepoRefByType(context.RepoRefBlob), repo.DownloadByIDRaw)
 			// "/*" route is deprecated, and kept for backward compatibility
-			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.SingleDownload)
+			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.SingleDownloadRaw)
 		}, repo.MustBeNotEmpty, reqRepoCodeReader)
 
 		m.Group("/archive", func() {

@@ -7,79 +7,10 @@ package repo
 import (
 	"time"
 
-	git_model "forgejo.org/models/git"
 	"forgejo.org/modules/git"
-	"forgejo.org/modules/httpcache"
-	"forgejo.org/modules/lfs"
-	"forgejo.org/modules/log"
-	"forgejo.org/modules/setting"
-	"forgejo.org/modules/storage"
 	"forgejo.org/routers/common"
 	"forgejo.org/services/context"
 )
-
-// ServeBlobOrLFS download a git.Blob redirecting to LFS if necessary
-func ServeBlobOrLFS(ctx *context.Context, blob *git.Blob, lastModified *time.Time) error {
-	if httpcache.HandleGenericETagTimeCache(ctx.Req, ctx.Resp, `"`+blob.ID.String()+`"`, lastModified) {
-		return nil
-	}
-
-	dataRc, err := blob.DataAsync()
-	if err != nil {
-		return err
-	}
-	closed := false
-	defer func() {
-		if closed {
-			return
-		}
-		if err = dataRc.Close(); err != nil {
-			log.Error("ServeBlobOrLFS: Close: %v", err)
-		}
-	}()
-
-	pointer, err := lfs.ReadPointer(dataRc)
-	if err == nil {
-		meta, _ := git_model.GetLFSMetaObjectByOid(ctx, ctx.Repo.Repository.ID, pointer.Oid)
-		if meta == nil {
-			if err = dataRc.Close(); err != nil {
-				log.Error("ServeBlobOrLFS: Close: %v", err)
-			}
-			closed = true
-			return common.ServeBlob(ctx.Base, ctx.Repo.TreePath, blob, lastModified)
-		}
-		if httpcache.HandleGenericETagCache(ctx.Req, ctx.Resp, `"`+pointer.Oid+`"`) {
-			return nil
-		}
-
-		if setting.LFS.Storage.MinioConfig.ServeDirect {
-			// If we have a signed url (S3, object storage, blob storage), redirect to this directly.
-			u, err := storage.LFS.URL(pointer.RelativePath(), blob.Name(), nil)
-			if u != nil && err == nil {
-				ctx.Redirect(u.String())
-				return nil
-			}
-		}
-
-		lfsDataRc, err := lfs.ReadMetaObject(meta.Pointer)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if err = lfsDataRc.Close(); err != nil {
-				log.Error("ServeBlobOrLFS: Close: %v", err)
-			}
-		}()
-		common.ServeContentByReadSeeker(ctx.Base, ctx.Repo.TreePath, lastModified, lfsDataRc)
-		return nil
-	}
-	if err = dataRc.Close(); err != nil {
-		log.Error("ServeBlobOrLFS: Close: %v", err)
-	}
-	closed = true
-
-	return common.ServeBlob(ctx.Base, ctx.Repo.TreePath, blob, lastModified)
-}
 
 func getBlobForEntry(ctx *context.Context) (*git.Blob, *time.Time) {
 	entry, err := ctx.Repo.Commit.GetTreeEntryByPath(ctx.Repo.TreePath)
@@ -107,31 +38,58 @@ func getBlobForEntry(ctx *context.Context) (*git.Blob, *time.Time) {
 	return entry.Blob(), lastModified
 }
 
-// SingleDownload download a file by repos path
+// SingleDownloadRaw facilitates the downloading of a served file using the
+// repository path.
+//
+// For "Git LFS files", the pointer is provided instead of the pointer's target.
+// See also: [SingleDownload]
+func SingleDownloadRaw(ctx *context.Context) {
+	blob, lastModified := getBlobForEntry(ctx)
+	if blob == nil {
+		return
+	}
+
+	if err := common.ServeBlobRaw(ctx.Base, ctx.Repo, blob, lastModified); err != nil {
+		ctx.ServerError("ServeBlobRaw", err)
+	}
+}
+
+// SingleDownload facilitates the downloading of a served file using the
+// repository path.
+//
+// Git LFS pointers are resolved. See also: [SingleDownloadRaw]
 func SingleDownload(ctx *context.Context) {
 	blob, lastModified := getBlobForEntry(ctx)
 	if blob == nil {
 		return
 	}
 
-	if err := common.ServeBlob(ctx.Base, ctx.Repo.TreePath, blob, lastModified); err != nil {
+	if err := common.ServeBlob(ctx.Base, ctx.Repo, blob, lastModified); err != nil {
 		ctx.ServerError("ServeBlob", err)
 	}
 }
 
-// SingleDownloadOrLFS download a file by repos path redirecting to LFS if necessary
-func SingleDownloadOrLFS(ctx *context.Context) {
-	blob, lastModified := getBlobForEntry(ctx)
-	if blob == nil {
+// DownloadByIDRaw downloads a file using its SHA1 ID.
+// For "Git LFS files", the pointer is provided instead of the pointer's target.
+// See also: [DownloadByID]
+func DownloadByIDRaw(ctx *context.Context) {
+	blob, err := ctx.Repo.GitRepo.GetBlob(ctx.Params("sha"))
+	if err != nil {
+		if git.IsErrNotExist(err) {
+			ctx.NotFound("GetBlob", nil)
+		} else {
+			ctx.ServerError("GetBlob", err)
+		}
 		return
 	}
-
-	if err := ServeBlobOrLFS(ctx, blob, lastModified); err != nil {
-		ctx.ServerError("ServeBlobOrLFS", err)
+	if err = common.ServeBlobRaw(ctx.Base, ctx.Repo, blob, nil); err != nil {
+		ctx.ServerError("ServeBlobRaw", err)
 	}
 }
 
-// DownloadByID download a file by sha1 ID
+// DownloadByID downloads a file suing its SHA1 ID.
+// Git LFS pointers shall be resolved; their target shall be provided.
+// See also: [DownloadByIDRaw]
 func DownloadByID(ctx *context.Context) {
 	blob, err := ctx.Repo.GitRepo.GetBlob(ctx.Params("sha"))
 	if err != nil {
@@ -142,23 +100,7 @@ func DownloadByID(ctx *context.Context) {
 		}
 		return
 	}
-	if err = common.ServeBlob(ctx.Base, ctx.Repo.TreePath, blob, nil); err != nil {
-		ctx.ServerError("ServeBlob", err)
-	}
-}
-
-// DownloadByIDOrLFS download a file by sha1 ID taking account of LFS
-func DownloadByIDOrLFS(ctx *context.Context) {
-	blob, err := ctx.Repo.GitRepo.GetBlob(ctx.Params("sha"))
-	if err != nil {
-		if git.IsErrNotExist(err) {
-			ctx.NotFound("GetBlob", nil)
-		} else {
-			ctx.ServerError("GetBlob", err)
-		}
-		return
-	}
-	if err = ServeBlobOrLFS(ctx, blob, nil); err != nil {
+	if err = common.ServeBlob(ctx.Base, ctx.Repo, blob, nil); err != nil {
 		ctx.ServerError("ServeBlob", err)
 	}
 }
