@@ -390,6 +390,18 @@ func (diffFile *DiffFile) GetType() int {
 	return int(diffFile.Type)
 }
 
+// GetEscapeStatus reports whether the diff contains characters that need escaping.
+func (diffFile *DiffFile) GetEscapeStatus(locale translation.Locale) *charset.EscapeStatus {
+	status := &charset.EscapeStatus{}
+	for _, section := range diffFile.Sections {
+		for _, line := range section.Lines {
+			lineStatus, _ := charset.EscapeControlHTML(template.HTML(html.EscapeString(line.Content)), locale, charset.DiffContext)
+			status.Or(lineStatus)
+		}
+	}
+	return status
+}
+
 // GetTailSection creates a fake DiffLineSection if the last section is not the end of the file
 func (diffFile *DiffFile) GetTailSection(gitRepo *git.Repository, leftCommit, rightCommit *git.Commit) *DiffSection {
 	if len(diffFile.Sections) == 0 || diffFile.Type != DiffFileChange || diffFile.IsBin || diffFile.IsLFSFile {

@@ -17,11 +17,21 @@ import (
 	"forgejo.org/modules/git"
 	"forgejo.org/modules/paginator"
 	"forgejo.org/modules/setting"
+	"forgejo.org/modules/translation"
 
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestDiffFileGetEscapeStatus(t *testing.T) {
+	file := &DiffFile{Sections: []*DiffSection{{Lines: []*DiffLine{{Content: " ordinary"}}}}}
+	locale := translation.NewLocale("es-MX")
+	assert.False(t, file.GetEscapeStatus(locale).Escaped)
+
+	file.Sections[0].Lines[0].Content = " hidden\u200bcharacter"
+	assert.True(t, file.GetEscapeStatus(locale).HasInvisible)
+}
 
 func TestDiffToHTML(t *testing.T) {
 	assert.Equal(t, "foo <span class=\"added-code\">bar</span> biz", diffToHTML(nil, []dmp.Diff{

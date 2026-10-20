@@ -171,7 +171,7 @@
 								{{if and $isReviewFile $file.HasChangedSinceLastReview}}
 									<span class="changed-since-last-review unselectable not-mobile">{{ctx.Locale.Tr "repo.pulls.has_changed_since_last_review"}}</span>
 								{{end}}
-								{{if not (or $file.IsIncomplete $file.IsBin $file.IsSubmodule)}}
+								{{if and (not (or $file.IsIncomplete $file.IsBin $file.IsSubmodule)) ($file.GetEscapeStatus ctx.Locale).Escaped}}
 									<button class="ui basic tiny button unescape-button not-mobile">{{ctx.Locale.Tr "repo.unescape_control_characters"}}</button>
 									<button class="ui basic tiny button escape-button tw-hidden">{{ctx.Locale.Tr "repo.escape_control_characters"}}</button>
 								{{end}}
