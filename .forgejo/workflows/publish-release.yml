@@ -44,7 +44,7 @@ jobs:
       - uses: https://data.forgejo.org/actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: copy & sign
-        uses: https://data.forgejo.org/forgejo/forgejo-build-publish/publish@c219f52c4d9a15f8f9f979111b1b79801f6857f3 # v5.7.3
+        uses: https://data.forgejo.org/forgejo/forgejo-build-publish/publish@9ed66ada30e6b8b1a6f0a74752cc482d2ded196e # v5.8.0
         with:
           from-forgejo: ${{ vars.FORGEJO }}
           to-forgejo: ${{ vars.FORGEJO }}
