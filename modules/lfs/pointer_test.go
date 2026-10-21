@@ -69,37 +69,38 @@ func TestGeneratePointer(t *testing.T) {
 }
 
 func TestReadPointerFromBuffer(t *testing.T) {
-	_, err := ReadPointerFromBuffer([]byte{})
-	require.ErrorIs(t, err, ErrMissingPrefix)
+	// expectedErr == nil -> any error
+	simpleTestBufferAndStringReadError := func(testString string, expectedErr error) {
+		_, err := ReadPointerFromString(testString)
+		if expectedErr != nil {
+			require.ErrorIs(t, err, expectedErr)
+		} else {
+			require.Error(t, err)
+		}
+		_, err = ReadPointerFromBuffer([]byte(testString))
+		if expectedErr != nil {
+			require.ErrorIs(t, err, expectedErr)
+		} else {
+			require.Error(t, err)
+		}
+	}
 
-	_, err = ReadPointerFromBuffer([]byte("test"))
-	require.ErrorIs(t, err, ErrMissingPrefix)
+	simpleTestBufferAndStringReadError("", ErrMissingPrefix)
+	simpleTestBufferAndStringReadError("test", ErrMissingPrefix)
+	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\n", ErrInvalidStructure)
+	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a\nsize 1234\n", ErrInvalidOIDFormat)
+	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a2146z4ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 1234\n", ErrInvalidOIDFormat)
+	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize -1\n", ErrInvalidPointerTargetSize)
+	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\ntest 1234\n", nil)
+	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize test\n", nil)
 
-	_, err = ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\n"))
-	require.ErrorIs(t, err, ErrInvalidStructure)
-
-	_, err = ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a\nsize 1234\n"))
-	require.ErrorIs(t, err, ErrInvalidOIDFormat)
-
-	_, err = ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a2146z4ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 1234\n"))
-	require.ErrorIs(t, err, ErrInvalidOIDFormat)
-
-	_, err = ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize -1\n"))
-	require.ErrorIs(t, err, ErrInvalidPointerTargetSize)
-
-	_, err = ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\ntest 1234\n"))
-	require.Error(t, err)
-
-	_, err = ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize test\n"))
-	require.Error(t, err)
-
-	p, err := ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 1234\n"))
+	p, err := ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 1234\ntest"))
 	require.NoError(t, err)
 	assert.NoError(t, p.Validate())
 	assert.Equal(t, "4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393", p.Oid)
 	assert.Equal(t, int64(1234), p.Size)
 
-	p, err = ReadPointerFromBuffer([]byte("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 1234\ntest"))
+	p, err = ReadPointerFromString("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393\nsize 1234\ntest")
 	require.NoError(t, err)
 	assert.NoError(t, p.Validate())
 	assert.Equal(t, "4d7a214614ab2935c943f9e0ff69d22eadbb8f32b1258daaa5e2ca24d17e2393", p.Oid)

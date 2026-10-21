@@ -67,12 +67,24 @@ func RefBlame(ctx *context.Context) {
 	ctx.Data["IsBlame"] = true
 
 	ctx.Data["BranchLink"] = ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchNameSubURL()
+	// Blame doesn't "support" Git LFS; it makes sense to show the "raw" version of
+	// the content that is otherwise visible as-is to the user.
 	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 	ctx.Data["Paths"] = paths
 	ctx.Data["TreeNames"] = treeNames
 
 	ctx.Data["FileSize"] = blob.Size()
 	ctx.Data["FileName"] = blob.Name()
+
+	if setting.LFS.StartServer {
+		_, dataRc, fileInfo, err := getFileReader(ctx.Req.Context(), ctx.Repo.Repository.ID, blob)
+		if err != nil {
+			ctx.ServerError("getFileReader", err)
+			return
+		}
+		ctx.Data["IsLFSFile"] = fileInfo.isLFSFile
+		dataRc.Close()
+	}
 
 	// Do not display a blame view if the size of the file is
 	// larger than what is configured as the maximum.

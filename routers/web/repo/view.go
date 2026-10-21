@@ -471,7 +471,10 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	isDisplayingSource := ctx.FormString("display") == "source"
 	isDisplayingRendered := !isDisplayingSource
 
-	if fInfo.isLFSFile {
+	// We override the link that uses the "/raw" endpoint; which just shows the
+	// contents of the pointer and not the contents of the Git LFS file that the
+	// pointer points at.
+	if fInfo.isLFSFile && setting.LFS.StartServer {
 		ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/media/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 	}
 

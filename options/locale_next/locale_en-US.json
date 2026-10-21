@@ -517,6 +517,7 @@
 	},
 	"repo.diff.commit.next-short": "Next",
 	"repo.diff.commit.previous-short": "Prev",
+	"repo.diff.lfs.tooltip": "This is a pointer to a Git LFS file.",
 	"discussion.locked": "This discussion has been locked. Commenting is limited to contributors.",
 	"discussion.sidebar.reference": "Reference",
 	"editor.textarea.tab_hint": "Line already indented. Press <kbd>Tab</kbd> again or <kbd>Escape</kbd> to leave the editor.",

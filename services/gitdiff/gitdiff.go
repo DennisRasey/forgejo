@@ -18,8 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"forgejo.org/models/db"
-	git_model "forgejo.org/models/git"
 	issues_model "forgejo.org/models/issues"
 	pull_model "forgejo.org/models/pull"
 	user_model "forgejo.org/models/user"
@@ -708,7 +706,7 @@ parsingLoop:
 					curFile.IsAmbiguous = false
 				}
 				// Otherwise do nothing with this line, but now switch to parsing hunks
-				lineBytes, isFragment, err := parseHunks(ctx, curFile, maxLines, maxLineCharacters, input)
+				lineBytes, isFragment, err := parseHunks(curFile, maxLines, maxLineCharacters, input)
 				diff.TotalAddition += curFile.Addition
 				diff.TotalDeletion += curFile.Deletion
 				if err != nil {
@@ -786,13 +784,12 @@ parsingLoop:
 	return diff, nil
 }
 
-func parseHunks(ctx context.Context, curFile *DiffFile, maxLines, maxLineCharacters int, input *bufio.Reader) (lineBytes []byte, isFragment bool, err error) {
+func parseHunks(curFile *DiffFile, maxLines, maxLineCharacters int, input *bufio.Reader) (lineBytes []byte, isFragment bool, err error) {
 	sb := strings.Builder{}
 
 	var (
 		curSection        *DiffSection
 		curFileLinesCount int
-		curFileLFSPrefix  bool
 	)
 
 	lastLeftIdx := -1
@@ -955,28 +952,6 @@ func parseHunks(ctx context.Context, curFile *DiffFile, maxLines, maxLineCharact
 			line = line[:maxLineCharacters]
 		}
 		curSection.Lines[len(curSection.Lines)-1].Content = line
-
-		// handle LFS
-		//
-		// FIXME: The "second line" is not necessarily the OID and so forth, see:
-		// https://github.com/git-lfs/git-lfs/blob/f0bffc4fe998fe5cb004dbca9e8951ea662ff66b/lfs/pointer_test.go#L189-L193
-		// Please also fix modules/lfs/pointer.go
-		if line[1:] == lfs.MetaFileIdentifier {
-			curFileLFSPrefix = true
-		} else if curFileLFSPrefix && strings.HasPrefix(line[1:], lfs.MetaFileOidPrefix) {
-			p := lfs.Pointer{Oid: strings.TrimPrefix(line[1:], lfs.MetaFileOidPrefix)}
-			if p.IsOIDValid() {
-				m := &git_model.LFSMetaObject{Pointer: p}
-				count, err := db.CountByBean(ctx, m)
-
-				if err == nil && count > 0 {
-					curFile.IsBin = true
-					curFile.IsLFSFile = true
-					curSection.Lines = nil
-					lastLeftIdx = -1
-				}
-			}
-		}
 	}
 }
 
@@ -1337,6 +1312,18 @@ func GetDiffSimple(ctx context.Context, gitRepo *git.Repository, opts *DiffOptio
 	}()
 
 	diff, err = ParsePatch(cmdCtx, opts.MaxLines, opts.MaxLineCharacters, reader)
+
+	// Find and mark any LFS files
+	for _, file := range diff.Files {
+		fileContentFromAfterCommit, err := afterCommit.GetFileContent(file.Name, lfs.BlobSizeCutoff)
+		if err == nil {
+			_, err := lfs.ReadPointerFromString(fileContentFromAfterCommit)
+			if err == nil {
+				file.IsLFSFile = true
+			}
+		}
+	}
+
 	// Ensure the git process is killed if it didn't exit already
 	cmdCancel()
 	if err != nil {
@@ -1371,6 +1358,7 @@ func GetDiffFull(ctx context.Context, gitRepo *git.Repository, opts *DiffOptions
 	for _, diffFile := range diff.Files {
 		gotVendor := false
 		gotGenerated := false
+		gotGitLFS := false
 
 		attrs, err := checker.CheckPath(diffFile.Name)
 		if err != nil {
@@ -1395,6 +1383,14 @@ func GetDiffFull(ctx context.Context, gitRepo *git.Repository, opts *DiffOptions
 		}
 		if !gotGenerated {
 			diffFile.IsGenerated = analyze.IsGenerated(diffFile.Name)
+		}
+		if !gotGitLFS {
+			fileContentFromAfterCommit, err := afterCommit.GetFileContent(diffFile.Name, lfs.BlobSizeCutoff)
+			if err == nil {
+				if _, err := lfs.ReadPointerFromString(fileContentFromAfterCommit); err == nil {
+					diffFile.IsLFSFile = true
+				}
+			}
 		}
 
 		tailSection := diffFile.GetTailSection(gitRepo, beforeCommit, afterCommit)

@@ -1180,7 +1180,7 @@ func viewPullFiles(ctx *context.Context, specifiedStartCommit, specifiedEndCommi
 		ctx.ServerError("GetCommit", err)
 		return
 	}
-	commit, err := gitRepo.GetCommit(endCommitID)
+	headCommit, err := gitRepo.GetCommit(endCommitID)
 	if err != nil {
 		ctx.ServerError("GetCommit", err)
 		return
@@ -1205,7 +1205,7 @@ func viewPullFiles(ctx *context.Context, specifiedStartCommit, specifiedEndCommi
 		}
 	}
 
-	setCompareContext(ctx, baseCommit, commit, ctx.Repo.Owner.Name, ctx.Repo.Repository.Name)
+	setCompareContext(ctx, baseCommit, headCommit, ctx.Repo.Owner.Name, ctx.Repo.Repository.Name)
 
 	assigneeUsers, err := repo_model.GetRepoAssignees(ctx, ctx.Repo.Repository)
 	if err != nil {

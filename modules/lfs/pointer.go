@@ -78,17 +78,21 @@ func (p Pointer) Validate() error {
 	return nil
 }
 
-// ReadPointerFromBuffer will return a pointer if the provided byte slice is a pointer file or an error otherwise.
-func ReadPointerFromBuffer(buf []byte) (Pointer, error) {
+// Reads a Git LFS pointer from a provided string.
+// Usually called by [ReadPointerFromBuffer], but the function in itself is
+// primarily useful for diffs.
+//
+// Will return a pointer if the provided byte slice is a pointer file or an
+// error otherwise.
+func ReadPointerFromString(pointerString string) (Pointer, error) {
 	var p Pointer
 	var err error
 
-	headString := string(buf)
-	if !strings.HasPrefix(headString, MetaFileIdentifier) {
+	splitLines := strings.Split(pointerString, "\n")
+	if !strings.HasPrefix(splitLines[0], MetaFileIdentifier) {
 		return p, ErrMissingPrefix
 	}
 
-	splitLines := strings.Split(headString, "\n")
 	if len(splitLines) < 3 {
 		return p, ErrInvalidStructure
 	}
@@ -111,6 +115,12 @@ func ReadPointerFromBuffer(buf []byte) (Pointer, error) {
 	}
 
 	return p, nil
+}
+
+// ReadPointerFromBuffer will return a pointer if the provided byte slice is
+// a pointer file or an error otherwise.
+func ReadPointerFromBuffer(buf []byte) (Pointer, error) {
+	return ReadPointerFromString(string(buf))
 }
 
 // ReadPointer tries to read LFS pointer data from the reader
