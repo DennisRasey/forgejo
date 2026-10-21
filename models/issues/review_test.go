@@ -62,6 +62,21 @@ func TestReviewType_Icon(t *testing.T) {
 	assert.Equal(t, "comment", issues_model.ReviewType(6).Icon())
 }
 
+func TestReview_AcceptsCommentsFrom(t *testing.T) {
+	reviewer := &user_model.User{ID: 1}
+	other := &user_model.User{ID: 2}
+
+	submitted := &issues_model.Review{Type: issues_model.ReviewTypeComment, ReviewerID: reviewer.ID}
+	assert.True(t, submitted.AcceptsCommentsFrom(reviewer))
+	assert.True(t, submitted.AcceptsCommentsFrom(other))
+	assert.True(t, submitted.AcceptsCommentsFrom(nil))
+
+	pending := &issues_model.Review{Type: issues_model.ReviewTypePending, ReviewerID: reviewer.ID}
+	assert.True(t, pending.AcceptsCommentsFrom(reviewer))
+	assert.False(t, pending.AcceptsCommentsFrom(other))
+	assert.False(t, pending.AcceptsCommentsFrom(nil))
+}
+
 func TestFindReviews(t *testing.T) {
 	require.NoError(t, unittest.PrepareTestDatabase())
 	reviews, err := issues_model.FindReviews(db.DefaultContext, issues_model.FindReviewOptions{

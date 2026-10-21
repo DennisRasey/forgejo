@@ -95,6 +95,13 @@ type CreatePullReviewComment struct {
 
 type CreatePullReviewCommentOptions CreatePullReviewComment
 
+// CreatePullReviewCommentReplyOptions are options to reply to a pull review comment
+type CreatePullReviewCommentReplyOptions struct {
+	// The body of the comment
+	// required:true
+	Body string `json:"body" binding:"Required"`
+}
+
 // SubmitPullReviewOptions are options to submit a pending pull review
 type SubmitPullReviewOptions struct {
 	Event ReviewStateType `json:"event"`

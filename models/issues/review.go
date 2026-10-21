@@ -232,6 +232,12 @@ func (r *Review) HTMLTypeColorName() string {
 	return "grey"
 }
 
+// AcceptsCommentsFrom reports whether doer may add comments to the review: anyone for a submitted
+// review, only its reviewer for a pending one.
+func (r *Review) AcceptsCommentsFrom(doer *user_model.User) bool {
+	return r.Type != ReviewTypePending || (doer != nil && r.ReviewerID == doer.ID)
+}
+
 // GetReviewByID returns the review by the given ID
 func GetReviewByID(ctx context.Context, id int64) (*Review, error) {
 	review := new(Review)
