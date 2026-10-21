@@ -61,18 +61,21 @@ func (repo *Repository) GetTagNameBySHA(sha string) (string, error) {
 
 // GetTagID returns the object ID for a tag (annotated tags have both an object SHA AND a commit SHA)
 func (repo *Repository) GetTagID(name string) (string, error) {
-	stdout, _, err := NewCommand(repo.Ctx, "show-ref", "--tags").AddDashesAndList(name).RunStdString(&RunOpts{Dir: repo.Path})
-	if err != nil {
+	if name == "" || !IsValidRefPattern(name) {
+		return "", ErrNotExist{ID: name}
+	}
+	var id []byte
+	if err := repo.WithCatFileBatchCheck(repo.Ctx, func(wr io.Writer, rd *bufio.Reader) error {
+		if _, err := wr.Write([]byte(TagPrefix + name + "\n")); err != nil {
+			return fmt.Errorf("write to cat-file --batch-check failed: %w", err)
+		}
+		var err error
+		id, _, _, err = ReadBatchLine(rd)
+		return err
+	}); err != nil {
 		return "", err
 	}
-	// Make sure exact match is used: "v1" != "release/v1"
-	for line := range strings.SplitSeq(stdout, "\n") {
-		fields := strings.Fields(line)
-		if len(fields) == 2 && fields[1] == "refs/tags/"+name {
-			return fields[0], nil
-		}
-	}
-	return "", ErrNotExist{ID: name}
+	return string(id), nil
 }
 
 // GetTag returns a Git tag by given name.

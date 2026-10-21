@@ -211,6 +211,7 @@ func Releases(ctx *context.Context) {
 		if rel.Release.IsTag && rel.Release.Title == "" {
 			rel.Release.Title = rel.Release.TagName
 		}
+		rel.Release.Repo = ctx.Repo.Repository // perf: avoid r.LoadRepo, tag-by-tag, in verifyTagSignature
 	}
 
 	ctx.Data["Releases"] = releases
@@ -224,14 +225,15 @@ func Releases(ctx *context.Context) {
 }
 
 func verifyTagSignature(ctx *context.Context, r *repo_model.Release) (*asymkey.ObjectVerification, error) {
-	if err := r.LoadAttributes(ctx); err != nil {
+	if err := r.LoadRepo(ctx); err != nil {
 		return nil, err
 	}
-	gitRepo, err := gitrepo.OpenRepository(ctx, r.Repo)
+
+	gitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, r.Repo)
 	if err != nil {
 		return nil, err
 	}
-	defer gitRepo.Close()
+	defer closer.Close()
 
 	tag, err := gitRepo.GetTag(r.TagName)
 	if err != nil {
@@ -302,6 +304,10 @@ func TagsList(ctx *context.Context) {
 	if err != nil {
 		ctx.ServerError("GetReleasesByRepoID", err)
 		return
+	}
+
+	for _, rel := range releases {
+		rel.Repo = ctx.Repo.Repository // perf: avoid r.LoadRepo, tag-by-tag, in verifyTagSignature
 	}
 
 	ctx.Data["Releases"] = releases

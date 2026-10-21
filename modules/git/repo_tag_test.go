@@ -105,6 +105,71 @@ func TestRepository_GetTag(t *testing.T) {
 	assert.Equal(t, lTagCommitID, oTagID)
 }
 
+func TestRepository_GetTagID(t *testing.T) {
+	bareRepo1Path := filepath.Join(testReposDir, "repo1_bare")
+
+	clonedPath, err := cloneRepo(t, bareRepo1Path)
+	require.NoError(t, err)
+
+	repo, err := openRepositoryWithDefaultContext(clonedPath)
+	require.NoError(t, err)
+	defer repo.Close()
+
+	require.NoError(t, repo.CreateTag("release/onlyNested", "8006ff9adbf0cb94da7dad9e537e53817f9fa5c0"))
+	require.NoError(t, repo.CreateTag("shared", "6fbd69e9823458e6c4a2fc5c0f6bc022b2f2acd1"))
+	require.NoError(t, repo.CreateBranch("shared", "8006ff9adbf0cb94da7dad9e537e53817f9fa5c0"))
+
+	t.Run("annotated tag from packed-refs", func(t *testing.T) {
+		id, err := repo.GetTagID("test")
+		require.NoError(t, err)
+		assert.Equal(t, "3ad28a9149a2864384548f3d17ed7f38014c9e8a", id)
+	})
+
+	t.Run("signed annotated tag", func(t *testing.T) {
+		id, err := repo.GetTagID("signed-tag")
+		require.NoError(t, err)
+		assert.Equal(t, "36f97d9a96457e2bab511db30fe2db03893ebc64", id)
+	})
+
+	t.Run("tag preferred over branch with same name", func(t *testing.T) {
+		id, err := repo.GetTagID("shared")
+		require.NoError(t, err)
+		assert.Equal(t, "6fbd69e9823458e6c4a2fc5c0f6bc022b2f2acd1", id)
+	})
+
+	t.Run("nonexistent tag", func(t *testing.T) {
+		_, err := repo.GetTagID("doesNotExist")
+		require.Error(t, err)
+		assert.True(t, IsErrNotExist(err))
+	})
+
+	t.Run("nested tag, suffix-only, returns not exist", func(t *testing.T) {
+		_, err := repo.GetTagID("onlyNested")
+		require.Error(t, err)
+		assert.True(t, IsErrNotExist(err))
+	})
+
+	t.Run("nested tag, prefix-only, returns not exist", func(t *testing.T) {
+		_, err := repo.GetTagID("release")
+		require.Error(t, err)
+		assert.True(t, IsErrNotExist(err))
+	})
+
+	t.Run("nested tag, fully matching", func(t *testing.T) {
+		id, err := repo.GetTagID("release/onlyNested")
+		require.NoError(t, err)
+		assert.Equal(t, "8006ff9adbf0cb94da7dad9e537e53817f9fa5c0", id)
+	})
+
+	t.Run("revision syntax is not interpreted", func(t *testing.T) {
+		// protected by IsValidRefPattern in GetTagID, otherwise cat-file would return for these values
+		for _, name := range []string{"test:file1.txt", "test^{}", "test^0", "test~1", "test@{0}"} {
+			_, err := repo.GetTagID(name)
+			require.Error(t, err, "name: %s", name)
+		}
+	})
+}
+
 func TestRepository_GetAnnotatedTag(t *testing.T) {
 	bareRepo1Path := filepath.Join(testReposDir, "repo1_bare")
 
