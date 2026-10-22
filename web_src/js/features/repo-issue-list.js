@@ -3,7 +3,7 @@ import {updateIssuesMeta} from './repo-issue.js';
 import {toggleElem, hideElem, isElemHidden} from '../utils/dom.ts';
 import {htmlEscape} from 'escape-goat';
 import {showErrorToast} from '../modules/toast.ts';
-import {createSortable} from '../modules/sortable.js';
+import {createSortable} from '../modules/sortable.ts';
 import {DELETE, POST} from '../modules/fetch.ts';
 import {parseDom} from '../utils.ts';
 import {showModal} from '../modules/modal.ts';

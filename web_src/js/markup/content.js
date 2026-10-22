@@ -1,6 +1,6 @@
 import {renderMermaid} from './mermaid.js';
 import {renderMath} from './math.js';
-import {renderCodeCopy} from './codecopy.js';
+import {renderCodeCopy} from './codecopy.ts';
 import {renderAsciicast} from './asciicast.js';
 import {renderExternal} from './external.js';
 import {initMarkupTasklist} from './tasklist.js';

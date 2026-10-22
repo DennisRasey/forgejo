@@ -1,5 +1,7 @@
-export async function createSortable(el, opts = {}) {
-  const {Sortable} = await import(/* webpackChunkName: "sortablejs" */'sortablejs');
+import type * as Sortable from 'sortablejs';
+
+export async function createSortable(el: HTMLElement, opts: Sortable.Options = {}): Promise<Sortable> {
+  const {default: Sortable} = await import(/* webpackChunkName: "sortablejs" */'sortablejs');
 
   return new Sortable(el, {
     animation: 150,

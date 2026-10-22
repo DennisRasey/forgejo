@@ -1,6 +1,6 @@
 import {svg} from '../svg.ts';
 
-export function makeCodeCopyButton() {
+export function makeCodeCopyButton(): HTMLButtonElement {
   const button = document.createElement('button');
   button.classList.add('code-copy', 'ui', 'button');
   button.innerHTML = svg('octicon-copy');

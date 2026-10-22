@@ -1,15 +1,16 @@
 import $ from 'jquery';
 import {contrastColor} from '../utils/color.ts';
-import {createSortable} from '../modules/sortable.js';
+import {createSortable} from '../modules/sortable.ts';
 import {POST, DELETE, PUT} from '../modules/fetch.ts';
+import {type SortableEvent} from 'sortablejs';
 
-function updateIssueCount(cards) {
+function updateIssueCount(cards: Element) {
   const parent = cards.parentElement;
   const cnt = parent.getElementsByClassName('issue-card').length;
-  parent.getElementsByClassName('project-column-issue-count')[0].textContent = cnt;
+  parent.getElementsByClassName('project-column-issue-count')[0].textContent = cnt.toString();
 }
 
-async function createNewColumn(url, columnTitle, projectColorInput) {
+async function createNewColumn(url: string, columnTitle: JQuery, projectColorInput: JQuery) {
   try {
     await POST(url, {
       data: {
@@ -25,7 +26,7 @@ async function createNewColumn(url, columnTitle, projectColorInput) {
   }
 }
 
-async function moveIssue({item, from, to, oldIndex}) {
+async function moveIssue({item, from, to, oldIndex}: SortableEvent) {
   const columnCards = to.getElementsByClassName('issue-card');
   updateIssueCount(from);
   updateIssueCount(to);
@@ -48,11 +49,10 @@ async function moveIssue({item, from, to, oldIndex}) {
 }
 
 async function initRepoProjectSortable() {
-  const els = document.querySelectorAll('#project-board > .board.sortable');
-  if (!els.length) return;
+  const mainBoard = document.querySelector<HTMLDivElement>('#project-board > .board.sortable');
+  if (!mainBoard) return;
 
   // the HTML layout is: #project-board > .board > .project-column .cards > .issue-card
-  const mainBoard = els[0];
   let boardColumns = mainBoard.getElementsByClassName('project-column');
   createSortable(mainBoard, {
     group: 'project-column',
@@ -81,7 +81,7 @@ async function initRepoProjectSortable() {
   });
 
   for (const boardColumn of boardColumns) {
-    const boardCardList = boardColumn.getElementsByClassName('cards')[0];
+    const boardCardList = boardColumn.getElementsByClassName('cards')[0] as HTMLDivElement;
     createSortable(boardCardList, {
       group: 'shared',
       onAdd: moveIssue,
@@ -97,15 +97,15 @@ export function initRepoProject() {
     return;
   }
 
-  const _promise = initRepoProjectSortable();
+  initRepoProjectSortable(); // intentionally not await-ed
 
-  for (const modal of document.getElementsByClassName('edit-project-column-modal')) {
+  for (const modal of document.querySelectorAll<HTMLDialogElement>('dialog.edit-project-column-modal')) {
     const projectHeader = modal.closest('.project-column-header');
     const projectTitleLabel = projectHeader?.querySelector('.project-column-title-label');
-    const projectTitleInput = modal.querySelector('.project-column-title-input');
-    const projectColorInput = modal.querySelector('#new_project_column_color');
-    const boardColumn = modal.closest('.project-column');
-    modal.querySelector('.edit-project-column-button')?.addEventListener('click', async function (e) {
+    const projectTitleInput = modal.querySelector<HTMLInputElement>('.project-column-title-input');
+    const projectColorInput = modal.querySelector<HTMLInputElement>('#new_project_column_color');
+    const boardColumn = modal.closest<HTMLDivElement>('.project-column');
+    modal.querySelector<HTMLButtonElement>('.edit-project-column-button')?.addEventListener('click', async function (e) {
       e.preventDefault();
       try {
         await PUT(this.getAttribute('data-url'), {
@@ -119,7 +119,7 @@ export function initRepoProject() {
       } finally {
         projectTitleLabel.textContent = projectTitleInput?.value;
         projectTitleInput.closest('form')?.classList.remove('dirty');
-        const dividers = boardColumn.querySelectorAll(':scope > .divider');
+        const dividers = boardColumn.querySelectorAll<HTMLDivElement>(':scope > .divider');
         if (projectColorInput.value) {
           const color = contrastColor(projectColorInput.value);
           boardColumn.style.setProperty('background', projectColorInput.value, 'important');
@@ -134,7 +134,7 @@ export function initRepoProject() {
             divider.style.removeProperty('color');
           }
         }
-        $('.ui.modal').modal('hide');
+        modal.close();
       }
     });
   }

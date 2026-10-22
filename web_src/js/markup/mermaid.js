@@ -1,5 +1,5 @@
 import {isDarkTheme} from '../utils.ts';
-import {makeCodeCopyButton} from './codecopy.js';
+import {makeCodeCopyButton} from './codecopy.ts';
 import {displayError} from './common.js';
 
 const {mermaidMaxSourceCharacters} = window.config;

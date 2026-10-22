@@ -10,7 +10,7 @@ import {initRepoGraphGit} from './features/repo-graph.js';
 import {initHeatmap} from './features/heatmap.js';
 import {initImageDiff} from './features/imagediff.js';
 import {initRepoMigration} from './features/repo-migration.js';
-import {initRepoProject} from './features/repo-projects.js';
+import {initRepoProject} from './features/repo-projects.ts';
 import {initTableSort} from './features/tablesort.js';
 import {initAutoFocusEnd} from './features/autofocus-end.js';
 import {initAdminUserListSearchForm} from './features/admin/users.js';

@@ -1,4 +1,5 @@
-import {renderCodeCopy} from './codecopy.js';
+import {expect, test} from 'vitest';
+import {renderCodeCopy} from './codecopy.ts';
 
 test('renderCodeCopy adds the button once and only updates the clipboard text afterwards', () => {
   document.body.innerHTML = '<div class="markup"><div><pre class="code-block"><code>initial content\n</code></pre></div></div>';
