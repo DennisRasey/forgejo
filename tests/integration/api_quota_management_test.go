@@ -506,7 +506,8 @@ func TestAPIQuotaAdminRoutesGroups(t *testing.T) {
 		adminSession.MakeRequest(t, req, http.StatusNoContent)
 
 		group, err := quota_model.GetGroupByName(db.DefaultContext, "default")
-		require.NoError(t, err)
+		require.Error(t, err)
+		assert.True(t, quota_model.IsErrGroupNotFound(err))
 		assert.Nil(t, group)
 
 		t.Run("unhappy path", func(t *testing.T) {

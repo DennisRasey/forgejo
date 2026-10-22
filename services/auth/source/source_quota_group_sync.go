@@ -48,12 +48,14 @@ func syncGroupsToQuotaGroupsCached(ctx context.Context, user *user_model.User, q
 		if !ok {
 			qgroup, err = quota.GetGroupByName(ctx, qgroupName)
 			if err != nil {
+				if quota.IsErrGroupNotFound(err) {
+					log.Warn("quota group sync: Could not find quota group %s: %v", qgroupName, err)
+					continue
+				}
+
 				return err
 			}
-			if qgroup == nil {
-				log.Warn("quota group sync: Could not find quota group %s: %v", qgroupName, err)
-				continue
-			}
+
 			qgroupCache[qgroup.Name] = qgroup
 		}
 		isMember, err := qgroup.IsUserInGroup(ctx, user.ID)

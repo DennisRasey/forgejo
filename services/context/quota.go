@@ -34,13 +34,15 @@ func QuotaGroupAssignmentAPI() func(ctx *APIContext) {
 		groupName := ctx.Params("quotagroup")
 		group, err := quota_model.GetGroupByName(ctx, groupName)
 		if err != nil {
+			if quota_model.IsErrGroupNotFound(err) {
+				ctx.NotFound()
+				return
+			}
+
 			ctx.Error(http.StatusInternalServerError, "quota_model.GetGroupByName", err)
 			return
 		}
-		if group == nil {
-			ctx.NotFound()
-			return
-		}
+
 		ctx.quotaGroup = group
 	}
 }

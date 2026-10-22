@@ -1,0 +1,13 @@
+-
+  name: git-lfs
+  limit: 512
+  subjects: [6]
+
+-
+  name: "repos:all"
+  limit: -1
+  subjects: [2]
+
+- name: "Multi subjects"
+  limit: 5000000000
+  subjects: [8,6]

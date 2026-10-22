@@ -11,6 +11,7 @@ import (
 
 	"forgejo.org/models"
 	"forgejo.org/models/db"
+	quota_model "forgejo.org/models/quota"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/models/webhook"
@@ -58,6 +59,17 @@ func Settings(ctx *context.Context) {
 	if err != nil {
 		ctx.ServerError("LoadHeaderCount", err)
 		return
+	}
+
+	if ctx.Doer.IsAdmin {
+		defaultGroups, quotaGroups, err := quota_model.GetGroupsForUserMember(ctx, ctx.Org.Organization.AsUser().ID)
+		if err != nil {
+			ctx.ServerError("quota_model.GetGroupsForUserMember", err)
+			return
+		}
+
+		ctx.Data["DefaultGroups"] = defaultGroups
+		ctx.Data["QuotaGroups"] = quotaGroups
 	}
 
 	ctx.HTML(http.StatusOK, tplSettingsOptions)
@@ -153,6 +165,14 @@ func SettingsPost(ctx *context.Context) {
 				ctx.ServerError("UpdateRepository", err)
 				return
 			}
+		}
+	}
+
+	if ctx.Doer.IsAdmin {
+		err := quota_model.UpdateGroupsForUser(ctx, org.AsUser().ID, form.OldQuotaGroups, form.NewQuotaGroups)
+		if err != nil {
+			ctx.ServerError("quota_model.UpdateGroupsForUser", err)
+			return
 		}
 	}
 

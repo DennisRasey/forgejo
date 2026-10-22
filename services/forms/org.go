@@ -44,6 +44,8 @@ type UpdateOrgSettingForm struct {
 	Location                  string `binding:"MaxSize(50)"`
 	Visibility                structs.VisibleType
 	MaxRepoCreation           int
+	OldQuotaGroups            []string
+	NewQuotaGroups            []string
 	RepoAdminChangeTeamAccess bool
 }
 

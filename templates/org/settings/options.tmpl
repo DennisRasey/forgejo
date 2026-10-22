@@ -80,6 +80,38 @@
 							<input id="max_repo_creation" name="max_repo_creation" type="number" min="-1" value="{{.Org.MaxRepoCreation}}">
 							<p class="help">{{ctx.Locale.Tr "admin.users.max_repo_creation_desc"}}</p>
 						</div>
+
+						<div class="divider"></div>
+
+						{{if .DefaultGroups}}
+							<div class="field">
+								<label>{{ctx.Locale.Tr "admin.users.quota.default"}}</label>
+								<span>
+									{{
+										ctx.Locale.Tr "admin.users.quota.default_configured"
+										(ExecuteTemplate ctx "admin/user/default_quota_group" .DefaultGroups)
+									}}
+								</span>
+							</div>
+
+							<div class="divider"></div>
+						{{end}}
+
+						<fieldset>
+							<legend>{{ctx.Locale.Tr "admin.users.quota.groups"}}</legend>
+							{{if not .QuotaGroups}}
+								<div class="help">{{ctx.Locale.Tr "admin.users.quota.no_groups"}}</div>
+							{{else}}
+								{{range .QuotaGroups}}
+									<label>
+										<input type="checkbox" name="new_quota_groups" value="{{.Group.Name}}" {{if .IsMember}}checked{{end}}>
+										{{.Group.Name}}
+									</label>
+									{{if .IsMember}}<input type="hidden" name="old_quota_groups" value="{{.Group.Name}}">{{end}}
+								{{end}}
+							{{end}}
+						</fieldset>
+
 						{{end}}
 
 						<div class="field">

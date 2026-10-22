@@ -8,6 +8,7 @@ import (
 
 	"forgejo.org/models/db"
 	user_model "forgejo.org/models/user"
+	"forgejo.org/modules/container"
 	"forgejo.org/modules/setting"
 
 	"xorm.io/builder"
@@ -39,6 +40,11 @@ type GroupMapping struct {
 	Kind      Kind   `xorm:"unique(qgm_kmg) not null"`
 	MappedID  int64  `xorm:"unique(qgm_kmg) not null"`
 	GroupName string `xorm:"index unique(qgm_kmg) not null"`
+}
+
+type GroupMember struct {
+	IsMember bool
+	Group    *Group
 }
 
 func (g *Group) TableName() string {
@@ -223,7 +229,12 @@ func GetGroupByName(ctx context.Context, name string) (*Group, error) {
 		}
 		return &group, nil
 	}
-	return nil, err
+
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, ErrGroupNotFound{Name: name}
 }
 
 func ListGroups(ctx context.Context) (GroupList, error) {
@@ -369,4 +380,92 @@ func GetGroupsForUser(ctx context.Context, userID int64) (GroupList, error) {
 	}
 
 	return groups, nil
+}
+
+func GetGroupsForUserMember(ctx context.Context, userID int64) (defaultGroups, userGroups []GroupMember, err error) {
+	allGroups, err := ListGroups(ctx)
+	if err != nil {
+		return defaultGroups, userGroups, err
+	}
+
+	memberGroups, err := GetGroupsForUser(ctx, userID)
+	if err != nil {
+		return defaultGroups, userGroups, err
+	}
+
+	// collect the quota groups the user is in and default quota groups in a map
+	// to check by directly indexing into it
+	userGroupsMap := container.Set[string]{}
+	for _, g := range memberGroups {
+		userGroupsMap.Add(g.Name)
+	}
+
+	defaultGroupMap := container.Set[string]{}
+	for _, g := range setting.Quota.DefaultGroups {
+		defaultGroupMap.Add(g)
+	}
+
+	quotaGroups := []GroupMember{}
+	for _, g := range allGroups {
+		isUserGroup := userGroupsMap.Contains(g.Name)
+		isDefaultGroup := defaultGroupMap.Contains(g.Name)
+
+		if isDefaultGroup {
+			defaultGroups = append(defaultGroups, GroupMember{IsMember: isUserGroup, Group: g})
+		} else {
+			quotaGroups = append(quotaGroups, GroupMember{IsMember: isUserGroup, Group: g})
+		}
+	}
+
+	return defaultGroups, quotaGroups, nil
+}
+
+func UpdateGroupsForUser(ctx context.Context, userID int64, oldQuotaGroups, newQuotaGroups []string) error {
+	oldGroups := map[string]*Group{}
+	for _, g := range oldQuotaGroups {
+		group, err := GetGroupByName(ctx, g)
+		if err != nil {
+			return err
+		}
+
+		oldGroups[g] = group
+	}
+
+	newGroups := map[string]*Group{}
+	for _, g := range newQuotaGroups {
+		group, err := GetGroupByName(ctx, g)
+		if err != nil {
+			return err
+		}
+
+		newGroups[g] = group
+	}
+
+	// add all new groups
+	for groupName, group := range newGroups {
+		_, has := oldGroups[groupName]
+		if has {
+			continue
+		}
+
+		err := group.AddUserByID(ctx, userID)
+		if err != nil {
+			return err
+		}
+	}
+
+	// remove all removed gorups
+	for groupName, group := range oldGroups {
+		_, has := newGroups[groupName]
+		if has {
+			continue
+		}
+
+		err := group.RemoveUserByID(ctx, userID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

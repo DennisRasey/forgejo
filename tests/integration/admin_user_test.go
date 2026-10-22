@@ -14,6 +14,7 @@ import (
 	auth_model "forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	issues_model "forgejo.org/models/issues"
+	quota_model "forgejo.org/models/quota"
 	"forgejo.org/models/unittest"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/setting"
@@ -24,6 +25,7 @@ import (
 	"forgejo.org/tests/forgery"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAdminViewUsers(t *testing.T) {
@@ -354,4 +356,77 @@ func TestAdminViewUsersSorted(t *testing.T) {
 			assert.Equalf(t, testCase.expectedUsers[i], user.UserName, "Sort type: %s, index %d", testCase.sortType, i)
 		}
 	}
+}
+
+func TestAdminQuotaGroups(t *testing.T) {
+	defer unittest.OverrideFixtures("models/quota/fixtures")()
+	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.Quota.Enabled, true)()
+	defer test.MockVariableValue(&setting.Quota.DefaultGroups, []string{"<b>SpOooOOOooKy default</b>"})()
+
+	ctx := t.Context()
+	session := loginUser(t, "user1")
+	userID := int64(4)
+
+	groups, err := quota_model.GetGroupsForUser(ctx, userID)
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
+	assert.Equal(t, "<b>SpOooOOOooKy default</b>", groups[0].Name)
+
+	editURL := fmt.Sprintf("/admin/users/%d/edit", userID)
+	req := NewRequest(t, "GET", editURL)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	assert.Contains(t, resp.Body.String(), "<b>&lt;b&gt;SpOooOOOooKy default&lt;/b&gt;</b>")
+
+	// set trusted-user
+	req = NewRequestWithValues(t, "POST", editURL, map[string]string{
+		"new_quota_groups":  "trusted-user",
+		"user_name":         "user4",
+		"login_type":        "0-0",
+		"visibility":        "0",
+		"email":             "user4@example.com",
+		"language":          "en-US",
+		"max_repo_creation": "-1",
+	})
+	session.MakeRequest(t, req, http.StatusSeeOther)
+
+	groups, err = quota_model.GetGroupsForUser(ctx, userID)
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
+	assert.Equal(t, "trusted-user", groups[0].Name)
+
+	// remove trusted-user and add medium
+	req = NewRequestWithValues(t, "POST", editURL, map[string]string{
+		"old_quota_groups":  "trusted-user",
+		"new_quota_groups":  "medium",
+		"user_name":         "user4",
+		"login_type":        "0-0",
+		"visibility":        "0",
+		"email":             "user4@example.com",
+		"language":          "en-US",
+		"max_repo_creation": "-1",
+	})
+	session.MakeRequest(t, req, http.StatusSeeOther)
+
+	groups, err = quota_model.GetGroupsForUser(ctx, userID)
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
+	assert.Equal(t, "medium", groups[0].Name)
+
+	// remove medium
+	req = NewRequestWithValues(t, "POST", editURL, map[string]string{
+		"old_quota_groups":  "medium",
+		"user_name":         "user4",
+		"login_type":        "0-0",
+		"visibility":        "0",
+		"email":             "user4@example.com",
+		"language":          "en-US",
+		"max_repo_creation": "-1",
+	})
+	session.MakeRequest(t, req, http.StatusSeeOther)
+
+	groups, err = quota_model.GetGroupsForUser(ctx, userID)
+	require.NoError(t, err)
+	require.Len(t, groups, 1)
+	assert.Equal(t, "<b>SpOooOOOooKy default</b>", groups[0].Name)
 }

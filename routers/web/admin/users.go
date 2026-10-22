@@ -15,6 +15,7 @@ import (
 	"forgejo.org/models/auth"
 	"forgejo.org/models/db"
 	org_model "forgejo.org/models/organization"
+	quota_model "forgejo.org/models/quota"
 	repo_model "forgejo.org/models/repo"
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/auth/password"
@@ -268,6 +269,15 @@ func prepareUserInfo(ctx *context.Context) *user_model.User {
 	}
 	ctx.Data["TwoFactorEnabled"] = hasTwoFactor
 
+	defaultGroups, quotaGroups, err := quota_model.GetGroupsForUserMember(ctx, u.ID)
+	if err != nil {
+		ctx.ServerError("quota_model.GetGroupsForUserMember", err)
+		return nil
+	}
+
+	ctx.Data["DefaultGroups"] = defaultGroups
+	ctx.Data["QuotaGroups"] = quotaGroups
+
 	return u
 }
 
@@ -492,6 +502,12 @@ func EditUserPost(ctx *context.Context) {
 				return
 			}
 		}
+	}
+
+	err := quota_model.UpdateGroupsForUser(ctx, u.ID, form.OldQuotaGroups, form.NewQuotaGroups)
+	if err != nil {
+		ctx.ServerError("quota_model.UpdateGroupsForUser", err)
+		return
 	}
 
 	ctx.Flash.Success(ctx.Tr("admin.users.update_profile_success"))
