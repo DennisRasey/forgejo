@@ -511,6 +511,10 @@ func assertViewPullUpdate(t *testing.T, pr *issues_model.PullRequest, session *T
 	resp := session.MakeRequest(t, req, http.StatusOK)
 
 	htmlDoc := NewHTMLParser(t, resp.Body)
+	message := htmlDoc.Find(".merge-section .item-section .flex-text-inline")
+	assert.Equal(t, "This branch is 1 commit behind main", strings.TrimSpace(message.Text()))
+	assert.Equal(t, "main", message.Find("code").Text())
+
 	// Verify that URL of the update button is shown correctly.
 	var mainExpectedURL string
 	mergeExpectedURL := fmt.Sprintf("/%s/%s/pulls/%d/update?style=merge", pr.BaseRepo.OwnerName, pr.BaseRepo.Name, pr.Issue.Index)

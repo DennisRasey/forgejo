@@ -3,7 +3,8 @@
 	<div class="item item-section">
 		<div class="flex-text-inline">
 			{{svg "octicon-alert"}}
-			{{ctx.Locale.Tr "repo.pulls.outdated_with_base_branch"}}
+			{{$baseBranchHTML := HTMLFormat "<code>%s</code>" $.Issue.PullRequest.BaseBranch}}
+			{{ctx.Locale.TrPluralString $.Issue.PullRequest.CommitsBehind "sync_fork.branch_behind" $.Issue.PullRequest.CommitsBehind $baseBranchHTML}}
 		</div>
 		<div>
 			{{if and $.UpdateAllowed $.UpdateByRebaseAllowed}}
