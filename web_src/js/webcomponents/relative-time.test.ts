@@ -2,7 +2,9 @@ import {expect, test} from 'vitest';
 import {DoUpdateRelativeTime, HALF_MINUTE, ONE_MINUTE, ONE_HOUR, ONE_DAY} from './relative-time.ts';
 
 test('CalculateRelativeTimes', () => {
+  // @ts-expect-error(TS2540) read-only property
   window.config.pageData.PLURAL_RULE_LANG = 0;
+  // @ts-expect-error(TS2540) read-only property
   window.config.pageData.DATETIMESTRINGS = {
     'FUTURE': 'in future',
     'NOW': 'now',
@@ -11,6 +13,7 @@ test('CalculateRelativeTimes', () => {
     'relativetime.1month': 'last month',
     'relativetime.1year': 'last year',
   };
+  // @ts-expect-error(TS2540) read-only property
   window.config.pageData.PLURALSTRINGS_LANG = {
     'relativetime.mins': ['%d minute ago', '%d minutes ago'],
     'relativetime.hours': ['%d hour ago', '%d hours ago'],
@@ -210,6 +213,7 @@ test('CalculateRelativeTimes', () => {
 });
 
 test('CalculateDurationFormat', () => {
+  // @ts-expect-error(TS2540) read-only property
   window.config.pageData.PLURAL_RULE_LANG = 0;
   // The suffix-free duration strings, mirroring options/locale_next translations.
   const durationStrings = {
@@ -221,6 +225,7 @@ test('CalculateDurationFormat', () => {
     month: ['%d month', '%d months'],
     year: ['%d year', '%d years'],
   };
+  // @ts-expect-error(TS2540) read-only property
   window.config.pageData.PLURALSTRINGS_LANG = {
     'relativetime.duration.secs': durationStrings.second,
     'relativetime.duration.mins': durationStrings.minute,
@@ -285,6 +290,7 @@ test('CalculateDurationFormat', () => {
   expect(mock.textContent).toEqual(fmt([3, 'minute']));
 
   // Untranslated unit falls back to the browser's Intl formatting (no "ago").
+  // @ts-expect-error(TS2542) index signature only permits reading
   delete window.config.pageData.PLURALSTRINGS_LANG['relativetime.duration.months'];
   const intlFallback = new Intl.NumberFormat(navigator.language, {
     style: 'unit', unit: 'month', unitDisplay: 'long',

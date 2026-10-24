@@ -82,9 +82,11 @@ test('parseRepoOwnerPathInfo', () => {
   expect(parseRepoOwnerPathInfo('/owner/repo/issues/new')).toEqual({owner: 'owner', repo: 'repo'});
   expect(parseRepoOwnerPathInfo('/owner/repo/releases')).toEqual({owner: 'owner', repo: 'repo'});
   expect(parseRepoOwnerPathInfo('/other')).toEqual({});
+  // @ts-expect-error(TS2540) read-only property
   window.config.appSubUrl = '/sub';
   expect(parseRepoOwnerPathInfo('/sub/owner/repo/issues/new')).toEqual({owner: 'owner', repo: 'repo'});
   expect(parseRepoOwnerPathInfo('/sub/owner/repo/compare/feature/branch-1...fix/branch-2')).toEqual({owner: 'owner', repo: 'repo'});
+  // @ts-expect-error(TS2540) read-only property
   window.config.appSubUrl = '';
 });
 

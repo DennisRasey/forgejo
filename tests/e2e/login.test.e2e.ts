@@ -19,6 +19,7 @@ test('Mismatched ROOT_URL', async ({browser}) => {
   await page.addInitScript(() => {
     setInterval(() => {
       if (window.config) {
+        // @ts-expect-error(TS2540) read-only property
         window.config.appUrl = 'https://example.com';
       }
     }, 1);

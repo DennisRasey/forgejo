@@ -66,6 +66,9 @@ export default defineConfig(
         destructuredArrayIgnorePattern: '^_',
         ignoreRestSiblings: false,
       }],
+      '@typescript-eslint/ban-ts-comment': [2, {
+        'ts-expect-error': true, // only allowed in tests
+      }],
 
       '@eslint-community/eslint-comments/disable-enable-pair': [2],
       '@eslint-community/eslint-comments/no-aggregating-enable': [2],
@@ -1058,6 +1061,10 @@ export default defineConfig(
     },
 
     rules: {
+      '@typescript-eslint/ban-ts-comment': [2, {
+        'ts-expect-error': {descriptionFormat: '^\\((TS\\d+)(,TS\\d+)*\\) .{3}.*$'}, // e.g. "@ts-expect-error(TS2540) setting read-only property"
+      }],
+
       '@vitest/consistent-test-filename': [0],
       '@vitest/consistent-test-it': [0],
       '@vitest/expect-expect': [0],

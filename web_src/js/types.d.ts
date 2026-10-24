@@ -1,30 +1,43 @@
 interface Window {
   __webpack_public_path__: string;
   config?: {
-    appUrl: string;
-    appSubUrl: string;
-    assetUrlPrefix: string;
-    pageData: PageData;
-    i18n: Record<string, string>;
-    customEmojis: Set<string>;
-    mentionValues: MentionValue[];
+    // These are set in template/base/head_script.tmpl
+    readonly appUrl: string;
+    readonly appSubUrl: string;
+    readonly assetUrlPrefix: string;
+    readonly pageData: PageData;
+    readonly i18n: LocaleStrings;
+    readonly customEmojis: ReadonlySet<string>;
+    readonly mentionValues: readonly MentionValue[];
   }
 }
 
+interface LocaleStrings {
+  readonly copy_success: string;
+  readonly copy_error: string;
+  readonly error_occurred: string;
+  readonly network_error: string;
+  readonly remove_label_str: string;
+  readonly modal_confirm: string;
+  readonly modal_cancel: string;
+  readonly more_items: string;
+  readonly incorrect_root_url: string;
+}
+
 interface PageData {
-  PLURALSTRINGS_LANG: Record<string, string[]>;
-  PLURAL_RULE_LANG: number;
-  DATETIMESTRINGS: Record<string, string>;
+  readonly PLURALSTRINGS_LANG: Readonly<Record<string, readonly string[]>>;
+  readonly PLURAL_RULE_LANG: number;
+  readonly DATETIMESTRINGS: Readonly<Record<string, string>>;
 
   [key: string]: unknown; // TODO: remove this after we've enumerated all pageData entries
 }
 
 interface MentionValue {
-  key: string;
-  value: string;
-  name: string;
-  fullname: string;
-  avatar: string;
+  readonly key: string;
+  readonly value: string;
+  readonly name: string;
+  readonly fullname: string;
+  readonly avatar: string;
 }
 
 type CodeMirrorLanguage = typeof import('@codemirror/language');
