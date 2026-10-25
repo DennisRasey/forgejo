@@ -3,11 +3,11 @@
 	<div class="ui attached segment">
 		<div class="ui form">
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.rubygems.install"}}:</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.rubygems.install"}}:</label>
 				<div class="markup"><pre class="code-block"><code>gem install {{.PackageDescriptor.Package.Name}} --version &quot;{{.PackageDescriptor.Version.Version}}&quot; --source &quot;<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/rubygems"></origin-url>&quot;</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-code"}} {{ctx.Locale.Tr "packages.rubygems.install2"}}:</label>
+				<label>{{svg "octicon-code" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.rubygems.install2"}}:</label>
 				<div class="markup"><pre class="code-block"><code>source "<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/rubygems"></origin-url>" do
 	gem "{{.PackageDescriptor.Package.Name}}", "{{.PackageDescriptor.Version.Version}}"
 end</code></pre></div>

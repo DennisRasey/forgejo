@@ -3,11 +3,11 @@
 	<div class="ui attached segment">
 		<div class="ui form">
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.common.registry"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.common.registry"}}</label>
 				<div class="markup"><pre class="code-block"><code>dotnet nuget add source --name {{.PackageDescriptor.Owner.Name}} --username your_username --password your_token <origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/nuget/index.json"></origin-url></code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.nuget.install"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.nuget.install"}}</label>
 				<div class="markup"><pre class="code-block"><code>dotnet add package --source {{.PackageDescriptor.Owner.Name}} --version {{.PackageDescriptor.Version.Version}} {{.PackageDescriptor.Package.Name}}</code></pre></div>
 			</div>
 			<div class="field">

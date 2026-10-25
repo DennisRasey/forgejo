@@ -3,14 +3,14 @@
 	<div class="ui attached segment">
 		<div class="ui form">
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.common.registry"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.common.registry"}}</label>
 				<div class="markup"><pre class="code-block"><code>sudo curl <origin-url data-url="{{AppSubUrl}}/api/packages/{{$.PackageDescriptor.Owner.Name}}/debian/repository.key"></origin-url> -o /etc/apt/keyrings/forgejo-{{$.PackageDescriptor.Owner.Name}}.asc
 echo "deb [signed-by=/etc/apt/keyrings/forgejo-{{$.PackageDescriptor.Owner.Name}}.asc] <origin-url data-url="{{AppSubUrl}}/api/packages/{{$.PackageDescriptor.Owner.Name}}/debian"></origin-url> $distribution $component" | sudo tee -a /etc/apt/sources.list.d/forgejo.list
 sudo apt update</code></pre></div>
 				<p>{{ctx.Locale.Tr "packages.debian.registry.info"}}</p>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.common.install"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.common.install"}}</label>
 				<div class="markup">
 					<pre class="code-block"><code>sudo apt install {{$.PackageDescriptor.Package.Name}}={{$.PackageDescriptor.Version.Version}}</code></pre>
 				</div>

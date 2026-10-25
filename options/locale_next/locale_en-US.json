@@ -779,6 +779,7 @@
 	"packages.keywords": "Keywords",
 	"packages.details": "Details",
 	"packages.details.author": "Author",
+	"packages.details.maintainer": "Maintainer",
 	"packages.details.project_site": "Project website",
 	"packages.details.repository_site": "Repository website",
 	"packages.details.documentation_site": "Documentation website",

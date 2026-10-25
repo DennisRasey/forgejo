@@ -3,7 +3,7 @@
 	<div class="ui attached segment">
 		<div class="ui form">
 			<div class="field">
-				<label>{{svg "octicon-code"}} {{ctx.Locale.Tr "packages.maven.registry"}}</label>
+				<label>{{svg "octicon-code" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.maven.registry"}}</label>
 				<div class="markup"><pre class="code-block"><code>&lt;repositories&gt;
 	&lt;repository&gt;
 		&lt;id&gt;gitea&lt;/id&gt;
@@ -25,7 +25,7 @@
 			</div>
 			{{if .PackageDescriptor.Metadata}}
 				<div class="field">
-					<label>{{svg "octicon-code"}} {{ctx.Locale.Tr "packages.maven.install"}}</label>
+					<label>{{svg "octicon-code" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.maven.install"}}</label>
 					<div class="markup"><pre class="code-block"><code>&lt;dependency&gt;
 	&lt;groupId&gt;{{.PackageDescriptor.Metadata.GroupID}}&lt;/groupId&gt;
 	&lt;artifactId&gt;{{.PackageDescriptor.Metadata.ArtifactID}}&lt;/artifactId&gt;
@@ -33,11 +33,11 @@
 &lt;/dependency&gt;</code></pre></div>
 				</div>
 				<div class="field">
-					<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.maven.install2"}}</label>
+					<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.maven.install2"}}</label>
 					<div class="markup"><pre class="code-block"><code>mvn install</code></pre></div>
 				</div>
 				<div class="field">
-					<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.maven.download"}}</label>
+					<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.maven.download"}}</label>
 					<div class="markup"><pre class="code-block"><code>mvn dependency:get -DremoteRepositories=<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/maven"></origin-url> -Dartifact={{.PackageDescriptor.Metadata.GroupID}}:{{.PackageDescriptor.Metadata.ArtifactID}}:{{.PackageDescriptor.Version.Version}}</code></pre></div>
 				</div>
 				<div class="field">

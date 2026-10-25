@@ -3,19 +3,19 @@
 	<div class="ui attached segment">
 		<div class="ui form">
 			<div class="field">
-				<label>{{svg "octicon-code"}} {{ctx.Locale.Tr "packages.npm.registry"}}</label>
+				<label>{{svg "octicon-code" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.npm.registry"}}</label>
 				<div class="markup"><pre class="code-block"><code>{{if .PackageDescriptor.Metadata.Scope}}{{.PackageDescriptor.Metadata.Scope}}:{{end}}registry=<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/npm/"></origin-url></code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.npm.registry.cli"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.npm.registry.cli"}}</label>
 				<div class="markup"><pre class="code-block"><code>npm config set {{if .PackageDescriptor.Metadata.Scope}}{{.PackageDescriptor.Metadata.Scope}}:{{end}}registry=<origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/npm/"></origin-url></code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.npm.install"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.npm.install"}}</label>
 				<div class="markup"><pre class="code-block"><code>npm install {{.PackageDescriptor.Package.Name}}@{{.PackageDescriptor.Version.Version}}</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-code"}} {{ctx.Locale.Tr "packages.npm.install2"}}</label>
+				<label>{{svg "octicon-code" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.npm.install2"}}</label>
 				<div class="markup"><pre class="code-block"><code>&quot;{{.PackageDescriptor.Package.Name}}&quot;: &quot;{{.PackageDescriptor.Version.Version}}&quot;</code></pre></div>
 			</div>
 			<div class="field">

@@ -3,16 +3,16 @@
 	<div class="ui attached segment">
 		<div class="ui form">
 			<div class="field">
-				<label>{{svg "octicon-code"}} {{ctx.Locale.Tr "packages.alpine.registry"}}</label>
+				<label>{{svg "octicon-code" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.alpine.registry"}}</label>
 				<div class="markup"><pre class="code-block"><code><origin-url data-url="{{AppSubUrl}}/api/packages/{{$.PackageDescriptor.Owner.Name}}/alpine"></origin-url>/$branch/$repository</code></pre></div>
 				<p>{{ctx.Locale.Tr "packages.alpine.registry.info"}}</p>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.alpine.registry.key"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.alpine.registry.key"}}</label>
 				<div class="markup"><pre class="code-block"><code>curl -JO <origin-url data-url="{{AppSubUrl}}/api/packages/{{$.PackageDescriptor.Owner.Name}}/alpine/key"></origin-url></code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.common.install"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.common.install"}}</label>
 				<div class="markup">
 					<pre class="code-block"><code>sudo apk add {{$.PackageDescriptor.Package.Name}}={{$.PackageDescriptor.Version.Version}}</code></pre>
 				</div>

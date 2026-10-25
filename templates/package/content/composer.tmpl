@@ -3,7 +3,7 @@
 	<div class="ui attached segment">
 		<div class="ui form">
 			<div class="field">
-				<label>{{svg "octicon-code"}} {{ctx.Locale.Tr "packages.composer.registry"}}</label>
+				<label>{{svg "octicon-code" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.composer.registry"}}</label>
 				<div class="markup"><pre class="code-block"><code>{
 	"repositories": [{
 			"type": "composer",
@@ -13,11 +13,11 @@
 }</code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.composer.registry.cli"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.composer.registry.cli"}}</label>
 				<div class="markup"><pre class="code-block"><code>composer config repositories.{{.PackageDescriptor.Owner.Name}} composer <origin-url data-url="{{AppSubUrl}}/api/packages/{{.PackageDescriptor.Owner.Name}}/composer"></origin-url></code></pre></div>
 			</div>
 			<div class="field">
-				<label>{{svg "octicon-terminal"}} {{ctx.Locale.Tr "packages.composer.install"}}</label>
+				<label>{{svg "octicon-terminal" 16 "tw-mr-2"}}{{ctx.Locale.Tr "packages.composer.install"}}</label>
 				<div class="markup"><pre class="code-block"><code>composer require {{.PackageDescriptor.Package.Name}}:{{.PackageDescriptor.Version.Version}}</code></pre></div>
 			</div>
 			<div class="field">
