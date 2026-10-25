@@ -1,25 +1,11 @@
 /*
 Gitea's tailwind-style CSS helper classes have `gt-` prefix.
-Gitea's private styles use `g-` prefix.
 */
 
 .gt-ellipsis {
   overflow: hidden !important;
   white-space: nowrap !important;
   text-overflow: ellipsis !important;
-}
-
-.g-table-auto-ellipsis td.auto-ellipsis {
-  position: relative;
-}
-
-.g-table-auto-ellipsis td.auto-ellipsis span {
-  position: absolute;
-  inset: 0;
-  padding: inherit;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .interact-fg { color: inherit !important; }

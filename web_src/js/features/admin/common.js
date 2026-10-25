@@ -2,7 +2,6 @@ import $ from 'jquery';
 import {checkAppUrl} from '../common-global.js';
 import {hideElem, showElem, toggleElem} from '../../utils/dom.ts';
 import {POST} from '../../modules/fetch.ts';
-import {showModal} from '../../modules/modal.ts';
 
 const {appSubUrl} = window.config;
 
@@ -211,16 +210,6 @@ export function initAdminCommon() {
 
   // Notice
   if (document.querySelector('.admin.notice')) {
-    const detailModal = document.getElementById('detail-modal');
-
-    // Attach view detail modals
-    $('.view-detail').on('click', function () {
-      const description = this.closest('tr').querySelector('.notice-description').textContent;
-      detailModal.querySelector('.content pre').textContent = description;
-      showModal('detail-modal', undefined);
-      return false;
-    });
-
     // Select actions
     const checkboxes = document.querySelectorAll('.select.table .ui.checkbox input');
 

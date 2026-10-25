@@ -3,7 +3,7 @@
 		<h4 class="ui top attached header">
 			{{ctx.Locale.Tr "admin.notices.system_notice_list"}} ({{ctx.Locale.Tr "admin.total" .Total}})
 		</h4>
-		<table class="ui attached segment select selectable striped table unstackable g-table-auto-ellipsis">
+		<table class="ui attached segment select selectable striped table unstackable">
 			<thead>
 				<tr>
 					<th></th>
@@ -20,9 +20,21 @@
 						<td><div class="ui checkbox tw-flex" data-id="{{.ID}}"><input type="checkbox"></div></td>
 						<td>{{.ID}}</td>
 						<td>{{ctx.Locale.Tr .TrStr}}</td>
-						<td class="view-detail auto-ellipsis tw-w-4/5"><span class="notice-description">{{.Description}}</span></td>
-						<td nowrap>{{DateUtils.AbsoluteShort .CreatedUnix}}</td>
-						<td class="view-detail"><a href="#">{{svg "octicon-note" 16}}</a></td>
+						<!-- the extra span here is important for auto ellipsis to work: -->
+						<td class="notice-description"><span>{{.Description}}</span></td>
+						<td class="tw-whitespace-nowrap">{{DateUtils.AbsoluteShort .CreatedUnix}}</td>
+						<td>
+							<button type="button" class="ui text primary btn" aria-label="{{ctx.Locale.Tr "admin.notices.view_details" .ID}}" command="show-modal" commandfor="notice-detail-{{.ID}}">{{svg "octicon-note" 16}}</button>
+							<dialog id="notice-detail-{{.ID}}" class="modal detail-modal" closedby="any">
+								<article>
+									<header>{{ctx.Locale.Tr "admin.notices.view_detail_header"}}</header>
+									<div class="content"><pre>{{.Description}}</pre></div>
+									<div class="actions">
+										<button type="button" class="secondary button" command="close" commandfor="notice-detail-{{.ID}}">{{ctx.Locale.Tr "modal.close"}}</button>
+									</div>
+								</article>
+							</dialog>
+						</td>
 					</tr>
 				{{else}}
 					<tr><td class="tw-text-center" colspan="6">{{ctx.Locale.Tr "repo.pulls.no_results"}}</td></tr>
@@ -60,15 +72,5 @@
 		</table>
 		{{template "base/paginate" .}}
 	</div>
-
-<dialog class="modal" id="detail-modal">
-	<article>
-		<header>{{ctx.Locale.Tr "admin.notices.view_detail_header"}}</header>
-		<div class="content"><pre></pre></div>
-			<div class="actions">
-				<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
-			</div>
-	</article>
-</dialog>
 
 {{template "admin/layout_footer" .}}

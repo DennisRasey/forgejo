@@ -12,6 +12,7 @@
 
 import {expect} from '@playwright/test';
 import {dynamic_id, test} from './utils_e2e.ts';
+import {testModalClosure} from './shared/modals.ts';
 import {screenshot} from './shared/screenshots.ts';
 
 test.use({user: 'user2'});
@@ -111,49 +112,17 @@ for (const run of [
       }
     });
 
-    for (const size of ['short', 'medium', 'long']) {
-      test.describe(`${size}-modal`, () => {
-        const id = `${size}-modal`;
-        const sel = `#${id}`;
-
-        test('disappears on Esc', async ({page}) => {
+    for (const id of ['short-modal', 'medium-modal', 'long-modal']) {
+      test.describe(id, () => {
+        test.beforeEach(async ({page}) => {
           await page.goto('/-/demo/modal');
-
-          const modal = page.locator(sel);
-          await expect(modal).toBeHidden();
-          await page.locator(`button[command="show-modal"][commandfor="${id}"]`).click();
-          await expect(modal).toBeVisible();
-
-          await page.keyboard.press('Escape');
-          await expect(modal).toBeHidden();
         });
 
-        test('disappears on Cancel button', async ({page}) => {
-          await page.goto('/-/demo/modal');
-
-          const modal = page.locator(sel);
-          await expect(modal).toBeHidden();
-          await page.locator(`button[command="show-modal"][commandfor="${id}"]`).click();
-          await expect(modal).toBeVisible();
-
-          await modal.locator('button[command="close"]').click();
-          await expect(modal).toBeHidden();
-        });
-
-        test('disappears on click outside', async ({page}) => {
-          await page.goto('/-/demo/modal');
-
-          const modal = page.locator(sel);
-          await expect(modal).toBeHidden();
-          await page.locator(`button[command="show-modal"][commandfor="${id}"]`).click();
-          await expect(modal).toBeVisible();
-
-          const box = await modal.boundingBox();
-          await page.mouse.click(box.x + 2, box.y + 2); // clicking the modal itself does nothing
-          await expect(modal).toBeVisible();
-          await page.mouse.click(box.x - 1, box.y);
-          await expect(modal).toBeHidden();
-        });
+        testModalClosure(
+          (page) => page.locator(`#${id}`),
+          (page) => page.locator(`button[command="show-modal"][commandfor="${id}"]`),
+          'Close',
+        );
       });
     }
 

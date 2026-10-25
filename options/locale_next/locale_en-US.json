@@ -453,6 +453,7 @@
 	"admin.monitor.queue.settings.changed": "Settings updated",
 	"admin.monitor.queue.settings.remove_all_items": "Remove all",
 	"admin.monitor.queue.settings.remove_all_items.success": "All items in the queue have been removed.",
+	"admin.notices.view_details": "View details for notice %[1]d",
 	"admin.orgs.name": "Name",
 	"admin.orgs.teams": "Teams",
 	"admin.orgs.members": "Members",

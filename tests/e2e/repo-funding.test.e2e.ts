@@ -19,6 +19,7 @@ import {expect, type Locator} from '@playwright/test';
 import {test} from './utils_e2e.ts';
 import {screenshot} from './shared/screenshots.ts';
 import {accessibilityCheck} from './shared/accessibility.ts';
+import {testModalClosure} from './shared/modals.ts';
 
 async function expectFundingEntry(entry: Locator, expectedProvider: string, expectedTitle: string, expectedValue: string) {
   await expect(entry.locator('a')).toHaveAttribute('href', expectedValue);
@@ -220,47 +221,17 @@ for (const run of [
       });
     }
 
-    test('Funding modal: closes on Esc', async ({page}) => {
-      const response = await page.goto('/user2/funding_basic_complete', {waitUntil: 'domcontentloaded'});
-      expect(response?.status()).toBe(200);
+    test.describe('Funding modal', () => {
+      test.beforeEach(async ({page}) => {
+        const response = await page.goto('/user2/funding_basic_complete', {waitUntil: 'domcontentloaded'});
+        expect(response?.status()).toBe(200);
+      });
 
-      const fundingModal = page.locator('#funding-modal');
-      await expect(fundingModal).toBeHidden();
-      await page.getByRole('button').filter({hasText: 'Donate'}).click();
-      await expect(fundingModal).toBeVisible();
-
-      await page.keyboard.press('Escape');
-      await expect(fundingModal).toBeHidden();
-    });
-
-    test('Funding modal: closes on outside click', async ({page}) => {
-      const response = await page.goto('/user2/funding_basic_complete', {waitUntil: 'domcontentloaded'});
-      expect(response?.status()).toBe(200);
-
-      const fundingModal = page.locator('#funding-modal');
-      await expect(fundingModal).toBeHidden();
-      await page.getByRole('button').filter({hasText: 'Donate'}).click();
-      await expect(fundingModal).toBeVisible();
-
-      // not sure if it's possible to select ::backdrop here, so we manually click just outside of the bounding box for the same effect
-      const box = await fundingModal.boundingBox();
-      await page.mouse.click(box.x + 2, box.y + 2); // clicking the modal itself does nothing
-      await expect(fundingModal).toBeVisible();
-      await page.mouse.click(box.x - 1, box.y);
-      await expect(fundingModal).toBeHidden();
-    });
-
-    test('Funding modal: closes on Close button', async ({page}) => {
-      const response = await page.goto('/user2/funding_basic_complete', {waitUntil: 'domcontentloaded'});
-      expect(response?.status()).toBe(200);
-
-      const fundingModal = page.locator('#funding-modal');
-      await expect(fundingModal).toBeHidden();
-      await page.getByRole('button').filter({hasText: 'Donate'}).click();
-      await expect(fundingModal).toBeVisible();
-
-      await page.getByLabel('Close').click();
-      await expect(fundingModal).toBeHidden();
+      testModalClosure(
+        (page) => page.locator('#funding-modal'),
+        (page) => page.locator('button[command="show-modal"][commandfor="funding-modal"]'),
+        'Close',
+      );
     });
   });
 }
