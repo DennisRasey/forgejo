@@ -720,5 +720,10 @@ func getRunInputs(run *actions_model.ActionRun) map[string]any {
 	if err != nil {
 		return nil
 	}
-	return dispatchPayload.Inputs
+	// transition from map[string]string to map[string]any...
+	inputs := make(map[string]any, len(dispatchPayload.Inputs))
+	for k, v := range dispatchPayload.Inputs {
+		inputs[k] = v
+	}
+	return inputs
 }
