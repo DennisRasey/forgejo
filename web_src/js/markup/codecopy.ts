@@ -13,9 +13,10 @@ export function renderCodeCopy() {
 
   for (const el of els) {
     if (!el.textContent) continue;
-    // suggestion and mermaid blocks are replaced by a rendered diff or diagram (see markup/suggestion.js
-    // and markup/mermaid.js), so they must not get a copy button. Mermaid adds its own.
-    if (/(?:^|\s)language-(?:suggestion|mermaid)(?:\s|$)/i.test(el.className)) continue;
+    // Suggestion, Mermaid and math blocks are replaced by some rendered content
+    // (see markup/suggestion.js, markup/mermaid.js and markup/math.js), therefore
+    // we should not add a copy button and leave it to the respective markup files.
+    if (/(?:^|\s)language-(?:suggestion|mermaid|math)(?:\s|$)/i.test(el.className)) continue;
     const parent = el.closest('pre');
     let btn = parent.nextElementSibling?.classList?.contains('code-copy') ? parent.nextElementSibling : null;
     if (!btn) {
