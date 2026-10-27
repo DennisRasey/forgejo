@@ -103,12 +103,12 @@ func (c *Client) Verify(token string, opts PostOptions) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	var response *Response
 	if err := json.Unmarshal(body, &response); err != nil {

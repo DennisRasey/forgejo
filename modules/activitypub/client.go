@@ -269,12 +269,12 @@ func (c *Client) GetBody(uri string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
 	log.Debug("Client: got status: %v", response.Status)
 	if response.StatusCode != 200 {
 		err = fmt.Errorf("got non 200 status code for id: %v", uri)
 		return nil, err
 	}
-	defer response.Body.Close()
 	if response.ContentLength > setting.Federation.MaxSize {
 		return nil, fmt.Errorf("Request returned %d bytes (max allowed incoming size: %d bytes)", response.ContentLength, setting.Federation.MaxSize)
 	} else if response.ContentLength == -1 {
