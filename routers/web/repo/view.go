@@ -226,6 +226,7 @@ func getFileReader(ctx gocontext.Context, repoID int64, blob *git.Blob) ([]byte,
 		return nil, nil, nil, err
 	}
 
+	// FIXME: Shouldn't this use BlobSizeCutOff?
 	buf := make([]byte, 1024)
 	n, _ := util.ReadAtMost(dataRc, buf)
 	buf = buf[:n]
@@ -244,7 +245,7 @@ func getFileReader(ctx gocontext.Context, repoID int64, blob *git.Blob) ([]byte,
 	}
 
 	pointer, err := lfs.ReadPointerFromBuffer(buf)
-	if err != nil { // fallback to plain file
+	if pointer == nil || err != nil { // fallback to plain file
 		return buf, dataRc, &fileInfo{isTextFile, false, blob.Size(), nil, st}, nil
 	}
 
@@ -256,7 +257,7 @@ func getFileReader(ctx gocontext.Context, repoID int64, blob *git.Blob) ([]byte,
 
 	dataRc.Close()
 
-	dataRc, err = lfs.ReadMetaObject(pointer)
+	dataRc, err = lfs.ReadMetaObject(*pointer)
 	if err != nil {
 		return nil, nil, nil, err
 	}

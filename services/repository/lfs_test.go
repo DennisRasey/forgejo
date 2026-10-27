@@ -62,13 +62,13 @@ func storeObjectInRepo(t *testing.T, repositoryID int64, content *[]byte) string
 	pointer, err := lfs.GeneratePointer(bytes.NewReader(*content))
 	require.NoError(t, err)
 
-	_, err = git_model.NewLFSMetaObject(db.DefaultContext, repositoryID, pointer)
+	_, err = git_model.NewLFSMetaObject(db.DefaultContext, repositoryID, *pointer)
 	require.NoError(t, err)
 	contentStore := lfs.NewContentStore()
-	exist, err := contentStore.Exists(pointer)
+	exist, err := contentStore.Exists(*pointer)
 	require.NoError(t, err)
 	if !exist {
-		err := contentStore.Put(pointer, bytes.NewReader(*content))
+		err := contentStore.Put(*pointer, bytes.NewReader(*content))
 		require.NoError(t, err)
 	}
 	return pointer.Oid

@@ -95,6 +95,6 @@ loop:
 			continue
 		}
 
-		pointerChan <- PointerBlob{Hash: sha, Pointer: pointer}
+		pointerChan <- PointerBlob{Hash: sha, Pointer: *pointer}
 	}
 }

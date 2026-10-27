@@ -218,7 +218,7 @@ func copyUploadedLFSFileIntoRepository(info *uploadInfo, storeInLFS bool, t *Tem
 			return err
 		}
 
-		info.lfsMetaObject = &git_model.LFSMetaObject{Pointer: pointer, RepositoryID: t.repo.ID}
+		info.lfsMetaObject = &git_model.LFSMetaObject{Pointer: *pointer, RepositoryID: t.repo.ID}
 
 		if objectHash, err = t.HashObject(strings.NewReader(pointer.StringContent())); err != nil {
 			return err

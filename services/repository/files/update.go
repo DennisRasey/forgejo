@@ -419,7 +419,7 @@ func CreateOrUpdateFile(ctx context.Context, t *TemporaryUploadRepository, file 
 			if err != nil {
 				return err
 			}
-			lfsMetaObject = &git_model.LFSMetaObject{Pointer: pointer, RepositoryID: repoID}
+			lfsMetaObject = &git_model.LFSMetaObject{Pointer: *pointer, RepositoryID: repoID}
 			treeObjectContentReader = strings.NewReader(pointer.StringContent())
 		}
 	}

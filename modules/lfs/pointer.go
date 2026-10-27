@@ -33,6 +33,10 @@ const (
 )
 
 var (
+	// ErrEmptyPointer occurs when the LFS pointer is empty
+	// (which is a valid pointer, but likely not what one expects)
+	ErrEmptyPointer = errors.New("LFS Pointer is empty")
+
 	// ErrMissingPrefix occurs if the content lacks the LFS prefix
 	ErrMissingPrefix = errors.New("content lacks the LFS prefix")
 
@@ -68,12 +72,19 @@ func (p Pointer) IsOIDValid() bool {
 //
 // TODO: Refactor and fix the additional checks of ReadPointerFromBuffer here
 // or someplace else.
-func (p Pointer) Validate() error {
+func (p *Pointer) Validate() error {
+	// p == nil represents the "empty pointer"
+	if p == nil {
+		return nil
+	}
 	if !p.IsOIDValid() {
 		return ErrInvalidOIDFormat
 	}
 	if p.Size < 0 {
 		return ErrInvalidPointerTargetSize
+	}
+	if p.Size == 0 {
+		return ErrEmptyPointer
 	}
 	return nil
 }
@@ -84,51 +95,52 @@ func (p Pointer) Validate() error {
 //
 // Will return a pointer if the provided byte slice is a pointer file or an
 // error otherwise.
-func ReadPointerFromString(pointerString string) (Pointer, error) {
+func ReadPointerFromString(pointerString string) (*Pointer, error) {
 	var p Pointer
 	var err error
 
+	if len(pointerString) == 0 {
+		return nil, ErrEmptyPointer
+	}
+
 	splitLines := strings.Split(pointerString, "\n")
+	// FIXME: There can be multiple different identifiers, not just that of the example.
 	if !strings.HasPrefix(splitLines[0], MetaFileIdentifier) {
-		return p, ErrMissingPrefix
+		return nil, ErrMissingPrefix
 	}
 
 	if len(splitLines) < 3 {
-		return p, ErrInvalidStructure
-	}
-
-	// More elaborate than Pointer's 'IsValid' method so as to be able to
-	// distinguish ErrInvalidOIDFormats.
-	p.Oid = strings.TrimPrefix(splitLines[1], MetaFileOidPrefix)
-	if !p.IsOIDValid() {
-		return p, ErrInvalidOIDFormat
+		return nil, ErrInvalidStructure
 	}
 
 	// FIXME: The second line is not necessarily that of the OID.
 	// See: https://github.com/git-lfs/git-lfs/blob/f0bffc4fe998fe5cb004dbca9e8951ea662ff66b/lfs/pointer_test.go#L189-L193
+	p.Oid = strings.TrimPrefix(splitLines[1], MetaFileOidPrefix)
+
 	p.Size, err = strconv.ParseInt(strings.TrimPrefix(splitLines[2], "size "), 10, 64)
 	if err != nil {
-		return p, err
-	}
-	if p.Size < 0 {
-		return p, ErrInvalidPointerTargetSize
+		return nil, err
 	}
 
-	return p, nil
+	if err = p.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }
 
 // ReadPointerFromBuffer will return a pointer if the provided byte slice is
 // a pointer file or an error otherwise.
-func ReadPointerFromBuffer(buf []byte) (Pointer, error) {
+func ReadPointerFromBuffer(buf []byte) (*Pointer, error) {
 	return ReadPointerFromString(string(buf))
 }
 
 // ReadPointer tries to read LFS pointer data from the reader
-func ReadPointer(reader io.Reader) (Pointer, error) {
+func ReadPointer(reader io.Reader) (*Pointer, error) {
 	buf := make([]byte, BlobSizeCutoff)
 	n, err := io.ReadFull(reader, buf)
 	if err != nil && err != io.ErrUnexpectedEOF {
-		return Pointer{}, err
+		return nil, err
 	}
 	buf = buf[:n]
 
@@ -137,7 +149,10 @@ func ReadPointer(reader io.Reader) (Pointer, error) {
 
 // StringContent returns the string representation of the pointer
 // https://github.com/git-lfs/git-lfs/blob/main/docs/spec.md#the-pointer
-func (p Pointer) StringContent() string {
+func (p *Pointer) StringContent() string {
+	if p == nil {
+		return ""
+	}
 	return fmt.Sprintf("%s\n%s%s\nsize %d\n", MetaFileIdentifier, MetaFileOidPrefix, p.Oid, p.Size)
 }
 
@@ -150,20 +165,23 @@ func (p Pointer) RelativePath() string {
 	return path.Join(p.Oid[0:2], p.Oid[2:4], p.Oid[4:])
 }
 
-func (p Pointer) LogString() string {
-	if p.Oid == "" && p.Size == 0 {
+func (p *Pointer) LogString() string {
+	if p == nil {
 		return "<LFSPointer empty>"
 	}
 	return fmt.Sprintf("<LFSPointer %s:%d>", p.Oid, p.Size)
 }
 
 // GeneratePointer generates a pointer for arbitrary content
-func GeneratePointer(content io.Reader) (Pointer, error) {
+func GeneratePointer(content io.Reader) (*Pointer, error) {
 	h := sha256.New()
 	c, err := io.Copy(h, content)
 	if err != nil {
-		return Pointer{}, err
+		return nil, err
 	}
 	sum := h.Sum(nil)
-	return Pointer{Oid: hex.EncodeToString(sum), Size: c}, nil
+	if c == 0 {
+		return nil, ErrEmptyPointer
+	}
+	return &Pointer{Oid: hex.EncodeToString(sum), Size: c}, nil
 }
