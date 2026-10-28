@@ -31,6 +31,7 @@ type DetectedWorkflow struct {
 	EventDetectionError error
 	NeedApproval        actions_model.ApprovalType
 	SourceCommit        *git.Commit
+	DetectedFromPRBase  bool
 }
 
 // GetWorkflowPath returns the full path to the workflow from the repository root, for example,

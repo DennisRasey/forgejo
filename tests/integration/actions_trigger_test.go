@@ -34,6 +34,7 @@ import (
 	"forgejo.org/modules/test"
 	webhook_module "forgejo.org/modules/webhook"
 	actions_service "forgejo.org/services/actions"
+	"forgejo.org/services/forms"
 	issue_service "forgejo.org/services/issue"
 	pull_service "forgejo.org/services/pull"
 	release_service "forgejo.org/services/release"
@@ -2049,6 +2050,26 @@ func TestActionsForkPullRequest(t *testing.T) {
 		closed := "closed"
 		editPR(t, baseRepo, pr, token, api.EditIssueOption{State: &closed})
 	}
+	mergePR := func(t *testing.T, baseRepo *repo_model.Repository, pr *issues_model.PullRequest, token string, merge *forms.MergePullRequestForm) {
+		url := fmt.Sprintf("/api/v1/repos/%s/pulls/%d/merge", baseRepo.FullName(), pr.Index)
+		req := NewRequestWithJSON(t, "POST", url, merge).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusOK)
+	}
+	mergePRWithMerge := func(t *testing.T, baseRepo *repo_model.Repository, pr *issues_model.PullRequest, token string) {
+		mergePR(t, baseRepo, pr, token, &forms.MergePullRequestForm{
+			Do: "merge",
+		})
+	}
+	mergePRWithSquash := func(t *testing.T, baseRepo *repo_model.Repository, pr *issues_model.PullRequest, token string) {
+		mergePR(t, baseRepo, pr, token, &forms.MergePullRequestForm{
+			Do: "squash",
+		})
+	}
+	mergePRWithFastForward := func(t *testing.T, baseRepo *repo_model.Repository, pr *issues_model.PullRequest, token string) {
+		mergePR(t, baseRepo, pr, token, &forms.MergePullRequestForm{
+			Do: "fast-forward-only",
+		})
+	}
 	reopenPR := func(t *testing.T, baseRepo *repo_model.Repository, pr *issues_model.PullRequest, token string) {
 		closePR(t, baseRepo, pr, token)
 		open := "open"
@@ -2169,6 +2190,9 @@ func TestActionsForkPullRequest(t *testing.T) {
 		// Workflow will be run without recognition that it is a pull request; for example when making a comment on a PR
 		// and triggering the issue_comment event.
 		runFromBaseWithoutPullRequest
+		// Workflow defined in the PR will be run, because it has been merged into the base.  Therefore it will not
+		// require approval, and will be provided secrets.
+		runFromMergedFork
 	)
 	type expectedRef int
 	const (
@@ -2304,6 +2328,27 @@ func TestActionsForkPullRequest(t *testing.T) {
 			workflowPreamble: "on: { pull_request_target: { types: [closed] } }\n",
 			triggerEvent:     closePR,
 			expectedResult:   runFromBase,
+			expectedRef:      refBaseBranch,
+		},
+		{
+			name:             "pull_request_target-closed-merge",
+			workflowPreamble: "on: { pull_request_target: { types: [closed] } }\n",
+			triggerEvent:     mergePRWithMerge,
+			expectedResult:   runFromMergedFork,
+			expectedRef:      refBaseBranch,
+		},
+		{
+			name:             "pull_request_target-closed-merge-squash",
+			workflowPreamble: "on: { pull_request_target: { types: [closed] } }\n",
+			triggerEvent:     mergePRWithSquash,
+			expectedResult:   runFromMergedFork,
+			expectedRef:      refBaseBranch,
+		},
+		{
+			name:             "pull_request_target-closed-merge-fast-forward",
+			workflowPreamble: "on: { pull_request_target: { types: [closed] } }\n",
+			triggerEvent:     mergePRWithFastForward,
+			expectedResult:   runFromMergedFork,
 			expectedRef:      refBaseBranch,
 		},
 		{
@@ -2491,7 +2536,7 @@ jobs:
 					assert.True(t, actionRun.IsForkPullRequest, "run must be marked as IsForkPullRequest")
 					assert.True(t, actionRun.NeedApproval, "run must be marked as NeedApproval")
 					require.NoError(t, actions_service.UpdateTrustedWithPullRequest(t.Context(), user2.ID, pullRequest, actions_service.UserTrustedOnce))
-				case runFromBase:
+				case runFromBase, runFromMergedFork:
 					actionRun := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{RepoID: baseRepo.ID})
 					assert.True(t, actionRun.IsForkPullRequest, "run must be !IsForkPullRequest")
 					assert.False(t, actionRun.NeedApproval, "run must be !NeedApproval")
@@ -2499,6 +2544,8 @@ jobs:
 					actionRun := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{RepoID: baseRepo.ID})
 					assert.False(t, actionRun.IsForkPullRequest, "run must be !IsForkPullRequest")
 					assert.False(t, actionRun.NeedApproval, "run must be !NeedApproval")
+				default:
+					assert.Failf(t, "unexpected tc.expectedResult", "tc.expectedResult=%d was not implemented", tc.expectedResult)
 				}
 				if t.Failed() {
 					return // faster test exit rather than waiting for fetchTask to fail, as it runs a check loop
@@ -2517,6 +2564,11 @@ jobs:
 					// runFromFork should give us a token that only has read permissions to the repo's units, so a write
 					// to the repo should fail:
 					writeToRepoCode(t, baseRepo, task.Secrets["FORGEJO_TOKEN"], http.StatusForbidden)
+				case runFromMergedFork:
+					assert.Contains(t, string(task.GetWorkflowPayload()), "job-fork:") // job-fork would be in the base branch now that the PR is merged
+					// secrets should be present
+					assert.Contains(t, task.Secrets, "MY_SECRET")
+					assert.Len(t, task.Secrets, 4)
 				case runFromBase:
 					assert.Contains(t, string(task.GetWorkflowPayload()), "job-base:") // running the workflow from the base branch, not the fork, which is why it can be trusted
 					assert.Contains(t, task.Secrets, "MY_SECRET")
@@ -2531,6 +2583,8 @@ jobs:
 					assert.Contains(t, task.Secrets, "MY_SECRET")
 					assert.Len(t, task.Secrets, 4)
 					writeToRepoCode(t, baseRepo, task.Secrets["FORGEJO_TOKEN"], http.StatusCreated)
+				default:
+					assert.Failf(t, "unexpected tc.expectedResult", "tc.expectedResult=%d was not implemented", tc.expectedResult)
 				}
 
 				ref, ok := task.Context.AsMap()["ref"]

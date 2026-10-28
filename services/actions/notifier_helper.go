@@ -275,6 +275,7 @@ func detectWorkflows(ctx context.Context, input *NotifyInput, gitRepo *git.Repos
 			log.Trace("repo %s with commit %s couldn't find pull_request_target workflows", input.Repo.RepoPath(), baseCommit.ID)
 		} else {
 			for _, wf := range baseWorkflows {
+				wf.DetectedFromPRBase = true
 				if wf.TriggerEvent.Name == actions_module.GithubEventPullRequestTarget {
 					detectedWorkflows = append(detectedWorkflows, wf)
 				}
@@ -383,7 +384,7 @@ func handleWorkflows(
 			Status:            actions_model.StatusWaiting,
 		}
 		workflowSourceCommit := commit
-		if dwf.SourceCommit != nil && dwf.SourceCommit.ID.String() != commit.ID.String() {
+		if dwf.SourceCommit != nil && dwf.DetectedFromPRBase {
 			// Note: ActionRunJob.CanAccessSecrets uses the presence/absence of WorkflowSourceCommit; don't change
 			// without consideration to the impacts of secrets access.
 			run.WorkflowSourceCommit = optional.Some(dwf.SourceCommit.ID.String())
