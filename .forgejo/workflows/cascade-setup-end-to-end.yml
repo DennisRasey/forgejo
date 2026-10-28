@@ -22,15 +22,22 @@ on:
       - 'wip-ci-end-to-end'
   pull_request_target:
     types:
+      - opened
+      - synchronize
       - labeled
+      - closed
 
 jobs:
   cascade:
     if: >
       vars.ROLE == 'forgejo-coding' && (
-        github.event_name == 'push' ||
-        (
-          github.event.action == 'label_updated' && github.event.label.name == 'run-end-to-end-tests'
+        forgejo.event_name == 'push' || (
+          forge.event_name == 'pull_request_target' && (
+            forge.event.action == 'closed' ||
+            ( forge.event.action == 'opened' && contains(forge.event.pull_request.labels.*.name, 'run-end-to-end-tests') ) ||
+            ( forge.event.action == 'synchronized' && contains(forge.event.pull_request.labels.*.name, 'run-end-to-end-tests') ) ||
+            ( forge.event.action == 'label_updated' && forge.event.label.name == 'run-end-to-end-tests' )
+          )
         )
       )
     runs-on: docker
