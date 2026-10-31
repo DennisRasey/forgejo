@@ -353,27 +353,12 @@ func ApplySuggestion(ctx *context.Context) {
 	// Applying a suggestion addresses its review comment, so resolve each conversation (best-effort:
 	// it requires resolve permission and must never undo or block the successful apply).
 	for _, comment := range comments {
-		if err := resolveSuggestionConversation(ctx, comment); err != nil {
+		if _, err := pull_service.MarkConversation(ctx, comment, ctx.Doer, true); err != nil && !errors.Is(err, util.ErrPermissionDenied) {
 			log.Error("ApplySuggestion: resolve conversation for comment %d: %v", comment.ID, err)
 		}
 	}
 
 	ctx.JSONOK()
-}
-
-// resolveSuggestionConversation marks the code conversation a just-applied suggestion belongs to as
-// resolved. It resolves the thread's first comment, which is what drives the conversation's resolved
-// state in the UI. It is a no-op when the doer lacks resolve permission.
-func resolveSuggestionConversation(ctx *context.Context, comment *issues_model.Comment) error {
-	ok, err := issues_model.CanMarkConversation(ctx, comment.Issue, ctx.Doer)
-	if err != nil || !ok {
-		return err
-	}
-	conversation, err := issues_model.FetchCodeConversation(ctx, comment, ctx.Doer)
-	if err != nil || len(conversation) == 0 {
-		return err
-	}
-	return issues_model.MarkConversation(ctx, conversation[0], ctx.Doer, true)
 }
 
 // SubmitReview creates a review out of the existing pending review or creates a new one if no pending review exist

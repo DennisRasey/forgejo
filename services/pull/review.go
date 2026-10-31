@@ -579,3 +579,46 @@ func DismissReview(ctx context.Context, reviewID, repoID int64, message string, 
 
 	return comment, nil
 }
+
+// MarkConversation resolves or unresolves the code conversation that comment belongs to, which can be any
+// comment of the conversation. It returns the conversation's first comment, the one holding the resolved mark.
+func MarkConversation(ctx context.Context, comment *issues_model.Comment, doer *user_model.User, isResolve bool) (*issues_model.Comment, error) {
+	if err := comment.LoadIssue(ctx); err != nil {
+		return nil, fmt.Errorf("load issue of comment %d: %w", comment.ID, err)
+	}
+	if !comment.Issue.IsPull {
+		return nil, util.NewNotExistErrorf("comment does not belong to a pull request")
+	}
+	if comment.Type != issues_model.CommentTypeCode {
+		return nil, util.NewInvalidArgumentErrorf("comment is not part of a review conversation")
+	}
+
+	canMark, err := issues_model.CanMarkConversation(ctx, comment.Issue, doer)
+	if err != nil {
+		return nil, fmt.Errorf("check permission to mark conversation of comment %d: %w", comment.ID, err)
+	}
+	if !canMark {
+		return nil, util.NewPermissionDeniedErrorf("user is not allowed to resolve this conversation")
+	}
+
+	root, err := conversationRoot(ctx, comment, doer)
+	if err != nil {
+		return nil, err
+	}
+	if err := issues_model.MarkConversation(ctx, root, doer, isResolve); err != nil {
+		return nil, fmt.Errorf("mark conversation of comment %d: %w", root.ID, err)
+	}
+
+	return conversationRoot(ctx, comment, doer)
+}
+
+func conversationRoot(ctx context.Context, comment *issues_model.Comment, doer *user_model.User) (*issues_model.Comment, error) {
+	conversation, err := issues_model.FetchCodeConversation(ctx, comment, doer)
+	if err != nil {
+		return nil, fmt.Errorf("fetch conversation of comment %d: %w", comment.ID, err)
+	}
+	if len(conversation) == 0 || conversation[0].Review == nil {
+		return nil, util.NewNotExistErrorf("review conversation of comment %d does not exist", comment.ID)
+	}
+	return conversation[0], nil
+}

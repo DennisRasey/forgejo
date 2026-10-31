@@ -15,6 +15,7 @@ import (
 	user_model "forgejo.org/models/user"
 	"forgejo.org/modules/gitrepo"
 	api "forgejo.org/modules/structs"
+	"forgejo.org/modules/util"
 	"forgejo.org/modules/web"
 	"forgejo.org/routers/api/v1/utils"
 	"forgejo.org/services/context"
@@ -263,6 +264,11 @@ func GetPullReviewComment(ctx *context.APIContext) {
 	}
 
 	if err := comment.LoadPoster(ctx); err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	if err := (issues_model.CommentList{comment}).LoadResolveDoers(ctx); err != nil {
 		ctx.InternalServerError(err)
 		return
 	}
@@ -1265,4 +1271,110 @@ func dismissReview(ctx *context.APIContext, msg string, isDismiss, dismissPriors
 		return
 	}
 	ctx.JSON(http.StatusOK, apiReview)
+}
+
+// ResolvePullReviewConversation marks the review conversation of a pull review comment as resolved
+func ResolvePullReviewConversation(ctx *context.APIContext) {
+	// swagger:operation POST /repos/{owner}/{repo}/pulls/comments/{id}/resolve repository repoResolvePullReviewConversation
+	// ---
+	// summary: Resolve the review conversation a pull review comment belongs to
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repository
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repository
+	//   type: string
+	//   required: true
+	// - name: id
+	//   in: path
+	//   description: ID of any comment in the conversation
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/PullReviewComment"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	markPullReviewConversation(ctx, true)
+}
+
+// UnresolvePullReviewConversation marks the review conversation of a pull review comment as unresolved
+func UnresolvePullReviewConversation(ctx *context.APIContext) {
+	// swagger:operation POST /repos/{owner}/{repo}/pulls/comments/{id}/unresolve repository repoUnresolvePullReviewConversation
+	// ---
+	// summary: Unresolve the review conversation a pull review comment belongs to
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repository
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repository
+	//   type: string
+	//   required: true
+	// - name: id
+	//   in: path
+	//   description: ID of any comment in the conversation
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/PullReviewComment"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	markPullReviewConversation(ctx, false)
+}
+
+func markPullReviewConversation(ctx *context.APIContext, isResolve bool) {
+	comment := ctx.LoadComment(":id")
+	if ctx.Written() {
+		return
+	}
+
+	root, err := pull_service.MarkConversation(ctx, comment, ctx.Doer(), isResolve)
+	switch {
+	case errors.Is(err, util.ErrNotExist):
+		ctx.NotFound()
+		return
+	case errors.Is(err, util.ErrInvalidArgument):
+		ctx.Error(http.StatusUnprocessableEntity, "", err)
+		return
+	case errors.Is(err, util.ErrPermissionDenied):
+		ctx.Error(http.StatusForbidden, "", err)
+		return
+	case err != nil:
+		ctx.InternalServerError(err)
+		return
+	}
+
+	root.Review.Issue = comment.Issue
+	apiComment, err := convert.ToPullReviewComment(ctx, root.Review, root, ctx.Doer())
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, apiComment)
 }
