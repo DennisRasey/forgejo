@@ -96,6 +96,10 @@ func Search(ctx *context.APIContext) {
 	//   in: query
 	//   description: show only archived, non-archived or all repositories (defaults to all)
 	//   type: boolean
+	// - name: language
+	//   in: query
+	//   description: retrieve only repositories that use the given language
+	//   type: string
 	// - name: mode
 	//   in: query
 	//   description: type of repository to search for. Supported values are
@@ -151,6 +155,7 @@ func Search(ctx *context.APIContext) {
 		Private:            private,
 		Template:           optional.None[bool](),
 		StarredByID:        ctx.FormInt64("starredBy"),
+		Language:           ctx.FormTrim("language"),
 		IncludeDescription: ctx.FormBool("includeDesc"),
 
 		AuthorizationReducer: ctx.Reducer(),
