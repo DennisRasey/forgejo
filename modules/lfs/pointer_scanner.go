@@ -83,6 +83,9 @@ loop:
 			_ = catFileBatchReader.CloseWithError(err)
 			break
 		}
+		if size == 0 || size >= BlobSizeCutoff {
+			continue
+		}
 		pointerBuf := buf[:size+1]
 		if _, err := io.ReadFull(bufferedReader, pointerBuf); err != nil {
 			_ = catFileBatchReader.CloseWithError(err)
@@ -95,6 +98,6 @@ loop:
 			continue
 		}
 
-		pointerChan <- PointerBlob{Hash: sha, Pointer: pointer}
+		pointerChan <- PointerBlob{Hash: sha, Pointer: *pointer}
 	}
 }

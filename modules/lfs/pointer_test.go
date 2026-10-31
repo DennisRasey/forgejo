@@ -39,7 +39,7 @@ func TestIsPointerValid(t *testing.T) {
 	assert.False(t, p.IsOIDValid())
 	assert.Equal(t, ErrInvalidOIDFormat, p.Validate())
 
-	p = Pointer{Oid: "94cb57646c54a297c9807697e80a30946f79a4b82cb079d2606847825b1812cc"}
+	p = Pointer{Oid: "94cb57646c54a297c9807697e80a30946f79a4b82cb079d2606847825b1812cc", Size: 1}
 	assert.True(t, p.IsOIDValid())
 	require.NoError(t, p.Validate())
 
@@ -49,11 +49,7 @@ func TestIsPointerValid(t *testing.T) {
 
 	p = Pointer{Oid: "94cb57646c54a297c9807697e80a30946f79a4b82cb079d2606847825b1812cc", Size: 0}
 	assert.True(t, p.IsOIDValid())
-	require.NoError(t, p.Validate())
-
-	p = Pointer{Oid: "94cb57646c54a297c9807697e80a30946f79a4b82cb079d2606847825b1812cc", Size: 1}
-	assert.True(t, p.IsOIDValid())
-	require.NoError(t, p.Validate())
+	assert.Equal(t, ErrEmptyPointer, p.Validate())
 
 	p = Pointer{Oid: "αυτή η πρόταση παραβιάζει τους περιορισμούς του regex", Size: 1}
 	assert.False(t, p.IsOIDValid())
@@ -85,7 +81,7 @@ func TestReadPointerFromBuffer(t *testing.T) {
 		}
 	}
 
-	simpleTestBufferAndStringReadError("", ErrMissingPrefix)
+	simpleTestBufferAndStringReadError("", ErrEmptyPointer)
 	simpleTestBufferAndStringReadError("test", ErrMissingPrefix)
 	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\n", ErrInvalidStructure)
 	simpleTestBufferAndStringReadError("version https://git-lfs.github.com/spec/v1\noid sha256:4d7a\nsize 1234\n", ErrInvalidOIDFormat)

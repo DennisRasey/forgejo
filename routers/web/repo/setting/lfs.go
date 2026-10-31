@@ -366,8 +366,8 @@ func LFSDelete(ctx *context.Context) {
 	}
 	oid := ctx.Params("oid")
 	p := lfs.Pointer{Oid: oid}
-	if err := p.Validate(); err != nil {
-		ctx.NotFound("LFSDelete", err)
+	if !p.IsOIDValid() {
+		ctx.NotFound("LFSDelete", lfs.ErrInvalidOIDFormat)
 		return
 	}
 
@@ -397,9 +397,7 @@ func LFSFileFind(ctx *context.Context) {
 	}
 	size := ctx.FormInt64("size")
 	pointer := lfs.Pointer{Oid: ctx.FormString("oid"), Size: size}
-	// TODO: size == 0 should be handled elsewhere, ErrInvalidPointerTarget size isn't
-	// the same.
-	if err := pointer.Validate(); err != nil || size == 0 {
+	if err := pointer.Validate(); err != nil {
 		ctx.NotFound("LFSFileFind", err)
 		return
 	}
